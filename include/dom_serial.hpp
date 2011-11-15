@@ -71,7 +71,7 @@ class dom_serial : public dom<unit, real_t>
     if (i_min == 0) (*psi_ijk[0])(Range(0),0,0) = 1;
 
     // periodic boundary
-    hook_neighbours(this, this);
+    this->hook_neighbours(this, this);
   }
 
   public: ~dom_serial()
@@ -153,7 +153,7 @@ class dom_serial : public dom<unit, real_t>
     for (unsigned long t = 0; t < nt; ++t)
     {   
       adv<unit, real_t> *a;
-      bool fallback = choose_an(&a, &n, t, advsch, fllbck);    
+      bool fallback = this->choose_an(&a, &n, t, advsch, fllbck);    
       record(n, t);
       for (int s = 1; s <= a->num_steps(); ++s)
       {   
