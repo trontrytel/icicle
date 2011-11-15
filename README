@@ -1,0 +1,50 @@
+--------------------------- ICICLE ---------------------------
+
+- outline: TODO
+- author: Sylwester Arabas et al. (University of Warsaw)
+- license: GPLv3 (cf. COPYING or http://www.gnu.org/licenses/)
+
+--------------------------------------------------------------
+* requirements:
+  - cmake .............................. http://www.cmake.org/
+  - C++ compiler, e.g.
+    - clang++ (no OpenMP as of '11) ... http://clang.llvm.org/
+    - g++ (GCC >= 4.2 for OpenMP) ........ http://gcc.gnu.org/
+    - ... 
+  - Blitz++ library ............ http://blitz.sourceforge.net/
+  - Boost C++ libraries, incl.: ........ http://www.boost.org/
+    - Boost headers (Units, Program_options, Conversion)
+
+* optional libraries:
+  - Boost C++ libraries, incl.: ........ http://www.boost.org/
+    - Boost headers & shared libs (Thread, MPI, Serialization)
+  - NetCDF C++ library ... http://www.unidata.ucar.edu/netcdf/
+  - MPI libraries with C++ bindings (optional), e.g.:
+    - Open MPI ...................... http://www.open-mpi.org/
+      (with --enable-mpi-threads if MPI+threads is to be used)
+    - MPICH ............... http://www.mcs.anl.gov/mpi/mpich2/
+    - LAM/MPI ........................ http://www.lam-mpi.org/
+      (not tested yet - FIXME, LAM/MPI authors "encourage all 
+      users to try migrating to Open MPI")
+
+--------------------------------------------------------------
+* in-tree compilation / tests / clean-up:
+  $ cmake .             [-DCMAKE_BUILD_TYPE=Release|Debug|...]
+  $ make       
+  $ make test
+  $ make clean
+
+  CMake honors the CXX env. var, so one may use e.g.
+  $ export CXX=openmpic++
+
+--------------------------------------------------------------
+* usage:
+  $ ./icicle --help
+  $ ./icicle ... --dom serial
+  $ ./icicle ... --dom threads --nsdom N
+  $ ./icicle ... --dom openmp --nsdom N
+  $ [open]mpirun -np N ./icicle ... --dom mpi --nsdom N
+
+--------------------------------------------------------------
+* developers' documentation draft:
+  - see doc/doxygen/html/index.html
