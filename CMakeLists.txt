@@ -1,5 +1,7 @@
 ## @file
-#  @author Sylwester Arabas (University of Warsaw) <slayoo@igf.fuw.edu.pl>
+#  @author 
+#    Sylwester Arabas (University of Warsaw) <slayoo@igf.fuw.edu.pl>
+#    Anna Jaruga (University of Warsaw) 
 #  @date November 2011
 #  @section LICENSE
 #    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
@@ -68,10 +70,15 @@ check_cxx_source_compiles(
   Find_NetCDF
 )
 if(NOT Find_NetCDF) 
-  message(WARNING "NetCDF not found! (cf. CMakeFiles/CMakeError.log) - NetCDF output will not be available.")
+  message(WARNING "
+    NetCDF not found! (cf. CMakeFiles/CMakeError.log) 
+    NetCDF output will not be available.
+      suitable Debian/Ubuntu package: libnetcdf-dev
+      suitable Macports port: netcdf
+  ")
   set(CMAKE_REQUIRED_LIBRARIES ${TMP})
 else()
-  set(HAVE_NETCDF ${found})
+  set(HAVE_NETCDF ${Find_NetCDF})
   set(LINK_FLAGS "${LINK_FLAGS} -lnetcdf_c++") 
 endif()
 
