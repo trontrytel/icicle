@@ -65,15 +65,15 @@ set(TMP ${CMAKE_REQUIRED_LIBRARIES})
 set(CMAKE_REQUIRED_LIBRARIES "-lnetcdf_c++")
 check_cxx_source_compiles(
   "#include <netcdfcpp.h>\n int main() { NcFile *f; }" 
-  found
+  Find_NetCDF
 )
-if(NOT found) 
+if(NOT Find_NetCDF) 
   message(WARNING "NetCDF not found! (cf. CMakeFiles/CMakeError.log) - NetCDF output will not be available.")
   set(CMAKE_REQUIRED_LIBRARIES ${TMP})
 else()
   set(HAVE_NETCDF ${found})
+  set(LINK_FLAGS "${LINK_FLAGS} -lnetcdf_c++") 
 endif()
-set(LINK_FLAGS "${LINK_FLAGS} -lnetcdf_c++") 
 
 set_target_properties(icicle PROPERTIES LINK_FLAGS ${LINK_FLAGS}) 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/common.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/common.hpp)

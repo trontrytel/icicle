@@ -12,15 +12,19 @@
 #  include "adv_leapfrog.hpp"
 
 #  include "dom_serial.hpp"
-#  include "dom_parallel_openmp.hpp"
+#  ifdef HAVE_OPENMP
+#    include "dom_parallel_openmp.hpp"
+#  endif
 
 #  include "out_gnuplot.hpp"
-#  include "out_netcdf.hpp"
+#  ifdef HAVE_NETCDF
+#    include "out_netcdf.hpp"
+#  endif
 
 #  include <boost/lexical_cast.hpp>
 
 template <typename real_t>
-int model(const po::variables_map& vm) 
+void model(const po::variables_map& vm) 
 {
   // some key parameters 
   if (
@@ -104,10 +108,13 @@ int model(const po::variables_map& vm)
     {
       if (!vm.count("nsd")) error_macro("subdomain count not specified (--nsd option)");
       int nsd = vm["nsd"].as<int>();
+#  ifdef HAVE_OPENMP
       if (domtype == "openmp")
         domain = new dom_parallel_openmp<si::dimensionless, real_t>(fllbck, advsch, output, nx, ny, nz, nsd);
       // ... other types here (MPI, threads, processes, ...) - FIXME
-      else error_macro("unsupported domain type: " << domtype);
+      else 
+#  endif
+      error_macro("unsupported domain type: " << domtype);
     }
   }
 
