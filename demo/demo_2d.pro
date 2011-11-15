@@ -17,14 +17,14 @@ pro demo_2D, nx=nx, nz=nz, u=u, w=w, nt=nt, adv=adv
     ' --u '  +  strmid(u,  2) + $
     ' --w '  +  strmid(w,  2) + $
     ' --adv ' + adv + $
-    ' --dom openmp --nsd 2' + $
+    ' --dom serial --nsd 2' + $
     ' --out netcdf --outfile demo_2d.nc'
   a = ncdf_open('demo_2d.nc') 
   scl = 20
   window, xsize=scl*nx, ysize=scl*nz
   loadct, 1
   i=0l
-  while 1 do begin ; infinite loop
+  while i lt 100 * nt do begin 
     ncdf_varget, a, 'psi', p, offset=[0,0,0,i++ mod nt], count=[nz, 1, nx, 1]
     p = reform(p[*,0,*,0]) ; removing dimensions of size one
     p = rotate(p, 4)

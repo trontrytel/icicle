@@ -51,7 +51,6 @@ class out_netcdf : public out<unit, real_t>
   {
     // due to presence of halos the data to be stored is not contiguous, 
     // hence looping over the two major ranks
-    assert(psi[n]->isMajorRank(firstRank));
     for (int i_int = i.first(); i_int <= i.last(); ++i_int) // loop over "outer" dimension
     {
       for (int j_int = j.first(); j_int <= j.last(); ++j_int)
