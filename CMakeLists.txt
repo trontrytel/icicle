@@ -61,7 +61,7 @@ else()
 endif()
 
 
-### NetCDF (optional)
+#### NetCDF (optional)
 #TODO handle -DNETCDF=no
 set(TMP ${CMAKE_REQUIRED_LIBRARIES})
 set(CMAKE_REQUIRED_LIBRARIES "-lnetcdf_c++")
@@ -75,12 +75,37 @@ if(NOT Find_NetCDF)
     NetCDF output will not be available.
       suitable Debian/Ubuntu package: libnetcdf-dev
       suitable Macports port: netcdf
+      erase the CMakeCache.txt before re-running cmake
   ")
-  set(CMAKE_REQUIRED_LIBRARIES ${TMP})
 else()
   set(HAVE_NETCDF ${Find_NetCDF})
   set(LINK_FLAGS "${LINK_FLAGS} -lnetcdf_c++") 
 endif()
+set(CMAKE_REQUIRED_LIBRARIES ${TMP})
+
+
+#### Boost.Thread (optional)
+#TODO handle -D...THREADS=no
+set(TMP ${CMAKE_REQUIRED_LIBRARIES})
+set(CMAKE_REQUIRED_LIBRARIES "-lboost_thread-mt")
+check_cxx_source_compiles(
+  "#include <boost/thread.hpp>\n int main() { boost::thread th; }" 
+  Find_Boost_Thread
+)
+if(NOT Find_Boost_Thread) 
+  message(WARNING "
+    Boost.Thread not found! (cf. CMakeFiles/CMakeError.log) 
+    Threads parallelisation will not be available.
+      suitable Debian/Ubuntu package: libboost-dev
+      suitable Macports port: boost / boost+openmpi
+      erase the CMakeCache.txt before re-running cmake
+  ")
+else()
+  set(HAVE_BOOST_THREAD ${Find_Boost_Thread})
+  set(LINK_FLAGS "${LINK_FLAGS} -lboost_thread-mt") 
+endif()
+set(CMAKE_REQUIRED_LIBRARIES ${TMP})
+
 
 set_target_properties(icicle PROPERTIES LINK_FLAGS ${LINK_FLAGS}) 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/common.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/common.hpp)
