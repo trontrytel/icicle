@@ -15,6 +15,9 @@
 #  ifdef HAVE_OPENMP
 #    include "dom_parallel_openmp.hpp"
 #  endif
+#  ifdef HAVE_BOOST_THREAD
+#    include "dom_parallel_threads.hpp"
+#  endif
 
 #  include "out_gnuplot.hpp"
 #  ifdef HAVE_NETCDF
@@ -111,7 +114,11 @@ void model(const po::variables_map& vm)
 #  ifdef HAVE_OPENMP
       if (domtype == "openmp")
         domain = new dom_parallel_openmp<si::dimensionless, real_t>(fllbck, advsch, output, nx, ny, nz, nsd);
-      // ... other types here (MPI, threads, processes, ...) - FIXME
+      else 
+#  endif
+#  ifdef HAVE_BOOST_THREAD
+      if (domtype == "threads")
+        domain = new dom_parallel_threads<si::dimensionless, real_t>(fllbck, advsch, output, nx, ny, nz, nsd);
       else 
 #  endif
       error_macro("unsupported domain type: " << domtype);

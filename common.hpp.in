@@ -10,6 +10,7 @@
 // compile-time options
 #cmakedefine HAVE_OPENMP 1
 #cmakedefine HAVE_NETCDF 1
+#cmakedefine HAVE_BOOST_THREAD 1
 
 // overloading the default d-tor with a virtual one (enforces execution of child d-tors)
 class root { public: virtual ~root() {} };

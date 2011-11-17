@@ -23,16 +23,14 @@
     - Open MPI ...................... http://www.open-mpi.org/
       (with --enable-mpi-threads if MPI+threads is to be used)
     - MPICH ............... http://www.mcs.anl.gov/mpi/mpich2/
-    - LAM/MPI ........................ http://www.lam-mpi.org/
-      (not tested yet - FIXME, LAM/MPI authors "encourage all 
-      users to try migrating to Open MPI")
+    - LAM/MPI (obsolete -> Open MPI) . http://www.lam-mpi.org/
 
 --------------------------------------------------------------
 * in-tree compilation / tests / clean-up:
   $ cmake .             [-DCMAKE_BUILD_TYPE=Release|Debug|...]
-  $ make       
+  $ make            
   $ make test
-  $ make clean
+  $ make clean 
 
   CMake honors the CXX env. var, so one may use e.g.
   $ export CXX=openmpic++
@@ -47,4 +45,4 @@
 
 --------------------------------------------------------------
 * developers' documentation draft:
-  - see doc/doxygen/html/index.html
+  - see doc/doxygen/html/index.html (cd doc; doxygen # if 404)

@@ -16,7 +16,7 @@ class adv_mpdata : public adv<unit, real_t>
   public: const int time_levels() { return 2; }
   public: const int num_steps() { return 2; }
 
-  protected: real_t eps;
+  private: real_t eps;
   public: adv_mpdata(real_t eps_ = 1e-6) { eps = eps_; }
 
   public: void op_1D(Array<quantity<unit, real_t>, 3>* psi[], const Range &i,

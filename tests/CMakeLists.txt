@@ -1,1 +1,1 @@
-add_test(courant_one.sh ./courant_one.sh)
+add_test(courant_one_1D.sh ./courant_one_1D.sh)
