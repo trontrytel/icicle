@@ -9,8 +9,11 @@
 cmake_minimum_required(VERSION 2.6) # for simplified if-constructs
 project(icicle CXX)
 add_executable(icicle src/icicle.cpp)
-set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES 
-  "common.hpp;Makefile;CMakeCache.txt;cmake_install.cmake;CMakeFiles;Testing;CTestTestfile.cmake;tests/Makefile;tests/CMakeCache.txt;tests/cmake_install.cmake;tests/CMakeFiles;tests/Testing;tests/CTestTestfile.cmake;doc/Makefile;doc/CMakeCache.txt;doc/cmake_install.cmake;doc/CMakeFiles;doc/Testing;doc/CTestTestfile.cmake") 
+set(TMP "src/config.hpp")
+foreach(d .;doc;tests;src;)
+  set(TMP "${TMP};${d}/Makefile;${d}/CMakeCache.txt;${d}/cmake_install.cmake;${d}/CMakeFiles;${d}/Testing;${d}/CTestTestfile.cmake")
+endforeach()
+set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${TMP}")
 include(CheckCXXSourceCompiles) 
 
 
@@ -108,7 +111,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.hpp.in ${CMAKE_CURRENT_BINARY_
 enable_testing()
 add_subdirectory(tests)
 
-string(COMPARE EQUAL ${CMAKE_BUILD_TYPE} "Debug" dbg)
+string(COMPARE EQUAL "${CMAKE_BUILD_TYPE}" "Debug" dbg)
 if(dbg)
   find_package(Doxygen)
   if (DOXYGEN_FOUND)
