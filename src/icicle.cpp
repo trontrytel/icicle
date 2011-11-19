@@ -53,10 +53,10 @@ int main(int ac, char* av[])
     if (vm.count("dom") && vm["dom"].as<string>() == "list")
     {
       cout << "serial";// FIXME: fork";
-#  ifdef HAVE_OPENMP
+#  ifdef _OPENMP
       cout << " openmp";
 #  endif
-#  ifdef _OPENMP
+#  ifdef USE_BOOST_THREADS
       cout << " threads";
 #  endif
       cout << endl;

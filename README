@@ -27,7 +27,11 @@
 
 --------------------------------------------------------------
 * in-tree compilation / tests / clean-up:
-  $ cmake .             [-DCMAKE_BUILD_TYPE=Release|Debug|...]
+  $ cmake .             
+    [-DCMAKE_BUILD_TYPE=Debug|Release]
+    [-DNETCDF=NO]
+    [-DTHREADS=NO]
+    [-DOPENMP=NO]
   $ make            
   $ make test
   $ make clean 
