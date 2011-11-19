@@ -71,7 +71,10 @@ void model(const po::variables_map& vm)
       fllbck = new adv_upstream<si::dimensionless, real_t>();
     }
     else if (advscheme == "mpdata")
-      advsch = new adv_mpdata<si::dimensionless, real_t>();
+    {
+      int iord = vm.count("adv.mpdata.iord") ? vm["adv.mpdata.iord"].as<int>() : 2;
+      advsch = new adv_mpdata<si::dimensionless, real_t>(iord);
+    }
     else error_macro("unsupported advection scheme: " << advscheme);
   }
 
@@ -85,8 +88,8 @@ void model(const po::variables_map& vm)
 #  ifdef USE_NETCDF
     if (outtype == "netcdf")
     {
-      if (!vm.count("outfile")) error_macro("output filename not specified (--outfile option)")
-      output = new out_netcdf<si::dimensionless, real_t>(vm["outfile"].as<string>(), nx, ny, nz);
+      if (!vm.count("out.netcdf.file")) error_macro("output filename not specified (--out.netcdf.file option)")
+      output = new out_netcdf<si::dimensionless, real_t>(vm["out.netcdf.file"].as<string>(), nx, ny, nz);
     }
     else
 #  endif

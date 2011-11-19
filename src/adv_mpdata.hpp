@@ -12,9 +12,16 @@
 template <class unit, typename real_t> 
 class adv_mpdata : public adv<unit, real_t> 
 {
+  private: int iord;
   public: const int stencil_extent() { return 3; }
   public: const int time_levels() { return 2; }
-  public: const int num_steps() { return 2; }
+  public: const int num_steps() { return iord; }
+
+  public: adv_mpdata(int iord = 2) 
+    : iord(iord)
+  {
+    assert(iord > 0);
+  }
 
   public: void op_1D(Array<quantity<unit, real_t>, 3>* psi[], const Range &i,
     const int n, const quantity<si::dimensionless, real_t> &courant, const int step) 
@@ -27,7 +34,7 @@ class adv_mpdata : public adv<unit, real_t>
         (*psi[n+1])(i) -= (F((*psi[n])(i), (*psi[n])(i+1), courant) - F((*psi[n])(i-1), (*psi[n])(i), courant));
         break;
       }
-      case 2:
+      default:
       {
         (*psi[n+1])(i) -= (
           F((*psi[n])(i), (*psi[n])(i+1), 
@@ -45,9 +52,7 @@ class adv_mpdata : public adv<unit, real_t>
             )
           )
         );
-        break;
       }
-      default: assert(false);
     }
 #    undef F
   }

@@ -18,7 +18,7 @@ pro demo_2D, nx=nx, nz=nz, u=u, w=w, nt=nt, adv=adv
     ' --w '  +  strmid(w,  2) + $
     ' --adv ' + adv + $
     ' --dom serial --nsd 2' + $
-    ' --out netcdf --outfile demo_2d.nc'
+    ' --out netcdf --out.netcdf.file demo_2d.nc'
   a = ncdf_open('demo_2d.nc') 
   scl = 20
   window, xsize=scl*nx, ysize=scl*nz
