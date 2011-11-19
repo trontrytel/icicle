@@ -32,12 +32,14 @@
     [-DNETCDF=NO]
     [-DTHREADS=NO]
     [-DOPENMP=NO]
-  $ make            
+  $ [VERBOSE=1] make            
   $ make test
   $ make clean 
 
   CMake honors the CXX env. var, so one may use e.g.
   $ export CXX=openmpic++
+  $ export LDFLAGS=-L/opt/local/lib 
+  $ export CXXFLAGS=-I/opt/local/include
 
 --------------------------------------------------------------
 * usage:

@@ -18,7 +18,7 @@ include(CheckCXXSourceCompiles)
 set(TMP CMAKE_REQUIRED_FLAGS)
 set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}")
 foreach(HPP ${HPPS})
-  check_cxx_source_compiles("#include <${HPP}.hpp>\n#include <${HPP}.hpp>\nmain() {}" ${HPP}_hpp)
+  check_cxx_source_compiles("#include <${HPP}.hpp>\n#include <${HPP}.hpp>\nint main() {}" ${HPP}_hpp)
   if (NOT ${HPP}_hpp)
     message(WARNING 
       "header file not self-contained or not protected against multiple-inclusion: 

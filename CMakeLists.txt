@@ -20,7 +20,7 @@ include(CheckCXXSourceCompiles)
 
 #### <Boost.units> (mandatory) #########################################
 check_cxx_source_compiles(                                             #
-  "#include <boost/units/systems/si.hpp>\n main() {}" 
+  "#include <boost/units/systems/si.hpp>\n int main() {}" 
   Find_Boost_Units
 )
 if(NOT Find_Boost_Units) 
@@ -32,7 +32,7 @@ endif()                                                                #
 
 #### <Boost.lexical_cast> (mandatory) ##################################
 check_cxx_source_compiles(                                             #
-  "#include <boost/lexical_cast.hpp>\n main() {}" 
+  "#include <boost/lexical_cast.hpp>\n int main() {}" 
   Find_Boost_Lexical_Cast
 )
 if(NOT Find_Boost_Lexical_Cast) 
@@ -44,7 +44,7 @@ endif()                                                                #
 
 #### <Blitz> (mandatory) ###############################################
 check_cxx_source_compiles(                                             #
-  "#include <blitz/array.h>\n main() {}" 
+  "#include <blitz/array.h>\n int main() {}" 
   Find_Blitz
 )
 if(NOT Find_Blitz) 
@@ -57,7 +57,7 @@ endif()                                                                #
 #### <Boost.program_options> (mandatory) ###############################
 set(CMAKE_REQUIRED_LIBRARIES "-lboost_program_options")                #
 check_cxx_source_compiles(
-  "#include <boost/program_options.hpp>\n main() { 
+  "#include <boost/program_options.hpp>\n int main() { 
     boost::program_options::options_description d; 
   }" 
   Find_Boost_Program_Options
@@ -77,7 +77,7 @@ else()
   set(TMP ${CMAKE_CXX_FLAGS}) 
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
   check_cxx_source_compiles(
-    "#include <omp.h>\n main() { omp_set_num_threads(2); }" 
+    "#include <omp.h>\n int main() { omp_set_num_threads(2); }" 
     Find_OpenMP
   )
   if(NOT Find_OpenMP)
@@ -94,7 +94,7 @@ if("${NETCDF}" STREQUAL "NO") # handles -DNETCDF=NO                      #
 else()
   set(CMAKE_REQUIRED_LIBRARIES "-lnetcdf_c++")
   check_cxx_source_compiles(
-    "#include <netcdfcpp.h>\n main() { NcFile *f; }" 
+    "#include <netcdfcpp.h>\n int main() { NcFile *f; }" 
     Find_NetCDF
   )
   if(NOT Find_NetCDF) 
@@ -118,7 +118,7 @@ if ("${THREADS}" STREQUAL "NO") # handles -DTHREADS=NO                 #
 else()
   set(CMAKE_REQUIRED_LIBRARIES "-lboost_thread-mt")
   check_cxx_source_compiles(
-    "#include <boost/thread.hpp>\n main() { boost::thread th; }" 
+    "#include <boost/thread.hpp>\n int main() { boost::thread th; }" 
     Find_Boost_Thread
   )
   if(NOT Find_Boost_Thread) 
@@ -137,6 +137,8 @@ endif()                                                                #
 #### </Boost.Thread> ###################################################
 
 set_target_properties(icicle PROPERTIES LINK_FLAGS ${LINK_FLAGS}) 
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffast-math -DNDEBUG")
+set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/src/config.hpp)
 
 enable_testing()

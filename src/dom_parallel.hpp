@@ -62,7 +62,7 @@ class dom_parallel : public dom<unit, real_t>
     for (unsigned long t = 0; t < nt; ++t)
     {   
       adv<unit, real_t> *a;
-      bool fallback = choose_an(&a, &n, t, advsch, fllbck);
+      bool fallback = this->choose_an(&a, &n, t, advsch, fllbck);
       barrier();
       if (sd == 0) for (int sdi=0; sdi < nsd; ++sdi) doms[sdi]->record(n, t);
       for (int s = 1; s <= a->num_steps(); ++s)
