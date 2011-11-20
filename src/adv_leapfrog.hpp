@@ -16,11 +16,16 @@ class adv_leapfrog : public adv<unit, real_t>
   public: const int time_levels() { return 3; }
   public: const int num_steps() { return 1; }
  
-  public: void op_1D(Array<quantity<unit, real_t>, 3>* psi[], const Range &i,
-    const int n, const quantity<si::dimensionless, real_t> &courant, const int step) 
+  public: void op_1D(Array<quantity<unit, real_t>, 3>* psi[], 
+    const Range &i, const int n, const int step,
+    const Array<quantity<si::dimensionless, real_t>, 3> &Cx, 
+    const Array<quantity<si::dimensionless, real_t>, 3> &Cy, 
+    const Array<quantity<si::dimensionless, real_t>, 3> &Cz
+  )
   {
     assert(step == 1);
-    (*psi[n+1])(i) -= courant * ( (*psi[n])(i+1) - (*psi[n])(i-1) );
+    // TODO: is the averaging done here correct???
+    (*psi[n+1])(i) -= .5 * (Cx(i+grd::p_half) + Cx(i-grd::m_half)) * ( (*psi[n])(i+1) - (*psi[n])(i-1) );
   }
 };
 #endif

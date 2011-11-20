@@ -37,11 +37,7 @@ class dom : root
     return fallback;
   }
   
-  public: virtual void integ_loop(unsigned long nt, 
-    quantity<si::dimensionless, real_t> &Cx,
-    quantity<si::dimensionless, real_t> &Cy,
-    quantity<si::dimensionless, real_t> &Cz
-  ) = 0;
+  public: virtual void integ_loop(unsigned long nt, quantity<si::time, real_t> dt) = 0;
 };
 
 #endif

@@ -6,14 +6,17 @@ for bits in {32,64,128}; do
           for nsd in {1,2,4,5,20}; do
             for nssdom in {1,2,3}; do
               for nout in {1,5,10}; do
-                for adv in {upstream,mpdata,"mpdata --adv.mpdata.iord 3",leapfrog}; do
+                for adv in {mpdata,"mpdata --adv.mpdata.iord 1","mpdata --adv.mpdata.iord 3",leapfrog}; do
                   # combinations that does not make sense
                   if [ $dom = "serial" -a $nsd != 1 ]; then continue; fi
 #                  if [ $dom = "serial" -a $sdom != "serial" ]; then continue; fi
 #                  if [ $sdom = "serial" -a $nssdom != 1 ]; then continue; fi
 
                   # the actual test
-                  cmd="../icicle --bits $bits --dt 1 --dx 1 --dy 1 --dz 1 --u $u --v 0 --w 0 --nt $nt --nx 20 --ny 1 --nz 1 --adv $adv --dom $dom --out gnuplot --nsd $nsd"
+                  cmd="../icicle"
+                  cmd="$cmd --bits $bits --dt 1 --dx 1 --dy 1 --dz 1"
+                  cmd="$cmd --vel uniform --vel.uniform.u $u --vel.uniform.v 0 --vel.uniform.w 0"
+                  cmd="$cmd --nt $nt --nx 20 --ny 1 --nz 1 --adv $adv --dom $dom --out gnuplot --nsd $nsd"
 # TODO: --sdom $sdom --nssdom $nssdom --nout $nout"
                   if [ $dom = "mpi" ]; then cmd="openmpirun -np $nsd $cmd"; fi;
                   ret=`$cmd 2>/dev/null` 

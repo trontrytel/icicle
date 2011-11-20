@@ -22,4 +22,10 @@ class root { public: virtual ~root() {} };
 #  define error_macro(msg) { cerr << "-- error: " << msg << endl; throw exception(); }
 #  define warning_macro(msg) { cerr << "-- warning: " << msg << endl; }
 
+// some non-standard units
+typedef multiply_typeof_helper<
+    si::velocity,
+    si::length
+  >::type velocity_times_length;
+
 #endif

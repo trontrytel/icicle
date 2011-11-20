@@ -23,31 +23,39 @@ class adv_mpdata : public adv<unit, real_t>
     assert(iord > 0);
   }
 
-  public: void op_1D(Array<quantity<unit, real_t>, 3>* psi[], const Range &i,
-    const int n, const quantity<si::dimensionless, real_t> &courant, const int step) 
+  public: void op_1D(Array<quantity<unit, real_t>, 3>* psi[], 
+    const Range &i, const int n, const int step,
+    const Array<quantity<si::dimensionless, real_t>, 3> &Cx, 
+    const Array<quantity<si::dimensionless, real_t>, 3> &Cy, 
+    const Array<quantity<si::dimensionless, real_t>, 3> &Cz
+  )
   {
-#    define F(psi_l,psi_r,U) (.5 * (U + sqrt(U*U)) * psi_l + .5 * (U - sqrt(U*U)) * psi_r)
+#    define F_donorcl(psi_l,psi_r,U) (.5 * (U + sqrt(U*U)) * psi_l + .5 * (U - sqrt(U*U)) * psi_r)
+#    define V_antydif(psi_l,psi_r,U) ((sqrt(U*U) - pow(U,2)) * (psi_r - psi_l) / (psi_r + psi_l))
     switch (step)
     {
       case 1:
       { 
-        (*psi[n+1])(i) -= (F((*psi[n])(i), (*psi[n])(i+1), courant) - F((*psi[n])(i-1), (*psi[n])(i), courant));
+        (*psi[n+1])(i) -= (
+          F_donorcl((*psi[n])(i  ), (*psi[n])(i+1), Cx(i + grd::p_half)) - 
+          F_donorcl((*psi[n])(i-1), (*psi[n])(i  ), Cx(i - grd::m_half))
+        );
         break;
       }
       default:
       {
         (*psi[n+1])(i) -= (
-          F((*psi[n])(i), (*psi[n])(i+1), 
+          F_donorcl((*psi[n])(i), (*psi[n])(i+1), 
             where(
               (*psi[n])(i+1) + (*psi[n])(i) > 0,
-              (abs(courant) - pow(courant, 2)) * ((*psi[n])(i+1) - (*psi[n])(i)) / ((*psi[n])(i+1) + (*psi[n])(i)),
+              V_antydif((*psi[n])(i), (*psi[n])(i+1), Cx(i + grd::p_half)),
               quantity<unit, real_t>(0.)
             )
           ) -
-          F((*psi[n])(i-1), (*psi[n])(i), 
+          F_donorcl((*psi[n])(i-1), (*psi[n])(i), 
             where(
               (*psi[n])(i) + (*psi[n])(i-1) > 0,
-              (abs(courant) - pow(courant, 2)) * ((*psi[n])(i) - (*psi[n])(i-1)) / ((*psi[n])(i) + (*psi[n])(i-1)),
+              V_antydif((*psi[n])(i-1), (*psi[n])(i), Cx(i - grd::m_half)),
               quantity<unit, real_t>(0.)
             )
           )
@@ -55,6 +63,7 @@ class adv_mpdata : public adv<unit, real_t>
       }
     }
 #    undef F
+#    undef C
   }
 };
 #endif

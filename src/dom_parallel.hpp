@@ -18,7 +18,12 @@ class dom_parallel : public dom<unit, real_t>
   private: adv<unit, real_t> *fllbck, *advsch;
   
   public: dom_parallel(adv<unit, real_t> *fllbck, adv<unit, real_t> *advsch, 
-    out<unit, real_t> *output, int nx, int ny, int nz, int nsd)
+    out<unit, real_t> *output, vel<real_t> *velocity, 
+    int nx, quantity<si::length, real_t> dx,
+    int ny, quantity<si::length, real_t> dy,
+    int nz, quantity<si::length, real_t> dz,
+    quantity<si::time, real_t> dt,
+    int nsd)
     : nsd(nsd), fllbck(fllbck), advsch(advsch)
   {
     // subdomain length
@@ -29,10 +34,11 @@ class dom_parallel : public dom<unit, real_t>
     // domain allocation
     doms = new dom_serial<unit, real_t>*[nsd];
     for (int sd=0; sd < nsd; ++sd) 
-      doms[sd] = new dom_serial<unit, real_t>(fllbck, advsch, output, 
-        sd * nxs, (sd + 1) * nxs - 1, nx,
-        0,        ny - 1,             ny,
-        0,        nz - 1,             nz
+      doms[sd] = new dom_serial<unit, real_t>(fllbck, advsch, output, velocity,
+        sd * nxs, (sd + 1) * nxs - 1, nx, dx,
+        0,        ny - 1,             ny, dy,
+        0,        nz - 1,             nz, dz,
+        dt
       );
 
     // periodic boundary over prallel domain
@@ -52,11 +58,7 @@ class dom_parallel : public dom<unit, real_t>
 
   private: virtual void barrier() = 0;
 
-  public: void integ_loop_sd(unsigned long nt, 
-    quantity<si::dimensionless, real_t> &Cx, 
-    quantity<si::dimensionless, real_t> &Cy, 
-    quantity<si::dimensionless, real_t> &Cz, 
-    int sd) 
+  public: void integ_loop_sd(unsigned long nt, quantity<si::time, real_t> dt, int sd) 
   {
     int n = 0;
     for (unsigned long t = 0; t < nt; ++t)
@@ -70,7 +72,7 @@ class dom_parallel : public dom<unit, real_t>
         barrier();
         doms[sd]->fill_halos(n);
         barrier();
-        doms[sd]->advect(a, n, Cx, Cy, Cz, s); 
+        doms[sd]->advect(a, n, s, dt); 
         if (!fallback) doms[sd]->cycle_arrays(n);
       } // s
     } // t

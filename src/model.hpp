@@ -9,7 +9,6 @@
 
 #  include "opt.hpp"
 
-#  include "adv_upstream.hpp"
 #  include "adv_mpdata.hpp"
 #  include "adv_leapfrog.hpp"
 
@@ -20,6 +19,9 @@
 #  include "out_gnuplot.hpp"
 #  include "out_netcdf.hpp"
 
+#  include "vel_uniform.hpp"
+#  include "vel_streamfunc_rasinski.hpp"
+
 #  include <boost/lexical_cast.hpp>
 
 template <typename real_t>
@@ -29,24 +31,16 @@ void model(const po::variables_map& vm)
   if (
     !vm.count("nx") || !vm.count("ny") || !vm.count("nz") || 
     !vm.count("dx") || !vm.count("dy") || !vm.count("dz") ||
-    !vm.count("nt") || !vm.count("dt") || 
-    !vm.count("u") || !vm.count("v") || !vm.count("w")
+    !vm.count("nt") || !vm.count("dt")
   )
-    error_macro("nx, ny, nz, dx, dy, dz, nt, dt and u options are mandatory")
+    error_macro("nx, ny, nz, dx, dy, dz, nt and dt options are mandatory")
   quantity<si::length, real_t> 
     dx = boost::lexical_cast<real_t>(vm["dx"].as<string>()) * si::metres,
     dy = boost::lexical_cast<real_t>(vm["dy"].as<string>()) * si::metres,
     dz = boost::lexical_cast<real_t>(vm["dz"].as<string>()) * si::metres;
+  assert(dx == dy && dy == dz); // TODO
   quantity<si::time, real_t> 
     dt = boost::lexical_cast<real_t>(vm["dt"].as<string>()) * si::seconds;
-  quantity<si::velocity, real_t> 
-    u = boost::lexical_cast<real_t>(vm["u"].as<string>()) * si::metres / si::seconds,
-    v = boost::lexical_cast<real_t>(vm["v"].as<string>()) * si::metres / si::seconds,
-    w = boost::lexical_cast<real_t>(vm["w"].as<string>()) * si::metres / si::seconds;
-  quantity<si::dimensionless, real_t> 
-    Cx = u * dt / dx,
-    Cy = v * dt / dx,
-    Cz = w * dt / dx;
   int 
     nx = vm["nx"].as<int>(),
     ny = vm["ny"].as<int>(),
@@ -63,19 +57,17 @@ void model(const po::variables_map& vm)
   adv<si::dimensionless, real_t> *advsch, *fllbck = NULL;
   {
     string advscheme = vm.count("adv") ? vm["adv"].as<string>() : "<unspecified>";
-    if (advscheme == "upstream") 
-      advsch = new adv_upstream<si::dimensionless, real_t>();
-    else if (advscheme == "leapfrog")
+    if (advscheme == "leapfrog")
     {
       advsch = new adv_leapfrog<si::dimensionless, real_t>();
-      fllbck = new adv_upstream<si::dimensionless, real_t>();
+      fllbck = new adv_mpdata<si::dimensionless, real_t>(1);
     }
     else if (advscheme == "mpdata")
     {
       int iord = vm.count("adv.mpdata.iord") ? vm["adv.mpdata.iord"].as<int>() : 2;
       advsch = new adv_mpdata<si::dimensionless, real_t>(iord);
     }
-    else error_macro("unsupported advection scheme: " << advscheme);
+    else error_macro("unsupported advection scheme: " << advscheme)
   }
 
   // output set-up (FIXME: no deallocation yet)
@@ -93,38 +85,70 @@ void model(const po::variables_map& vm)
     }
     else
 #  endif
-    error_macro("unsupported output type: " << outtype);
+    error_macro("unsupported output type: " << outtype)
   }
 
+  // velocity field // TODO: no deallocation yet!
+  vel<real_t> *velocity;
+  { 
+    string veltype= vm.count("vel") ? vm["vel"].as<string>() : "<unspecified>";
+    if (veltype == "uniform")
+    {
+      if (!vm.count("vel.uniform.u") || !vm.count("vel.uniform.v") || !vm.count("vel.uniform.w"))
+        error_macro("vel.uniform.[u,v,w] must be specified")
+      quantity<si::velocity, real_t> 
+        u = boost::lexical_cast<real_t>(vm["vel.uniform.u"].as<string>()) * si::metres / si::seconds,
+        v = boost::lexical_cast<real_t>(vm["vel.uniform.v"].as<string>()) * si::metres / si::seconds,
+        w = boost::lexical_cast<real_t>(vm["vel.uniform.w"].as<string>()) * si::metres / si::seconds;
+      velocity = new vel_uniform<real_t>(u, v, w);
+    }
+    else if (veltype == "rasinski")
+    {
+      if (!vm.count("vel.rasinski.Z_clb") || !vm.count("vel.rasinski.Z_top") || !vm.count("vel.rasinski.A"))
+        error_macro("vel.rasinski.[Z_clb,Z_top,A] must be specified")
+      quantity<si::length, real_t> 
+        Z_clb = boost::lexical_cast<real_t>(vm["vel.rasinski.Z_clb"].as<string>()) * si::metres,
+        Z_top = boost::lexical_cast<real_t>(vm["vel.rasinski.Z_top"].as<string>()) * si::metres, 
+        X = real_t(nx) * dx;
+      quantity<velocity_times_length, real_t> 
+        A = boost::lexical_cast<real_t>(vm["vel.rasinski.A"].as<string>()) * si::metres * si::metres / si::seconds;
+      velocity = new vel_streamfunc_rasinski<real_t>(X, Z_clb, Z_top, A);
+    }
+    else error_macro("unsupported velocity field type: " << veltype)
+  }
+
+  // time integration loop
   // domain set-up (FIXME: no deallocation yet)
   dom<si::dimensionless, real_t> *domain;
   {
     string domtype = vm.count("dom") ? vm["dom"].as<string>() : "<unspecified>";
     if (domtype == "serial")
-      domain = new dom_serial<si::dimensionless, real_t>(fllbck, advsch, output, 
-        0, nx - 1, nx,
-        0, ny - 1, ny,
-        0, nz - 1, nz
+      domain = new dom_serial<si::dimensionless, real_t>(fllbck, advsch, output, velocity,
+        0, nx - 1, nx, dx,
+        0, ny - 1, ny, dy,
+        0, nz - 1, nz, dz,
+        dt
       );
     else 
     {
-      if (!vm.count("nsd")) error_macro("subdomain count not specified (--nsd option)");
+      if (!vm.count("nsd")) error_macro("subdomain count not specified (--nsd option)")
       int nsd = vm["nsd"].as<int>();
 #  ifdef _OPENMP
       if (domtype == "openmp")
-        domain = new dom_parallel_openmp<si::dimensionless, real_t>(fllbck, advsch, output, nx, ny, nz, nsd);
+        domain = new dom_parallel_openmp<si::dimensionless, real_t>(
+          fllbck, advsch, output, velocity, nx, dx, ny, dy, nz, dz, dt, nsd);
       else 
 #  endif
 #  ifdef USE_BOOST_THREAD
       if (domtype == "threads")
-        domain = new dom_parallel_threads<si::dimensionless, real_t>(fllbck, advsch, output, nx, ny, nz, nsd);
+        domain = new dom_parallel_threads<si::dimensionless, real_t>(
+          fllbck, advsch, output, velocity, nx, dx, ny, dy, nz, dz, dt, nsd);
       else 
 #  endif
-      error_macro("unsupported domain type: " << domtype);
+      error_macro("unsupported domain type: " << domtype)
     }
   }
 
-  // time integration loop
-  domain->integ_loop(nt, Cx, Cy, Cz);
+  domain->integ_loop(nt, dt);
 }
 #endif

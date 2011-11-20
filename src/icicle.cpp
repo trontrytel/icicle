@@ -11,7 +11,11 @@
 
 int main(int ac, char* av[])
 {
-  cerr << "-- init: icicle starting (revision: TODO; build date: " << __DATE__ ")" << endl;
+  cerr << "-- init: icicle starting (built on " << __DATE__;
+#ifdef __FAST_MATH__
+  cerr << " with FAST_MATH enabled!";
+#endif
+  cerr << ")" << endl;
   try
   {
     // options list
@@ -19,7 +23,7 @@ int main(int ac, char* av[])
     desc.add_options()
       ("help", "print this message")
       ("bits", po::value<int>(), "floating point bits: sizeof(float), sizeof(double), sizeof(long double)")
-      ("adv", po::value<string>(), "advection scheme: upstream, leapfrog, mpdata")
+      ("adv", po::value<string>(), "advection scheme: leapfrog, mpdata")
       ("adv.mpdata.iord", po::value<int>(), "mpdata iord option: 1, 2, ...")
       ("dom", po::value<string>(), "domain: serial, openmp, threads")
       ("out", po::value<string>(), "output: gnuplot, netcdf")
@@ -33,9 +37,13 @@ int main(int ac, char* av[])
       ("dx", po::value<string>(), "gridbox length (X) [m]")
       ("dy", po::value<string>(), "gridbox length (Y) [m]")
       ("dz", po::value<string>(), "gridbox length (Z) [m]")
-      ("u", po::value<string>(), "velocity (X) [m/s]")
-      ("v", po::value<string>(), "velocity (Y) [m/s]")
-      ("w", po::value<string>(), "velocity (Z) [m/s]")
+      ("vel", po::value<string>(), "velocity field: uniform, rasinski")
+      ("vel.uniform.u", po::value<string>(), "velocity (X) [m/s]")
+      ("vel.uniform.v", po::value<string>(), "velocity (Y) [m/s]")
+      ("vel.uniform.w", po::value<string>(), "velocity (Z) [m/s]")
+      ("vel.rasinski.Z_clb", po::value<string>(), "cloud base height [m]")
+      ("vel.rasinski.Z_top", po::value<string>(), "cloud top height [m]")
+      ("vel.rasinski.A", po::value<string>(), "amplitude [m2/s]")
     ;
     po::variables_map vm;
     po::store(po::parse_command_line(ac, av, desc), vm);
