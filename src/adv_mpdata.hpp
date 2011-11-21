@@ -27,7 +27,8 @@ class adv_mpdata : public adv<unit, real_t>
     const Range &i, const int n, const int step,
     const Array<quantity<si::dimensionless, real_t>, 3> &Cx, 
     const Array<quantity<si::dimensionless, real_t>, 3> &Cy, 
-    const Array<quantity<si::dimensionless, real_t>, 3> &Cz
+    const Array<quantity<si::dimensionless, real_t>, 3> &Cz,
+    grd<real_t> &grid
   )
   {
 #    define F_donorcl(psi_l,psi_r,U) (.5 * (U + sqrt(U*U)) * psi_l + .5 * (U - sqrt(U*U)) * psi_r)
@@ -37,8 +38,8 @@ class adv_mpdata : public adv<unit, real_t>
       case 1:
       { 
         (*psi[n+1])(i) -= (
-          F_donorcl((*psi[n])(i  ), (*psi[n])(i+1), Cx(i + grd::p_half)) - 
-          F_donorcl((*psi[n])(i-1), (*psi[n])(i  ), Cx(i - grd::m_half))
+          F_donorcl((*psi[n])(i  ), (*psi[n])(i+1), Cx(i + grid.p_half)) - 
+          F_donorcl((*psi[n])(i-1), (*psi[n])(i  ), Cx(i - grid.m_half))
         );
         break;
       }
@@ -48,14 +49,14 @@ class adv_mpdata : public adv<unit, real_t>
           F_donorcl((*psi[n])(i), (*psi[n])(i+1), 
             where(
               (*psi[n])(i+1) + (*psi[n])(i) > 0,
-              V_antydif((*psi[n])(i), (*psi[n])(i+1), Cx(i + grd::p_half)),
+              V_antydif((*psi[n])(i), (*psi[n])(i+1), Cx(i + grid.p_half)),
               quantity<unit, real_t>(0.)
             )
           ) -
           F_donorcl((*psi[n])(i-1), (*psi[n])(i), 
             where(
               (*psi[n])(i) + (*psi[n])(i-1) > 0,
-              V_antydif((*psi[n])(i-1), (*psi[n])(i), Cx(i - grd::m_half)),
+              V_antydif((*psi[n])(i-1), (*psi[n])(i), Cx(i - grid.m_half)),
               quantity<unit, real_t>(0.)
             )
           )

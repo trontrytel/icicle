@@ -11,36 +11,20 @@
 #  include "adv.hpp"
 #  include "out.hpp"
 #  include "vel.hpp"
+#  include "arr.hpp"
 
 template <class unit, typename real_t>
 class dom_serial : public dom<unit, real_t>
 {
-  private: Array<quantity<unit, real_t>, 3> 
-    **psi_ijk, **psi_jki, **psi_kij;
+  private: arr<unit, real_t> *psi;
+  private: Array<quantity<unit, real_t>, 3> **psi_ijk, **psi_jki, **psi_kij;
   private: adv<unit, real_t> *fllbck, *advsch;
   private: Range *i, *j, *k;
   private: out<unit, real_t> *output;
   private: int nx, ny, nz, xhalo, yhalo, zhalo;
-  private: Array<quantity<si::dimensionless, real_t>, 3> 
-    *Cx_ijk, *Cy_ijk, *Cz_ijk,
-    *Cx_jki, *Cy_jki, *Cz_jki,
-    *Cx_kij, *Cy_kij, *Cz_kij;
+  private: arr<si::dimensionless, real_t> *Cx, *Cy, *Cz;
   private: quantity<si::length, real_t> dx, dy, dz;
-
-  // TODO: move to an 'arr' class that would have ijk(), jki() and kij() methods
-  private: Array<quantity<unit, real_t>, 3>*array_view(
-    Array<quantity<unit, real_t>, 3>* a, int d1, int d2, int d3
-  )
-  {
-    GeneralArrayStorage<3> storage;
-    storage.ordering() = d1, d2, d3;
-    storage.base() = a->lbound(d1), a->lbound(d2), a->lbound(d3);
-    return new Array<quantity<unit, real_t>, 3>(
-      a->dataFirst(), 
-      TinyVector<int, 3>(a->extent(d1), a->extent(d2), a->extent(d3)), 
-      storage
-    );
-  }
+  private: grd<real_t> *grid;
 
   public: dom_serial(adv<unit, real_t> *fllbck, adv<unit, real_t> *advsch, 
     out<unit, real_t> *output, vel<real_t> *velocity,
@@ -63,15 +47,14 @@ class dom_serial : public dom<unit, real_t>
     psi_kij = new Array<quantity<unit, real_t>, 3>*[advsch->time_levels()]; 
     for (int n=0; n < advsch->time_levels(); ++n) 
     {
-      psi_ijk[n] = new Array<quantity<unit, real_t>, 3>(
+      psi = new arr<unit, real_t>(
         Range(i_min - xhalo, i_max + xhalo),
         Range(j_min - yhalo, j_max + yhalo),
         Range(k_min - zhalo, k_max + zhalo)
-      ); 
-
-      // two "views" of the array with permuted dimensions (but the data remains the same!)
-      psi_jki[n] = array_view(psi_ijk[n], secondRank, thirdRank, firstRank);
-      psi_kij[n] = array_view(psi_ijk[n], thirdRank, firstRank, secondRank);
+      );
+      psi_ijk[n] = &psi->ijk();
+      psi_jki[n] = &psi->jki();
+      psi_kij[n] = &psi->kij();
     }
     i = new Range(i_min, i_max);
     j = new Range(j_min, j_max);
@@ -83,29 +66,25 @@ class dom_serial : public dom<unit, real_t>
     // periodic boundary
     this->hook_neighbours(this, this);
  
+    // grid
+    grid = new grd<real_t>;
+ 
     // velocity fields
     {
       Range 
-        ii = Range(i->first() - grd::m_half, i->last() + grd::p_half),
+        ii = Range(i->first() - grid->m_half, i->last() + grid->p_half),
         jj = (j->first() != j->last())
-          ? Range(j->first() - grd::m_half, j->last() + grd::p_half)
+          ? Range(j->first() - grid->m_half, j->last() + grid->p_half)
           : Range(j->first(), j->last()),
         kk = (k->first() != k->last())
-          ? Range(k->first() - grd::m_half, k->last() + grd::p_half)
+          ? Range(k->first() - grid->m_half, k->last() + grid->p_half)
           : Range(k->first(), k->last());
 
-      Cx_ijk = new Array<quantity<si::dimensionless, real_t>, 3>(ii, jj, kk);
-      Cx_jki = array_view(Cx_ijk, secondRank, thirdRank, firstRank);
-      Cx_kij = array_view(Cx_ijk, thirdRank, firstRank, secondRank);
+      Cx = new arr<si::dimensionless, real_t>(ii, jj, kk);
+      Cy = new arr<si::dimensionless, real_t>(ii, jj, kk);
+      Cz = new arr<si::dimensionless, real_t>(ii, jj, kk);
 
-      Cy_ijk = new Array<quantity<si::dimensionless, real_t>, 3>(ii, jj, kk);
-      Cy_jki = array_view(Cy_ijk, secondRank, thirdRank, firstRank);
-      Cy_kij = array_view(Cy_ijk, thirdRank, firstRank, secondRank);
-
-      Cz_ijk = new Array<quantity<si::dimensionless, real_t>, 3>(ii, jj, kk);
-      Cz_jki = array_view(Cz_ijk, secondRank, thirdRank, firstRank);
-      Cz_kij = array_view(Cz_ijk, thirdRank, firstRank, secondRank);
-
+      // TODO: move this loop into arr!
       for (int i_int = ii.first(); i_int <= ii.last(); ++i_int)
       {
         for (int j_int = jj.first(); j_int <= jj.last(); ++j_int)
@@ -113,14 +92,14 @@ class dom_serial : public dom<unit, real_t>
           for (int k_int = kk.first(); k_int <= kk.last(); ++k_int)
           {
             quantity<si::length, real_t> 
-              x = real_t(i_int - .5) * dx,
-              y = real_t(j_int - .5) * dy,
-              z = real_t(k_int - .5) * dz;
-            (*Cx_ijk)(i_int, j_int, k_int) = velocity->u(x, y, z) * dt / dx;
+              x = grid->i2x(i_int, dx),
+              y = grid->j2y(j_int, dy),
+              z = grid->k2z(k_int, dz);
+            (Cx->ijk())(i_int, j_int, k_int) = velocity->u(x, y, z) * dt / dx;
             if (j->first() != j->last()) 
-              (*Cy_ijk)(i_int, j_int, k_int) = velocity->v(x, y, z) * dt / dy;
+              (Cy->ijk())(i_int, j_int, k_int) = velocity->v(x, y, z) * dt / dy;
             if (k->first() != k->last()) 
-              (*Cz_ijk)(i_int, j_int, k_int) = velocity->w(x, y, z) * dt / dz;
+              (Cz->ijk())(i_int, j_int, k_int) = velocity->w(x, y, z) * dt / dz;
           }
         }
       }
@@ -135,10 +114,10 @@ class dom_serial : public dom<unit, real_t>
     delete[] psi_kij;
     for (int n=0; n < advsch->time_levels(); ++n) delete psi_ijk[n];
     delete[] psi_ijk;
+    delete psi;
     delete i;
-    delete Cx_ijk; delete Cy_ijk; delete Cz_ijk;
-    delete Cx_jki; delete Cy_jki; delete Cz_jki;
-    delete Cx_kij; delete Cy_kij; delete Cz_kij;
+    delete Cx; delete Cy; delete Cz;
+    delete grid;
   }
 
   public: void record(const int n, const unsigned long t)
@@ -170,10 +149,15 @@ class dom_serial : public dom<unit, real_t>
 
   public: void advect(adv<unit, real_t> *a, int n, int s, quantity<si::time, real_t> dt)
   {
-    *psi_ijk[n+1] = *psi_ijk[0]; // op_1D() uses the -= operator so the first assignment happens here
-    a->op_1D(psi_ijk, *i, n, s, *Cx_ijk, *Cy_ijk, *Cz_ijk); // in extreme cases paralellisaion may make i->first() = i->last()
-    if (j->first() != j->last()) a->op_1D(psi_jki, *j, n, s, *Cy_jki, *Cz_jki, *Cx_jki);
-    if (k->first() != k->last()) a->op_1D(psi_kij, *k, n, s, *Cz_kij, *Cx_kij, *Cy_kij);
+    // op_1D() uses the -= operator so the first assignment happens here
+    *psi_ijk[n+1] = *psi_ijk[0]; 
+
+    if (true) // in extreme cases paralellisaion may make i->first() = i->last()
+      a->op_1D(psi_ijk, *i, n, s, Cx->ijk(), Cy->ijk(), Cz->ijk(), *grid); // X
+    if (j->first() != j->last()) 
+      a->op_1D(psi_jki, *j, n, s, Cy->jki(), Cz->jki(), Cx->jki(), *grid); // Y
+    if (k->first() != k->last()) 
+      a->op_1D(psi_kij, *k, n, s, Cz->kij(), Cx->kij(), Cy->kij(), *grid); // Z
   }
 
   public: void cycle_arrays(const int n)
@@ -211,6 +195,5 @@ class dom_serial : public dom<unit, real_t>
     } // t
     record(n, nt);
   }
-
 };
 #endif

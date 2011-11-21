@@ -20,12 +20,15 @@ class adv_leapfrog : public adv<unit, real_t>
     const Range &i, const int n, const int step,
     const Array<quantity<si::dimensionless, real_t>, 3> &Cx, 
     const Array<quantity<si::dimensionless, real_t>, 3> &Cy, 
-    const Array<quantity<si::dimensionless, real_t>, 3> &Cz
+    const Array<quantity<si::dimensionless, real_t>, 3> &Cz,
+    grd<real_t> &grid
   )
   {
     assert(step == 1);
     // TODO: is the averaging done here correct???
-    (*psi[n+1])(i) -= .5 * (Cx(i+grd::p_half) + Cx(i-grd::m_half)) * ( (*psi[n])(i+1) - (*psi[n])(i-1) );
+    (*psi[n+1])(i) -= 
+      .5 * (Cx(i+grid.p_half) + Cx(i-grid.m_half)) // average Courant number
+      * ( (*psi[n])(i+1) - (*psi[n])(i-1) );
   }
 };
 #endif

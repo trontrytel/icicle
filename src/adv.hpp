@@ -8,8 +8,8 @@
 #  define ADV_HPP
 
 #  include "config.hpp" // USE_* defines
-#  include "common.hpp" // root class, error reporting
-#  include "grd.hpp" // m_half, p_half
+#  include "common.hpp" // root class, error reporting, ...
+#  include "grd.hpp" // m_half, p_half, ...
 
 template <class unit, typename real_t>
 class adv : root
@@ -22,7 +22,8 @@ class adv : root
     const Range &i, const int n, const int step,
     const Array<quantity<si::dimensionless, real_t>, 3> &Cx,
     const Array<quantity<si::dimensionless, real_t>, 3> &Cy,
-    const Array<quantity<si::dimensionless, real_t>, 3> &Cz
+    const Array<quantity<si::dimensionless, real_t>, 3> &Cz,
+    grd<real_t>&
   ) = 0;
 };
 #endif
