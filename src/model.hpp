@@ -22,6 +22,7 @@
 
 #  include "vel_uniform.hpp"
 #  include "vel_2d-xz_rasinski.hpp"
+//#  include "vel_2d-xz_test.hpp"
 
 #  include <boost/lexical_cast.hpp>
 
@@ -126,6 +127,12 @@ void model(const po::variables_map& vm)
         A = boost::lexical_cast<real_t>(vm["vel.rasinski.A"].as<string>()) * si::metres * si::metres / si::seconds;
       velocity = new vel_2d_xz_rasinski<real_t>(X, Z_clb, Z_top, A);
     }
+//    else if (veltype == "test")
+//   {
+//      if (!vm.count("vel.test.omega")) error_macro("vel.test.omega must be specified")
+//      quantity<si::frequency, real_t> omega = boost::lexical_cast<real_t>(vm["vel.test.omega"].as<string>()) / si::seconds;
+//      velocity = new vel_2d_xz_test<real_t>(omega, .5 * nx * dx, .5 * nz * dz);
+//    }
     else error_macro("unsupported velocity field type: " << veltype)
   }
 
