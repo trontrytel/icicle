@@ -19,11 +19,13 @@ class adv : root
   public: virtual const int num_steps() = 0;
 
   public: virtual void op_1D(Array<quantity<unit, real_t>, 3> *psi[], 
-    const Range &i, const int n, const int step,
+    const Range &i, 
+    const Range &j, 
+    const Range &k, 
+    const int n, const int step,
     const Array<quantity<si::dimensionless, real_t>, 3> &Cx,
     const Array<quantity<si::dimensionless, real_t>, 3> &Cy,
-    const Array<quantity<si::dimensionless, real_t>, 3> &Cz,
-    grd<real_t>&
+    const Array<quantity<si::dimensionless, real_t>, 3> &Cz
   ) = 0;
 };
 #endif

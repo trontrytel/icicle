@@ -51,10 +51,10 @@ class grd_2d_xz_arakawa_c : public grd_2d_xz<real_t>
     return dz_;
   }
 
-  public: Range rng_sclr(int first, int last) 
-  { 
-    return Range(first, last); 
-  }
+  //public: Range rng_sclr(int first, int last) 
+  //{ 
+  //  return Range(first, last); 
+  //}
 
   public: Range rng_vctr(int first, int last) 
   { 
@@ -63,7 +63,7 @@ class grd_2d_xz_arakawa_c : public grd_2d_xz<real_t>
 
   public: quantity<si::length, real_t> u_x(int i, int j, int k) { return real_t(i) * dx_; }
   public: quantity<si::length, real_t> u_z(int i, int j, int k) { return (k + real_t(.5)) * dz_; }
-  public: quantity<si::length, real_t> w_x(int i, int j, int k) { return (i + real_t(.5)) * dz_; }
+  public: quantity<si::length, real_t> w_x(int i, int j, int k) { return (i + real_t(.5)) * dx_; }
   public: quantity<si::length, real_t> w_z(int i, int j, int k) { return real_t(k) * dz_; }
 
 };

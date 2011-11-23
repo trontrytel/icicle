@@ -20,7 +20,7 @@ class grd : root
 
   // returns ranges to be passed as constructors to arr (e.g.)
   // first and last concern scalar indices
-  public: virtual Range rng_sclr(int first, int last) = 0;
+//  public: virtual Range rng_sclr(int first, int last) = 0;
   public: virtual Range rng_vctr(int first, int last) = 0;
 
   public: virtual quantity<si::length, real_t> u_x(int i, int j, int k) = 0;

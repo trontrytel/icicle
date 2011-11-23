@@ -11,7 +11,7 @@
 pro demo_2D, nx=nx, nz=nz, nt=nt, adv=adv, vel=vel
   spawn, 'rm -f demo_2d.nc'
   cmd = '../icicle' + $
-    ' --bits 32 --dt 1 --dx 1 --dy 1 --dz 1 --ny 1' + $
+    ' --bits 32 --dt 1 --grd.dx 1 --grd.dy 1 --grd.dz 1 --grd arakawa-c --ny 1' + $
     ' --nt ' +  strmid(nt, 2) + $
     ' --nx ' +  strmid(nx, 2) + $
     ' --nz ' +  strmid(nz, 2) + $

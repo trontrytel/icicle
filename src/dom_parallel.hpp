@@ -19,9 +19,8 @@ class dom_parallel : public dom<unit, real_t>
   
   public: dom_parallel(adv<unit, real_t> *fllbck, adv<unit, real_t> *advsch, 
     out<unit, real_t> *output, vel<real_t> *velocity, 
-    int nx, quantity<si::length, real_t> dx,
-    int ny, quantity<si::length, real_t> dy,
-    int nz, quantity<si::length, real_t> dz,
+    int nx, int ny, int nz,
+    grd<real_t> *grid,
     quantity<si::time, real_t> dt,
     int nsd)
     : nsd(nsd), fllbck(fllbck), advsch(advsch)
@@ -35,9 +34,10 @@ class dom_parallel : public dom<unit, real_t>
     doms = new dom_serial<unit, real_t>*[nsd];
     for (int sd=0; sd < nsd; ++sd) 
       doms[sd] = new dom_serial<unit, real_t>(fllbck, advsch, output, velocity,
-        sd * nxs, (sd + 1) * nxs - 1, nx, dx,
-        0,        ny - 1,             ny, dy,
-        0,        nz - 1,             nz, dz,
+        sd * nxs, (sd + 1) * nxs - 1, nx,
+        0,        ny - 1,             ny, 
+        0,        nz - 1,             nz, 
+        grid,
         dt
       );
 

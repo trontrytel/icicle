@@ -21,7 +21,10 @@ class adv_lax_wendroff : public adv<unit, real_t>
   public: const int num_steps() { return 1; } // ?
 
   public: void op_1D(Array<quantity<unit, real_t>, 3>* psi[], 
-    const Range &i, const int n, const int step,
+    const Range &i, 
+    const Range &j, 
+    const Range &k, 
+    const int n, const int step,
     const Array<quantity<si::dimensionless, real_t>, 3> &Cx, 
     const Array<quantity<si::dimensionless, real_t>, 3> &, 
     const Array<quantity<si::dimensionless, real_t>, 3> &

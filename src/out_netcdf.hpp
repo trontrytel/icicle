@@ -19,16 +19,24 @@ class out_netcdf : public out<unit, real_t>
   private: NcFile *f;
   private: NcVar *vpsi;
 
-  public: out_netcdf(string file, int nx, int ny, int nz) 
+  public: out_netcdf(string file, grd<real_t> *grid, int nx, int ny, int nz) 
   { 
     f = new NcFile(file.c_str(), NcFile::New); // TODO: other parameters (perhaps via variables_map?)
     if (!f->is_valid()) error_macro("failed to open netcdf file for writing: " << file)
     NcDim 
       *t = f->add_dim("T"),
-      *x = f->add_dim("X", nx),
-      *y = f->add_dim("Y", ny),
-      *z = f->add_dim("Z", nz);
-    vpsi = f->add_var("psi", ncFloat, t, x, y, z); // TODO: ncFloat vs. ncDouble, ...
+      *xs = f->add_dim("X_sclr", nx),
+      *ys = f->add_dim("Y_sclr", ny),
+      *zs = f->add_dim("Z_sclr", nz),
+      *xv = f->add_dim("X_vctr", grid->rng_vctr(0, nx-1).length()), // TODO:  
+      *yv = f->add_dim("Y_vctr", grid->rng_vctr(0, ny-1).length()), // TODO: that's a kludge
+      *zv = f->add_dim("Z_vctr", grid->rng_vctr(0, nz-1).length()); // TODO:
+    // TODO: is the order of dimensions optimal?
+    vpsi = f->add_var("psi", ncFloat, t, xs, ys, zs); // TODO: ncFloat vs. ncDouble, ...
+    NcVar *vu = f->add_var("u", ncFloat, xv, yv, zv); // TODO: ncFloat vs. ncDouble, ...
+    NcVar *vv = f->add_var("v", ncFloat, xv, yv, zv); // TODO: ncFloat vs. ncDouble, ...
+    NcVar *vw = f->add_var("w", ncFloat, xv, yv, zv); // TODO: ncFloat vs. ncDouble, ...
+// TODO: add X_sclr i X_vctr variables! (e.g. for axis labelling)
 
     // a sanity check to verify if Boost.units was optimised correctly and if pointer
     // arithmetics may be applied to &(blitz::Array<boost::units::quantity>(...).value())

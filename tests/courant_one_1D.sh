@@ -14,7 +14,7 @@ for bits in {32,64,128}; do
 
                   # the actual test
                   cmd="../icicle"
-                  cmd="$cmd --bits $bits --dt 1 --dx 1 --dy 1 --dz 1"
+                  cmd="$cmd --bits $bits --dt 1 --grd.dx 1 --grd.dy 1 --grd.dz 1 --grd arakawa-c"
                   cmd="$cmd --vel uniform --vel.uniform.u $u --vel.uniform.v 0 --vel.uniform.w 0"
                   cmd="$cmd --nt $nt --nx 20 --ny 1 --nz 1 --adv $adv --dom $dom --out gnuplot --nsd $nsd"
 # TODO: --sdom $sdom --nssdom $nssdom --nout $nout"

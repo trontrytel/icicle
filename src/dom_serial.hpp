@@ -12,6 +12,7 @@
 #  include "out.hpp"
 #  include "vel.hpp"
 #  include "arr.hpp"
+#  include "grd.hpp"
 
 template <class unit, typename real_t>
 class dom_serial : public dom<unit, real_t>
@@ -23,17 +24,16 @@ class dom_serial : public dom<unit, real_t>
   private: out<unit, real_t> *output;
   private: int nx, ny, nz, xhalo, yhalo, zhalo;
   private: arr<si::dimensionless, real_t> *Cx, *Cy, *Cz;
-  private: quantity<si::length, real_t> dx, dy, dz;
-  private: grd<real_t> *grid;
 
   public: dom_serial(adv<unit, real_t> *fllbck, adv<unit, real_t> *advsch, 
     out<unit, real_t> *output, vel<real_t> *velocity,
-    int i_min, int i_max, int nx, quantity<si::length, real_t> dx,
-    int j_min, int j_max, int ny, quantity<si::length, real_t> dy,
-    int k_min, int k_max, int nz, quantity<si::length, real_t> dz,
+    int i_min, int i_max, int nx,
+    int j_min, int j_max, int ny,
+    int k_min, int k_max, int nz, 
+    grd<real_t> *grid,
     quantity<si::time, real_t> dt // TODO: dt should not be needed here!
   )
-    : fllbck(fllbck), advsch(advsch), output(output), nx(nx), ny(ny), nz(nz), dx(dx), dy(dy), dz(dz)
+    : fllbck(fllbck), advsch(advsch), output(output), nx(nx), ny(ny), nz(nz)
   {
     // memory allocation
     {
@@ -66,43 +66,22 @@ class dom_serial : public dom<unit, real_t>
     // periodic boundary
     this->hook_neighbours(this, this);
  
-    // grid
-    grid = new grd<real_t>;
- 
     // velocity fields
     {
       Range 
-        ii = Range(i->first() - grid->m_half, i->last() + grid->p_half),
+        ii = grid->rng_vctr(i->first(), i->last()),
         jj = (j->first() != j->last())
-          ? Range(j->first() - grid->m_half, j->last() + grid->p_half)
+          ? grid->rng_vctr(j->first(), j->last())
           : Range(j->first(), j->last()),
         kk = (k->first() != k->last())
-          ? Range(k->first() - grid->m_half, k->last() + grid->p_half)
+          ? grid->rng_vctr(k->first(), k->last())
           : Range(k->first(), k->last());
 
       Cx = new arr<si::dimensionless, real_t>(ii, jj, kk);
       Cy = new arr<si::dimensionless, real_t>(ii, jj, kk);
       Cz = new arr<si::dimensionless, real_t>(ii, jj, kk);
 
-      // TODO: move this loop into arr!
-      for (int i_int = ii.first(); i_int <= ii.last(); ++i_int)
-      {
-        for (int j_int = jj.first(); j_int <= jj.last(); ++j_int)
-        {
-          for (int k_int = kk.first(); k_int <= kk.last(); ++k_int)
-          {
-            quantity<si::length, real_t> 
-              x = grid->i2x(i_int, dx),
-              y = grid->j2y(j_int, dy),
-              z = grid->k2z(k_int, dz);
-            (Cx->ijk())(i_int, j_int, k_int) = velocity->u(x, y, z) * dt / dx;
-            if (j->first() != j->last()) 
-              (Cy->ijk())(i_int, j_int, k_int) = velocity->v(x, y, z) * dt / dy;
-            if (k->first() != k->last()) 
-              (Cz->ijk())(i_int, j_int, k_int) = velocity->w(x, y, z) * dt / dz;
-          }
-        }
-      }
+      grid->populate_courant_fields(ii, jj, kk, &Cx->ijk(), &Cy->ijk(), &Cz->ijk(), velocity, dt);
     }
   }
 
@@ -117,7 +96,6 @@ class dom_serial : public dom<unit, real_t>
     delete psi;
     delete i;
     delete Cx; delete Cy; delete Cz;
-    delete grid;
   }
 
   public: void record(const int n, const unsigned long t)
@@ -153,11 +131,11 @@ class dom_serial : public dom<unit, real_t>
     *psi_ijk[n+1] = *psi_ijk[0]; 
 
     if (true) // in extreme cases paralellisaion may make i->first() = i->last()
-      a->op_1D(psi_ijk, *i, n, s, Cx->ijk(), Cy->ijk(), Cz->ijk(), *grid); // X
+      a->op_1D(psi_ijk, *i, *j, *k, n, s, Cx->ijk(), Cy->ijk(), Cz->ijk()); // X
     if (j->first() != j->last()) 
-      a->op_1D(psi_jki, *j, n, s, Cy->jki(), Cz->jki(), Cx->jki(), *grid); // Y
+      a->op_1D(psi_jki, *j, *k, *i, n, s, Cy->jki(), Cz->jki(), Cx->jki()); // Y
     if (k->first() != k->last()) 
-      a->op_1D(psi_kij, *k, n, s, Cz->kij(), Cx->kij(), Cy->kij(), *grid); // Z
+      a->op_1D(psi_kij, *k, *i, *j, n, s, Cz->kij(), Cx->kij(), Cy->kij()); // Z
   }
 
   public: void cycle_arrays(const int n)

@@ -19,12 +19,11 @@ class dom_parallel_threads : public dom_parallel<unit, real_t>
 
   public: dom_parallel_threads(adv<unit, real_t> *fllbck, adv<unit, real_t> *advsch, 
     out<unit, real_t> *output, vel<real_t> *velocity, 
-    int nx, quantity<si::length, real_t> dx, 
-    int ny, quantity<si::length, real_t> dy, 
-    int nz, quantity<si::length, real_t> dz, 
+    int nx, int ny, int nz, 
+    grd<real_t> *grid,
     quantity<si::time, real_t> dt,
     int nsd)
-    : dom_parallel<unit, real_t>(fllbck, advsch, output, velocity, nx, dx, ny, dy, nz, dz, dt, nsd), nsd(nsd)
+    : dom_parallel<unit, real_t>(fllbck, advsch, output, velocity, nx, ny, nz, grid, dt, nsd), nsd(nsd)
   {
     int ncpu = boost::thread::hardware_concurrency();
     if (nsd > ncpu) warning_macro("using more threads (" << nsd << ") than CPUs/cores (" << ncpu << ")")
