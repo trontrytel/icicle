@@ -1,5 +1,6 @@
 ;; @file
-;  @author Sylwester Arabas (University of Warsaw) <slayoo@igf.fuw.edu.pl>
+;  @author Sylwester Arabas <slayoo@igf.fuw.edu.pl>
+;  @copyright University of Warsaw
 ;  @date November 2011
 ;  @section LICENSE
 ;    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
@@ -17,7 +18,7 @@ pro demo_2D, nx=nx, nz=nz, nt=nt, adv=adv, vel=vel
     ' --nz ' +  strmid(nz, 2) + $
     ' --vel ' + vel + $
     ' --adv ' + adv + $
-    ' --dom serial --nsd 2' + $
+    ' --dom serial' + $
     ' --out netcdf --out.netcdf.file demo_2d.nc'
   spawn, cmd
   a = ncdf_open('demo_2d.nc') 

@@ -1,7 +1,7 @@
 ## @file
-#  @author 
-#    Sylwester Arabas (University of Warsaw) <slayoo@igf.fuw.edu.pl>
-#    Anna Jaruga (University of Warsaw) 
+#  @author Sylwester Arabas <slayoo@igf.fuw.edu.pl>
+#  @author Anna Jaruga
+#  @copyright University of Warsaw
 #  @date November 2011
 #  @section LICENSE
 #    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)

@@ -1,5 +1,6 @@
 /** @file
- *  @author Sylwester Arabas (University of Warsaw) <slayoo@igf.fuw.edu.pl>
+ *  @author Sylwester Arabas <slayoo@igf.fuw.edu.pl>
+ *  @copyright University of Warsaw
  *  @date November 2011
  *  @section LICENSE
  *    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
@@ -61,11 +62,11 @@ class dom_serial : public dom<unit, real_t>
     k = new Range(k_min, k_max);
 
     // initial condition (FIXME! - now it's always: |...... )
-    for (int i_int = i->first(); i_int <= i->last(); ++i_int)
-      for (int j_int = j->first(); j_int <= j->last(); ++j_int)
-        for (int k_int = k->first(); k_int <= k->last(); ++k_int)
-          if (i_int == k_int) (*psi_ijk[0])(i_int, j_int, k_int) = 1;
-    //if (i_min == 0) (*psi_ijk[0])(Range(0),0,0) = 1;
+    //for (int i_int = i->first(); i_int <= i->last(); ++i_int)
+    //  for (int j_int = j->first(); j_int <= j->last(); ++j_int)
+    //    for (int k_int = k->first(); k_int <= k->last(); ++k_int)
+    //      if (i_int == k_int) (*psi_ijk[0])(i_int, j_int, k_int) = 1;
+    if (i_min == 0) (*psi_ijk[0])(Range(0),0,0) = 1;
 
     // periodic boundary
     this->hook_neighbours(this, this);

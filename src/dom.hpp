@@ -1,5 +1,6 @@
 /** @file
- *  @author Sylwester Arabas (University of Warsaw) <slayoo@igf.fuw.edu.pl>
+ *  @author Sylwester Arabas <slayoo@igf.fuw.edu.pl>
+ *  @copyright University of Warsaw
  *  @date November 2011
  *  @section LICENSE
  *    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
@@ -19,10 +20,12 @@ class dom : root
 
   private: virtual quantity<unit, real_t> data(int n, int i, int j, int k) = 0;
 
+  // TODO: why virtual?
   public: virtual quantity<unit, real_t> left_nghbr_data(int n, int i, int j, int k) 
   { 
     return left->data(n, i, j, k); 
   }
+  // TODO: why virtual?
   public: virtual quantity<unit, real_t> rght_nghbr_data(int n, int i, int j, int k) 
   { 
     return rght->data(n, i, j, k); 

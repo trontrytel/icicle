@@ -1,3 +1,10 @@
+## @file
+#  @author Sylwester Arabas <slayoo@igf.fuw.edu.pl>
+#  @copyright University of Warsaw
+#  @date November 2011
+#  @section LICENSE
+#    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
+
 for bits in {32,64,128}; do
   for u in {-1,1}; do
     for nt in {10,30}; do

@@ -1,5 +1,6 @@
 /** @file
- *  @author Sylwester Arabas (University of Warsaw) <slayoo@igf.fuw.edu.pl>
+ *  @author Sylwester Arabas <slayoo@igf.fuw.edu.pl>
+ *  @copyright University of Warsaw
  *  @date November 2011
  *  @section LICENSE
  *    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
@@ -8,7 +9,7 @@
  *    Fischer and Renner 1972, MWR 100, no. 9
  *    (with the assumption that velocity field does not change with time)
  */
-#ifndef ADV_LAX_WENROFF_HPP
+#ifndef ADV_LAX_WENDROFF_HPP
 #  define ADV_LAX_WENDROFF_HPP
 
 #  include "adv.hpp"
