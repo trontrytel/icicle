@@ -13,8 +13,6 @@
 #  include "config.hpp" // USE_* defines
 #  include "common.hpp" // root class, error reporting
 
-// TODO: optimise for 1D and 2D!
-
 template <typename real_t>
 class vel : root
 {

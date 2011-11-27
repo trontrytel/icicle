@@ -18,7 +18,7 @@ pro demo_2D, nx=nx, nz=nz, nt=nt, adv=adv, vel=vel
     ' --nz ' +  strmid(nz, 2) + $
     ' --vel ' + vel + $
     ' --adv ' + adv + $
-    ' --dom serial' + $
+    ' --slv serial' + $
     ' --out netcdf --out.netcdf.file demo_2d.nc'
   spawn, cmd
   a = ncdf_open('demo_2d.nc') 
@@ -30,7 +30,6 @@ pro demo_2D, nx=nx, nz=nz, nt=nt, adv=adv, vel=vel
     ncdf_varget, a, 'psi', p, offset=[0,0,0,i++ mod nt], count=[nz, 1, nx, 1]
     p = reform(p[*,0,*,0]) ; removing dimensions of size one
     p = rotate(p, 4)
-print, max(p), total(p)
     tvscl, rebin(p, scl*nx, scl*nz, /sample)
   endwhile
 end

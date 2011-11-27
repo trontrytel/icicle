@@ -19,7 +19,7 @@ class adv : root
   public: virtual const int time_levels() = 0;
   public: virtual const int num_steps() = 0;
 
-  public: virtual void op_1D(Array<quantity<unit, real_t>, 3> *psi[], 
+  public: virtual void op(Array<quantity<unit, real_t>, 3> *psi[], 
     const Range &i, 
     const Range &j, 
     const Range &k, 

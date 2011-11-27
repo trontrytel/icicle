@@ -14,20 +14,13 @@
 template <class unit, typename real_t>
 class arr : root
 {
-  private: Array<quantity<unit, real_t>, 3> *arr_ijk, *arr_jki, *arr_kij;
+  private: auto_ptr<Array<quantity<unit, real_t>, 3> > arr_ijk, arr_jki, arr_kij;
 
   public: arr(Range rng_x, Range rng_y, Range rng_z)
   {
-    arr_ijk = new Array<quantity<unit, real_t>, 3>(rng_x, rng_y, rng_z);
-    arr_jki = array_view(arr_ijk, secondRank, thirdRank, firstRank);
-    arr_kij = array_view(arr_ijk, thirdRank, firstRank, secondRank);
-  }
-
-  public: ~arr()
-  {
-    delete arr_kij;
-    delete arr_jki;
-    delete arr_ijk;
+    arr_ijk.reset(new Array<quantity<unit, real_t>, 3>(rng_x, rng_y, rng_z));
+    arr_jki.reset(array_view(arr_ijk.get(), secondRank, thirdRank, firstRank));
+    arr_kij.reset(array_view(arr_ijk.get(), thirdRank, firstRank, secondRank));
   }
 
   private: Array<quantity<unit, real_t>, 3>*array_view(

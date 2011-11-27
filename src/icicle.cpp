@@ -26,7 +26,7 @@ int main(int ac, char* av[])
       ("bits", po::value<int>(), "floating point bits: sizeof(float), sizeof(double), sizeof(long double)")
       ("adv", po::value<string>(), "advection scheme: leapfrog, mpdata")
       ("adv.mpdata.iord", po::value<int>(), "mpdata iord option: 1, 2, ...")
-      ("dom", po::value<string>(), "domain: serial, openmp, threads")
+      ("slv", po::value<string>(), "solver: serial, openmp, threads")
       ("out", po::value<string>(), "output: gnuplot, netcdf")
       ("out.netcdf.file", po::value<string>(), "output filename (e.g. for netcdf)")
       ("nsd", po::value<int>(), "number of subdomains (nx/nsd must be int)")
@@ -60,8 +60,8 @@ int main(int ac, char* av[])
       exit(EXIT_FAILURE);
     }
 
-    // --dom list
-    if (vm.count("dom") && vm["dom"].as<string>() == "list")
+    // --slv list
+    if (vm.count("slv") && vm["slv"].as<string>() == "list")
     {
       cout << "serial";// FIXME: fork";
 #  ifdef _OPENMP

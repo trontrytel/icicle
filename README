@@ -1,7 +1,9 @@
 --------------------------- ICICLE ---------------------------
 
 - outline: TODO
-- author: Sylwester Arabas et al. (University of Warsaw)
+- authors: Sylwester Arabas et al. 
+- copyright: University of Warsaw
+- funding: Polish National Science Center grant no. ...
 - license: GPLv3 (cf. COPYING or http://www.gnu.org/licenses/)
 
 --------------------------------------------------------------
@@ -28,7 +30,7 @@
 --------------------------------------------------------------
 * in-tree compilation / tests / clean-up:
   $ cmake .             
-    [-DCMAKE_BUILD_TYPE=Debug|Release]
+    [-DCMAKE_BUILD_TYPE=Debug|Release|None]
     [-DNETCDF=NO]
     [-DTHREADS=NO]
     [-DOPENMP=NO]

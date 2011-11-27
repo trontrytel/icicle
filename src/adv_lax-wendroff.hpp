@@ -21,7 +21,7 @@ class adv_lax_wendroff : public adv<unit, real_t>
   public: const int time_levels() { return 3; } // ?
   public: const int num_steps() { return 1; } // ?
 
-  public: void op_1D(Array<quantity<unit, real_t>, 3>* psi[], 
+  public: void op(Array<quantity<unit, real_t>, 3>* psi[], 
     const Range &i, 
     const Range &j, 
     const Range &k, 

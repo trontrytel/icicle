@@ -17,12 +17,12 @@
 template <class unit, typename real_t>
 class out_netcdf : public out<unit, real_t>
 {
-  private: NcFile *f;
+  private: auto_ptr<NcFile> f;
   private: NcVar *vpsi;
 
   public: out_netcdf(string file, grd<real_t> *grid, int nx, int ny, int nz) 
   { 
-    f = new NcFile(file.c_str(), NcFile::New); // TODO: other parameters (perhaps via variables_map?)
+    f.reset(new NcFile(file.c_str(), NcFile::New)); // TODO: other parameters (perhaps via variables_map?)
     if (!f->is_valid()) error_macro("failed to open netcdf file for writing: " << file)
     NcDim 
       *t = f->add_dim("T"),
@@ -47,11 +47,6 @@ class out_netcdf : public out<unit, real_t>
       a = 11,22,33;
       if (*(&a(0).value() + 2) != 33) error_macro("The compiler did not optimise Blitz+Boost.Units enough :(");
     }
-  }
-
-  public: ~out_netcdf()
-  {
-    delete f;
   }
 
   public: virtual void record(

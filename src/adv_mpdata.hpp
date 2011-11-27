@@ -13,7 +13,7 @@
 #  define ADV_MPDATA_HPP
 
 #  include "adv.hpp"
-#  include "grd_2d-xz_arakawa-c.hpp"
+#  include "grd_arakawa-c-lorenz.hpp"
 
 template <class unit, typename real_t> 
 class adv_mpdata : public adv<unit, real_t> 
@@ -23,18 +23,15 @@ class adv_mpdata : public adv<unit, real_t>
   public: const int num_steps() { return iord; }
 
   private: int iord;
-  private: grd_2d_xz_arakawa_c<real_t> *grid;
+  private: grd_arakawa_c_lorenz<real_t> *grid;
 
-  public: adv_mpdata(grd<real_t> *g, int iord) 
-    : iord(iord)
+  public: adv_mpdata(grd_arakawa_c_lorenz<real_t> *grid, int iord) 
+    : iord(iord), grid(grid)
   {
     if (iord <= 0) error_macro("iord (the number of iterations) must be > 0")
-    grid = dynamic_cast<grd_2d_xz_arakawa_c<real_t>*>(g);
-    if (grid == NULL) error_macro("this version of the MPDATA scheme works with the Arakawa-C grid only!")
   }
 
 #    define mpdata_F(p1, p2, U) (.5 * (U + sqrt(U*U)) * p1 + .5 * (U - sqrt(U*U)) * p2)
-
   public: void op_helper(const real_t sign, const Range &il, const Range &ic, const Range &ir,
     const Range &i, const Range &j, const Range &k, 
     Array<quantity<unit, real_t>, 3>* psi[], const int n,
@@ -91,7 +88,7 @@ class adv_mpdata : public adv<unit, real_t>
 #    undef mpdata_CB
   }
 
-  public: void op_1D(Array<quantity<unit, real_t>, 3>* psi[], 
+  public: void op(Array<quantity<unit, real_t>, 3>* psi[], 
     const Range &i, const Range &j, const Range &k, 
     const int n, const int step,
     const Array<quantity<si::dimensionless, real_t>, 3> &Cx, 

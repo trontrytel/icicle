@@ -7,7 +7,7 @@
 
 set xlabel "x [grid cell number]"
 set ylabel "t [imestep number]"
-opts = '--bits 32 --nx 40 --ny 1 --nz 1 --nt 60 --dt 1 --grd.dx 1 --grd.dy 1 --grd.dz 1 --vel uniform --vel.uniform.u .3 --vel.uniform.v 0 --vel.uniform.w 0 --adv mpdata --adv.mpdata.iord 6 --dom serial --out gnuplot --grd arakawa-c'
+opts = '--bits 32 --nx 40 --ny 1 --nz 1 --nt 60 --dt 1 --grd.dx 1 --grd.dy 1 --grd.dz 1 --vel uniform --vel.uniform.u .3 --vel.uniform.v 0 --vel.uniform.w 0 --adv mpdata --adv.mpdata.iord 6 --slv serial --out gnuplot --grd arakawa-c'
 if (strlen("$0") == 0) print "default options were used: " . opts; else opts = "$0"
 set title opts
 splot "< ../icicle ".opts using 0:-2:1 notitle with lines palette

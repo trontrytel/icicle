@@ -9,7 +9,7 @@
 #  define ADV_LEAPFROG_HPP
 
 #  include "adv.hpp"
-#  include "grd_2d-xz_arakawa-c.hpp"
+#  include "grd_arakawa-c-lorenz.hpp"
 
 template <class unit, typename real_t> 
 class adv_leapfrog : public adv<unit, real_t> 
@@ -18,15 +18,13 @@ class adv_leapfrog : public adv<unit, real_t>
   public: const int time_levels() { return 3; }
   public: const int num_steps() { return 1; }
  
-  private: grd_2d_xz_arakawa_c<real_t> *grid;
+  private: grd_arakawa_c_lorenz<real_t> *grid;
 
-  public: adv_leapfrog(grd<real_t> *g)
-  {
-    grid = dynamic_cast<grd_2d_xz_arakawa_c<real_t>*>(g);
-    if (grid == NULL) error_macro("this version of the leapfrog scheme works with the Arakawa-C grid only!")
-  }
+  public: adv_leapfrog(grd_arakawa_c_lorenz<real_t> *grid)
+    : grid(grid)
+  { }
 
-  public: void op_1D(Array<quantity<unit, real_t>, 3>* psi[], 
+  public: void op(Array<quantity<unit, real_t>, 3>* psi[], 
     const Range &i, 
     const Range &j, 
     const Range &k, 

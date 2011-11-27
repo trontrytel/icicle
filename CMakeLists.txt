@@ -7,8 +7,24 @@
 #    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
 
 cmake_minimum_required(VERSION 2.6) # for simplified if-constructs
+
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffast-math -DNDEBUG")
+set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g") # TODO: -DBZ_DEBUG (needs linking with libblitz?
+
+if(NOT (
+  "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" OR 
+  "${CMAKE_BUILD_TYPE}" STREQUAL "Release" OR
+  "${CMAKE_BUILD_TYPE}" STREQUAL "None"
+))
+  message(FATAL_ERROR "Please specify the build type, i.e.:
+    \$ cmake . -DCMAKE_BUILD_TYPE=Debug   \# (CXX_FLAGS=\"\$CXXFLAGS ${CMAKE_CXX_FLAGS_DEBUG}\")
+    or
+    \$ cmake . -DCMAKE_BUILD_TYPE=Release \# (CXX_FLAGS=\"\$CXXFLAGS ${CMAKE_CXX_FLAGS_RELEASE}\")
+    or
+    \$ cmake . -DCMAKE_BUILD_TYPE=None    \# (CXX_FLAGS=\$CXXFLAGS)")
+endif()
+
 project(icicle CXX)
-add_executable(icicle src/icicle.cpp)
 
 set(TMP "src/config.hpp")
 foreach(d .;doc;tests;src;)
@@ -25,7 +41,7 @@ check_cxx_source_compiles(                                             #
 )
 if(NOT Find_Boost_Units) 
   message(FATAL_ERROR "Boost.Units not found! 
-    (cf. CMakeFiles/CMakeError.log)"
+    (cf. CMakeFiles/CMakeError.log, fix, rm CMakeCache.txt and rerun)"
   )
 endif()                                                                #
 #### </Boost.units> ####################################################
@@ -37,7 +53,7 @@ check_cxx_source_compiles(                                             #
 )
 if(NOT Find_Boost_Lexical_Cast) 
   message(FATAL_ERROR "Boost.lexical_cast not found! 
-    (cf. CMakeFiles/CMakeError.log)"
+    (cf. CMakeFiles/CMakeError.log, fix, rm CMakeCache.txt and rerun)"
   )
 endif()                                                                #
 #### </Boost.lexical_cast> #############################################
@@ -49,7 +65,7 @@ check_cxx_source_compiles(                                             #
 )
 if(NOT Find_Blitz) 
   message(FATAL_ERROR "Blitz++ not found!
-    (cf. CMakeFiles/CMakeError.log)"
+    (cf. CMakeFiles/CMakeError.log, fix, rm CMakeCache.txt and rerun)"
   )
 endif()                                                                #
 #### </Blitz> ##########################################################
@@ -64,7 +80,7 @@ check_cxx_source_compiles(
 )
 if(NOT Find_Boost_Program_Options) 
   message(FATAL_ERROR "Boost.Program_Options not found! 
-    (cf. CMakeFiles/CMakeError.log)"
+    (cf. CMakeFiles/CMakeError.log, fix, rm CMakeCache.txt and rerun)"
   )
 endif()
 set(LINK_FLAGS "${LINK_FLAGS} ${CMAKE_REQUIRED_LIBRARIES}")            #
@@ -89,7 +105,7 @@ endif()                                                                #
 #### </OpenMP> #########################################################
 
 #### <NetCDF> (optional) ###############################################
-if("${NETCDF}" STREQUAL "NO") # handles -DNETCDF=NO                      #
+if("${NETCDF}" STREQUAL "NO") # handles -DNETCDF=NO                    #
   message("-- Building without netCDF (-DNETCDF=NO specified)")
 else()
   set(CMAKE_REQUIRED_LIBRARIES "-lnetcdf_c++")
@@ -99,8 +115,8 @@ else()
   )
   if(NOT Find_NetCDF) 
     message(WARNING "
-      NetCDF not found! (cf. CMakeFiles/CMakeError.log) 
-      NetCDF output will not be available.
+      NetCDF not found! (cf. CMakeFiles/CMakeError.log)
+      Without it the NetCDF output will not be available.
         suitable Debian/Ubuntu package: libnetcdf-dev
         suitable Macports port: netcdf
         erase the CMakeCache.txt before re-running cmake
@@ -136,13 +152,9 @@ else()
 endif()                                                                #
 #### </Boost.Thread> ###################################################
 
-set_target_properties(icicle PROPERTIES LINK_FLAGS ${LINK_FLAGS}) 
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffast-math -DNDEBUG")
-set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
+add_executable(icicle src/icicle.cpp)
+set_target_properties(icicle PROPERTIES LINK_FLAGS ${LINK_FLAGS})
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/src/config.hpp)
-
-enable_testing()
-add_subdirectory(tests)
 
 find_package(Doxygen)
 if (DOXYGEN_FOUND)
@@ -151,6 +163,7 @@ else()
   message(WARNING "Doxygent not found - 'make doc' will not be available.")
 endif()
 
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-  add_subdirectory(src) # has to be done after the config.hpp file is created!
-endif()
+enable_testing()
+
+#add_subdirectory(tests)
+#add_subdirectory(src) # has to be done after the config.hpp file is created! (...?)

@@ -59,6 +59,5 @@ class grd : root
               velocity->w(w_x(i, j, k), (jr.first() != jr.last()) ? w_y(i, j, k) : 0, w_z(i, j, k));
         }
   }
-  
 };
 #endif
