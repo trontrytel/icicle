@@ -15,7 +15,7 @@ pro demo_2d_smolar_1983, test=test
   nz=100
   file='demo_2d_smolar_1983.nc'
   spawn, 'rm -f '+file
-  cmd = '../icicle' + $
+  cmd = '../icicles' + $
     ' --bits 32 --dt .1 --grd.dx 1 --grd.dy 1 --grd.dz 1'+ $
     '  --grd arakawa-c --ny 1' + $
     ' --nt '+string(nt)+ $

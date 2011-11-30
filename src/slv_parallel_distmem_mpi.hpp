@@ -33,11 +33,11 @@ class slv_parallel_distmem_mpi : public slv_parallel_distmem<unit, real_t, shrdm
   }
 
   public: slv_parallel_distmem_mpi(adv<unit, real_t> *fllbck, adv<unit, real_t> *advsch, 
-    out<unit, real_t> *output, vel<real_t> *velocity,
+    out<unit, real_t> *output, vel<real_t> *velocity, ini<real_t> *intcond,
     int nx, int ny, int nz, grd<real_t> *grid, quantity<si::time, real_t> dt, int nsd
   ) 
     : slv_parallel_distmem<unit, real_t, shrdmem_class>(
-      fllbck, advsch, output, velocity, nx, ny, nz, grid, dt, nsd, mpi_init()
+      fllbck, advsch, output, velocity, intcond, nx, ny, nz, grid, dt, nsd, mpi_init()
     )
   {
     if (nsd != comm->size()) 

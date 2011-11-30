@@ -57,9 +57,9 @@ class slv_parallel_distmem : public shrdmem_class
   private: int i_max(int nx, int rank, int size) { return i_min(nx, rank + 1, size) - 1; }
 
   public: slv_parallel_distmem(adv<unit, real_t> *fllbck, adv<unit, real_t> *advsch,
-    out<unit, real_t> *output, vel<real_t> *velocity,
+    out<unit, real_t> *output, vel<real_t> *velocity, ini<real_t> *intcond,
     int nx, int ny, int nz, grd<real_t> *grid, quantity<si::time, real_t> dt, int size, int rank)
-    : shrdmem_class(fllbck, advsch, output, velocity,
+    : shrdmem_class(fllbck, advsch, output, velocity, intcond,
       i_min(nx, rank, size), i_max(nx, rank, size), nx,
       0, ny - 1, ny,
       0, nz - 1, nz,

@@ -24,7 +24,7 @@ if(NOT (
     \$ cmake . -DCMAKE_BUILD_TYPE=None    \# (CXX_FLAGS=\$CXXFLAGS)")
 endif()
 
-project(icicle CXX)
+project(icicles CXX)
 
 set(TMP "src/config.hpp")
 foreach(d .;doc;tests;src;)
@@ -183,8 +183,8 @@ else()
 endif()
 #### </Boost.MPI> ######################################################
 
-add_executable(icicle src/icicle.cpp)
-set_target_properties(icicle PROPERTIES LINK_FLAGS ${LINK_FLAGS})
+add_executable(icicles src/icicles.cpp)
+set_target_properties(icicles PROPERTIES LINK_FLAGS ${LINK_FLAGS})
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/src/config.hpp)
 
 find_package(Doxygen)

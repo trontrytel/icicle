@@ -63,7 +63,7 @@ slv<si::dimensionless, real_t> *opt_slv(const po::variables_map& vm,
 #  ifdef USE_BOOST_MPI
     if (slvtype == "mpi")
       return new slv_parallel_distmem_mpi<si::dimensionless, real_t, slv_parallel_serial<si::dimensionless, real_t> >(
-        fllbck, advsch, output, velocity, nx, ny, nz, grid, dt, nsd
+        fllbck, advsch, output, velocity, intcond, nx, ny, nz, grid, dt, nsd
       );
     else
 #    ifdef USE_BOOST_THREAD
