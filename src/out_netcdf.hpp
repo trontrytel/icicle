@@ -10,6 +10,12 @@
 #  ifdef USE_NETCDF
 
 #    include "out.hpp"
+
+// fixes preprocessor macro redefinition conflict with MPI
+// cf. http://www.unidata.ucar.edu/mailing_lists/archives/netcdfgroup/2009/msg00350.html
+#    ifdef USE_BOOST_MPI 
+#      define MPI_INCLUDED
+#    endif              
 #    include <netcdfcpp.h>
 
 // TODO: error handling

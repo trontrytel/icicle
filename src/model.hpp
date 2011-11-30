@@ -10,9 +10,9 @@
 
 #  include "opt_grd.hpp"
 #  include "opt_adv.hpp"
-#  include "opt_out.hpp"
 #  include "opt_vel.hpp"
 #  include "opt_slv.hpp"
+#  include "opt_out.hpp" // has to be included after slv/MPI
 
 template <typename real_t>
 void model(const po::variables_map& vm) 

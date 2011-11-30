@@ -34,6 +34,7 @@
     [-DNETCDF=NO]
     [-DTHREADS=NO]
     [-DOPENMP=NO]
+    [-DMPI=NO]
   $ [VERBOSE=1] make            
   $ make test
   $ make clean 

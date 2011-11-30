@@ -16,16 +16,26 @@ template <class unit, typename real_t>
 class slv : root
 {
   private: slv *left, *rght;
-  public: void hook_neighbours(slv *l, slv *r) { left = l; rght = r; }
-
-  private: virtual quantity<unit, real_t> data(int n, int i, int j, int k) = 0;
-
-  public: quantity<unit, real_t> left_nghbr_data(int n, int i, int j, int k) 
+  public: virtual void hook_neighbours(slv *l, slv *r) 
   { 
+    if (l != NULL) left = l; 
+    if (r != NULL) rght = r; 
+  }
+
+  public: virtual Array<quantity<unit, real_t>, 3> data(int n, 
+    const Range &i, const Range &j, const Range &k
+  ) = 0;
+
+  public: Array<quantity<unit, real_t>, 3> left_nghbr_data(int n, 
+    const Range &i, const Range &j, const Range &k) 
+  { 
+    left->sync(n);
     return left->data(n, i, j, k); 
   }
-  public: quantity<unit, real_t> rght_nghbr_data(int n, int i, int j, int k) 
+  public: Array<quantity<unit, real_t>, 3> rght_nghbr_data(int n, 
+    const Range &i, const Range &j, const Range &k) 
   { 
+    rght->sync(n); 
     return rght->data(n, i, j, k); 
   }
 
@@ -37,8 +47,9 @@ class slv : root
     *n = (*a)->time_levels() - 2;
     return fallback;
   }
-  
+
   public: virtual void integ_loop(unsigned long nt, quantity<si::time, real_t> dt) = 0;
+  public: virtual void sync(int n) {};
 };
 
 #endif

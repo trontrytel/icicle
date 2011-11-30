@@ -104,7 +104,8 @@ class slv_serial : public slv<unit, real_t>
     output->record(psi_ijk, n, *i, *j, *k, t);
   }
 
-  private: quantity<unit, real_t> data(int n, int i, int j, int k) 
+  public: Array<quantity<unit, real_t>, 3> data(int n, 
+    const Range &i, const Range &j, const Range &k) 
   { 
     return (*psi_ijk[n])(i, j, k);
   }
@@ -112,18 +113,18 @@ class slv_serial : public slv<unit, real_t>
   public: void fill_halos(int n)
   {
     // left halo
-    for (int i_int = i->first() - xhalo; i_int < i->first(); ++i_int)
-      for (int j_int = j->first(); j_int <= j->last(); ++j_int)
-        for (int k_int = k->first(); k_int <= k->last(); ++k_int)
-          (*psi_ijk[n])(i_int, j_int, k_int) = 
-            this->left_nghbr_data(n, (i_int + nx) % nx, j_int, k_int);
+    {
+      int i_min = i->first() - xhalo, i_max = i->first() - 1;
+      (*psi_ijk[n])(Range(i_min, i_max), *j, *k) = 
+        this->left_nghbr_data(n, Range((i_min + nx) % nx, (i_max + nx) % nx), *j, *k);
+    }
 
     // rght halo
-    for (int i_int = i->last() + 1; i_int <= i->last() + xhalo; ++i_int)
-      for (int j_int = j->first(); j_int <= j->last(); ++j_int)
-        for (int k_int = k->first(); k_int <= k->last(); ++k_int)
-          (*psi_ijk[n])(i_int, j_int, k_int) = 
-            this->rght_nghbr_data(n, (i_int + nx) % nx, j_int, k_int);
+    {
+      int i_min = i->last() + 1, i_max = i->last() + xhalo;
+      (*psi_ijk[n])(Range(i_min, i_max), *j, *k) =
+        this->rght_nghbr_data(n, Range((i_min + nx) % nx, (i_max + nx) % nx), *j, *k);
+    } 
   }
 
   public: void advect(adv<unit, real_t> *a, int n, int s, quantity<si::time, real_t> dt)

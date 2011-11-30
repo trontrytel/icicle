@@ -27,7 +27,7 @@ int main(int ac, char* av[])
       ("adv", po::value<string>(), "advection scheme: leapfrog, mpdata")
       ("adv.mpdata.iord", po::value<int>(), "mpdata iord option: 1, 2, ...")
       ("slv", po::value<string>(), "solver: serial, openmp, threads")
-      ("out", po::value<string>(), "output: gnuplot, netcdf")
+      ("out", po::value<string>(), "output: debug, gnuplot, netcdf")
       ("out.netcdf.file", po::value<string>(), "output filename (e.g. for netcdf)")
       ("nsd", po::value<int>(), "number of subdomains (nx/nsd must be int)")
       ("nx", po::value<int>(), "number of grid points (X)")
@@ -35,7 +35,7 @@ int main(int ac, char* av[])
       ("nz", po::value<int>(), "number of grid points (Z)")
       ("nt", po::value<unsigned long>(), "number of timesteps")
       ("dt", po::value<string>(), "timestep length [s]")
-      ("grd", po::value<string>(), "grid: arakawa-c")
+      ("grd", po::value<string>(), "grid: arakawa-c-lorenz")
       ("grd.dx", po::value<string>(), "gridbox length (X) [m]")
       ("grd.dy", po::value<string>(), "gridbox length (Y) [m]")
       ("grd.dz", po::value<string>(), "gridbox length (Z) [m]")
@@ -69,6 +69,15 @@ int main(int ac, char* av[])
 #  endif
 #  ifdef USE_BOOST_THREADS
       cout << " threads";
+#  endif
+#  ifdef USE_BOOST_MPI
+      cout << " mpi";
+#    ifdef USE_BOOST_THREADS
+      cout << " mpi+threads";
+#    endif
+#    ifdef _OPENMP
+      cout << " mpi+openmp";
+#    endif
 #  endif
       cout << endl;
       exit(EXIT_FAILURE);

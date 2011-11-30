@@ -14,30 +14,35 @@
 template <class unit, typename real_t>
 class slv_parallel : public slv<unit, real_t>
 {
-  private: int nsd;
+  private: int nsd; // number of subdomains within this solver
+  private: int nxs; // number of points per subdomain
+  private: int i_min; // i_min for this set of subdomains
   private: auto_ptr<slv_serial<unit, real_t> > *slvs;
   private: adv<unit, real_t> *fllbck, *advsch;
   
   public: slv_parallel(adv<unit, real_t> *fllbck, adv<unit, real_t> *advsch, 
     out<unit, real_t> *output, vel<real_t> *velocity, 
-    int nx, int ny, int nz,
+    int i_min, int i_max, int nx, 
+    int j_min, int j_max, int ny, 
+    int k_min, int k_max, int nz,
     grd<real_t> *grid,
     quantity<si::time, real_t> dt,
     int nsd)
-    : nsd(nsd), fllbck(fllbck), advsch(advsch)
+    : nsd(nsd), i_min(i_min), fllbck(fllbck), advsch(advsch)
   {
     // subdomain length
-    int nxs = nx / nsd;
-    if (nxs != ((1.*nx) / (1.*nsd))) 
-      error_macro("nx/nk must be an integer value (" << nx << "/" << nsd << " given)")
+    int nxl = (i_max - i_min + 1);
+    nxs = nxl / nsd;
+    if (nxs != ((1.*nxl) / (1.*nsd))) 
+      error_macro("nxl/nsd must be an integer value (" << nxl << "/" << nsd << " given)")
 
-    // serial solver allocation
+    // serial solver allocation (TODO: there could be just one psi for all subdomains...)
     slvs = new auto_ptr<slv_serial<unit, real_t> >[nsd];
     for (int sd=0; sd < nsd; ++sd) 
       slvs[sd].reset(new slv_serial<unit, real_t>(fllbck, advsch, output, velocity,
-        sd * nxs, (sd + 1) * nxs - 1, nx,
-        0,        ny - 1,             ny, 
-        0,        nz - 1,             nz, 
+        i_min + sd * nxs, i_min + (sd + 1) * nxs - 1, nx,
+        j_min           , j_max                     , ny, 
+        k_min           , k_max                     , nz,
         grid,
         dt
       ));
@@ -80,7 +85,20 @@ class slv_parallel : public slv<unit, real_t>
     if (sd == 0) for (int sd=0; sd < nsd; ++sd) slvs[sd]->record(n, nt);
   }
 
-  // e.g. for MPI + OpenMP nesting (FIXME)
-  private: quantity<unit, real_t> data(int n, int i, int j, int k) { throw; }
+  // the two below are for MPI/fork + threads/OpenMP nested parallelisations
+  public: Array<quantity<unit, real_t>, 3> data(int n, 
+    const Range &i, const Range &j, const Range &k) 
+  { 
+    int sd = (i.first() - i_min) / nxs;
+    assert(sd == 0 || sd == nsd - 1);
+    assert((i.last() - i_min) / nxs == sd);
+    return slvs[sd]->data(n, i, j, k);
+  }
+
+  public: void hook_neighbours(slv<unit, real_t> *l, slv<unit, real_t> *r) 
+  {
+    slvs[0]->hook_neighbours(l, NULL);
+    slvs[nsd-1]->hook_neighbours(NULL, r); 
+  }
 };
 #endif

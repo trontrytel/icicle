@@ -143,7 +143,7 @@ else()
       Threads parallelisation will not be available.
         suitable Debian/Ubuntu package: libboost-dev
         suitable Macports port: boost / boost+openmpi
-        erase the CMakeCache.txt before re-running cmake
+        (after installation delete CMakeCache.txt before running cmake)
     ")
   else()
     set(USE_BOOST_THREAD ${Find_Boost_Thread})
@@ -151,6 +151,37 @@ else()
   endif()
 endif()                                                                #
 #### </Boost.Thread> ###################################################
+
+#### <Boost.MPI> (optional) ############################################
+if ("${MPI}" STREQUAL "NO") # handles -DMPI=NO
+  message("-- Building without Boost.MPI (-DMPI=NO specified)")
+else()
+  set(CMAKE_REQUIRED_LIBRARIES 
+    "-lboost_mpi-mt -lboost_serialization-mt"
+  )
+  check_cxx_source_compiles(
+    "#include <boost/mpi.hpp>
+     #include <boost/serialization/string.hpp>
+     int main() {boost::mpi::communicator().send(1,0,std::string());}"
+    Find_Boost_MPI
+  )
+  if(NOT Find_Boost_MPI)
+    message(WARNING "
+      Boost.MPI not found! (cf. CMakeFiles/CMakeError.log)
+      MPI parallelisation will not be available.
+      Possible reasons:
+      - a wrapper like mpic++ need to be used (e.d. export CXX=mpic++)
+      - Boost.MPI needs to be installed:
+        suitable Debian/Ubuntu package: ... TODO ...
+        suitable Macports port: ... TODO ...
+        (after installation delete CMakeCache.txt before running cmake)
+    ")
+  else()
+    set(USE_BOOST_MPI ${Find_Boost_MPI})
+    set(LINK_FLAGS "${LINK_FLAGS} ${CMAKE_REQUIRED_LIBRARIES}")
+  endif()
+endif()
+#### </Boost.MPI> ######################################################
 
 add_executable(icicle src/icicle.cpp)
 set_target_properties(icicle PROPERTIES LINK_FLAGS ${LINK_FLAGS})

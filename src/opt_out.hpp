@@ -10,6 +10,7 @@
 
 #  include "opt.hpp"
 #  include "grd.hpp"
+#  include "out_debug.hpp"
 #  include "out_gnuplot.hpp"
 #  include "out_netcdf.hpp"
 
@@ -20,6 +21,9 @@ out<si::dimensionless, real_t> *opt_out(const po::variables_map& vm,
   string outtype = vm.count("out") ? vm["out"].as<string>() : "<unspecified>";
   if (outtype == "gnuplot")
     return new out_gnuplot<si::dimensionless, real_t>();
+  else
+  if (outtype == "debug")
+    return new out_debug<si::dimensionless, real_t>();
   else
 #  ifdef USE_NETCDF
   if (outtype == "netcdf")

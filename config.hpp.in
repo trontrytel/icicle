@@ -11,5 +11,6 @@
 // compile-time options
 #cmakedefine USE_NETCDF 1
 #cmakedefine USE_BOOST_THREAD 1
+#cmakedefine USE_BOOST_MPI 1
 
 #endif

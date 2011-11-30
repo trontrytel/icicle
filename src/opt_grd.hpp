@@ -16,7 +16,7 @@ grd<real_t> *opt_grd(const po::variables_map& vm)
 {
   string grdtype = vm.count("grd") ? vm["grd"].as<string>() : "<unspecified>";
 
-  if (grdtype == "arakawa-c")
+  if (grdtype == "arakawa-c-lorenz")
   {
     if (!vm.count("grd.dx") || !vm.count("grd.dy") || !vm.count("grd.dz"))
       error_macro("grd.dx, grd.dy, grd.dz options are mandatory")

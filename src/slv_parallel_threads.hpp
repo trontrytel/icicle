@@ -20,11 +20,16 @@ class slv_parallel_threads : public slv_parallel<unit, real_t>
 
   public: slv_parallel_threads(adv<unit, real_t> *fllbck, adv<unit, real_t> *advsch, 
     out<unit, real_t> *output, vel<real_t> *velocity, 
-    int nx, int ny, int nz, 
+    int i_min, int i_max, int nx, 
+    int j_min, int j_max, int ny, 
+    int k_min, int k_max, int nz, 
     grd<real_t> *grid,
     quantity<si::time, real_t> dt,
     int nsd)
-    : slv_parallel<unit, real_t>(fllbck, advsch, output, velocity, nx, ny, nz, grid, dt, nsd), nsd(nsd)
+    : slv_parallel<unit, real_t>(fllbck, advsch, output, velocity, 
+        i_min, i_max, nx, 
+        j_min, j_max, ny,
+        k_min, k_max, nz, grid, dt, nsd), nsd(nsd)
   {
     int ncpu = boost::thread::hardware_concurrency();
     if (nsd > ncpu) warning_macro("using more threads (" << nsd << ") than CPUs/cores (" << ncpu << ")")
