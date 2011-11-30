@@ -60,5 +60,10 @@ class grd_arakawa_c_lorenz : public grd<real_t>
   public: quantity<si::length, real_t> w_x(int i, int  , int  ) { return real_t(i) * dx_; }
   public: quantity<si::length, real_t> w_y(int  , int j, int  ) { return real_t(j) * dy_; }
   public: quantity<si::length, real_t> w_z(int  , int  , int k) { return (k + real_t(.5)) * dz_; }
+
+  public: quantity<si::length, real_t> x(int i, int  , int  ) { return (i + real_t(.5)) * dx_; };
+  public: quantity<si::length, real_t> y(int  , int j, int  ) { return (j + real_t(.5)) * dy_; };
+  public: quantity<si::length, real_t> z(int  , int  , int k) { return (k + real_t(.5)) * dz_;};
+
 };
 #endif

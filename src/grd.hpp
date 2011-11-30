@@ -11,6 +11,7 @@
 #  include "config.hpp" // USE_* defines
 #  include "common.hpp" // root class, error reporting
 #  include "vel.hpp"
+#  include "ini.hpp"
 
 template<typename real_t>
 class grd : root
@@ -23,6 +24,10 @@ class grd : root
   // first and last concern scalar indices
 //  public: virtual Range rng_sclr(int first, int last) = 0;
   public: virtual Range rng_vctr(int first, int last) = 0;
+
+  public: virtual quantity<si::length, real_t> x(int i, int j, int k) = 0;
+  public: virtual quantity<si::length, real_t> y(int i, int j, int k) = 0;
+  public: virtual quantity<si::length, real_t> z(int i, int j, int k) = 0;
 
   public: virtual quantity<si::length, real_t> u_x(int i, int j, int k) = 0;
   public: virtual quantity<si::length, real_t> u_y(int i, int j, int k) = 0;
@@ -58,6 +63,17 @@ class grd : root
             (*Cz)(i, j, k) = dt / dz() *
               velocity->w(w_x(i, j, k), (jr.first() != jr.last()) ? w_y(i, j, k) : 0, w_z(i, j, k));
         }
+  }
+
+  public: virtual void populate_scalar_field(
+    const Range &ii, const Range &jj, const Range &kk,
+    Array<quantity<si::dimensionless, real_t>, 3> *psi, ini<real_t> *intcond
+  )
+  {
+    for (int i = ii.first(); i <= ii.last(); ++i)
+      for (int j = jj.first(); j <= jj.last(); ++j)
+        for (int k = kk.first(); k <= kk.last(); ++k)
+          (*psi)(i,j,k) = intcond->psi(x(i,j,k), y(i,j,k), z(i,j,k));
   }
 };
 #endif

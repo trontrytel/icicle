@@ -16,17 +16,17 @@
 template <typename real_t>
 class vel : root
 {
-  public: virtual quantity<si::velocity> u(
+  public: virtual quantity<si::velocity, real_t> u(
     const quantity<si::length, real_t> &x,
     const quantity<si::length, real_t> &y,
     const quantity<si::length, real_t> &z
   ) = 0;
-  public: virtual quantity<si::velocity> v(
+  public: virtual quantity<si::velocity, real_t> v(
     const quantity<si::length, real_t> &x,
     const quantity<si::length, real_t> &y,
     const quantity<si::length, real_t> &z
   ) = 0;
-  public: virtual quantity<si::velocity> w(
+  public: virtual quantity<si::velocity, real_t> w(
     const quantity<si::length, real_t> &x,
     const quantity<si::length, real_t> &y,
     const quantity<si::length, real_t> &z

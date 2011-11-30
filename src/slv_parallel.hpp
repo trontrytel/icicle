@@ -19,7 +19,7 @@ class slv_parallel : public slv<unit, real_t>
   private: adv<unit, real_t> *fllbck, *advsch;
   
   public: slv_parallel(adv<unit, real_t> *fllbck, adv<unit, real_t> *advsch, 
-    out<unit, real_t> *output, vel<real_t> *velocity, 
+    out<unit, real_t> *output, vel<real_t> *velocity, ini<real_t> *intcond,
     int nx, int ny, int nz,
     grd<real_t> *grid,
     quantity<si::time, real_t> dt,
@@ -34,7 +34,7 @@ class slv_parallel : public slv<unit, real_t>
     // serial solver allocation
     slvs = new auto_ptr<slv_serial<unit, real_t> >[nsd];
     for (int sd=0; sd < nsd; ++sd) 
-      slvs[sd].reset(new slv_serial<unit, real_t>(fllbck, advsch, output, velocity,
+      slvs[sd].reset(new slv_serial<unit, real_t>(fllbck, advsch, output, velocity, intcond,
         sd * nxs, (sd + 1) * nxs - 1, nx,
         0,        ny - 1,             ny, 
         0,        nz - 1,             nz, 

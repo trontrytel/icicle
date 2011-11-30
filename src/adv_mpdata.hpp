@@ -1,6 +1,6 @@
 /** @file
  *  @author Sylwester Arabas <slayoo@igf.fuw.edu.pl>
- *  @author Anna Jaruga 
+ *  @author Anna Jaruga <ajaruga@igf.fuw.edu.pl>
  *  @copyright University of Warsaw
  *  @date November 2011
  *  @section LICENSE
