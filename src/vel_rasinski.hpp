@@ -43,7 +43,7 @@ class vel_rasinski : public vel<real_t>
     : pi(real_t(4)*atan(real_t(1))), X(X), Z_clb(Z_clb), Z_top(Z_top), A(A)
   {}
  
-  public: virtual quantity<si::velocity> u(
+  public: virtual quantity<si::velocity, real_t> u(
     const quantity<si::length, real_t> &x, 
     const quantity<si::length, real_t> &, 
     const quantity<si::length, real_t> &z
@@ -56,7 +56,7 @@ class vel_rasinski : public vel<real_t>
       : -pi/2 * A / (Z_clb - Z_top) * cos(2*pi * x / X) * sin(pi/2 * (z - Z_clb) / (Z_clb - Z_top)); 
   }
 
-  public: virtual quantity<si::velocity> w(
+  public: virtual quantity<si::velocity, real_t> w(
     const quantity<si::length, real_t> &x, 
     const quantity<si::length, real_t> &, 
     const quantity<si::length, real_t> &z
@@ -69,13 +69,13 @@ class vel_rasinski : public vel<real_t>
       : pi/2 * A / X * sin(2*pi * x / X) * cos(pi/2 * (z - Z_clb) / (Z_clb - Z_top));
   }
 
-  public: virtual quantity<si::velocity> v(
+  public: virtual quantity<si::velocity, real_t> v(
     const quantity<si::length, real_t> &, 
     const quantity<si::length, real_t> &, 
     const quantity<si::length, real_t> &
   )   
   {
-    return 0. * si::metres / si::seconds;
+    return real_t(0.) * si::metres / si::seconds;
   }
 };
 #endif

@@ -12,7 +12,7 @@
 #  include "grd.hpp"
 #  include "vel_uniform.hpp"
 #  include "vel_rasinski.hpp"
-//#  include "vel_test.hpp"
+#  include "vel_test.hpp"
 
 template <typename real_t>
 vel<real_t> *opt_vel(const po::variables_map& vm,
@@ -41,12 +41,12 @@ vel<real_t> *opt_vel(const po::variables_map& vm,
       A = boost::lexical_cast<real_t>(vm["vel.rasinski.A"].as<string>()) * si::metres * si::metres / si::seconds;
     return new vel_rasinski<real_t>(X, Z_clb, Z_top, A);
   }
-//  else if (veltype == "test")
-//  {
-//    if (!vm.count("vel.test.omega")) error_macro("vel.test.omega must be specified")
-//    quantity<si::frequency, real_t> omega = boost::lexical_cast<real_t>(vm["vel.test.omega"].as<string>()) / si::seconds;
-//    return new vel_test<real_t>(omega, .5 * nx * grid->dx(), .5 * nz * grid->dz());
-//  }
+  else if (veltype == "test")
+  {
+    if (!vm.count("vel.test.omega")) error_macro("vel.test.omega must be specified")
+    quantity<si::frequency, real_t> omega = boost::lexical_cast<real_t>(vm["vel.test.omega"].as<string>()) / si::seconds;
+    return new vel_test<real_t>(omega, real_t(.5 * nx) * grid->dx(), real_t(.5 * nz) * grid->dz());
+  }
   else error_macro("unsupported velocity field type: " << veltype)
 }
 

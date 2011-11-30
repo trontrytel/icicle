@@ -13,6 +13,7 @@
 #  include "opt_out.hpp"
 #  include "opt_vel.hpp"
 #  include "opt_slv.hpp"
+#  include "opt_ini.hpp"
 
 template <typename real_t>
 void model(const po::variables_map& vm) 
@@ -53,10 +54,13 @@ void model(const po::variables_map& vm)
   // velocity choice
   auto_ptr<vel<real_t> > velocity(opt_vel<real_t>(vm, grid.get(), nx, ny, nz));
 
+  // initial condition
+  auto_ptr<ini<real_t> > intcond(opt_ini<real_t>(vm, grid.get()));
+
   // solver choice
   auto_ptr<slv<si::dimensionless, real_t> > solver(opt_slv(vm, 
-    fllbck.get(), advsch.get(), output.get(), velocity.get(), grid.get(),
-    nx, ny, nz, dt 
+    fllbck.get(), advsch.get(), output.get(), velocity.get(), intcond.get(),
+    nx, ny, nz, grid.get(), dt 
   ));
 
   // integration

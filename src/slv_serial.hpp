@@ -14,6 +14,7 @@
 #  include "vel.hpp"
 #  include "arr.hpp"
 #  include "grd.hpp"
+#  include "ini.hpp"
 
 template <class unit, typename real_t>
 class slv_serial : public slv<unit, real_t>
@@ -27,7 +28,7 @@ class slv_serial : public slv<unit, real_t>
   private: auto_ptr<arr<si::dimensionless, real_t> > Cx, Cy, Cz;
 
   public: slv_serial(adv<unit, real_t> *fllbck, adv<unit, real_t> *advsch, 
-    out<unit, real_t> *output, vel<real_t> *velocity,
+    out<unit, real_t> *output, vel<real_t> *velocity, ini<real_t> *intcond,
     int i_min, int i_max, int nx,
     int j_min, int j_max, int ny,
     int k_min, int k_max, int nz, 
@@ -67,7 +68,8 @@ class slv_serial : public slv<unit, real_t>
     //  for (int j_int = j->first(); j_int <= j->last(); ++j_int)
     //    for (int k_int = k->first(); k_int <= k->last(); ++k_int)
     //      if (i_int == k_int) (*psi_ijk[0])(i_int, j_int, k_int) = 1;
-    if (i_min == 0) (*psi_ijk[0])(Range(0),0,0) = 1;
+    //if (i_min == 0) (*psi_ijk[0])(Range(0),0,0) = 1;
+    grid->populate_scalar_field(*i, *j, *k, psi_ijk[0], intcond);
 
     // periodic boundary
     this->hook_neighbours(this, this);
