@@ -17,27 +17,27 @@
 template <typename real_t>
 class vel_uniform : public vel<real_t>
 {
-  private: quantity<si::velocity> uu, vv, ww;
+  private: quantity<si::velocity, real_t> uu, vv, ww;
 
   public: vel_uniform(
-    quantity<si::velocity> uu,
-    quantity<si::velocity> vv,
-    quantity<si::velocity> ww
+    quantity<si::velocity, real_t> uu,
+    quantity<si::velocity, real_t> vv,
+    quantity<si::velocity, real_t> ww
   )
     : uu(uu), vv(vv), ww(ww)
   {}
 
-  public: virtual quantity<si::velocity> u(
+  public: virtual quantity<si::velocity, real_t> u(
     const quantity<si::length, real_t> &x,
     const quantity<si::length, real_t> &y,
     const quantity<si::length, real_t> &z
   ) { return uu; }
-  public: virtual quantity<si::velocity> v(
+  public: virtual quantity<si::velocity, real_t> v(
     const quantity<si::length, real_t> &x,
     const quantity<si::length, real_t> &y,
     const quantity<si::length, real_t> &z
   ) { return vv; }
-  public: virtual quantity<si::velocity> w(
+  public: virtual quantity<si::velocity, real_t> w(
     const quantity<si::length, real_t> &x,
     const quantity<si::length, real_t> &y,
     const quantity<si::length, real_t> &z

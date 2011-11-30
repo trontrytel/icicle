@@ -46,6 +46,12 @@ int main(int ac, char* av[])
       ("vel.rasinski.Z_clb", po::value<string>(), "cloud base height [m]")
       ("vel.rasinski.Z_top", po::value<string>(), "cloud top height [m]")
       ("vel.rasinski.A", po::value<string>(), "amplitude [m2/s]")
+      ("vel.test.omega", po::value<string>(), "frequency [1/s]")
+      ("ini", po::value<string>(), "initical condition: origin-one, cone")
+      ("ini.cone.h", po::value<string>(), "h [m]")
+      ("ini.cone.x0", po::value<string>(), "x0 [m]")
+      ("ini.cone.z0", po::value<string>(), "z0 [m]")
+      ("ini.cone.r", po::value<string>(), "r [m]")
     ;
     po::variables_map vm;
     po::store(po::parse_command_line(ac, av, desc), vm);

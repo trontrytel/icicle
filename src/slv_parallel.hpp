@@ -21,7 +21,7 @@ class slv_parallel : public slv<unit, real_t>
   private: adv<unit, real_t> *fllbck, *advsch;
   
   public: slv_parallel(adv<unit, real_t> *fllbck, adv<unit, real_t> *advsch, 
-    out<unit, real_t> *output, vel<real_t> *velocity, 
+    out<unit, real_t> *output, vel<real_t> *velocity, ini<real_t> *intcond,
     int i_min, int i_max, int nx, 
     int j_min, int j_max, int ny, 
     int k_min, int k_max, int nz,
@@ -39,7 +39,7 @@ class slv_parallel : public slv<unit, real_t>
     // serial solver allocation (TODO: there could be just one psi for all subdomains...)
     slvs = new auto_ptr<slv_serial<unit, real_t> >[nsd];
     for (int sd=0; sd < nsd; ++sd) 
-      slvs[sd].reset(new slv_serial<unit, real_t>(fllbck, advsch, output, velocity,
+      slvs[sd].reset(new slv_serial<unit, real_t>(fllbck, advsch, output, velocity, intcond,
         i_min + sd * nxs, i_min + (sd + 1) * nxs - 1, nx,
         j_min           , j_max                     , ny, 
         k_min           , k_max                     , nz,

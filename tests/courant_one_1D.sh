@@ -20,7 +20,7 @@ for bits in {32,64,128}; do
 #                  if [ $sdom = "serial" -a $nssdom != 1 ]; then continue; fi
 
                   # the actual test
-                  cmd="../icicle"
+                  cmd="../icicle --ini origin-one"
                   cmd="$cmd --bits $bits --dt 1 --grd.dx 1 --grd.dy 1 --grd.dz 1 --grd arakawa-c-lorenz"
                   cmd="$cmd --vel uniform --vel.uniform.u $u --vel.uniform.v 0 --vel.uniform.w 0"
                   cmd="$cmd --nt $nt --nx 20 --ny 1 --nz 1 --adv $adv --slv $slv --out gnuplot --nsd $nsd"
