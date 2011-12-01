@@ -29,7 +29,8 @@ out<si::dimensionless, real_t> *opt_out(const po::variables_map& vm,
   if (outtype == "netcdf")
   {
     if (!vm.count("out.netcdf.file")) error_macro("output filename not specified (--out.netcdf.file option)")
-    return new out_netcdf<si::dimensionless, real_t>(vm["out.netcdf.file"].as<string>(), grid, nx, ny, nz);
+    int freq = vm.count("out.netcdf.freq") ? vm["out.netcdf.freq"].as<int>() : 1;
+    return new out_netcdf<si::dimensionless, real_t>(vm["out.netcdf.file"].as<string>(), grid, nx, ny, nz, freq);
   }
   else
 #  endif

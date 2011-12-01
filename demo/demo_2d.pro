@@ -7,7 +7,7 @@
 ;    GDL> demo_2D, nx=100, nz=100, nt=628, adv='mpdata', vel='test --vel.test.omega .1', ini='cone --ini.cone.h 3.87 --ini.cone.x0 75 --ini.cone.z0 50 --ini.cone.r 15'
 ;    GDL> demo_2D, nx=50, nz=50, nt=200, adv='mpdata', vel='test --vel.test.omega .1', ini='cone --ini.cone.h 3.87 --ini.cone.x0 40 --ini.cone.z0 20 --ini.cone.r 5'
 
-pro demo_2D, nx=nx, nz=nz, nt=nt, adv=adv, vel=vel, ini=ini
+pro demo_2D, nx=nx, nz=nz, nt=nt, adv=adv, vel=vel, ini=ini, freq=freq
   spawn, 'rm -f demo_2d.nc'
   cmd = '../icicles' + $
     ' --bits 32 --dt 1 --grd.dx 1 --grd.dy 1 --grd.dz 1 --grd arakawa-c-lorenz --ny 1' + $
@@ -18,7 +18,7 @@ pro demo_2D, nx=nx, nz=nz, nt=nt, adv=adv, vel=vel, ini=ini
     ' --adv ' + adv + $
     ' --ini ' + ini + $
     ' --slv serial' + $
-    ' --out netcdf --out.netcdf.file demo_2d.nc'
+    ' --out netcdf --out.netcdf.file demo_2d.nc --out.netcdf.freq ' + strmid(freq, 2)
   spawn, cmd
   a = ncdf_open('demo_2d.nc') 
   scl = 20
@@ -26,7 +26,7 @@ pro demo_2D, nx=nx, nz=nz, nt=nt, adv=adv, vel=vel, ini=ini
   loadct, 1
   i=0l
   while i lt 100 * nt do begin ; repeat 100 times...
-    ncdf_varget, a, 'psi', p, offset=[0,0,0,i++ mod nt], count=[nz, 1, nx, 1]
+    ncdf_varget, a, 'psi', p, offset=[0,0,0,i++ mod (nt / freq)], count=[nz, 1, nx, 1]
     p = reform(p[*,0,*,0]) ; removing dimensions of size one
     p = rotate(p, 4)
     tvscl, rebin(p, scl*nx, scl*nz, /sample)

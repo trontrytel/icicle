@@ -25,8 +25,10 @@ class out_netcdf : public out<unit, real_t>
 {
   private: auto_ptr<NcFile> f;
   private: NcVar *vpsi;
+  private: int freq; 
 
-  public: out_netcdf(string file, grd<real_t> *grid, int nx, int ny, int nz) 
+  public: out_netcdf(string file, grd<real_t> *grid, int nx, int ny, int nz, int freq) 
+    : freq(freq)
   { 
     f.reset(new NcFile(file.c_str(), NcFile::New)); // TODO: other parameters (perhaps via variables_map?)
     if (!f->is_valid()) error_macro("failed to open netcdf file for writing: " << file)
@@ -48,7 +50,7 @@ class out_netcdf : public out<unit, real_t>
     // a sanity check to verify if Boost.units was optimised correctly and if pointer
     // arithmetics may be applied to &(blitz::Array<boost::units::quantity>(...).value())
     {
-      // TODO: is it really needed???
+      // TODO: is it really needed??? (move into CMakeLists.txt)
       Array<quantity<unit, real_t>, 1> a(3);
       a = 11,22,33;
       if (*(&a(0).value() + 2) != 33) error_macro("The compiler did not optimise Blitz+Boost.Units enough :(");
@@ -60,6 +62,7 @@ class out_netcdf : public out<unit, real_t>
     const Range &i, const Range &j, const Range &k, const unsigned long t
   ) 
   {
+    if (t % freq != 0) return;
     // due to presence of halos the data to be stored is not contiguous, 
     // hence looping over the two major ranks
     for (int i_int = i.first(); i_int <= i.last(); ++i_int) // loop over "outer" dimension
@@ -67,7 +70,7 @@ class out_netcdf : public out<unit, real_t>
       for (int j_int = j.first(); j_int <= j.last(); ++j_int)
       {
         assert((*psi[n])(i_int, j_int, k).isStorageContiguous());
-        if (!vpsi->set_cur(t, i_int, j_int, k.first()))
+        if (!vpsi->set_cur(t / freq, i_int, j_int, k.first()))
           error_macro("failed to set position in the netCDF file")
         if (!vpsi->put(
           &(*psi[n])(i_int, j_int, k).dataFirst()->value(), 1, 1, 1, (k.last() - k.first() + 1)
