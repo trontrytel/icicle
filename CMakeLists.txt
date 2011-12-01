@@ -196,5 +196,5 @@ endif()
 
 enable_testing()
 
-#add_subdirectory(tests)
+add_subdirectory(tests)
 #add_subdirectory(src) # has to be done after the config.hpp file is created! (...?)

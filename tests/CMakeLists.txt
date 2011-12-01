@@ -1,1 +1,3 @@
-add_test(courant_one_1D.sh ./courant_one_1D.sh)
+add_subdirectory(smolar_1983)
+
+add_test(NAME courant_one_1D COMMAND ./courant_one_1D.sh)
