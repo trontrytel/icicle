@@ -15,31 +15,30 @@
 template <class unit, typename real_t>
 class slv : root
 {
-  private: slv *left, *rght;
-  public: virtual void hook_neighbours(slv *l, slv *r) 
+  // left->i_min, rght->i_max, fore->j_min, hind->j_max, base->k_min, apex->k_max
+  public: enum side { first, left=first, rght, fore, hind, base, apex, last=apex };
+  private: slv *nghbrs[6];
+
+  public: virtual void hook_neighbour(side s, slv *n) 
   { 
-    if (l != NULL) left = l; 
-    if (r != NULL) rght = r; 
+    nghbrs[s] = n; 
   }
 
-  public: virtual Array<quantity<unit, real_t>, 3> data(int n, 
-    const Range &i, const Range &j, const Range &k
+  public: virtual Array<quantity<unit, real_t>, 3> data(
+    int n, const Range &i, const Range &j, const Range &k
   ) = 0;
 
-  public: Array<quantity<unit, real_t>, 3> left_nghbr_data(int n, 
-    const Range &i, const Range &j, const Range &k) 
-  { 
-    left->sync(n);
-    return left->data(n, i, j, k); 
-  }
-  public: Array<quantity<unit, real_t>, 3> rght_nghbr_data(int n, 
-    const Range &i, const Range &j, const Range &k) 
-  { 
-    rght->sync(n); 
-    return rght->data(n, i, j, k); 
+  public: Array<quantity<unit, real_t>, 3> nghbr_data(
+    side s, int n, const Range &i, const Range &j, const Range &k
+  )
+  {
+    nghbrs[s]->sync(n);
+    return nghbrs[s]->data(n, i, j, k);
   }
 
-  public: bool choose_an(adv<unit, real_t> **a, int *n, int t, adv<unit, real_t> *advsch, adv<unit, real_t> *fllbck)
+  public: bool choose_an(adv<unit, real_t> **a, int *n, int t, 
+    adv<unit, real_t> *advsch, adv<unit, real_t> *fllbck
+  )
   {
     assert(advsch->time_levels() <= 3); // FIXME: support for other values
     bool fallback = (t == 0 && advsch->time_levels() == 3); 

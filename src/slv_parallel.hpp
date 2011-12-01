@@ -52,7 +52,8 @@ class slv_parallel : public slv<unit, real_t>
     {   
       int l = (nsd + sd - 1) % nsd; 
       int r = (nsd + sd + 1) % nsd;  
-      slvs[sd]->hook_neighbours(slvs[l].get(), slvs[r].get());
+      slvs[sd]->hook_neighbour(slv<unit, real_t>::left, slvs[l].get());
+      slvs[sd]->hook_neighbour(slv<unit, real_t>::rght, slvs[r].get());
     }
   }
 
@@ -95,10 +96,14 @@ class slv_parallel : public slv<unit, real_t>
     return slvs[sd]->data(n, i, j, k);
   }
 
-  public: void hook_neighbours(slv<unit, real_t> *l, slv<unit, real_t> *r) 
+  public: void hook_neighbour(enum slv<unit, real_t>::side s, slv<unit, real_t> *n) 
   {
-    slvs[0]->hook_neighbours(l, NULL);
-    slvs[nsd-1]->hook_neighbours(NULL, r); 
+    switch (s)
+    {
+      case slv<unit, real_t>::left: slvs[0    ]->hook_neighbour(s, n); break;
+      case slv<unit, real_t>::rght: slvs[nsd-1]->hook_neighbour(s, n); break;
+      default: assert(false);
+    }
   }
 };
 #endif

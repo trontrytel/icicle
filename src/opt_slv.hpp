@@ -13,6 +13,7 @@
 #  include "slv_parallel_threads.hpp"
 #  include "slv_parallel_serial.hpp"
 #  include "slv_parallel_distmem_mpi.hpp"
+#  include "slv_parallel_distmem_fork.hpp"
 
 template <typename real_t>
 slv<si::dimensionless, real_t> *opt_slv(const po::variables_map& vm,
@@ -60,6 +61,12 @@ slv<si::dimensionless, real_t> *opt_slv(const po::variables_map& vm,
       );
     else
 #  endif
+    if (slvtype == "fork")
+      return new slv_parallel_distmem_fork<si::dimensionless, real_t, slv_parallel_serial<si::dimensionless, real_t> >(
+        fllbck, advsch, output, velocity, intcond, nx, ny, nz, grid, dt, nsd
+      );
+    else
+    // TODO: fork+threads, fork+openmp
 #  ifdef USE_BOOST_MPI
     if (slvtype == "mpi")
       return new slv_parallel_distmem_mpi<si::dimensionless, real_t, slv_parallel_serial<si::dimensionless, real_t> >(

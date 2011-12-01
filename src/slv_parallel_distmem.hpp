@@ -99,7 +99,8 @@ class slv_parallel_distmem : public shrdmem_class
       );
       rhalo.reset(new slv_halo(this, peer_rght, ixr, oxr, yr, zr));
     }
-    this->hook_neighbours(lhalo.get(), rhalo.get());
+    this->hook_neighbour(slv<unit, real_t>::left, lhalo.get());
+    this->hook_neighbour(slv<unit, real_t>::rght, rhalo.get());
   }
 
   private: virtual void distmem_barrier() = 0;

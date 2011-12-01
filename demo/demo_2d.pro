@@ -2,7 +2,7 @@
 ;    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
 ;  @section DESCRIPTION
 ;    example usage: 
-;    GDL> demo_2D, nx=20, nz=30, nt=100, adv='mpdata', el='uniform --vel.uniform.u .2 --vel.uniform.v 0 --vel.uniform.w .3'
+;    GDL> demo_2D, nx=20, nz=30, nt=100, adv='mpdata', vel='uniform --vel.uniform.u .2 --vel.uniform.v 0 --vel.uniform.w .3', ini='origin-one'
 ;    GDL> demo_2D, nx=20, nz=30, nt=100, adv='mpdata', vel='rasinski --vel.rasinski.A 1 --vel.rasinski.Z_top 30 --vel.rasinski.Z_clb 20'
 ;    GDL> demo_2D, nx=100, nz=100, nt=628, adv='mpdata', vel='test --vel.test.omega .1', ini='cone --ini.cone.h 3.87 --ini.cone.x0 75 --ini.cone.z0 50 --ini.cone.r 15'
 ;    GDL> demo_2D, nx=50, nz=50, nt=200, adv='mpdata', vel='test --vel.test.omega .1', ini='cone --ini.cone.h 3.87 --ini.cone.x0 40 --ini.cone.z0 20 --ini.cone.r 5'
