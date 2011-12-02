@@ -12,21 +12,21 @@
 #    include "slv_parallel.hpp"
 #    include <boost/thread.hpp>
 
-template <class unit, typename real_t>
-class slv_parallel_threads : public slv_parallel<unit, real_t>
+template <typename real_t>
+class slv_parallel_threads : public slv_parallel<real_t>
 {
   private: auto_ptr<boost::barrier> b; 
   private: int nsd;
 
-  public: slv_parallel_threads(adv<unit, real_t> *fllbck, adv<unit, real_t> *advsch, 
-    out<unit, real_t> *output, vel<real_t> *velocity, ini<real_t> *intcond,
+  public: slv_parallel_threads(adv<real_t> *fllbck, adv<real_t> *advsch, 
+    out<real_t> *output, vel<real_t> *velocity, ini<real_t> *intcond,
     int i_min, int i_max, int nx, 
     int j_min, int j_max, int ny, 
     int k_min, int k_max, int nz, 
     grd<real_t> *grid,
     quantity<si::time, real_t> dt,
     int nsd)
-    : slv_parallel<unit, real_t>(fllbck, advsch, output, velocity, intcond,
+    : slv_parallel<real_t>(fllbck, advsch, output, velocity, intcond,
         i_min, i_max, nx, 
         j_min, j_max, ny,
         k_min, k_max, nz, grid, dt, nsd), nsd(nsd)
@@ -45,7 +45,7 @@ class slv_parallel_threads : public slv_parallel<unit, real_t>
   {
     boost::thread_group threads;
     for (int sd = 0; sd < nsd; ++sd) threads.add_thread(new boost::thread(
-      &slv_parallel<unit, real_t>::integ_loop_sd, this, nt, dt, sd
+      &slv_parallel<real_t>::integ_loop_sd, this, nt, dt, sd
     ));
     threads.join_all();
   }

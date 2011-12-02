@@ -15,8 +15,8 @@
 
 template <typename real_t>
 void opt_adv(const po::variables_map& vm,
-  adv<si::dimensionless, real_t> **fllbck,
-  adv<si::dimensionless, real_t> **advsch, 
+  adv<real_t> **fllbck,
+  adv<real_t> **advsch, 
   grd<real_t> *grid
 )
 {
@@ -28,13 +28,13 @@ void opt_adv(const po::variables_map& vm,
   *fllbck = NULL;
   if (advscheme == "leapfrog")
   {
-    *advsch = new adv_leapfrog<si::dimensionless, real_t>(g);
-    *fllbck = new adv_mpdata<si::dimensionless, real_t>(g, 1);
+    *advsch = new adv_leapfrog<real_t>(g);
+    *fllbck = new adv_mpdata<real_t>(g, 1);
   }
   else if (advscheme == "mpdata")
   {
     int iord = vm.count("adv.mpdata.iord") ? vm["adv.mpdata.iord"].as<int>() : 2;
-    *advsch = new adv_mpdata<si::dimensionless, real_t>(g, iord);
+    *advsch = new adv_mpdata<real_t>(g, iord);
   }
   else error_macro("unsupported advection scheme: " << advscheme)
 }

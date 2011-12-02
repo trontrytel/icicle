@@ -17,8 +17,8 @@ extern "C" {
 #  include <sys/wait.h>
 };
 
-template <class unit, typename real_t, class shrdmem_class>
-class slv_parallel_distmem_fork : public slv_parallel_distmem<unit, real_t, shrdmem_class>
+template <typename real_t, class shrdmem_class>
+class slv_parallel_distmem_fork : public slv_parallel_distmem<real_t, shrdmem_class>
 {
   private: int fork_init(int nk)
   {
@@ -37,11 +37,11 @@ class slv_parallel_distmem_fork : public slv_parallel_distmem<unit, real_t, shrd
 
   private: int size, rank;
 
-  public: slv_parallel_distmem_fork(adv<unit, real_t> *fllbck, adv<unit, real_t> *advsch, 
-    out<unit, real_t> *output, vel<real_t> *velocity, ini<real_t> *intcond,
+  public: slv_parallel_distmem_fork(adv<real_t> *fllbck, adv<real_t> *advsch, 
+    out<real_t> *output, vel<real_t> *velocity, ini<real_t> *intcond,
     int nx, int ny, int nz, grd<real_t> *grid, quantity<si::time, real_t> dt, int nsd
   ) 
-    : slv_parallel_distmem<unit, real_t, shrdmem_class>(
+    : slv_parallel_distmem<real_t, shrdmem_class>(
       fllbck, advsch, output, velocity, intcond, nx, ny, nz, grid, dt, size=nsd, rank=fork_init(nsd)
     )
   { }
@@ -61,7 +61,7 @@ class slv_parallel_distmem_fork : public slv_parallel_distmem<unit, real_t, shrd
 cerr << rank << "->barrier()" << endl;
   }
 
-  private: void sndrcv(int peer, int cnt, quantity<unit, real_t> *ibuf, quantity<unit, real_t> *obuf)
+  private: void sndrcv(int peer, int cnt, real_t *ibuf, real_t *obuf)
   {
     /*
     mpi::request reqs[2];

@@ -15,22 +15,22 @@
 #  include "out_netcdf.hpp"
 
 template <typename real_t>
-out<si::dimensionless, real_t> *opt_out(const po::variables_map& vm, 
+out<real_t> *opt_out(const po::variables_map& vm, 
   grd<real_t> *grid, int nx, int ny, int nz)
 {
   string outtype = vm.count("out") ? vm["out"].as<string>() : "<unspecified>";
   if (outtype == "gnuplot")
-    return new out_gnuplot<si::dimensionless, real_t>();
+    return new out_gnuplot<real_t>();
   else
   if (outtype == "debug")
-    return new out_debug<si::dimensionless, real_t>();
+    return new out_debug<real_t>();
   else
 #  ifdef USE_NETCDF
   if (outtype == "netcdf")
   {
     if (!vm.count("out.netcdf.file")) error_macro("output filename not specified (--out.netcdf.file option)")
     int freq = vm.count("out.netcdf.freq") ? vm["out.netcdf.freq"].as<int>() : 1;
-    return new out_netcdf<si::dimensionless, real_t>(vm["out.netcdf.file"].as<string>(), grid, nx, ny, nz, freq);
+    return new out_netcdf<real_t>(vm["out.netcdf.file"].as<string>(), grid, nx, ny, nz, freq);
   }
   else
 #  endif

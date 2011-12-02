@@ -18,10 +18,12 @@
 #    endif              
 #    include <netcdfcpp.h>
 
+// TODO: #include <boost/timer/timer.hpp> (requires Boost 1.48)
+
 // TODO: error handling
 
-template <class unit, typename real_t>
-class out_netcdf : public out<unit, real_t>
+template <typename real_t>
+class out_netcdf : public out<real_t>
 {
   private: auto_ptr<NcFile> f;
   private: NcVar *vpsi;
@@ -46,19 +48,10 @@ class out_netcdf : public out<unit, real_t>
     NcVar *vv = f->add_var("v", ncFloat, xv, yv, zv); // TODO: ncFloat vs. ncDouble, ...
     NcVar *vw = f->add_var("w", ncFloat, xv, yv, zv); // TODO: ncFloat vs. ncDouble, ...
 // TODO: add X_sclr i X_vctr variables! (e.g. for axis labelling)
-
-    // a sanity check to verify if Boost.units was optimised correctly and if pointer
-    // arithmetics may be applied to &(blitz::Array<boost::units::quantity>(...).value())
-    {
-      // TODO: is it really needed??? (move into CMakeLists.txt)
-      Array<quantity<unit, real_t>, 1> a(3);
-      a = 11,22,33;
-      if (*(&a(0).value() + 2) != 33) error_macro("The compiler did not optimise Blitz+Boost.Units enough :(");
-    }
   }
 
   public: virtual void record(
-    Array<quantity<unit, real_t>, 3> **psi, const int n, 
+    Array<real_t, 3> **psi, const int n, 
     const Range &i, const Range &j, const Range &k, const unsigned long t
   ) 
   {
@@ -73,7 +66,7 @@ class out_netcdf : public out<unit, real_t>
         if (!vpsi->set_cur(t / freq, i_int, j_int, k.first()))
           error_macro("failed to set position in the netCDF file")
         if (!vpsi->put(
-          &(*psi[n])(i_int, j_int, k).dataFirst()->value(), 1, 1, 1, (k.last() - k.first() + 1)
+          (*psi[n])(i_int, j_int, k).dataFirst(), 1, 1, 1, (k.last() - k.first() + 1)
         )) error_macro("failed to write to netCDF file");
       }
     }

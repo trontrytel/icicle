@@ -11,13 +11,13 @@
 
 #  include "slv_parallel_distmem.hpp"
 
-#  include <boost/serialization/string.hpp> // serialization of strings
-#  include <boost/units/io.hpp> // serialization of units
+//#  include <boost/serialization/string.hpp> // serialization of strings
+//#  include <boost/units/io.hpp> // serialization of units
 #  include <boost/mpi.hpp>
 namespace mpi = boost::mpi;
 
-template <class unit, typename real_t, class shrdmem_class>
-class slv_parallel_distmem_mpi : public slv_parallel_distmem<unit, real_t, shrdmem_class>
+template <typename real_t, class shrdmem_class>
+class slv_parallel_distmem_mpi : public slv_parallel_distmem<real_t, shrdmem_class>
 {
   private: enum msgtype { msg_halo };
   private: mpi::environment *env; // perhaps MPI::Init_thread(MPI_THREAD_MULTIPLE) instead to support MPI+threads?
@@ -32,11 +32,11 @@ class slv_parallel_distmem_mpi : public slv_parallel_distmem<unit, real_t, shrdm
     return comm->rank();
   }
 
-  public: slv_parallel_distmem_mpi(adv<unit, real_t> *fllbck, adv<unit, real_t> *advsch, 
-    out<unit, real_t> *output, vel<real_t> *velocity, ini<real_t> *intcond,
+  public: slv_parallel_distmem_mpi(adv<real_t> *fllbck, adv<real_t> *advsch, 
+    out<real_t> *output, vel<real_t> *velocity, ini<real_t> *intcond,
     int nx, int ny, int nz, grd<real_t> *grid, quantity<si::time, real_t> dt, int nsd
   ) 
-    : slv_parallel_distmem<unit, real_t, shrdmem_class>(
+    : slv_parallel_distmem<real_t, shrdmem_class>(
       fllbck, advsch, output, velocity, intcond, nx, ny, nz, grid, dt, nsd, mpi_init()
     )
   {
@@ -55,7 +55,7 @@ class slv_parallel_distmem_mpi : public slv_parallel_distmem<unit, real_t, shrdm
     comm->barrier();
   }
 
-  private: void sndrcv(int peer, int cnt, quantity<unit, real_t> *ibuf, quantity<unit, real_t> *obuf)
+  private: void sndrcv(int peer, int cnt, real_t *ibuf, real_t *obuf)
   {
     mpi::request reqs[2];
     int r = 0;

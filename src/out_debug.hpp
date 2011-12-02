@@ -10,11 +10,11 @@
 
 #  include "out.hpp"
 
-template <class unit, typename real_t>
-class out_debug : public out<unit, real_t>
+template <typename real_t>
+class out_debug : public out<real_t>
 {
   public: virtual void record(
-    Array<quantity<unit, real_t>, 3> **psi, const int n, 
+    Array<real_t, 3> **psi, const int n, 
     const Range &i, const Range &j, const Range &k, const unsigned long t
   ) 
   {

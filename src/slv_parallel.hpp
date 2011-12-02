@@ -11,17 +11,17 @@
 #  include "slv_serial.hpp"
 #  include "out.hpp"
 
-template <class unit, typename real_t>
-class slv_parallel : public slv<unit, real_t>
+template <typename real_t>
+class slv_parallel : public slv<real_t>
 {
   private: int nsd; // number of subdomains within this solver
   private: int nxs; // number of points per subdomain
   private: int i_min; // i_min for this set of subdomains
-  private: auto_ptr<slv_serial<unit, real_t> > *slvs;
-  private: adv<unit, real_t> *fllbck, *advsch;
+  private: auto_ptr<slv_serial<real_t> > *slvs;
+  private: adv<real_t> *fllbck, *advsch;
   
-  public: slv_parallel(adv<unit, real_t> *fllbck, adv<unit, real_t> *advsch, 
-    out<unit, real_t> *output, vel<real_t> *velocity, ini<real_t> *intcond,
+  public: slv_parallel(adv<real_t> *fllbck, adv<real_t> *advsch, 
+    out<real_t> *output, vel<real_t> *velocity, ini<real_t> *intcond,
     int i_min, int i_max, int nx, 
     int j_min, int j_max, int ny, 
     int k_min, int k_max, int nz,
@@ -37,9 +37,9 @@ class slv_parallel : public slv<unit, real_t>
       error_macro("nxl/nsd must be an integer value (" << nxl << "/" << nsd << " given)")
 
     // serial solver allocation (TODO: there could be just one psi for all subdomains...)
-    slvs = new auto_ptr<slv_serial<unit, real_t> >[nsd];
+    slvs = new auto_ptr<slv_serial<real_t> >[nsd];
     for (int sd=0; sd < nsd; ++sd) 
-      slvs[sd].reset(new slv_serial<unit, real_t>(fllbck, advsch, output, velocity, intcond,
+      slvs[sd].reset(new slv_serial<real_t>(fllbck, advsch, output, velocity, intcond,
         i_min + sd * nxs, i_min + (sd + 1) * nxs - 1, nx,
         j_min           , j_max                     , ny, 
         k_min           , k_max                     , nz,
@@ -52,8 +52,8 @@ class slv_parallel : public slv<unit, real_t>
     {   
       int l = (nsd + sd - 1) % nsd; 
       int r = (nsd + sd + 1) % nsd;  
-      slvs[sd]->hook_neighbour(slv<unit, real_t>::left, slvs[l].get());
-      slvs[sd]->hook_neighbour(slv<unit, real_t>::rght, slvs[r].get());
+      slvs[sd]->hook_neighbour(slv<real_t>::left, slvs[l].get());
+      slvs[sd]->hook_neighbour(slv<real_t>::rght, slvs[r].get());
     }
   }
 
@@ -69,7 +69,7 @@ class slv_parallel : public slv<unit, real_t>
     int n = 0;
     for (unsigned long t = 0; t < nt; ++t)
     {   
-      adv<unit, real_t> *a;
+      adv<real_t> *a;
       bool fallback = this->choose_an(&a, &n, t, advsch, fllbck);
       barrier();
       if (sd == 0) for (int sdi=0; sdi < nsd; ++sdi) slvs[sdi]->record(n, t);
@@ -87,7 +87,7 @@ class slv_parallel : public slv<unit, real_t>
   }
 
   // the two below are for MPI/fork + threads/OpenMP nested parallelisations
-  public: Array<quantity<unit, real_t>, 3> data(int n, 
+  public: Array<real_t, 3> data(int n, 
     const Range &i, const Range &j, const Range &k) 
   { 
     int sd = (i.first() - i_min) / nxs;
@@ -96,12 +96,12 @@ class slv_parallel : public slv<unit, real_t>
     return slvs[sd]->data(n, i, j, k);
   }
 
-  public: void hook_neighbour(enum slv<unit, real_t>::side s, slv<unit, real_t> *n) 
+  public: void hook_neighbour(enum slv<real_t>::side s, slv<real_t> *n) 
   {
     switch (s)
     {
-      case slv<unit, real_t>::left: slvs[0    ]->hook_neighbour(s, n); break;
-      case slv<unit, real_t>::rght: slvs[nsd-1]->hook_neighbour(s, n); break;
+      case slv<real_t>::left: slvs[0    ]->hook_neighbour(s, n); break;
+      case slv<real_t>::rght: slvs[nsd-1]->hook_neighbour(s, n); break;
       default: assert(false);
     }
   }

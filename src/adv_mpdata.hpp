@@ -15,8 +15,8 @@
 #  include "adv.hpp"
 #  include "grd_arakawa-c-lorenz.hpp"
 
-template <class unit, typename real_t> 
-class adv_mpdata : public adv<unit, real_t> 
+template <typename real_t> 
+class adv_mpdata : public adv<real_t> 
 {
   public: const int stencil_extent() { return 3; }
   public: const int time_levels() { return 2; }
@@ -31,28 +31,28 @@ class adv_mpdata : public adv<unit, real_t>
     if (iord <= 0) error_macro("iord (the number of iterations) must be > 0")
   }
 
-#    define mpdata_F(p1, p2, U) (.5 * (U + sqrt(U*U)) * p1 + .5 * (U - sqrt(U*U)) * p2)
+#    define mpdata_F(p1, p2, U) (.5 * (U + abs(U)) * p1 + .5 * (U - abs(U)) * p2)
   public: void op_helper(const real_t sign, const Range &il, const Range &ic, const Range &ir,
     const Range &i, const Range &j, const Range &k, 
-    Array<quantity<unit, real_t>, 3>* psi[], const int n,
-    const Array<quantity<si::dimensionless, real_t>, 3> &Cx, 
-    const Array<quantity<si::dimensionless, real_t>, 3> &Cy, 
-    const Array<quantity<si::dimensionless, real_t>, 3> &Cz
+    Array<real_t, 3>* psi[], const int n,
+    const Array<real_t, 3> &Cx, 
+    const Array<real_t, 3> &Cy, 
+    const Array<real_t, 3> &Cz
   )
   {
     // preprocessor macros are the only option as methods cannot return parts of Blitz expressions 
 #    define mpdata_A(pr, pl) \
        where(pr + pl > 0, \
          (pr - pl) / (pr + pl), \
-         quantity<unit, real_t>(0.) \
+         real_t(0.) \
        )
 #    define mpdata_B(pru, plu, prd, pld) \
        where(pru + plu + prd + pld > 0, \
          .5 * (pru + plu - prd - pld) / (pru + plu + prd + pld), \
-         quantity<unit, real_t>(0.) \
+         real_t(0.) \
        )
 #    define mpdata_V(Vru, Vlu, Vrd, Vld) (.25 * (Vru + Vlu + Vrd + Vld))
-#    define mpdata_CA(pr, pl, U) ((sqrt(U*U) - pow(U,2)) * mpdata_A(pr, pl))
+#    define mpdata_CA(pr, pl, U) ((abs(U) - pow(U,2)) * mpdata_A(pr, pl))
 #    define mpdata_CB(pru, plu, prd, pld, U, V) (U * V * mpdata_B(pru, plu, prd, pld)) 
     (*psi[n+1])(i,j,k) += sign * (
       mpdata_F(
@@ -88,12 +88,12 @@ class adv_mpdata : public adv<unit, real_t>
 #    undef mpdata_CB
   }
 
-  public: void op(Array<quantity<unit, real_t>, 3>* psi[], 
+  public: void op(Array<real_t, 3>* psi[], 
     const Range &i, const Range &j, const Range &k, 
     const int n, const int step,
-    const Array<quantity<si::dimensionless, real_t>, 3> &Cx, 
-    const Array<quantity<si::dimensionless, real_t>, 3> &Cy, 
-    const Array<quantity<si::dimensionless, real_t>, 3> &Cz
+    const Array<real_t, 3> &Cx, 
+    const Array<real_t, 3> &Cy, 
+    const Array<real_t, 3> &Cz
   )
   {
     if (step == 1)

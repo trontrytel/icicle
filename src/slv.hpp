@@ -12,7 +12,7 @@
 #  include "common.hpp" // root class, error reporting
 #  include "adv.hpp"
 
-template <class unit, typename real_t>
+template <typename real_t>
 class slv : root
 {
   // left->i_min, rght->i_max, fore->j_min, hind->j_max, base->k_min, apex->k_max
@@ -24,11 +24,11 @@ class slv : root
     nghbrs[s] = n; 
   }
 
-  public: virtual Array<quantity<unit, real_t>, 3> data(
+  public: virtual Array<real_t, 3> data(
     int n, const Range &i, const Range &j, const Range &k
   ) = 0;
 
-  public: Array<quantity<unit, real_t>, 3> nghbr_data(
+  public: Array<real_t, 3> nghbr_data(
     side s, int n, const Range &i, const Range &j, const Range &k
   )
   {
@@ -36,8 +36,8 @@ class slv : root
     return nghbrs[s]->data(n, i, j, k);
   }
 
-  public: bool choose_an(adv<unit, real_t> **a, int *n, int t, 
-    adv<unit, real_t> *advsch, adv<unit, real_t> *fllbck
+  public: bool choose_an(adv<real_t> **a, int *n, int t, 
+    adv<real_t> *advsch, adv<real_t> *fllbck
   )
   {
     assert(advsch->time_levels() <= 3); // FIXME: support for other values

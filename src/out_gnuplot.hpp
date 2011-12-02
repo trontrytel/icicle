@@ -14,16 +14,8 @@
 
 #  include "out.hpp"
 
-/// gnuplot-digestible output for Blitz
-template<class unit, class real_t>
-ostream& operator<<(ostream& os, const Array<quantity<unit, real_t>, 1>& a)
-{
-  for (int i=a.lbound(0); i<=a.ubound(0); ++i) os << real_t(a(i)) << endl;
-  return os; 
-}
-
-template <class unit, typename real_t>
-class out_gnuplot : public out<unit, real_t>
+template <typename real_t>
+class out_gnuplot : public out<real_t>
 {
   private: unsigned long t_last; // TODO: si::seconds?
   private: int i_last;
@@ -35,7 +27,7 @@ class out_gnuplot : public out<unit, real_t>
   }
 
   public: virtual void record(
-    Array<quantity<unit, real_t>, 3> **psi, const int n, 
+    Array<real_t, 3> **psi, const int n, 
     const Range &i, const Range &j, const Range &k, const unsigned long t
   ) 
   {
@@ -50,7 +42,8 @@ class out_gnuplot : public out<unit, real_t>
       i_last = -1;
     }
     assert(i_last + 1 == i.first()); // if data is output in order
-    cout << (*psi[n])(i, 0, 0);
+    Array<real_t, 1> a = (*psi[n])(i, 0, 0);
+    for (int i=a.lbound(0); i<=a.ubound(0); ++i) cout << a(i) << endl;
   
     // housekeeping
     t_last = t;

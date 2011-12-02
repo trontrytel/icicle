@@ -14,21 +14,21 @@
 
 #  include "adv.hpp"
 
-template <class unit, typename real_t> 
-class adv_lax_wendroff : public adv<unit, real_t> 
+template <typename real_t> 
+class adv_lax_wendroff : public adv<real_t> 
 {
   public: const int stencil_extent() { return 3; }
   public: const int time_levels() { return 3; } // ?
   public: const int num_steps() { return 1; } // ?
 
-  public: void op(Array<quantity<unit, real_t>, 3>* psi[], 
+  public: void op(Array<real_t, 3>* psi[], 
     const Range &i, 
     const Range &j, 
     const Range &k, 
     const int n, const int step,
-    const Array<quantity<si::dimensionless, real_t>, 3> &Cx, 
-    const Array<quantity<si::dimensionless, real_t>, 3> &, 
-    const Array<quantity<si::dimensionless, real_t>, 3> &
+    const Array<real_t, 3> &Cx, 
+    const Array<real_t, 3> &, 
+    const Array<real_t, 3> &
   )
   {
     assert(step == 1);

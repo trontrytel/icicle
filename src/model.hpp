@@ -40,16 +40,16 @@ void model(const po::variables_map& vm)
   auto_ptr<grd<real_t> > grid(opt_grd<real_t>(vm));
 
   // advection scheme choice
-  auto_ptr<adv<si::dimensionless, real_t> > advsch, fllbck;
+  auto_ptr<adv<real_t> > advsch, fllbck;
   {
-    adv<si::dimensionless, real_t> *advschp, *fllbckp;
+    adv<real_t> *advschp, *fllbckp;
     opt_adv<real_t>(vm, &fllbckp, &advschp, grid.get());
     advsch.reset(advschp);
     if (fllbckp != NULL) fllbck.reset(fllbckp);
   }
 
   // output choice
-  auto_ptr<out<si::dimensionless, real_t> > output(opt_out<real_t>(vm, grid.get(), nx, ny, nz));
+  auto_ptr<out<real_t> > output(opt_out<real_t>(vm, grid.get(), nx, ny, nz));
 
   // velocity choice
   auto_ptr<vel<real_t> > velocity(opt_vel<real_t>(vm, grid.get(), nx, ny, nz));
@@ -58,7 +58,7 @@ void model(const po::variables_map& vm)
   auto_ptr<ini<real_t> > intcond(opt_ini<real_t>(vm, grid.get()));
 
   // solver choice
-  auto_ptr<slv<si::dimensionless, real_t> > solver(opt_slv(vm, 
+  auto_ptr<slv<real_t> > solver(opt_slv(vm, 
     fllbck.get(), advsch.get(), output.get(), velocity.get(), intcond.get(),
     nx, ny, nz, grid.get(), dt 
   ));

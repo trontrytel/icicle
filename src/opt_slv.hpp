@@ -16,10 +16,10 @@
 #  include "slv_parallel_distmem_fork.hpp"
 
 template <typename real_t>
-slv<si::dimensionless, real_t> *opt_slv(const po::variables_map& vm,
-  adv<si::dimensionless, real_t> *fllbck, 
-  adv<si::dimensionless, real_t> *advsch,
-  out<si::dimensionless, real_t> *output,
+slv<real_t> *opt_slv(const po::variables_map& vm,
+  adv<real_t> *fllbck, 
+  adv<real_t> *advsch,
+  out<real_t> *output,
   vel<real_t> *velocity,
   ini<real_t> *intcond,
   int nx, int ny, int nz, 
@@ -29,7 +29,7 @@ slv<si::dimensionless, real_t> *opt_slv(const po::variables_map& vm,
 {
   string slvtype = vm.count("slv") ? vm["slv"].as<string>() : "<unspecified>";
   if (slvtype == "serial")
-    return new slv_serial<si::dimensionless, real_t>(fllbck, advsch, output, velocity, intcond,
+    return new slv_serial<real_t>(fllbck, advsch, output, velocity, intcond,
       0, nx - 1, nx,
       0, ny - 1, ny,
       0, nz - 1, nz,
@@ -41,7 +41,7 @@ slv<si::dimensionless, real_t> *opt_slv(const po::variables_map& vm,
     int nsd = vm["nsd"].as<int>();
 #  ifdef _OPENMP
     if (slvtype == "openmp")
-      return new slv_parallel_openmp<si::dimensionless, real_t>(
+      return new slv_parallel_openmp<real_t>(
         fllbck, advsch, output, velocity, intcond, 
         0, nx - 1, nx, 
         0, ny - 1, ny,
@@ -52,7 +52,7 @@ slv<si::dimensionless, real_t> *opt_slv(const po::variables_map& vm,
 #  endif
 #  ifdef USE_BOOST_THREAD
     if (slvtype == "threads")
-      return new slv_parallel_threads<si::dimensionless, real_t>(
+      return new slv_parallel_threads<real_t>(
         fllbck, advsch, output, velocity, intcond, 
         0, nx - 1, nx, 
         0, ny - 1, ny,
@@ -62,14 +62,14 @@ slv<si::dimensionless, real_t> *opt_slv(const po::variables_map& vm,
     else
 #  endif
     if (slvtype == "fork")
-      return new slv_parallel_distmem_fork<si::dimensionless, real_t, slv_parallel_serial<si::dimensionless, real_t> >(
+      return new slv_parallel_distmem_fork<real_t, slv_parallel_serial<real_t> >(
         fllbck, advsch, output, velocity, intcond, nx, ny, nz, grid, dt, nsd
       );
     else
     // TODO: fork+threads, fork+openmp
 #  ifdef USE_BOOST_MPI
     if (slvtype == "mpi")
-      return new slv_parallel_distmem_mpi<si::dimensionless, real_t, slv_parallel_serial<si::dimensionless, real_t> >(
+      return new slv_parallel_distmem_mpi<real_t, slv_parallel_serial<real_t> >(
         fllbck, advsch, output, velocity, intcond, nx, ny, nz, grid, dt, nsd
       );
     else

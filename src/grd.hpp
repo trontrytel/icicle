@@ -42,9 +42,9 @@ class grd : root
   // ... Nothing is real and nothing to get hung about.
   // courant fields forever ...
   public: virtual void populate_courant_fields(Range &ir, Range &jr, Range &kr,
-    Array<quantity<si::dimensionless, real_t>, 3> *Cx, 
-    Array<quantity<si::dimensionless, real_t>, 3> *Cy, 
-    Array<quantity<si::dimensionless, real_t>, 3> *Cz, 
+    Array<real_t, 3> *Cx, 
+    Array<real_t, 3> *Cy, 
+    Array<real_t, 3> *Cz, 
     vel<real_t> *velocity,
     quantity<si::time, real_t> dt
   ) 
@@ -67,7 +67,7 @@ class grd : root
 
   public: virtual void populate_scalar_field(
     const Range &ii, const Range &jj, const Range &kk,
-    Array<quantity<si::dimensionless, real_t>, 3> *psi, ini<real_t> *intcond
+    Array<real_t, 3> *psi, ini<real_t> *intcond
   )
   {
     for (int i = ii.first(); i <= ii.last(); ++i)

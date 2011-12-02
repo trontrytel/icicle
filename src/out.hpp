@@ -11,11 +11,11 @@
 #  include "config.hpp" // USE_* defines
 #  include "common.hpp" // root class, error reporting
 
-template <class unit, typename real_t>
+template <typename real_t>
 class out : root
 {
   public: virtual void record( // TODO: t should be in seconds
-    Array<quantity<unit, real_t>, 3> **psi, const int n, 
+    Array<real_t, 3> **psi, const int n, 
     const Range &i, const Range &j, const Range &k, const unsigned long t
   ) = 0;
 };

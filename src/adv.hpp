@@ -12,21 +12,21 @@
 #  include "common.hpp" // root class, error reporting, ...
 #  include "grd.hpp" // m_half, p_half, ...
 
-template <class unit, typename real_t>
+template <typename real_t>
 class adv : root
 {
   public: virtual const int stencil_extent() = 0;
   public: virtual const int time_levels() = 0;
   public: virtual const int num_steps() = 0;
 
-  public: virtual void op(Array<quantity<unit, real_t>, 3> *psi[], 
+  public: virtual void op(Array<real_t, 3> *psi[], 
     const Range &i, 
     const Range &j, 
     const Range &k, 
     const int n, const int step,
-    const Array<quantity<si::dimensionless, real_t>, 3> &Cx,
-    const Array<quantity<si::dimensionless, real_t>, 3> &Cy,
-    const Array<quantity<si::dimensionless, real_t>, 3> &Cz
+    const Array<real_t, 3> &Cx,
+    const Array<real_t, 3> &Cy,
+    const Array<real_t, 3> &Cz
   ) = 0;
 };
 #endif

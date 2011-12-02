@@ -16,19 +16,19 @@
 #  include "grd.hpp"
 #  include "ini.hpp"
 
-template <class unit, typename real_t>
-class slv_serial : public slv<unit, real_t>
+template <typename real_t>
+class slv_serial : public slv<real_t>
 {
-  private: auto_ptr<arr<unit, real_t> > *psi;
-  private: Array<quantity<unit, real_t>, 3> **psi_ijk, **psi_jki, **psi_kij;
-  private: adv<unit, real_t> *fllbck, *advsch;
+  private: auto_ptr<arr<real_t> > *psi;
+  private: Array<real_t, 3> **psi_ijk, **psi_jki, **psi_kij;
+  private: adv<real_t> *fllbck, *advsch;
   private: auto_ptr<Range> i, j, k;
-  private: out<unit, real_t> *output;
+  private: out<real_t> *output;
   private: int nx, ny, nz, xhalo, yhalo, zhalo;
-  private: auto_ptr<arr<si::dimensionless, real_t> > Cx, Cy, Cz;
+  private: auto_ptr<arr<real_t> > Cx, Cy, Cz;
 
-  public: slv_serial(adv<unit, real_t> *fllbck, adv<unit, real_t> *advsch, 
-    out<unit, real_t> *output, vel<real_t> *velocity, ini<real_t> *intcond,
+  public: slv_serial(adv<real_t> *fllbck, adv<real_t> *advsch, 
+    out<real_t> *output, vel<real_t> *velocity, ini<real_t> *intcond,
     int i_min, int i_max, int nx,
     int j_min, int j_max, int ny,
     int k_min, int k_max, int nz, 
@@ -44,13 +44,13 @@ class slv_serial : public slv<unit, real_t>
       yhalo = (j_max != j_min ? halo : 0);
       zhalo = (k_max != k_min ? halo : 0);
     }
-    psi = new auto_ptr<arr<unit, real_t> >[advsch->time_levels()];
-    psi_ijk = new Array<quantity<unit, real_t>, 3>*[advsch->time_levels()]; 
-    psi_jki = new Array<quantity<unit, real_t>, 3>*[advsch->time_levels()]; 
-    psi_kij = new Array<quantity<unit, real_t>, 3>*[advsch->time_levels()]; 
+    psi = new auto_ptr<arr<real_t> >[advsch->time_levels()];
+    psi_ijk = new Array<real_t, 3>*[advsch->time_levels()]; 
+    psi_jki = new Array<real_t, 3>*[advsch->time_levels()]; 
+    psi_kij = new Array<real_t, 3>*[advsch->time_levels()]; 
     for (int n=0; n < advsch->time_levels(); ++n) 
     {
-      psi[n].reset(new arr<unit, real_t>(
+      psi[n].reset(new arr<real_t>(
         Range(i_min - xhalo, i_max + xhalo),
         Range(j_min - yhalo, j_max + yhalo),
         Range(k_min - zhalo, k_max + zhalo)
@@ -67,7 +67,7 @@ class slv_serial : public slv<unit, real_t>
     grid->populate_scalar_field(*i, *j, *k, psi_ijk[0], intcond);
 
     // periodic boundary in all directions
-    for (enum slv<unit, real_t>::side s=this->first; s <= this->last; ++s) 
+    for (enum slv<real_t>::side s=this->first; s <= this->last; ++s) 
       this->hook_neighbour(s, this);
  
     // velocity fields
@@ -81,9 +81,9 @@ class slv_serial : public slv<unit, real_t>
           ? grid->rng_vctr(k->first(), k->last())
           : Range(k->first(), k->last());
 
-      Cx.reset(new arr<si::dimensionless, real_t>(ii, jj, kk));
-      Cy.reset(new arr<si::dimensionless, real_t>(ii, jj, kk));
-      Cz.reset(new arr<si::dimensionless, real_t>(ii, jj, kk));
+      Cx.reset(new arr<real_t>(ii, jj, kk));
+      Cy.reset(new arr<real_t>(ii, jj, kk));
+      Cz.reset(new arr<real_t>(ii, jj, kk));
 
       grid->populate_courant_fields(ii, jj, kk, &Cx->ijk(), &Cy->ijk(), &Cz->ijk(), velocity, dt);
     }
@@ -102,7 +102,7 @@ class slv_serial : public slv<unit, real_t>
     output->record(psi_ijk, n, *i, *j, *k, t);
   }
 
-  public: Array<quantity<unit, real_t>, 3> data(int n, 
+  public: Array<real_t, 3> data(int n, 
     const Range &i, const Range &j, const Range &k) 
   { 
     return (*psi_ijk[n])(i, j, k);
@@ -113,24 +113,24 @@ class slv_serial : public slv<unit, real_t>
     { // left halo
       int i_min = i->first() - xhalo, i_max = i->first() - 1;
       (*psi_ijk[n])(Range(i_min, i_max), *j, *k) = 
-        this->nghbr_data(slv<unit, real_t>::left, n, Range((i_min + nx) % nx, (i_max + nx) % nx), *j, *k);
+        this->nghbr_data(slv<real_t>::left, n, Range((i_min + nx) % nx, (i_max + nx) % nx), *j, *k);
     }
     { // rght halo
       int i_min = i->last() + 1, i_max = i->last() + xhalo;
       (*psi_ijk[n])(Range(i_min, i_max), *j, *k) =
-        this->nghbr_data(slv<unit, real_t>::rght, n, Range((i_min + nx) % nx, (i_max + nx) % nx), *j, *k);
+        this->nghbr_data(slv<real_t>::rght, n, Range((i_min + nx) % nx, (i_max + nx) % nx), *j, *k);
     } 
     if (j->first() != j->last())
     {
       { // fore halo
         int j_min = j->first() - yhalo, j_max = j->first() - 1;
         (*psi_ijk[n])(*i, Range(j_min, j_max), *k) = 
-          this->nghbr_data(slv<unit, real_t>::fore, n, *i, Range((j_min + ny) % ny, (j_max + ny) % ny), *k);
+          this->nghbr_data(slv<real_t>::fore, n, *i, Range((j_min + ny) % ny, (j_max + ny) % ny), *k);
       }
       { // hind halo
         int j_min = j->last() + 1, j_max = j->last() + yhalo;
         (*psi_ijk[n])(*i, Range(j_min, j_max), *k) =
-          this->nghbr_data(slv<unit, real_t>::hind, n, *i, Range((j_min + ny) % ny, (j_max + ny) % ny), *k);
+          this->nghbr_data(slv<real_t>::hind, n, *i, Range((j_min + ny) % ny, (j_max + ny) % ny), *k);
       } 
     }
     if (k->first() != k->last())
@@ -138,17 +138,17 @@ class slv_serial : public slv<unit, real_t>
       { // base halo
         int k_min = k->first() - zhalo, k_max = k->first() - 1;
         (*psi_ijk[n])(*i, *j, Range(k_min, k_max)) = 
-          this->nghbr_data(slv<unit, real_t>::base, n, *i, *j, Range((k_min + nz) % nz, (k_max + nz) % nz));
+          this->nghbr_data(slv<real_t>::base, n, *i, *j, Range((k_min + nz) % nz, (k_max + nz) % nz));
       }
       { // apex halo
         int k_min = k->last() + 1, k_max = k->last() + zhalo;
         (*psi_ijk[n])(*i, *j, Range(k_min, k_max)) =
-          this->nghbr_data(slv<unit, real_t>::apex, n, *i, *j, Range((k_min + nz) % nz, (k_max + nz) % nz));
+          this->nghbr_data(slv<real_t>::apex, n, *i, *j, Range((k_min + nz) % nz, (k_max + nz) % nz));
       } 
     }
   }
 
-  public: void advect(adv<unit, real_t> *a, int n, int s, quantity<si::time, real_t> dt)
+  public: void advect(adv<real_t> *a, int n, int s, quantity<si::time, real_t> dt)
   {
     // op() uses the -= operator so the first assignment happens here
     *psi_ijk[n+1] = *psi_ijk[0]; 
@@ -184,7 +184,7 @@ class slv_serial : public slv<unit, real_t>
     int n;
     for (unsigned long t = 0; t < nt; ++t)
     {   
-      adv<unit, real_t> *a;
+      adv<real_t> *a;
       bool fallback = this->choose_an(&a, &n, t, advsch, fllbck);    
       record(n, t);
       for (int s = 1; s <= a->num_steps(); ++s)
