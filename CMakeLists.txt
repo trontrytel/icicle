@@ -156,13 +156,10 @@ endif()                                                                #
 if ("${MPI}" STREQUAL "NO") # handles -DMPI=NO
   message("-- Building without Boost.MPI (-DMPI=NO specified)")
 else()
-  set(CMAKE_REQUIRED_LIBRARIES 
-    "-lboost_mpi-mt -lboost_serialization-mt"
-  )
+  set(CMAKE_REQUIRED_LIBRARIES "-lboost_mpi-mt")
   check_cxx_source_compiles(
     "#include <boost/mpi.hpp>
-     #include <boost/serialization/string.hpp>
-     int main() {boost::mpi::communicator().send(1,0,std::string());}"
+     int main() {boost::mpi::communicator().send(1,0,0.);}"
     Find_Boost_MPI
   )
   if(NOT Find_Boost_MPI)

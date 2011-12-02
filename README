@@ -19,7 +19,7 @@
 
 * optional libraries:
   - Boost C++ libraries, incl.: ........ http://www.boost.org/
-    - Boost headers & shared libs (Thread, MPI, Serialization)
+    - Boost headers & shared libs (Thread, MPI)
   - NetCDF C++ library ... http://www.unidata.ucar.edu/netcdf/
   - MPI libraries with C++ bindings (optional), e.g.:
     - Open MPI ...................... http://www.open-mpi.org/

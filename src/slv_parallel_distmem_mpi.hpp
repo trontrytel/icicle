@@ -11,8 +11,6 @@
 
 #  include "slv_parallel_distmem.hpp"
 
-//#  include <boost/serialization/string.hpp> // serialization of strings
-//#  include <boost/units/io.hpp> // serialization of units
 #  include <boost/mpi.hpp>
 namespace mpi = boost::mpi;
 
