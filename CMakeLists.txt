@@ -108,14 +108,14 @@ endif()                                                                #
 if("${NETCDF}" STREQUAL "NO") # handles -DNETCDF=NO                    #
   message("-- Building without netCDF (-DNETCDF=NO specified)")
 else()
-  set(CMAKE_REQUIRED_LIBRARIES "-lnetcdf_c++")
+  set(CMAKE_REQUIRED_LIBRARIES "-lnetcdf_c++4")
   check_cxx_source_compiles(
-    "#include <netcdfcpp.h>\n int main() { NcFile *f; }" 
+    "#include <netcdf>\n int main() { netCDF::NcFile *f; }" 
     Find_NetCDF
   )
   if(NOT Find_NetCDF) 
     message(WARNING "
-      NetCDF not found! (cf. CMakeFiles/CMakeError.log)
+      NetCDF >=4.1.1 not found! (cf. CMakeFiles/CMakeError.log)
       Without it the NetCDF output will not be available.
         suitable Debian/Ubuntu package: libnetcdf-dev
         suitable Macports port: netcdf

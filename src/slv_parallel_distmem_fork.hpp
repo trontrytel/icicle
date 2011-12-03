@@ -7,7 +7,7 @@
  *  @section DESCRIPTION
  *    a fork()/IPC implementation of slv_parallel_distmem built for several reasons:
  *    - as a facility for testing the distmem logic when compiling without MPI
- *    - for validating that the distmem loginc is free of MPI-related assumptions
+ *    - for validating that the distmem logic is free of MPI-related assumptions
  *    - for fun :)
  */
 #ifndef SLV_PARALLEL_DISTMEM_FORK_HPP

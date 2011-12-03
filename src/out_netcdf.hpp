@@ -13,41 +13,51 @@
 
 // fixes preprocessor macro redefinition conflict with MPI
 // cf. http://www.unidata.ucar.edu/mailing_lists/archives/netcdfgroup/2009/msg00350.html
-#    ifdef USE_BOOST_MPI 
-#      define MPI_INCLUDED
-#    endif              
-#    include <netcdfcpp.h>
+//#    ifdef USE_BOOST_MPI 
+//#      define MPI_INCLUDED
+//#    endif              
+
+// the Lynton Appel's netCDF-4 C++ API (since netCDF 4.1.1)
+#    include <netcdf>
+using namespace netCDF;
 
 // TODO: #include <boost/timer/timer.hpp> (requires Boost 1.48)
-
-// TODO: error handling
+// TODO: ncFloat vs. ncDouble, ... ?
+// TODO: add X_sclr i X_vctr variables! (e.g. for axis labelling)
+// TODO: is the order of dimensions optimal?
 
 template <typename real_t>
 class out_netcdf : public out<real_t>
 {
   private: auto_ptr<NcFile> f;
-  private: NcVar *vpsi;
+  private: NcVar vpsi;
   private: int freq; 
 
   public: out_netcdf(string file, grd<real_t> *grid, int nx, int ny, int nz, int freq) 
     : freq(freq)
   { 
-    f.reset(new NcFile(file.c_str(), NcFile::New)); // TODO: other parameters (perhaps via variables_map?)
-    if (!f->is_valid()) error_macro("failed to open netcdf file for writing: " << file)
+    f.reset(new NcFile(file, NcFile::newFile)); 
     NcDim 
-      *t = f->add_dim("T"),
-      *xs = f->add_dim("X_sclr", nx),
-      *ys = f->add_dim("Y_sclr", ny),
-      *zs = f->add_dim("Z_sclr", nz),
-      *xv = f->add_dim("X_vctr", grid->rng_vctr(0, nx-1).length()), // TODO:  
-      *yv = f->add_dim("Y_vctr", grid->rng_vctr(0, ny-1).length()), // TODO: that's a kludge
-      *zv = f->add_dim("Z_vctr", grid->rng_vctr(0, nz-1).length()); // TODO:
-    // TODO: is the order of dimensions optimal?
-    vpsi = f->add_var("psi", ncFloat, t, xs, ys, zs); // TODO: ncFloat vs. ncDouble, ...
-    NcVar *vu = f->add_var("u", ncFloat, xv, yv, zv); // TODO: ncFloat vs. ncDouble, ...
-    NcVar *vv = f->add_var("v", ncFloat, xv, yv, zv); // TODO: ncFloat vs. ncDouble, ...
-    NcVar *vw = f->add_var("w", ncFloat, xv, yv, zv); // TODO: ncFloat vs. ncDouble, ...
-// TODO: add X_sclr i X_vctr variables! (e.g. for axis labelling)
+      d_t = f->addDim("t"),
+      d_xs = f->addDim("xs", nx),
+      d_ys = f->addDim("ys", ny),
+      d_zs = f->addDim("zs", nz),
+      d_xv = f->addDim("xv", grid->rng_vctr(0, nx-1).length()), // TODO:  
+      d_yv = f->addDim("yv", grid->rng_vctr(0, ny-1).length()), // TODO: that's a kludge
+      d_zv = f->addDim("zv", grid->rng_vctr(0, nz-1).length()); // TODO:
+    vector<NcDim> sdims;
+    sdims[0] = d_t;
+    sdims[1] = d_xs;
+    sdims[2] = d_ys;
+    sdims[3] = d_zs;
+    vpsi = f->addVar("psi", ncFloat, sdims); 
+    vector<NcDim> vdims;
+    vdims[0] = d_xv;
+    vdims[1] = d_yv;
+    vdims[2] = d_zv;
+    NcVar vu = f->addVar("u", ncFloat, vdims); 
+    NcVar vv = f->addVar("v", ncFloat, vdims); 
+    NcVar vw = f->addVar("w", ncFloat, vdims); 
   }
 
   public: virtual void record(
@@ -56,21 +66,23 @@ class out_netcdf : public out<real_t>
   ) 
   {
     if (t % freq != 0) return;
+    vector<size_t> startp(4), countp(4, 1);
+    startp[0] = t / freq;
+    countp[3] = k.last() - k.first() + 1;
     // due to presence of halos the data to be stored is not contiguous, 
     // hence looping over the two major ranks
     for (int i_int = i.first(); i_int <= i.last(); ++i_int) // loop over "outer" dimension
     {
+      startp[1] = i_int;
       for (int j_int = j.first(); j_int <= j.last(); ++j_int)
       {
         assert((*psi[n])(i_int, j_int, k).isStorageContiguous());
-        if (!vpsi->set_cur(t / freq, i_int, j_int, k.first()))
-          error_macro("failed to set position in the netCDF file")
-        if (!vpsi->put(
-          (*psi[n])(i_int, j_int, k).dataFirst(), 1, 1, 1, (k.last() - k.first() + 1)
-        )) error_macro("failed to write to netCDF file");
+        startp[2] = j_int;
+        startp[3] = k.first();
+        vpsi.putVar(startp, countp, (*psi[n])(i_int, j_int, k).dataFirst());
       }
     }
-    if (!f->sync()) warning_macro("failed to synchronise netCDF file")
+    //if (!f->sync()) warning_macro("failed to synchronise netCDF file")
   }
 };
 #  endif
