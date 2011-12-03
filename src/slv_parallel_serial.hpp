@@ -13,15 +13,13 @@
 template <typename real_t>
 class slv_parallel_serial : public slv_parallel<real_t>
 {
-  public: slv_parallel_serial(adv<real_t> *fllbck, adv<real_t> *advsch, 
-    out<real_t> *output, vel<real_t> *velocity, ini<real_t> *intcond,
+  public: slv_parallel_serial(stp<real_t> *setup,
     int i_min, int i_max, int nx, 
     int j_min, int j_max, int ny, 
     int k_min, int k_max, int nz, 
-    grd<real_t> *grid, quantity<si::time, real_t> dt, int nsd
+    quantity<si::time, real_t> dt, int nsd
   )
-    : slv_parallel<real_t>(fllbck, advsch, output, velocity, intcond,
-      i_min, i_max, nx, j_min, j_max, ny, k_min, k_max, nz, grid, dt, nsd
+    : slv_parallel<real_t>(setup, i_min, i_max, nx, j_min, j_max, ny, k_min, k_max, nz, dt, nsd
     )
   {
     assert(nsd == 1);

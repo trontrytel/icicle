@@ -57,11 +57,17 @@ void model(const po::variables_map& vm)
   // initial condition
   auto_ptr<ini<real_t> > intcond(opt_ini<real_t>(vm, grid.get()));
 
-  // solver choice
-  auto_ptr<slv<real_t> > solver(opt_slv(vm, 
-    fllbck.get(), advsch.get(), output.get(), velocity.get(), intcond.get(),
-    nx, ny, nz, grid.get(), dt 
+  // grouping all above into a single set-up object
+  auto_ptr<stp<real_t> > setup(new stp<real_t>(
+    fllbck.get(), advsch.get(), 
+    output.get(), 
+    velocity.get(),
+    intcond.get(),
+    grid.get()
   ));
+
+  // solver choice
+  auto_ptr<slv<real_t> > solver(opt_slv(vm, setup.get(), nx, ny, nz, dt));
 
   // integration
   solver->integ_loop(nt, dt);

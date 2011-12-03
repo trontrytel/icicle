@@ -20,15 +20,13 @@ class slv_parallel : public slv<real_t>
   private: auto_ptr<slv_serial<real_t> > *slvs;
   private: adv<real_t> *fllbck, *advsch;
   
-  public: slv_parallel(adv<real_t> *fllbck, adv<real_t> *advsch, 
-    out<real_t> *output, vel<real_t> *velocity, ini<real_t> *intcond,
+  public: slv_parallel(stp<real_t> *setup,
     int i_min, int i_max, int nx, 
     int j_min, int j_max, int ny, 
     int k_min, int k_max, int nz,
-    grd<real_t> *grid,
     quantity<si::time, real_t> dt,
     int nsd)
-    : nsd(nsd), i_min(i_min), fllbck(fllbck), advsch(advsch)
+    : nsd(nsd), i_min(i_min), fllbck(setup->fllbck), advsch(setup->advsch)
   {
     // subdomain length
     int nxl = (i_max - i_min + 1);
@@ -39,11 +37,10 @@ class slv_parallel : public slv<real_t>
     // serial solver allocation (TODO: there could be just one psi for all subdomains...)
     slvs = new auto_ptr<slv_serial<real_t> >[nsd];
     for (int sd=0; sd < nsd; ++sd) 
-      slvs[sd].reset(new slv_serial<real_t>(fllbck, advsch, output, velocity, intcond,
+      slvs[sd].reset(new slv_serial<real_t>(setup,
         i_min + sd * nxs, i_min + (sd + 1) * nxs - 1, nx,
         j_min           , j_max                     , ny, 
         k_min           , k_max                     , nz,
-        grid,
         dt
       ));
 
@@ -59,7 +56,7 @@ class slv_parallel : public slv<real_t>
 
   public: ~slv_parallel()
   {
-    delete[] slvs;
+    delete[] slvs; // vector is not used as it might not work with auto_ptr
   }
 
   private: virtual void barrier() = 0;

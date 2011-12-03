@@ -70,16 +70,16 @@ int main(int ac, char* av[])
     // --slv list
     if (vm.count("slv") && vm["slv"].as<string>() == "list")
     {
-      cout << "serial";// FIXME: fork";
+      cout << "serial fork";
 #  ifdef _OPENMP
-      cout << " openmp";
+      cout << " openmp fork+openmp";
 #  endif
-#  ifdef USE_BOOST_THREADS
-      cout << " threads";
+#  ifdef USE_BOOST_THREAD
+      cout << " threads fork+threads";
 #  endif
 #  ifdef USE_BOOST_MPI
       cout << " mpi";
-#    ifdef USE_BOOST_THREADS
+#    ifdef USE_BOOST_THREAD
       cout << " mpi+threads";
 #    endif
 #    ifdef _OPENMP

@@ -16,24 +16,17 @@
 #  include "slv_parallel_distmem_fork.hpp"
 
 template <typename real_t>
-slv<real_t> *opt_slv(const po::variables_map& vm,
-  adv<real_t> *fllbck, 
-  adv<real_t> *advsch,
-  out<real_t> *output,
-  vel<real_t> *velocity,
-  ini<real_t> *intcond,
-  int nx, int ny, int nz, 
-  grd<real_t> *grid,
-  quantity<si::time, real_t> dt
+slv<real_t> *opt_slv(const po::variables_map& vm, stp<real_t> *setup,
+  int nx, int ny, int nz, quantity<si::time, real_t> dt
 )
 {
   string slvtype = vm.count("slv") ? vm["slv"].as<string>() : "<unspecified>";
   if (slvtype == "serial")
-    return new slv_serial<real_t>(fllbck, advsch, output, velocity, intcond,
+    return new slv_serial<real_t>(setup,
       0, nx - 1, nx,
       0, ny - 1, ny,
       0, nz - 1, nz,
-      grid, dt
+      dt
     );
   else
   {
@@ -41,36 +34,34 @@ slv<real_t> *opt_slv(const po::variables_map& vm,
     int nsd = vm["nsd"].as<int>();
 #  ifdef _OPENMP
     if (slvtype == "openmp")
-      return new slv_parallel_openmp<real_t>(
-        fllbck, advsch, output, velocity, intcond, 
+      return new slv_parallel_openmp<real_t>(setup,
         0, nx - 1, nx, 
         0, ny - 1, ny,
         0, nz - 1, nz, 
-        grid, dt, nsd
+        dt, nsd
       );
     else
 #  endif
 #  ifdef USE_BOOST_THREAD
     if (slvtype == "threads")
-      return new slv_parallel_threads<real_t>(
-        fllbck, advsch, output, velocity, intcond, 
+      return new slv_parallel_threads<real_t>(setup,
         0, nx - 1, nx, 
         0, ny - 1, ny,
         0, nz - 1, nz, 
-        grid, dt, nsd
+        dt, nsd
       );
     else
 #  endif
     if (slvtype == "fork")
       return new slv_parallel_distmem_fork<real_t, slv_parallel_serial<real_t> >(
-        fllbck, advsch, output, velocity, intcond, nx, ny, nz, grid, dt, nsd
+        setup, nx, ny, nz, dt, nsd
       );
     else
     // TODO: fork+threads, fork+openmp
 #  ifdef USE_BOOST_MPI
     if (slvtype == "mpi")
       return new slv_parallel_distmem_mpi<real_t, slv_parallel_serial<real_t> >(
-        fllbck, advsch, output, velocity, intcond, nx, ny, nz, grid, dt, nsd
+        setup, nx, ny, nz, dt, nsd
       );
     else
 #    ifdef USE_BOOST_THREAD

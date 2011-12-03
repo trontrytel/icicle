@@ -11,7 +11,7 @@ for bits in {32,64,128}; do
       for slv in `../icicles --slv list`; do
 #        for sdom in `../icicles --sdom list`; do
           for nsd in {1,2,4,5,20}; do
-            for nssdom in {1,2,3}; do
+#            for nssdom in {1,2,3}; do
               for nout in {1,5,10}; do
                 for adv in {mpdata,"mpdata --adv.mpdata.iord 1","mpdata --adv.mpdata.iord 3",leapfrog}; do
                   # combinations that does not make sense
@@ -40,7 +40,7 @@ for bits in {32,64,128}; do
                   echo "OK for: " $cmd
                 done # adv
               done # nout
-            done # nssdom
+#            done # nssdom
           done # nsd
 #        done # sdom
       done # slv

@@ -56,45 +56,47 @@ class slv_parallel_distmem : public shrdmem_class
   private: int i_min(int nx, int rank, int size) { return (rank + 0) * nx / size; }
   private: int i_max(int nx, int rank, int size) { return i_min(nx, rank + 1, size) - 1; }
 
-  public: slv_parallel_distmem(adv<real_t> *fllbck, adv<real_t> *advsch,
-    out<real_t> *output, vel<real_t> *velocity, ini<real_t> *intcond,
-    int nx, int ny, int nz, grd<real_t> *grid, quantity<si::time, real_t> dt, int size, int rank)
-    : shrdmem_class(fllbck, advsch, output, velocity, intcond,
+  public: slv_parallel_distmem(stp<real_t> *setup,
+    int nx, int ny, int nz, quantity<si::time, real_t> dt, int size, int rank)
+    : shrdmem_class(setup,
       i_min(nx, rank, size), i_max(nx, rank, size), nx,
       0, ny - 1, ny,
       0, nz - 1, nz,
-      grid, dt,
+      dt,
       1 // FIXME: MPI+OpenMP and MPI+threads 
     ), size(size), rank(rank)
   {
+    // we distinguish left and right halos just by knowing where they come from so...
+    if (size <= 2) error_macro("at least three subdomains are needed for distmem parallelisations")
+
     // subdomain length
     int nxs = nx / size;
     if (nxs != ((1.*nx) / (1.*size))) error_macro("nx/nk must be an integer value (" << nx << "/" << size << " given)")
 
     // halo containers for halo domain (TODO: use some clever Blitz constructor to save memory)
     {
-      int halo = (advsch->stencil_extent() - 1) / 2;
+      int halo = (setup->advsch->stencil_extent() - 1) / 2;
       int peer_left = (size + rank - 1) % size;
       int peer_rght = (size + rank + 1) % size;
 
       Range ixr, oxr, yr(0, ny - 1), zr(nz - 1);
 
       ixr = Range( // input xr (halo)
-        i_min(nx, rank, size) - halo, 
-        i_min(nx, rank, size) - 1  
+        (i_min(nx, rank, size) - halo + nx) % nx, 
+        (i_min(nx, rank, size) - 1    + nx) % nx  
       );
       oxr = Range( // output xr (edge)
         i_min(nx, rank, size), 
-        i_min(nx, rank, size) + halo
+        i_min(nx, rank, size) + halo - 1
       );
       lhalo.reset(new slv_halo(this, peer_left, ixr, oxr, yr, zr));
 
       ixr = Range( // input xr (halo)
-        i_max(nx, rank, size) + 1, 
-        i_max(nx, rank, size) + halo
+        (i_max(nx, rank, size) + 1    + nx) % nx, 
+        (i_max(nx, rank, size) + halo + nx) % nx
       );
       oxr = Range( // output xr (edge)
-        i_max(nx, rank, size) - halo,
+        i_max(nx, rank, size) - halo + 1,
         i_max(nx, rank, size)  
       );
       rhalo.reset(new slv_halo(this, peer_rght, ixr, oxr, yr, zr));

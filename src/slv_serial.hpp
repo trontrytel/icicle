@@ -9,12 +9,7 @@
 #  define DOM_SERIAL_HPP
 
 #  include "slv.hpp"
-#  include "adv.hpp"
-#  include "out.hpp"
-#  include "vel.hpp"
-#  include "arr.hpp"
-#  include "grd.hpp"
-#  include "ini.hpp"
+#  include "stp.hpp"
 
 template <typename real_t>
 class slv_serial : public slv<real_t>
@@ -27,15 +22,13 @@ class slv_serial : public slv<real_t>
   private: int nx, ny, nz, xhalo, yhalo, zhalo;
   private: auto_ptr<arr<real_t> > Cx, Cy, Cz;
 
-  public: slv_serial(adv<real_t> *fllbck, adv<real_t> *advsch, 
-    out<real_t> *output, vel<real_t> *velocity, ini<real_t> *intcond,
+  public: slv_serial(stp<real_t> *setup,
     int i_min, int i_max, int nx,
     int j_min, int j_max, int ny,
     int k_min, int k_max, int nz, 
-    grd<real_t> *grid,
     quantity<si::time, real_t> dt // TODO: dt should not be needed here!
   )
-    : fllbck(fllbck), advsch(advsch), output(output), nx(nx), ny(ny), nz(nz)
+    : fllbck(setup->fllbck), advsch(setup->advsch), output(setup->output), nx(nx), ny(ny), nz(nz)
   {
     // memory allocation
     {
@@ -64,7 +57,7 @@ class slv_serial : public slv<real_t>
     k.reset(new Range(k_min, k_max));
 
     // initial condition
-    grid->populate_scalar_field(*i, *j, *k, psi_ijk[0], intcond);
+    setup->grid->populate_scalar_field(*i, *j, *k, psi_ijk[0], setup->intcond);
 
     // periodic boundary in all directions
     for (enum slv<real_t>::side s=this->first; s <= this->last; ++s) 
@@ -73,19 +66,19 @@ class slv_serial : public slv<real_t>
     // velocity fields
     {
       Range 
-        ii = grid->rng_vctr(i->first(), i->last()),
+        ii = setup->grid->rng_vctr(i->first(), i->last()),
         jj = (j->first() != j->last())
-          ? grid->rng_vctr(j->first(), j->last())
+          ? setup->grid->rng_vctr(j->first(), j->last())
           : Range(j->first(), j->last()),
         kk = (k->first() != k->last())
-          ? grid->rng_vctr(k->first(), k->last())
+          ? setup->grid->rng_vctr(k->first(), k->last())
           : Range(k->first(), k->last());
 
       Cx.reset(new arr<real_t>(ii, jj, kk));
       Cy.reset(new arr<real_t>(ii, jj, kk));
       Cz.reset(new arr<real_t>(ii, jj, kk));
 
-      grid->populate_courant_fields(ii, jj, kk, &Cx->ijk(), &Cy->ijk(), &Cz->ijk(), velocity, dt);
+      setup->grid->populate_courant_fields(ii, jj, kk, &Cx->ijk(), &Cy->ijk(), &Cz->ijk(), setup->velocity, dt);
     }
   }
 

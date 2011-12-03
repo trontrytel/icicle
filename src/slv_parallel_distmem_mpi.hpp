@@ -20,7 +20,6 @@ class slv_parallel_distmem_mpi : public slv_parallel_distmem<real_t, shrdmem_cla
   private: enum msgtype { msg_halo };
   private: mpi::environment *env; // perhaps MPI::Init_thread(MPI_THREAD_MULTIPLE) instead to support MPI+threads?
   private: mpi::communicator *comm;
-  private: int bufsize;
 
   /// MPI init for using rank as an argument to the parent class c-tor
   private: int mpi_init()
@@ -30,12 +29,10 @@ class slv_parallel_distmem_mpi : public slv_parallel_distmem<real_t, shrdmem_cla
     return comm->rank();
   }
 
-  public: slv_parallel_distmem_mpi(adv<real_t> *fllbck, adv<real_t> *advsch, 
-    out<real_t> *output, vel<real_t> *velocity, ini<real_t> *intcond,
-    int nx, int ny, int nz, grd<real_t> *grid, quantity<si::time, real_t> dt, int nsd
+  public: slv_parallel_distmem_mpi(stp<real_t> *setup,
+    int nx, int ny, int nz, quantity<si::time, real_t> dt, int nsd
   ) 
-    : slv_parallel_distmem<real_t, shrdmem_class>(
-      fllbck, advsch, output, velocity, intcond, nx, ny, nz, grid, dt, nsd, mpi_init()
+    : slv_parallel_distmem<real_t, shrdmem_class>(setup, nx, ny, nz, dt, nsd, mpi_init()
     )
   {
     if (nsd != comm->size()) 
