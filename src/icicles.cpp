@@ -102,6 +102,7 @@ int main(int ac, char* av[])
   {
     cerr << "-- exception cought: " << e.what() << endl;
     cerr << "-- exit: KO" << endl;
+cerr << "exiting with code: " << EXIT_FAILURE << endl;
     exit(EXIT_FAILURE);
   }
   cerr << "-- exit: OK" << endl;
