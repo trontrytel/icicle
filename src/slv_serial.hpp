@@ -19,7 +19,7 @@ class slv_serial : public slv<real_t>
   private: adv<real_t> *fllbck, *advsch;
   private: auto_ptr<Range> i, j, k;
   private: out<real_t> *output;
-  private: int nx, ny, nz, xhalo, yhalo, zhalo;
+  private: int nx, ny, nz, halo;//, halo, zhalo;
   private: auto_ptr<arr<real_t> > Cx, Cy, Cz;
 
   public: slv_serial(stp<real_t> *setup,
@@ -31,12 +31,7 @@ class slv_serial : public slv<real_t>
     : fllbck(setup->fllbck), advsch(setup->advsch), output(setup->output), nx(nx), ny(ny), nz(nz)
   {
     // memory allocation
-    {
-      int halo = (advsch->stencil_extent() - 1) / 2;
-      xhalo = halo; // in extreme cases paralellisaion may make i_max = i_min
-      yhalo = (j_max != j_min ? halo : 0);
-      zhalo = (k_max != k_min ? halo : 0);
-    }
+    halo = (advsch->stencil_extent() - 1) / 2;
     psi = new auto_ptr<arr<real_t> >[advsch->time_levels()];
     psi_ijk = new Array<real_t, 3>*[advsch->time_levels()]; 
     psi_jki = new Array<real_t, 3>*[advsch->time_levels()]; 
@@ -44,9 +39,9 @@ class slv_serial : public slv<real_t>
     for (int n=0; n < advsch->time_levels(); ++n) 
     {
       psi[n].reset(new arr<real_t>(
-        Range(i_min - xhalo, i_max + xhalo),
-        Range(j_min - yhalo, j_max + yhalo),
-        Range(k_min - zhalo, k_max + zhalo)
+        Range(i_min - halo, i_max + halo),
+        Range(j_min - halo, j_max + halo),
+        Range(k_min - halo, k_max + halo)
       ));
       psi_ijk[n] = &psi[n]->ijk();
       psi_jki[n] = &psi[n]->jki();
@@ -60,19 +55,15 @@ class slv_serial : public slv<real_t>
     setup->grid->populate_scalar_field(*i, *j, *k, psi_ijk[0], setup->intcond);
 
     // periodic boundary in all directions
-    for (enum slv<real_t>::side s=this->first; s <= this->last; ++s) 
+    for (int s=this->first; s <= this->last; ++s) 
       this->hook_neighbour(s, this);
  
     // velocity fields
     {
       Range 
         ii = setup->grid->rng_vctr(i->first(), i->last()),
-        jj = (j->first() != j->last())
-          ? setup->grid->rng_vctr(j->first(), j->last())
-          : Range(j->first(), j->last()),
-        kk = (k->first() != k->last())
-          ? setup->grid->rng_vctr(k->first(), k->last())
-          : Range(k->first(), k->last());
+        jj = setup->grid->rng_vctr(j->first(), j->last()),
+        kk = setup->grid->rng_vctr(k->first(), k->last());
 
       Cx.reset(new arr<real_t>(ii, jj, kk));
       Cy.reset(new arr<real_t>(ii, jj, kk));
@@ -104,41 +95,35 @@ class slv_serial : public slv<real_t>
   public: void fill_halos(int n)
   { // TODO: make it much shorter!!!
     { // left halo
-      int i_min = i->first() - xhalo, i_max = i->first() - 1;
+      int i_min = i->first() - halo, i_max = i->first() - 1;
       (*psi_ijk[n])(Range(i_min, i_max), *j, *k) = 
         this->nghbr_data(slv<real_t>::left, n, Range((i_min + nx) % nx, (i_max + nx) % nx), *j, *k);
     }
     { // rght halo
-      int i_min = i->last() + 1, i_max = i->last() + xhalo;
+      int i_min = i->last() + 1, i_max = i->last() + halo;
       (*psi_ijk[n])(Range(i_min, i_max), *j, *k) =
         this->nghbr_data(slv<real_t>::rght, n, Range((i_min + nx) % nx, (i_max + nx) % nx), *j, *k);
     } 
-    if (j->first() != j->last())
-    {
-      { // fore halo
-        int j_min = j->first() - yhalo, j_max = j->first() - 1;
-        (*psi_ijk[n])(*i, Range(j_min, j_max), *k) = 
-          this->nghbr_data(slv<real_t>::fore, n, *i, Range((j_min + ny) % ny, (j_max + ny) % ny), *k);
-      }
-      { // hind halo
-        int j_min = j->last() + 1, j_max = j->last() + yhalo;
-        (*psi_ijk[n])(*i, Range(j_min, j_max), *k) =
-          this->nghbr_data(slv<real_t>::hind, n, *i, Range((j_min + ny) % ny, (j_max + ny) % ny), *k);
-      } 
+    { // fore halo
+      int j_min = j->first() - halo, j_max = j->first() - 1;
+      (*psi_ijk[n])(*i, Range(j_min, j_max), *k) = 
+        this->nghbr_data(slv<real_t>::fore, n, *i, Range((j_min + ny) % ny, (j_max + ny) % ny), *k);
     }
-    if (k->first() != k->last())
-    {
-      { // base halo
-        int k_min = k->first() - zhalo, k_max = k->first() - 1;
-        (*psi_ijk[n])(*i, *j, Range(k_min, k_max)) = 
-          this->nghbr_data(slv<real_t>::base, n, *i, *j, Range((k_min + nz) % nz, (k_max + nz) % nz));
-      }
-      { // apex halo
-        int k_min = k->last() + 1, k_max = k->last() + zhalo;
-        (*psi_ijk[n])(*i, *j, Range(k_min, k_max)) =
-          this->nghbr_data(slv<real_t>::apex, n, *i, *j, Range((k_min + nz) % nz, (k_max + nz) % nz));
-      } 
+    { // hind halo
+      int j_min = j->last() + 1, j_max = j->last() + halo;
+      (*psi_ijk[n])(*i, Range(j_min, j_max), *k) =
+        this->nghbr_data(slv<real_t>::hind, n, *i, Range((j_min + ny) % ny, (j_max + ny) % ny), *k);
+    } 
+    { // base halo
+      int k_min = k->first() - halo, k_max = k->first() - 1;
+      (*psi_ijk[n])(*i, *j, Range(k_min, k_max)) = 
+        this->nghbr_data(slv<real_t>::base, n, *i, *j, Range((k_min + nz) % nz, (k_max + nz) % nz));
     }
+    { // apex halo
+      int k_min = k->last() + 1, k_max = k->last() + halo;
+      (*psi_ijk[n])(*i, *j, Range(k_min, k_max)) =
+        this->nghbr_data(slv<real_t>::apex, n, *i, *j, Range((k_min + nz) % nz, (k_max + nz) % nz));
+    } 
   }
 
   public: void advect(adv<real_t> *a, int n, int s, quantity<si::time, real_t> dt)

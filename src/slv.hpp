@@ -15,11 +15,11 @@
 template <typename real_t>
 class slv : root
 {
-  // left->i_min, rght->i_max, fore->j_min, hind->j_max, base->k_min, apex->k_max
-  public: enum side { first, left=first, rght, fore, hind, base, apex, last=apex };
+  // left->i_min, rght->i_max, fore->j_min, hind->j_max, base->k_min, apex->k_max (enums may not be ++)
+  public: static const int first=0, left=first, rght=1, fore=2, hind=3, base=4, apex=5, last=apex;
   private: slv *nghbrs[6];
 
-  public: virtual void hook_neighbour(side s, slv *n) 
+  public: virtual void hook_neighbour(int s, slv *n) 
   { 
     nghbrs[s] = n; 
   }
@@ -29,7 +29,7 @@ class slv : root
   ) = 0;
 
   public: Array<real_t, 3> nghbr_data(
-    side s, int n, const Range &i, const Range &j, const Range &k
+    int s, int n, const Range &i, const Range &j, const Range &k
   )
   {
     nghbrs[s]->sync(n);

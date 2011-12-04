@@ -43,7 +43,7 @@ class out_gnuplot : public out<real_t>
     }
     assert(i_last + 1 == i.first()); // if data is output in order
     Array<real_t, 1> a = (*psi[n])(i, 0, 0);
-    for (int i=a.lbound(0); i<=a.ubound(0); ++i) cout << a(i) << endl;
+    for (int ii=a.lbound(0); ii<=a.ubound(0); ++ii) cout << a(ii) << endl;
   
     // housekeeping
     t_last = t;

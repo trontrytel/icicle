@@ -13,6 +13,7 @@
 #  include <boost/units/systems/si.hpp>
 using namespace boost::units;
 
+#  define BZ_THREADSAFE
 #  include <blitz/array.h>
 using namespace blitz;
 

@@ -16,7 +16,9 @@ for bits in {32,64,128}; do
                 for adv in {mpdata,"mpdata --adv.mpdata.iord 1","mpdata --adv.mpdata.iord 3",leapfrog}; do
                   # combinations that does not make sense
                   if [ $slv = "serial" -a $nsd != 1 ]; then continue; fi
-#                  if [ $slv = "serial" -a $sdom != "serial" ]; then continue; fi
+                  if [ $slv = "fork" ]; then continue; fi # TODO: output not ready
+                  if [ $slv = "fork+openmp" ]; then continue; fi # TODO: not ready
+                  if [ $slv = "fork+threads" ]; then continue; fi # TODO: not ready
 #                  if [ $sdom = "serial" -a $nssdom != 1 ]; then continue; fi
 
                   # the actual test

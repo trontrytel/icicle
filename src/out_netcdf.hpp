@@ -48,10 +48,10 @@ class out_netcdf : public out<real_t>
       }
       f.reset(new NcFile(file, NcFile::newFile, fmt)); 
       NcDim 
-        d_t = f->addDim("t"),
-        d_xs = f->addDim("xs", nx),
-        d_ys = f->addDim("ys", ny),
-        d_zs = f->addDim("zs", nz),
+        d_t = f->addDim("time"),
+        d_xs = f->addDim("X", nx),
+        d_ys = f->addDim("Y", ny),
+        d_zs = f->addDim("Z", nz),
         d_xv = f->addDim("xv", grid->rng_vctr(0, nx-1).length()), // TODO:  
         d_yv = f->addDim("yv", grid->rng_vctr(0, ny-1).length()), // TODO: that's a kludge
         d_zv = f->addDim("zv", grid->rng_vctr(0, nz-1).length()); // TODO:

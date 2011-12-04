@@ -6,10 +6,8 @@
  *  @section LICENSE
  *    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
  *  @section DESCRIPTION
- *    tralalalala
  *  @section RESULTS
  *
- *    MPDATA: \f$\sqrt{(x_2-x_1)^2+(y_2-y_1)^2}\f$.
  *    \image html "../../tests/smolar_1983/fig1.svg"
  */
 

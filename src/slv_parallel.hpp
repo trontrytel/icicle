@@ -93,7 +93,7 @@ class slv_parallel : public slv<real_t>
     return slvs[sd]->data(n, i, j, k);
   }
 
-  public: void hook_neighbour(enum slv<real_t>::side s, slv<real_t> *n) 
+  public: void hook_neighbour(int s, slv<real_t> *n) 
   {
     switch (s)
     {

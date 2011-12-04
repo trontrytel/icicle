@@ -1,14 +1,14 @@
 netcdf test_netcdf {
 dimensions:
-	t = UNLIMITED ; // (11 currently)
-	xs = 20 ;
-	ys = 1 ;
-	zs = 1 ;
+	time = UNLIMITED ; // (11 currently)
+	X = 20 ;
+	Y = 1 ;
+	Z = 1 ;
 	xv = 21 ;
 	yv = 2 ;
 	zv = 2 ;
 variables:
-	float psi(t, xs, ys, zs) ;
+	float psi(time, X, Y, Z) ;
 	float u(xv, yv, zv) ;
 	float v(xv, yv, zv) ;
 	float w(xv, yv, zv) ;

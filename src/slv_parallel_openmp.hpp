@@ -16,10 +16,17 @@ template <typename real_t>
 class slv_parallel_openmp : public slv_parallel<real_t>
 {
   public: slv_parallel_openmp(stp<real_t> *setup,
-    int nx, int ny, int nz, 
+    int i_min, int i_max, int nx, 
+    int j_min, int j_max, int ny, 
+    int k_min, int k_max, int nz, 
     quantity<si::time, real_t> dt,
     int nsd)
-    : slv_parallel<real_t>(setup, nx, ny, nz, dt, nsd)
+    : slv_parallel<real_t>(setup, 
+      i_min, i_max, nx, 
+      j_min, j_max, ny, 
+      k_min, k_max, nz, 
+      dt, nsd
+  )
   {
     int ncpu = omp_get_num_procs();
     if (nsd > ncpu) warning_macro("using more threads (" << nsd << ") than CPUs/cores (" << ncpu << ")")

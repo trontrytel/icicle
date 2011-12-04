@@ -8,7 +8,7 @@
  *    
  *
  *    Here's an example header of the netCDF file (output of ncdump -c):
- *    \include "netcdf4/lst1.txt"
+ *    \include "netcdf/lst1.txt"
  */
 
 #include <cstdlib>
