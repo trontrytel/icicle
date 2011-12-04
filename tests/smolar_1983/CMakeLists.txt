@@ -1,0 +1,2 @@
+add_executable(test_smolar_1983 test_smolar_1983.cpp)
+add_test(test_smolar_1983 test_smolar_1983)
