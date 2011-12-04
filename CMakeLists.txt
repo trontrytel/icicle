@@ -27,7 +27,7 @@ endif()
 project(icicles CXX)
 
 set(TMP "src/config.hpp")
-foreach(d .;doc;tests;src;)
+foreach(d .;doc;tests;src)
   set(TMP "${TMP};${d}/Makefile;${d}/CMakeCache.txt;${d}/cmake_install.cmake;${d}/CMakeFiles;${d}/Testing;${d}/CTestTestfile.cmake")
 endforeach()
 set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${TMP}")

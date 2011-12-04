@@ -20,6 +20,7 @@
 // the Lynton Appel's netCDF-4 C++ API (since netCDF 4.1.1)
 #    include <netcdf>
 using namespace netCDF;
+using namespace netCDF::exceptions;
 
 // TODO: #include <boost/timer/timer.hpp> (requires Boost 1.48)
 // TODO: ncFloat vs. ncDouble, ... ?
@@ -33,31 +34,53 @@ class out_netcdf : public out<real_t>
   private: NcVar vpsi;
   private: int freq; 
 
-  public: out_netcdf(string file, grd<real_t> *grid, int nx, int ny, int nz, int freq) 
+  public: out_netcdf(string file, grd<real_t> *grid, int nx, int ny, int nz, int freq, int ver) 
     : freq(freq)
   { 
-    f.reset(new NcFile(file, NcFile::newFile)); 
-    NcDim 
-      d_t = f->addDim("t"),
-      d_xs = f->addDim("xs", nx),
-      d_ys = f->addDim("ys", ny),
-      d_zs = f->addDim("zs", nz),
-      d_xv = f->addDim("xv", grid->rng_vctr(0, nx-1).length()), // TODO:  
-      d_yv = f->addDim("yv", grid->rng_vctr(0, ny-1).length()), // TODO: that's a kludge
-      d_zv = f->addDim("zv", grid->rng_vctr(0, nz-1).length()); // TODO:
-    vector<NcDim> sdims;
-    sdims[0] = d_t;
-    sdims[1] = d_xs;
-    sdims[2] = d_ys;
-    sdims[3] = d_zs;
-    vpsi = f->addVar("psi", ncFloat, sdims); 
-    vector<NcDim> vdims;
-    vdims[0] = d_xv;
-    vdims[1] = d_yv;
-    vdims[2] = d_zv;
-    NcVar vu = f->addVar("u", ncFloat, vdims); 
-    NcVar vv = f->addVar("v", ncFloat, vdims); 
-    NcVar vw = f->addVar("w", ncFloat, vdims); 
+    try
+    {
+      netCDF::NcFile::FileFormat fmt;
+      switch (ver)
+      {
+        case 3: fmt = NcFile::classic; break;
+        case 4: fmt = NcFile::nc4; break;
+        default: error_macro("unsupported netCDF format version: " << ver)
+      }
+      f.reset(new NcFile(file, NcFile::newFile, fmt)); 
+      NcDim 
+        d_t = f->addDim("t"),
+        d_xs = f->addDim("xs", nx),
+        d_ys = f->addDim("ys", ny),
+        d_zs = f->addDim("zs", nz),
+        d_xv = f->addDim("xv", grid->rng_vctr(0, nx-1).length()), // TODO:  
+        d_yv = f->addDim("yv", grid->rng_vctr(0, ny-1).length()), // TODO: that's a kludge
+        d_zv = f->addDim("zv", grid->rng_vctr(0, nz-1).length()); // TODO:
+      {
+        vector<NcDim> sdims(4);
+        sdims[0] = d_t;
+        sdims[1] = d_xs;
+        sdims[2] = d_ys;
+        sdims[3] = d_zs;
+        vpsi = f->addVar("psi", ncFloat, sdims); 
+      }
+      {
+        vector<NcDim> vdims(3);
+        vdims[0] = d_xv;
+        vdims[1] = d_yv;
+        vdims[2] = d_zv;
+        NcVar vu = f->addVar("u", ncFloat, vdims); 
+        NcVar vv = f->addVar("v", ncFloat, vdims); 
+        NcVar vw = f->addVar("w", ncFloat, vdims); 
+      }
+      // workaround for the lack of netCDF3 nc_enddef() in the netCDF C++4 API
+      if (fmt == NcFile::classic) 
+      {
+        f.reset(); // closing the file
+        f.reset(new NcFile(file, NcFile::write, fmt)); // reopening it
+        vpsi = f->getVar("psi");
+      }
+    }
+    catch (NcException& e) error_macro(e.what())
   }
 
   public: virtual void record(
@@ -79,7 +102,11 @@ class out_netcdf : public out<real_t>
         assert((*psi[n])(i_int, j_int, k).isStorageContiguous());
         startp[2] = j_int;
         startp[3] = k.first();
-        vpsi.putVar(startp, countp, (*psi[n])(i_int, j_int, k).dataFirst());
+        try 
+        {
+          vpsi.putVar(startp, countp, (*psi[n])(i_int, j_int, k).dataFirst());
+        }
+        catch (NcException& e) error_macro(e.what());
       }
     }
     //if (!f->sync()) warning_macro("failed to synchronise netCDF file")

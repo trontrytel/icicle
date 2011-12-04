@@ -30,7 +30,7 @@ out<real_t> *opt_out(const po::variables_map& vm,
   {
     if (!vm.count("out.netcdf.file")) error_macro("output filename not specified (--out.netcdf.file option)")
     int freq = vm.count("out.netcdf.freq") ? vm["out.netcdf.freq"].as<int>() : 1;
-    return new out_netcdf<real_t>(vm["out.netcdf.file"].as<string>(), grid, nx, ny, nz, freq);
+    return new out_netcdf<real_t>(vm["out.netcdf.file"].as<string>(), grid, nx, ny, nz, freq, vm["out.netcdf.ver"].as<int>());
   }
   else
 #  endif

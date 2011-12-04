@@ -23,27 +23,28 @@ int main(int ac, char* av[])
     po::options_description desc("options");
     desc.add_options()
       ("help", "print this message")
-      ("bits", po::value<int>(), "floating point bits: sizeof(float), sizeof(double), sizeof(long double)")
+      ("bits", po::value<int>()->default_value(32), "floating point bits: sizeof(float), sizeof(double), sizeof(long double)")
       ("adv", po::value<string>(), "advection scheme: leapfrog, mpdata")
       ("adv.mpdata.iord", po::value<int>(), "mpdata iord option: 1, 2, ...")
       ("slv", po::value<string>(), "solver: serial, openmp, threads")
       ("out", po::value<string>(), "output: debug, gnuplot, netcdf")
       ("out.netcdf.file", po::value<string>(), "output filename (e.g. for netcdf)")
       ("out.netcdf.freq", po::value<int>(), "inverse of output frequency (10 for every 10-th record)")
+      ("out.netcdf.ver", po::value<int>()->default_value(4), "netCDF format version (3 or 4)")
       ("nsd", po::value<int>(), "number of subdomains (nx/nsd must be int)")
       ("nx", po::value<int>(), "number of grid points (X)")
-      ("ny", po::value<int>(), "number of grid points (Y)")
-      ("nz", po::value<int>(), "number of grid points (Z)")
+      ("ny", po::value<int>()->default_value(1), "number of grid points (Y)")
+      ("nz", po::value<int>()->default_value(1), "number of grid points (Z)")
       ("nt", po::value<unsigned long>(), "number of timesteps")
       ("dt", po::value<string>(), "timestep length [s]")
       ("grd", po::value<string>(), "grid: arakawa-c-lorenz")
       ("grd.dx", po::value<string>(), "gridbox length (X) [m]")
-      ("grd.dy", po::value<string>(), "gridbox length (Y) [m]")
-      ("grd.dz", po::value<string>(), "gridbox length (Z) [m]")
+      ("grd.dy", po::value<string>()->default_value("0"), "gridbox length (Y) [m]")
+      ("grd.dz", po::value<string>()->default_value("0"), "gridbox length (Z) [m]")
       ("vel", po::value<string>(), "velocity field: uniform, rasinski")
       ("vel.uniform.u", po::value<string>(), "velocity (X) [m/s]")
-      ("vel.uniform.v", po::value<string>(), "velocity (Y) [m/s]")
-      ("vel.uniform.w", po::value<string>(), "velocity (Z) [m/s]")
+      ("vel.uniform.v", po::value<string>()->default_value("0"), "velocity (Y) [m/s]")
+      ("vel.uniform.w", po::value<string>()->default_value("0"), "velocity (Z) [m/s]")
       ("vel.rasinski.Z_clb", po::value<string>(), "cloud base height [m]")
       ("vel.rasinski.Z_top", po::value<string>(), "cloud top height [m]")
       ("vel.rasinski.A", po::value<string>(), "amplitude [m2/s]")
@@ -91,7 +92,6 @@ int main(int ac, char* av[])
     }
 
     // --bits (floating point precision choice)
-    if (!vm.count("bits")) error_macro("floating point precision not specified (--bits option)")
     int bits = vm["bits"].as<int>();
     if (sizeof(float) * 8 == bits) model<float>(vm);
 //    else if (sizeof(double) * 8 == bits) model<double>(vm);
@@ -102,7 +102,6 @@ int main(int ac, char* av[])
   {
     cerr << "-- exception cought: " << e.what() << endl;
     cerr << "-- exit: KO" << endl;
-cerr << "exiting with code: " << EXIT_FAILURE << endl;
     exit(EXIT_FAILURE);
   }
   cerr << "-- exit: OK" << endl;

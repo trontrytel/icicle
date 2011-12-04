@@ -21,6 +21,9 @@
   - Boost C++ libraries, incl.: ........ http://www.boost.org/
     - Boost headers & shared libs (Thread, MPI)
   - NetCDF C++ library ... http://www.unidata.ucar.edu/netcdf/
+    (configured with netCDF4 support)
+  - NetCDF C++4 bindings . http://www.unidata.ucar.edu/netcdf/
+    (ver >= 4.2 beta) . ftp://ftp.unidata.ucar.edu/pub/netcdf/
   - MPI libraries with C++ bindings (optional), e.g.:
     - Open MPI ...................... http://www.open-mpi.org/
       (with --enable-mpi-threads if MPI+threads is to be used)
