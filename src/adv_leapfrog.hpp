@@ -24,7 +24,7 @@ class adv_leapfrog : public adv<real_t>
     : grid(grid)
   { }
 
-  public: void op(Array<real_t, 3>* psi[], 
+  public: void op(int, Array<real_t, 3>* psi[], 
     const Range &i, 
     const Range &j, 
     const Range &k, 

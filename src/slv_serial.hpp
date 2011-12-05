@@ -129,15 +129,7 @@ class slv_serial : public slv<real_t>
 
   public: void advect(adv<real_t> *a, int n, int s, quantity<si::time, real_t> dt)
   {
-    // op() uses the -= operator so the first assignment happens here
-    *psi_ijk[n+1] = *psi_ijk[0]; 
-
-    if (true) // in extreme cases paralellisaion may make i->first() = i->last()
-      a->op(psi_ijk, *i, *j, *k, n, s, Cx->ijk(), Cy->ijk(), Cz->ijk()); // X
-    if (j->first() != j->last()) 
-      a->op(psi_jki, *j, *k, *i, n, s, Cy->jki(), Cz->jki(), Cx->jki()); // Y
-    if (k->first() != k->last()) 
-      a->op(psi_kij, *k, *i, *j, n, s, Cz->kij(), Cx->kij(), Cy->kij()); // Z
+    a->op3D(psi_ijk, psi_jki, psi_kij, *i, *j, *k, n, s, *Cx, *Cy, *Cz);
   }
 
   public: void cycle_arrays(const int n)

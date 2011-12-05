@@ -10,6 +10,7 @@
 
 #  include "opt.hpp"
 #  include "adv_mpdata.hpp"
+#  include "adv_mpdata_fct.hpp"
 #  include "adv_leapfrog.hpp"
 #  include "adv_lax-wendroff.hpp"
 
@@ -33,8 +34,10 @@ void opt_adv(const po::variables_map& vm,
   }
   else if (advscheme == "mpdata")
   {
-    int iord = vm.count("adv.mpdata.iord") ? vm["adv.mpdata.iord"].as<int>() : 2;
-    *advsch = new adv_mpdata<real_t>(g, iord);
+    if (vm["adv.mpdata.fct"].as<bool>())
+      *advsch = new adv_mpdata_fct<real_t>(g, vm["adv.mpdata.iord"].as<int>());
+    else
+      *advsch = new adv_mpdata<real_t>(g, vm["adv.mpdata.iord"].as<int>());
   }
   else error_macro("unsupported advection scheme: " << advscheme)
 }

@@ -23,23 +23,32 @@ class adv_mpdata : public adv<real_t>
   public: const int num_steps() { return iord; }
 
   private: int iord;
+  private: bool cache;
   private: grd_arakawa_c_lorenz<real_t> *grid;
+  private: auto_ptr<Array<real_t, 3> > caches[3]; // antidiffusive velocity caches
 
-  public: adv_mpdata(grd_arakawa_c_lorenz<real_t> *grid, int iord) 
-    : iord(iord), grid(grid)
+  public: adv_mpdata(grd_arakawa_c_lorenz<real_t> *grid, int iord, bool cache = false) 
+    : iord(iord), cache(cache), grid(grid)
   {
     if (iord <= 0) error_macro("iord (the number of iterations) must be > 0")
   }
 
 #    define mpdata_F(p1, p2, U) (.5 * (U + abs(U)) * p1 + .5 * (U - abs(U)) * p2)
-  public: void op_helper(const real_t sign, const Range &il, const Range &ic, const Range &ir,
-    const Range &i, const Range &j, const Range &k, 
-    Array<real_t, 3>* psi[], const int n,
-    const Array<real_t, 3> &Cx, 
-    const Array<real_t, 3> &Cy, 
-    const Array<real_t, 3> &Cz
+  public: void op_helper(int dim, const real_t sign, const Range &il, const Range &ic, const Range &ir,
+    const Range &i, const Range &j, const Range &k, Array<real_t, 3>* psi[], const int n,
+    const Array<real_t, 3> &Cx, const Array<real_t, 3> &Cy, const Array<real_t, 3> &Cz
   )
   {
+    if (cache)
+    {
+      if (caches[0].get() == NULL) // not allocated yet
+      {
+        int nx=Cx.cols(), ny=Cx.rows(), nz=Cx.depth();
+        caches[0].reset(new Array<real_t, 3>(nx, ny, nz));
+        caches[1].reset(new Array<real_t, 3>(nx, ny, nz));
+        caches[2].reset(new Array<real_t, 3>(nx, ny, nz));
+      }
+    }
     // preprocessor macros are the only option as methods cannot return parts of Blitz expressions 
 #    define mpdata_A(pr, pl) \
        where(pr + pl > 0, \
@@ -57,6 +66,11 @@ class adv_mpdata : public adv<real_t>
     (*psi[n+1])(i,j,k) += sign * (
       mpdata_F(
         (*psi[n])(il, j, k), (*psi[n])(ir, j, k),
+// TODO na jutro: 
+// - 6 tablicy w cache'u
+// - poniższy nawias -> makro preprocesora
+// - zapisanie wyniku lub nie w zależności od wartości cache
+// - metody getCache() do uzycia w klasie pochodnej (adv_mpdata_fct)
         (
           mpdata_CA( 
             (*psi[n])(ir, j, k), (*psi[n])(il, j, k), // pl, pr
@@ -88,12 +102,9 @@ class adv_mpdata : public adv<real_t>
 #    undef mpdata_CB
   }
 
-  public: void op(Array<real_t, 3>* psi[], 
-    const Range &i, const Range &j, const Range &k, 
-    const int n, const int step,
-    const Array<real_t, 3> &Cx, 
-    const Array<real_t, 3> &Cy, 
-    const Array<real_t, 3> &Cz
+  public: void op(int dim, Array<real_t, 3>* psi[], 
+    const Range &i, const Range &j, const Range &k, const int n, const int step,
+    const Array<real_t, 3> &Cx, const Array<real_t, 3> &Cy, const Array<real_t, 3> &Cz
   )
   {
     if (step == 1)
@@ -103,8 +114,8 @@ class adv_mpdata : public adv<real_t>
       );
     else 
     {
-      op_helper(-1, i  , i+grid->p_half, i+1, i, j, k, psi, n, Cx, Cy, Cz);
-      op_helper(+1, i-1, i-grid->m_half, i  , i, j, k, psi, n, Cx, Cy, Cz);
+      op_helper(dim, -1, i  , i+grid->p_half, i+1, i, j, k, psi, n, Cx, Cy, Cz);
+      op_helper(dim, +1, i-1, i-grid->m_half, i  , i, j, k, psi, n, Cx, Cy, Cz);
     }
   }
 #    undef mpdata_F

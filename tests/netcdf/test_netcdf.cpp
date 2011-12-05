@@ -29,7 +29,7 @@ int main()
 
   if (0 != system(cmd.c_str())) 
     exit(EXIT_FAILURE);
-  if (0 != system("test `ncdump -k test_netcdf.nc` == \"netCDF-4\"")) 
+  if (0 != system("test \"`ncdump -k test_netcdf.nc`\" = \"netCDF-4\"")) 
     exit(EXIT_FAILURE);
   if (0 != system("ncdump -c test_netcdf.nc > lst1.txt")) 
     exit(EXIT_FAILURE);
@@ -37,7 +37,7 @@ int main()
 
   if (0 != system((cmd + " --out.netcdf.ver 3").c_str())) 
     exit(EXIT_FAILURE);
-  if (0 != system("test `ncdump -k test_netcdf.nc` == \"classic\"")) 
+  if (0 != system("test \"`ncdump -k test_netcdf.nc`\" = \"classic\"")) 
     exit(EXIT_FAILURE);
   unlink("test_netcdf.nc");
 }
