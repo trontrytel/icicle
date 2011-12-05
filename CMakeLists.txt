@@ -148,6 +148,7 @@ else()
   else()
     set(USE_BOOST_THREAD ${Find_Boost_Thread})
     set(LINK_FLAGS "${LINK_FLAGS} ${CMAKE_REQUIRED_LIBRARIES}") 
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
   endif()
 endif()                                                                #
 #### </Boost.Thread> ###################################################
@@ -194,4 +195,4 @@ endif()
 enable_testing()
 
 add_subdirectory(tests)
-#add_subdirectory(src) # has to be done after the config.hpp file is created! (...?)
+add_subdirectory(src) 

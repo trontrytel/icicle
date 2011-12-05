@@ -8,8 +8,8 @@
 for bits in {32,64,128}; do
   for u in {-1,1}; do
     for nt in {10,30}; do
-      for slv in `../icicles --slv list`; do
-#        for sdom in `../icicles --sdom list`; do
+      for slv in `../../icicles --slv list`; do
+#        for sdom in `../../icicles --sdom list`; do
           for nsd in {1,2,4,5,20}; do
 #            for nssdom in {1,2,3}; do
               for nout in {1,5,10}; do
@@ -22,7 +22,7 @@ for bits in {32,64,128}; do
 #                  if [ $sdom = "serial" -a $nssdom != 1 ]; then continue; fi
 
                   # the actual test
-                  cmd="../icicles --ini origin-one"
+                  cmd="../../icicles --ini origin-one"
                   cmd="$cmd --bits $bits --dt 1 --grd.dx 1 --grd.dy 1 --grd.dz 1 --grd arakawa-c-lorenz"
                   cmd="$cmd --vel uniform --vel.uniform.u $u --vel.uniform.v 0 --vel.uniform.w 0"
                   cmd="$cmd --nt $nt --nx 20 --ny 1 --nz 1 --adv $adv --slv $slv --out gnuplot --nsd $nsd"

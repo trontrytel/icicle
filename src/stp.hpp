@@ -9,14 +9,13 @@
  *    the advection scheme, the output type, the velocity field etc
  */
 #ifndef STP_HPP
-#  define SPT_HPP
+#  define STP_HPP
 
 #  include "adv.hpp"
 #  include "out.hpp"
 #  include "vel.hpp"
-#  include "arr.hpp"
-#  include "grd.hpp"
 #  include "ini.hpp"
+#  include "grd.hpp"
 
 template <typename real_t>
 class stp : root

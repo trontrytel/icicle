@@ -10,6 +10,7 @@
 
 #  include "slv.hpp"
 #  include "stp.hpp"
+#  include "arr.hpp"
 
 template <typename real_t>
 class slv_serial : public slv<real_t>

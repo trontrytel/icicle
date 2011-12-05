@@ -9,6 +9,7 @@
 #  define OPT_INI_HPP
 
 #  include "opt.hpp"
+#  include "grd.hpp"
 #  include "ini_origin-one.hpp"
 #  include "ini_cone.hpp"
 

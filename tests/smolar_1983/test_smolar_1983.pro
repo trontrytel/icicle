@@ -18,7 +18,7 @@ pro test_smolar_1983, full=full
     ' --adv mpdata'+ $
     ' --ini cone --ini.cone.h 3.87 --ini.cone.x0 75 --ini.cone.z0 50 --ini.cone.r 15'+ $
     ' --slv serial' + $
-    ' --out netcdf --out.netcdf.freq '+string(nt)+' --out.netcdf.file '+file
+    ' --out netcdf --out.netcdf.ver 3 --out.netcdf.freq '+string(nt)+' --out.netcdf.file '+file
   spawn, cmd, exit_status=status
   if status ne 0 then exit, status=1
   f = ncdf_open(file) 
