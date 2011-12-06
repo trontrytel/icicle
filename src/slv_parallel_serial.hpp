@@ -17,17 +17,16 @@ class slv_parallel_serial : public slv_parallel<real_t>
     int i_min, int i_max, int nx, 
     int j_min, int j_max, int ny, 
     int k_min, int k_max, int nz, 
-    quantity<si::time, real_t> dt, int nsd
+    quantity<si::time, real_t> dt, int nsd = 1
   )
-    : slv_parallel<real_t>(setup, i_min, i_max, nx, j_min, j_max, ny, k_min, k_max, nz, dt, nsd
+    : slv_parallel<real_t>(setup, i_min, i_max, nx, j_min, j_max, ny, k_min, k_max, nz, dt, 1
     )
-  {
+  { 
     assert(nsd == 1);
   }
 
   public: void barrier() 
-  { 
-  }
+  { }
 
   public: void integ_loop(unsigned long nt, quantity<si::time, real_t> dt)
   {

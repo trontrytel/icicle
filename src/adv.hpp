@@ -11,6 +11,7 @@
 #  include "config.hpp" // USE_* defines
 #  include "common.hpp" // root class, error reporting, ...
 #  include "grd.hpp" // m_half, p_half, ...
+#  include "idx.hpp"
 
 template <typename real_t>
 class adv : root
@@ -19,14 +20,25 @@ class adv : root
   public: virtual const int time_levels() = 0;
   public: virtual const int num_steps() = 0;
 
-  public: virtual void op(Array<real_t, 3> *psi[], 
-    const Range &i, 
-    const Range &j, 
-    const Range &k, 
+  public: virtual void op_ijk(
+    Array<real_t, 3> *psi[], 
+    const Range &i, const Range &j, const Range &k, 
     const int n, const int step,
-    const Array<real_t, 3> &Cx,
-    const Array<real_t, 3> &Cy,
-    const Array<real_t, 3> &Cz
+    const Array<real_t, 3> &Cx, const Array<real_t, 3> &Cy, const Array<real_t, 3> &Cz
+  ) = 0;
+
+  public: virtual void op_jki(
+    Array<real_t, 3> *psi[], 
+    const Range &i, const Range &j, const Range &k, 
+    const int n, const int step,
+    const Array<real_t, 3> &Cx, const Array<real_t, 3> &Cy, const Array<real_t, 3> &Cz
+  ) = 0; 
+
+  public: virtual void op_kij(
+    Array<real_t, 3> *psi[], 
+    const Range &i, const Range &j, const Range &k, 
+    const int n, const int step,
+    const Array<real_t, 3> &Cx, const Array<real_t, 3> &Cy, const Array<real_t, 3> &Cz
   ) = 0;
 };
 #endif

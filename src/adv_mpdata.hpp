@@ -32,7 +32,9 @@ class adv_mpdata : public adv<real_t>
   }
 
 #    define mpdata_F(p1, p2, U) (.5 * (U + abs(U)) * p1 + .5 * (U - abs(U)) * p2)
-  public: void op_helper(const real_t sign, const Range &il, const Range &ic, const Range &ir,
+  public: 
+  template <class idx>
+  void op_helper(const real_t sign, const Range &il, const Range &ic, const Range &ir,
     const Range &i, const Range &j, const Range &k, 
     Array<real_t, 3>* psi[], const int n,
     const Array<real_t, 3> &Cx, 
@@ -54,28 +56,28 @@ class adv_mpdata : public adv<real_t>
 #    define mpdata_V(Vru, Vlu, Vrd, Vld) (.25 * (Vru + Vlu + Vrd + Vld))
 #    define mpdata_CA(pr, pl, U) ((abs(U) - pow(U,2)) * mpdata_A(pr, pl))
 #    define mpdata_CB(pru, plu, prd, pld, U, V) (U * V * mpdata_B(pru, plu, prd, pld)) 
-    (*psi[n+1])(i,j,k) += sign * (
+    (*psi[n+1])(idx(i,j,k)) += sign * (
       mpdata_F(
-        (*psi[n])(il, j, k), (*psi[n])(ir, j, k),
+        (*psi[n])(idx(il, j, k)), (*psi[n])(idx(ir, j, k)),
         (
           mpdata_CA( 
-            (*psi[n])(ir, j, k), (*psi[n])(il, j, k), // pl, pr
-            Cx(ic, j, k)
+            (*psi[n])(idx(ir, j, k)), (*psi[n])(idx(il, j, k)), // pl, pr
+            Cx(idx(ic, j, k))
           ) - 
           mpdata_CB(
-            (*psi[n])(ir, j+1, k), (*psi[n])(il, j+1, k), // pru, plu
-            (*psi[n])(ir, j-1, k), (*psi[n])(il, j-1, k), // prd, pld
-            Cx(ic, j, k), mpdata_V(
-              Cy(ir, j + grid->p_half, k), Cy(il, j + grid->p_half, k), // Vru, Vlu
-              Cy(ir, j - grid->m_half, k), Cy(il, j - grid->m_half, k)  // Vrd, Vld
+            (*psi[n])(idx(ir, j+1, k)), (*psi[n])(idx(il, j+1, k)), // pru, plu
+            (*psi[n])(idx(ir, j-1, k)), (*psi[n])(idx(il, j-1, k)), // prd, pld
+            Cx(idx(ic, j, k)), mpdata_V(
+              Cy(idx(ir, j + grid->p_half, k)), Cy(idx(il, j + grid->p_half, k)), // Vru, Vlu
+              Cy(idx(ir, j - grid->m_half, k)), Cy(idx(il, j - grid->m_half, k))  // Vrd, Vld
             )
           ) - 
           mpdata_CB(
-            (*psi[n])(ir, j, k+1), (*psi[n])(il, j, k+1), // pru, plu
-            (*psi[n])(ir, j, k-1), (*psi[n])(il, j, k-1), // prd, pld
-            Cx(ic, j, k), mpdata_V(
-              Cz(ir, j, k + grid->p_half), Cz(il, j, k + grid->p_half), // Vru, Vlu
-              Cz(ir, j, k - grid->m_half), Cz(il, j, k - grid->m_half)  // Vrd, Vld
+            (*psi[n])(idx(ir, j, k+1)), (*psi[n])(idx(il, j, k+1)), // pru, plu
+            (*psi[n])(idx(ir, j, k-1)), (*psi[n])(idx(il, j, k-1)), // prd, pld
+            Cx(idx(ic, j, k)), mpdata_V(
+              Cz(idx(ir, j, k + grid->p_half)), Cz(idx(il, j, k + grid->p_half)), // Vru, Vlu
+              Cz(idx(ir, j, k - grid->m_half)), Cz(idx(il, j, k - grid->m_half))  // Vrd, Vld
             )
           ) 
         )
@@ -88,7 +90,9 @@ class adv_mpdata : public adv<real_t>
 #    undef mpdata_CB
   }
 
-  public: void op(Array<real_t, 3>* psi[], 
+  public: 
+  template <class idx>
+  void op(Array<real_t, 3>* psi[], 
     const Range &i, const Range &j, const Range &k, 
     const int n, const int step,
     const Array<real_t, 3> &Cx, 
@@ -97,16 +101,17 @@ class adv_mpdata : public adv<real_t>
   )
   {
     if (step == 1)
-      (*psi[n+1])(i,j,k) -= (
-        mpdata_F((*psi[n])(i  ,j,k), (*psi[n])(i+1,j,k), Cx(i + grid->p_half,j,k)) - 
-        mpdata_F((*psi[n])(i-1,j,k), (*psi[n])(i  ,j,k), Cx(i - grid->m_half,j,k))
+      (*psi[n+1])(idx(i,j,k)) -= (
+        mpdata_F((*psi[n])(idx(i  ,j,k)), (*psi[n])(idx(i+1,j,k)), Cx(idx(i + grid->p_half,j,k))) - 
+        mpdata_F((*psi[n])(idx(i-1,j,k)), (*psi[n])(idx(i  ,j,k)), Cx(idx(i - grid->m_half,j,k)))
       );
     else 
     {
-      op_helper(-1, i  , i+grid->p_half, i+1, i, j, k, psi, n, Cx, Cy, Cz);
-      op_helper(+1, i-1, i-grid->m_half, i  , i, j, k, psi, n, Cx, Cy, Cz);
+      op_helper<idx>(-1, i  , i+grid->p_half, i+1, i, j, k, psi, n, Cx, Cy, Cz);
+      op_helper<idx>(+1, i-1, i-grid->m_half, i  , i, j, k, psi, n, Cx, Cy, Cz);
     }
   }
 #    undef mpdata_F
+#  include "adv_hack.cpp"
 };
 #endif

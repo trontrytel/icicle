@@ -84,7 +84,7 @@ class out_netcdf : public out<real_t>
   }
 
   public: virtual void record(
-    Array<real_t, 3> **psi, const int n, 
+    Array<real_t, 3> *psi,
     const Range &i, const Range &j, const Range &k, const unsigned long t
   ) 
   {
@@ -99,12 +99,12 @@ class out_netcdf : public out<real_t>
       startp[1] = i_int;
       for (int j_int = j.first(); j_int <= j.last(); ++j_int)
       {
-        assert((*psi[n])(i_int, j_int, k).isStorageContiguous());
+        assert((*psi)(i_int, j_int, k).isStorageContiguous());
         startp[2] = j_int;
         startp[3] = k.first();
         try 
         {
-          vpsi.putVar(startp, countp, (*psi[n])(i_int, j_int, k).dataFirst());
+          vpsi.putVar(startp, countp, (*psi)(i_int, j_int, k).dataFirst());
         }
         catch (NcException& e) error_macro(e.what());
       }

@@ -14,14 +14,14 @@ template <typename real_t>
 class out_debug : public out<real_t>
 {
   public: virtual void record(
-    Array<real_t, 3> **psi, const int n, 
+    Array<real_t, 3> *psi,
     const Range &i, const Range &j, const Range &k, const unsigned long t
   ) 
   {
     cerr // non-buffered?
       << "[" << i << "," << j << "," << k << "] @ t/dt=" << t
       << endl
-      << (*psi[n])(i, j, k) 
+      << (*psi)(i, j, k) 
       << endl;
   }
 };
