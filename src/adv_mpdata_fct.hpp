@@ -17,11 +17,14 @@
 template <typename real_t> 
 class adv_mpdata_fct : public adv_mpdata<real_t> 
 {
+  public: const int num_vctr_caches() 
+  { 
+    return adv_mpdata<real_t>::num_vctr_caches() + 3; 
+  }
+
   public: adv_mpdata_fct(grd_arakawa_c_lorenz<real_t> *grid, int iord) 
     : adv_mpdata<real_t>(grid, iord, true)
-  {
-    // TODO: zaalokowac tmp1 i tmp2
-  }
+  { }
 
 /*
   public: void op3D(

@@ -18,53 +18,55 @@ class adv : root
 {
   public: virtual const int stencil_extent() = 0;
   public: virtual const int time_levels() = 0;
-  public: virtual const int num_steps() = 0;
+  public: virtual const int num_steps() { return 0; }
+  public: virtual const int num_sclr_caches() { return 0; }
+  public: virtual const int num_vctr_caches() { return 0; }
 
-  public: virtual void op_ijk(
+  private: virtual void op_ijk(
     Array<real_t, 3> *psi[], 
+    Array<real_t, 3> *tmp[], 
     const Range &i, const Range &j, const Range &k, 
     const int n, const int step,
     const Array<real_t, 3> &Cx, const Array<real_t, 3> &Cy, const Array<real_t, 3> &Cz
   ) = 0;
 
-  public: virtual void op_jki(
+  private: virtual void op_jki(
     Array<real_t, 3> *psi[], 
+    Array<real_t, 3> *tmp[], 
     const Range &i, const Range &j, const Range &k, 
     const int n, const int step,
     const Array<real_t, 3> &Cx, const Array<real_t, 3> &Cy, const Array<real_t, 3> &Cz
   ) = 0; 
 
-  public: virtual void op_kij(
+  private: virtual void op_kij(
     Array<real_t, 3> *psi[], 
+    Array<real_t, 3> *tmp[], 
     const Range &i, const Range &j, const Range &k, 
     const int n, const int step,
     const Array<real_t, 3> &Cx, const Array<real_t, 3> &Cy, const Array<real_t, 3> &Cz
   ) = 0;
 
-/*
   public: virtual void op3D(
-    Array<real_t, 3> *psi_ijk[], 
-    Array<real_t, 3> *psi_jki[], 
-    Array<real_t, 3> *psi_kij[], 
+    Array<real_t, 3> *psi[], 
+    Array<real_t, 3> *tmp[], 
     const Range &i, 
     const Range &j, 
     const Range &k, 
-    const int n, const int step,
-    arr<real_t> &Cx,
-    arr<real_t> &Cy,
-    arr<real_t> &Cz
+    const int n, const int s,
+    Array<real_t, 3> &Cx,
+    Array<real_t, 3> &Cy,
+    Array<real_t, 3> &Cz
   )
   {
     // op() uses the -= operator so the first assignment happens here
-    *psi_ijk[n+1] = *psi_ijk[0];
+    *psi[n+1] = *psi[0];
 
-    if (true) // in extreme cases paralellisaion may make i->first() = i->last()
-      op(0, psi_ijk, i, j, k, n, step, Cx.ijk(), Cy.ijk(), Cz.ijk()); // X
+    if (true)  
+      op_ijk(psi, tmp, i, j, k, n, s, Cx, Cy, Cz); // X
     if (j.first() != j.last())
-      op(1, psi_jki, j, k, i, n, step, Cy.jki(), Cz.jki(), Cx.jki()); // Y
+      op_jki(psi, tmp, i, j, k, n, s, Cy, Cz, Cx); // Y
     if (k.first() != k.last())
-      op(2, psi_kij, k, i, j, n, step, Cz.kij(), Cx.kij(), Cy.kij()); // Z
+      op_kij(psi, tmp, i, j, k, n, s, Cz, Cx, Cy); // Z
   }
-*/
 };
 #endif

@@ -13,7 +13,7 @@ for bits in {32,64,128}; do
           for nsd in {1,2,4,5,20}; do
 #            for nssdom in {1,2,3}; do
               for nout in {1,5,10}; do
-                for adv in {mpdata,"mpdata --adv.mpdata.iord 1","mpdata --adv.mpdata.iord 3",leapfrog}; do
+                for adv in {mpdata,"mpdata --adv.mpdata.iord 1","mpdata --adv.mpdata.iord 3",leapfrog,"mpdata --adv.mpdata.fct 1"}; do
                   # combinations that does not make sense
                   if [ $slv = "serial" -a $nsd != 1 ]; then continue; fi
                   if [ $slv = "fork" ]; then continue; fi # TODO: output not ready
