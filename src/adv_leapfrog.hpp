@@ -16,7 +16,6 @@ class adv_leapfrog : public adv<real_t>
 {
   public: const int stencil_extent() { return 3; }
   public: const int time_levels() { return 3; }
-  public: const int num_steps() { return 1; }
  
   private: grd_arakawa_c_lorenz<real_t> *grid;
 
@@ -26,7 +25,9 @@ class adv_leapfrog : public adv<real_t>
 
   public: 
   template <class idx>
-  void op(Array<real_t, 3>* psi[], 
+  void op(int dim,
+    Array<real_t, 3>* psi[], 
+    Array<real_t, 3>* tmp[], 
     const Range &i, const Range &j, const Range &k, 
     const int n, const int step,
     const Array<real_t, 3> &Cx, const Array<real_t, 3> &, const Array<real_t, 3> &

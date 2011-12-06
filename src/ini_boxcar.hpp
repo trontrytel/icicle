@@ -1,26 +1,30 @@
 /** @file
  *  @author Sylwester Arabas <slayoo@igf.fuw.edu.pl>
+ *  @author Anna Jaruga <ajaruga@igf.fuw.edu.pl>
  *  @copyright University of Warsaw
  *  @date November 2011
  *  @section LICENSE
  *    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef INI_ORIGIN_ONE_HPP
-#  define INI_ORIGIN_ONE_HPP
+#ifndef INI_BOXCAR_HPP
+#  define INI_BOXCAR_HPP
 
 #  include "ini.hpp" 
 
 template <typename real_t>
-class ini_origin_one : public ini<real_t>
+class ini_boxcar : public ini<real_t>
 {
   private: quantity<si::length, real_t> dxhlf, dyhlf, dzhlf;
+  private: quantity<si::length, real_t> a, b;
+  private: quantity<si::dimensionless, real_t> A, A0;
 
-  public: ini_origin_one(
-    const quantity<si::length, real_t> &dx,
-    const quantity<si::length, real_t> &dy,
-    const quantity<si::length, real_t> &dz
+  public: ini_boxcar(
+    const quantity<si::length, real_t> &a,
+    const quantity<si::length, real_t> &b,
+    const quantity<si::dimensionless, real_t> &A,
+    const quantity<si::dimensionless, real_t> &A0
   )
-    : dxhlf(real_t(.5) * dx), dyhlf(real_t(.5) * dy), dzhlf(real_t(.5) * dz)
+    : a(a), b(b), A(A), A0(A0)
   {}
 
   public: quantity<si::dimensionless, real_t> psi(
@@ -29,7 +33,8 @@ class ini_origin_one : public ini<real_t>
     const quantity<si::length, real_t> &z
   ) 
   {
-    return (x == dxhlf && y == dyhlf && z == dzhlf) ? real_t(1) : real_t(0);
+    if (x < a || x > b) return A0;
+    return A0 + A;
   }
 };
 #endif

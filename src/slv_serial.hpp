@@ -14,13 +14,18 @@
 template <typename real_t>
 class slv_serial : public slv<real_t>
 {
-  private: auto_ptr<Array<real_t, 3> > *psi_guard;
-  private: Array<real_t, 3> **psi;
   private: adv<real_t> *fllbck, *advsch;
   private: auto_ptr<Range> i, j, k;
   private: out<real_t> *output;
   private: int nx, ny, nz, halo;//, halo, zhalo;
+
   private: auto_ptr<Array<real_t, 3> > Cx, Cy, Cz;
+
+  private: auto_ptr<Array<real_t, 3> > *psi_guard;
+  private: Array<real_t, 3> **psi;
+
+  private: auto_ptr<Array<real_t, 3> > *tmp_guard;
+  private: Array<real_t, 3> **tmp;
 
   public: slv_serial(stp<real_t> *setup,
     int i_min, int i_max, int nx,
@@ -43,6 +48,24 @@ class slv_serial : public slv<real_t>
       ));
       psi[n] = psi_guard[n].get();
     }
+
+    // caches
+    assert(advsch->num_sclr_caches() == 0);
+    assert(fllbck == NULL || fllbck->num_sclr_caches() == 0);
+    assert(fllbck == NULL || fllbck->num_vctr_caches() == 0);
+    tmp_guard = new auto_ptr<Array<real_t, 3> >[advsch->num_vctr_caches()];
+    tmp = new Array<real_t, 3>*[advsch->num_vctr_caches()];
+    for (int n=0; n < advsch->num_vctr_caches(); ++n)
+    {
+      tmp_guard[n].reset(new Array<real_t, 3>(
+        setup->grid->rng_vctr(i_min, i_max),
+        setup->grid->rng_vctr(j_min, j_max),
+        setup->grid->rng_vctr(k_min, k_max)
+      ));
+      tmp[n] = tmp_guard[n].get();
+    }
+ 
+    // indices
     i.reset(new Range(i_min, i_max));
     j.reset(new Range(j_min, j_max));
     k.reset(new Range(k_min, k_max));
@@ -73,6 +96,8 @@ class slv_serial : public slv<real_t>
   {
     delete[] psi;
     delete[] psi_guard;
+    //delete[] tmp; TODO!!!
+    //delete[] tmp_guard; TODO!!!
   }
 
   public: void record(const int n, const unsigned long t)
@@ -122,15 +147,7 @@ class slv_serial : public slv<real_t>
 
   public: void advect(adv<real_t> *a, int n, int s, quantity<si::time, real_t> dt)
   {
-    // op() uses the -= operator so the first assignment happens here
-    *psi[n+1] = *psi[0]; 
-
-    if (nx != 1) 
-      a->op_ijk(psi, *i, *j, *k, n, s, *Cx, *Cy, *Cz); // X
-    if (ny != 1) 
-      a->op_jki(psi, *i, *j, *k, n, s, *Cy, *Cz, *Cx); // Y
-    if (nz != 1) 
-      a->op_kij(psi, *i, *j, *k, n, s, *Cz, *Cx, *Cy); // Z
+    a->op3D(psi, tmp, *i, *j, *k, n, s, *Cx, *Cy, *Cz);
   }
 
   public: void cycle_arrays(const int n)

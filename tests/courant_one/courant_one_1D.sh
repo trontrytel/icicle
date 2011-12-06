@@ -13,7 +13,7 @@ for bits in {32,64,128}; do
           for nsd in {1,2,4,5,20}; do
 #            for nssdom in {1,2,3}; do
               for nout in {1,5,10}; do
-                for adv in {mpdata,"mpdata --adv.mpdata.iord 1","mpdata --adv.mpdata.iord 3",leapfrog}; do
+                for adv in {mpdata,"mpdata --adv.mpdata.iord 1","mpdata --adv.mpdata.iord 3",leapfrog,"mpdata --adv.mpdata.fct 1"}; do
                   # combinations that does not make sense
                   if [ $slv = "serial" -a $nsd != 1 ]; then continue; fi
                   if [ $slv = "fork" ]; then continue; fi # TODO: output not ready
@@ -22,7 +22,7 @@ for bits in {32,64,128}; do
 #                  if [ $sdom = "serial" -a $nssdom != 1 ]; then continue; fi
 
                   # the actual test
-                  cmd="../../icicles --ini origin-one"
+                  cmd="../../icicles --ini boxcar --ini.boxcar.b 1"
                   cmd="$cmd --bits $bits --dt 1 --grd.dx 1 --grd.dy 1 --grd.dz 1 --grd arakawa-c-lorenz"
                   cmd="$cmd --vel uniform --vel.uniform.u $u --vel.uniform.v 0 --vel.uniform.w 0"
                   cmd="$cmd --nt $nt --nx 20 --ny 1 --nz 1 --adv $adv --slv $slv --out gnuplot --nsd $nsd"
