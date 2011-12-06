@@ -22,7 +22,7 @@ slv<real_t> *opt_slv(const po::variables_map& vm, stp<real_t> *setup,
 {
   string slvtype = vm.count("slv") ? vm["slv"].as<string>() : "<unspecified>";
   if (slvtype == "serial")
-    return new slv_serial<real_t>(setup,
+    return new slv_parallel_serial<real_t>(setup,
       0, nx - 1, nx,
       0, ny - 1, ny,
       0, nz - 1, nz,

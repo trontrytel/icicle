@@ -27,7 +27,7 @@ class out_gnuplot : public out<real_t>
   }
 
   public: virtual void record(
-    Array<real_t, 3> **psi, const int n, 
+    Array<real_t, 3> *psi,
     const Range &i, const Range &j, const Range &k, const unsigned long t
   ) 
   {
@@ -42,7 +42,7 @@ class out_gnuplot : public out<real_t>
       i_last = -1;
     }
     assert(i_last + 1 == i.first()); // if data is output in order
-    Array<real_t, 1> a = (*psi[n])(i, 0, 0);
+    Array<real_t, 1> a = (*psi)(i, 0, 0);
     for (int ii=a.lbound(0); ii<=a.ubound(0); ++ii) cout << a(ii) << endl;
   
     // housekeeping

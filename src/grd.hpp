@@ -53,15 +53,12 @@ class grd : root
       for (int j = jr.first(); j <= jr.last(); ++j)
         for (int k = kr.first(); k <= kr.last(); ++k)
         {
-          if (true)
-            (*Cx)(i, j, k) = dt / dx() *
-              velocity->u(u_x(i, j, k), (jr.first() != jr.last()) ? u_y(i, j, k) : 0, u_z(i, j, k));
-          if (jr.first() != jr.last()) 
-            (*Cy)(i, j, k) = dt / dy() *
-              velocity->v(v_x(i, j, k), v_y(i, j, k), v_z(i, j, k));
-          if (kr.first() != kr.last()) 
-            (*Cz)(i, j, k) = dt / dz() *
-              velocity->w(w_x(i, j, k), (jr.first() != jr.last()) ? w_y(i, j, k) : 0, w_z(i, j, k));
+          (*Cx)(i, j, k) = dt / dx() *
+            velocity->u(u_x(i, j, k), u_y(i, j, k), u_z(i, j, k));
+          (*Cy)(i, j, k) = dt / dy() *
+            velocity->v(v_x(i, j, k), v_y(i, j, k), v_z(i, j, k));
+          (*Cz)(i, j, k) = dt / dz() *
+            velocity->w(w_x(i, j, k), w_y(i, j, k), w_z(i, j, k));
         }
   }
 

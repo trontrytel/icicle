@@ -23,6 +23,7 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
     // TODO: zaalokowac tmp1 i tmp2
   }
 
+/*
   public: void op3D(
     Array<real_t, 3> *psi_ijk[],
     Array<real_t, 3> *psi_jki[],
@@ -43,6 +44,7 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
 //      adv_mpdata<real_t>::op(psi_ijk, psi_jki, psi_kij, i, j, k, n, step, Cx_mon, Cy_mon, Cz_mon);
     }
   }
+*/
 
 };
 #endif

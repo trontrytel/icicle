@@ -21,7 +21,9 @@ class adv_lax_wendroff : public adv<real_t>
   public: const int time_levels() { return 3; } // ?
   public: const int num_steps() { return 1; } // ?
 
-  public: void op(int, Array<real_t, 3>* psi[], 
+  public: 
+  template <class idx>
+  void op(Array<real_t, 3>* psi[], 
     const Range &i, 
     const Range &j, 
     const Range &k, 
@@ -40,5 +42,6 @@ class adv_lax_wendroff : public adv<real_t>
       * ( (*psi[n])(i+1) - (*psi[n])(i-1) );
 */
   }
+#  include "adv_hack.cpp"
 };
 #endif

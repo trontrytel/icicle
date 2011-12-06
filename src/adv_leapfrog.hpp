@@ -24,20 +24,20 @@ class adv_leapfrog : public adv<real_t>
     : grid(grid)
   { }
 
-  public: void op(int, Array<real_t, 3>* psi[], 
-    const Range &i, 
-    const Range &j, 
-    const Range &k, 
+  public: 
+  template <class idx>
+  void op(Array<real_t, 3>* psi[], 
+    const Range &i, const Range &j, const Range &k, 
     const int n, const int step,
-    const Array<real_t, 3> &Cx, 
-    const Array<real_t, 3> &, 
-    const Array<real_t, 3> &
+    const Array<real_t, 3> &Cx, const Array<real_t, 3> &, const Array<real_t, 3> &
   )
   {
     assert(step == 1);
-    (*psi[n+1])(i,j,k) -= 
-      .5 * (Cx(i + grid->p_half,j,k) + Cx(i - grid->m_half,j,k)) // average Courant number!
-      * ( (*psi[n])(i+1,j,k) - (*psi[n])(i-1,j,k) );
+    (*psi[n+1])(idx(i,j,k)) -= 
+      .5 * (Cx(idx(i + grid->p_half,j,k)) + Cx(idx(i - grid->m_half,j,k))) // average Courant number!
+      * ( (*psi[n])(idx(i+1,j,k)) - (*psi[n])(idx(i-1,j,k)) );
   }
+
+#  include "adv_hack.cpp"
 };
 #endif
