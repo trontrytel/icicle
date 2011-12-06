@@ -8,13 +8,16 @@
  *  @section DESCRIPTION
  *  @section RESULTS
  *
- *    \image html "../../tests/smolar_1983/fig1.svg"
+ *    \include "smolar_1983/test_smolar_1983.py"
+ *    \image html "../../tests/smolar_1983/fig-leapfrog.gif"
+ *    \image html "../../tests/smolar_1983/fig-upstream.gif"
+ *    \image html "../../tests/smolar_1983/fig-mpdata.gif"
  */
 
 #include <cstdlib>
 
 int main() 
 { 
-  int status = system("gdl -quiet -e test_smolar_1983");
+  int status = system("python test_smolar_1983.py");
   exit(status == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
 }

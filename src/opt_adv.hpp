@@ -31,6 +31,10 @@ void opt_adv(const po::variables_map& vm,
     *advsch = new adv_leapfrog<real_t>(g);
     *fllbck = new adv_mpdata<real_t>(g, 1);
   }
+  else if (advscheme == "upstream")
+  {
+    *advsch = new adv_mpdata<real_t>(g, 1);
+  }
   else if (advscheme == "mpdata")
   {
     int iord = vm.count("adv.mpdata.iord") ? vm["adv.mpdata.iord"].as<int>() : 2;
