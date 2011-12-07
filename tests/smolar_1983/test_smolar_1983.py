@@ -14,7 +14,7 @@ for adv in ('leapfrog','upstream','mpdata'):
   if os.path.exists(file) : os.unlink(file)
   freq = 25
   cmd = (
-    '../../icicles',
+    '../../icicle',
     '--dt','.1', 
     '--grd.dx','1',
     '--grd.dy','1',

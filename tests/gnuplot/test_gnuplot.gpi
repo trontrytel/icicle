@@ -18,7 +18,7 @@ set xyplane at 0
 set palette maxcolors 24 defined ( -.5 "red", -0 "red", 0 "blue", .33 "green", .66 "brown", 1 "black")
 set term svg
 set output "fig1.svg"
-cmd = "../../icicles" \
+cmd = "../../icicle" \
   ." --dt 1 " \
   ." --grd.dx 1" \
   ." --grd.dy 1 " \

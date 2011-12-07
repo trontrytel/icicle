@@ -18,7 +18,7 @@ int main()
 { 
   int status;
   std::string cmd =
-    "../../icicles"
+    "../../icicle"
     " --dt 1 --grd.dx 1 --grd.dy 1 --grd.dz 1 --grd arakawa-c-lorenz"
     " --vel uniform --vel.uniform.u -1"
     " --nt 10 --nx 20"

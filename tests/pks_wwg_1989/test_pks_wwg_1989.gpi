@@ -18,7 +18,7 @@ set xyplane at 0
 set palette defined ( .8 "red", 1 "red", 1 "blue", 2 "blue", 2 "green", 2.2 "green")
 #set term svg
 #set output "fig1.svg"
-cmd = "../../icicles" \
+cmd = "../../icicle" \
   ." --dt 1 " \
   ." --grd.dx 1" \
   ." --grd.dy 1 " \

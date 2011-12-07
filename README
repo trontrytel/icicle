@@ -1,4 +1,4 @@
--------------------------- ICICLES ---------------------------
+-------------------------- ICICLE- ---------------------------
 
 - outline: TODO
 - authors: Sylwester Arabas et al. 
@@ -49,11 +49,11 @@
 
 --------------------------------------------------------------
 * usage:
-  $ ./icicles --help
-  $ ./icicles ... --dom serial
-  $ ./icicles ... --dom threads --nsdom N
-  $ ./icicles ... --dom openmp --nsdom N
-  $ [open]mpirun -np N ./icicles ... --dom mpi --nsdom N
+  $ ./icicle --help
+  $ ./icicle ... --dom serial
+  $ ./icicle ... --dom threads --nsdom N
+  $ ./icicle ... --dom openmp --nsdom N
+  $ [open]mpirun -np N ./icicle ... --dom mpi --nsdom N
 
 --------------------------------------------------------------
 * developers' documentation draft:

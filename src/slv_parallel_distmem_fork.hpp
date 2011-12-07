@@ -38,7 +38,7 @@ class slv_parallel_distmem_fork : public slv_parallel_distmem<real_t, shrdmem_cl
       if (k == 0)  
       {   
         ostringstream tmp;
-        tmp << "icicles." << getpid(); 
+        tmp << "icicle." << getpid(); 
         ipckey = new string(tmp.str()); 
       } 
       // fork

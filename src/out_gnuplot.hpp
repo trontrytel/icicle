@@ -7,7 +7,7 @@
  *  @section DESCRIPTION
  *    provides gnuplot-digestible ascii-based output facility suitable
  *    for quick-looking the results in 1D, e.g.:
- *    gnuplot> splot '< ./icicles --nx 100 --ny 1 --nz 1 ... ' u 0:-2:1 w lines palette
+ *    gnuplot> splot '< ./icicle --nx 100 --ny 1 --nz 1 ... ' u 0:-2:1 w lines palette
  */
 #ifndef OUT_GNUPLOT_HPP
 #  define OUT_GNUPLOT_HPP
