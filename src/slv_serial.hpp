@@ -24,8 +24,10 @@ class slv_serial : public slv<real_t>
   private: auto_ptr<Array<real_t, 3> > *psi_guard;
   private: Array<real_t, 3> **psi;
 
-  private: auto_ptr<Array<real_t, 3> > *tmp_guard;
-  private: Array<real_t, 3> **tmp;
+  private: auto_ptr<Array<real_t, 3> > *tmp_s_guard;
+  private: Array<real_t, 3> **tmp_s;
+  private: auto_ptr<Array<real_t, 3> > *tmp_v_guard;
+  private: Array<real_t, 3> **tmp_v;
 
   public: slv_serial(stp<real_t> *setup,
     int i_min, int i_max, int nx,
@@ -53,17 +55,36 @@ class slv_serial : public slv<real_t>
     assert(advsch->num_sclr_caches() == 0);
     assert(fllbck == NULL || fllbck->num_sclr_caches() == 0);
     assert(fllbck == NULL || fllbck->num_vctr_caches() == 0);
-    tmp_guard = new auto_ptr<Array<real_t, 3> >[advsch->num_vctr_caches()];
-    tmp = new Array<real_t, 3>*[advsch->num_vctr_caches()];
-    for (int n=0; n < advsch->num_vctr_caches(); ++n)
+
     {
-      tmp_guard[n].reset(new Array<real_t, 3>(
-        setup->grid->rng_vctr(i_min, i_max),
-        setup->grid->rng_vctr(j_min, j_max),
-        setup->grid->rng_vctr(k_min, k_max)
-      ));
-      tmp[n] = tmp_guard[n].get();
+      int cnt = advsch->num_vctr_caches();
+      tmp_v_guard = new auto_ptr<Array<real_t, 3> >[cnt];
+      tmp_v = new Array<real_t, 3>*[cnt];
+      for (int n=0; n < cnt; ++n)
+      {
+        tmp_v_guard[n].reset(new Array<real_t, 3>(
+          setup->grid->rng_vctr(i_min, i_max),
+          setup->grid->rng_vctr(j_min, j_max),
+          setup->grid->rng_vctr(k_min, k_max)
+        ));
+        tmp_v[n] = tmp_v_guard[n].get();
+      }
     }
+    {
+      int cnt = advsch->num_sclr_caches();
+      tmp_s_guard = new auto_ptr<Array<real_t, 3> >[cnt];
+      tmp_s = new Array<real_t, 3>*[cnt];
+      for (int n=0; n < cnt; ++n)
+      {
+        tmp_s_guard[n].reset(new Array<real_t, 3>(
+          Range(i_min, i_max),
+          Range(j_min, j_max),
+          Range(k_min, k_max)
+        ));
+        tmp_s[n] = tmp_s_guard[n].get();
+      }
+    }
+
  
     // indices
     i.reset(new Range(i_min, i_max));
@@ -83,7 +104,7 @@ class slv_serial : public slv<real_t>
         ii = setup->grid->rng_vctr(i->first(), i->last()),
         jj = setup->grid->rng_vctr(j->first(), j->last()),
         kk = setup->grid->rng_vctr(k->first(), k->last());
-
+      //TODO dla nx=3 ny=3 Cx powinno być 4x3 a nie 4x4
       Cx.reset(new Array<real_t, 3>(ii, jj, kk));
       Cy.reset(new Array<real_t, 3>(ii, jj, kk));
       Cz.reset(new Array<real_t, 3>(ii, jj, kk));
@@ -96,8 +117,8 @@ class slv_serial : public slv<real_t>
   {
     delete[] psi;
     delete[] psi_guard;
-    //delete[] tmp; TODO!!!
-    //delete[] tmp_guard; TODO!!!
+    //delete[] tmp_{s,v}; TODO!!!
+    //delete[] tmp_{s,v}_guard; TODO!!!
   }
 
   public: void record(const int n, const unsigned long t)
@@ -147,7 +168,7 @@ class slv_serial : public slv<real_t>
 
   public: void advect(adv<real_t> *a, int n, int s, quantity<si::time, real_t> dt)
   {
-    a->op3D(psi, tmp, *i, *j, *k, n, s, *Cx, *Cy, *Cz);
+    a->op3D(psi, tmp_s, tmp_v, *i, *j, *k, n, s, *Cx, *Cy, *Cz);
   }
 
   public: void cycle_arrays(const int n)

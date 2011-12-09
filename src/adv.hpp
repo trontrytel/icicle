@@ -24,7 +24,8 @@ class adv : root
 
   private: virtual void op_ijk(
     Array<real_t, 3> *psi[], 
-    Array<real_t, 3> *tmp[], 
+    Array<real_t, 3> *tmp_s[], 
+    Array<real_t, 3> *tmp_v[], 
     const Range &i, const Range &j, const Range &k, 
     const int n, const int step,
     const Array<real_t, 3> &Cx, const Array<real_t, 3> &Cy, const Array<real_t, 3> &Cz
@@ -32,7 +33,8 @@ class adv : root
 
   private: virtual void op_jki(
     Array<real_t, 3> *psi[], 
-    Array<real_t, 3> *tmp[], 
+    Array<real_t, 3> *tmp_s[], 
+    Array<real_t, 3> *tmp_v[], 
     const Range &i, const Range &j, const Range &k, 
     const int n, const int step,
     const Array<real_t, 3> &Cx, const Array<real_t, 3> &Cy, const Array<real_t, 3> &Cz
@@ -40,7 +42,8 @@ class adv : root
 
   private: virtual void op_kij(
     Array<real_t, 3> *psi[], 
-    Array<real_t, 3> *tmp[], 
+    Array<real_t, 3> *tmp_s[], 
+    Array<real_t, 3> *tmp_v[], 
     const Range &i, const Range &j, const Range &k, 
     const int n, const int step,
     const Array<real_t, 3> &Cx, const Array<real_t, 3> &Cy, const Array<real_t, 3> &Cz
@@ -48,7 +51,8 @@ class adv : root
 
   public: virtual void op3D(
     Array<real_t, 3> *psi[], 
-    Array<real_t, 3> *tmp[], 
+    Array<real_t, 3> *tmp_s[], 
+    Array<real_t, 3> *tmp_v[], 
     const Range &i, 
     const Range &j, 
     const Range &k, 
@@ -62,11 +66,11 @@ class adv : root
     *psi[n+1] = *psi[0];
 
     if (true)  
-      op_ijk(psi, tmp, i, j, k, n, s, Cx, Cy, Cz); // X
+      op_ijk(psi, tmp_s, tmp_v, i, j, k, n, s, Cx, Cy, Cz); // X
     if (j.first() != j.last())
-      op_jki(psi, tmp, i, j, k, n, s, Cy, Cz, Cx); // Y
+      op_jki(psi, tmp_s, tmp_v, i, j, k, n, s, Cx, Cy, Cz); // Y
     if (k.first() != k.last())
-      op_kij(psi, tmp, i, j, k, n, s, Cz, Cx, Cy); // Z
+      op_kij(psi, tmp_s, tmp_v, i, j, k, n, s, Cx, Cy, Cz); // Z
   }
 };
 #endif
