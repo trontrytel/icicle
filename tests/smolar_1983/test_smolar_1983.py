@@ -1,3 +1,11 @@
+## @file
+#  @author Sylwester Arabas <slayoo@igf.fuw.edu.pl>
+#  @author Anna Jaruga <ajaruga@igf.fuw.edu.pl>
+#  @copyright University of Warsaw
+#  @date December 2011
+#  @section LICENSE
+#    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
+
 import numpy as np                       # arrays
 from scipy.io.netcdf import netcdf_file  # netcdf IO
 import subprocess                        # shell calls

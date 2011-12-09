@@ -45,7 +45,8 @@ vel<real_t> *opt_vel(const po::variables_map& vm,
   {
     if (!vm.count("vel.test.omega")) error_macro("vel.test.omega must be specified")
     quantity<si::frequency, real_t> omega = boost::lexical_cast<real_t>(vm["vel.test.omega"].as<string>()) / si::seconds;
-    return new vel_test<real_t>(omega, real_t(.5 * nx) * grid->dx(), real_t(.5 * nz) * grid->dz());
+    quantity<si::velocity, real_t> v = boost::lexical_cast<real_t>(vm["vel.test.v"].as<string>()) * si::metres / si::seconds;
+    return new vel_test<real_t>(omega, real_t(.5 * nx) * grid->dx(), real_t(.5 * nz) * grid->dz(), v);
   }
   else error_macro("unsupported velocity field type: " << veltype)
 }

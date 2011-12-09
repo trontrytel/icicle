@@ -14,7 +14,6 @@
 template <typename real_t>
 class ini_boxcar : public ini<real_t>
 {
-  private: quantity<si::length, real_t> dxhlf, dyhlf, dzhlf;
   private: quantity<si::length, real_t> a, b;
   private: quantity<si::dimensionless, real_t> A, A0;
 
@@ -33,7 +32,11 @@ class ini_boxcar : public ini<real_t>
     const quantity<si::length, real_t> &z
   ) 
   {
-    if (x < a || x > b) return A0;
+    if (
+      x < a || x > b || 
+      y < a || y > b || 
+      z < a || z > b
+    ) return A0;
     return A0 + A;
   }
 };
