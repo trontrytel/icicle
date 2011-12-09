@@ -1,4 +1,5 @@
 /** @file
+ *  @example gnuplot/test_gnuplot.cpp
  *  @author Sylwester Arabas <slayoo@igf.fuw.edu.pl>
  *  @copyright University of Warsaw
  *  @date December 2011

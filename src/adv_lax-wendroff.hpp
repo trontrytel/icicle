@@ -25,7 +25,8 @@ class adv_lax_wendroff : public adv<real_t>
   template <class idx>
   void op(int dim,
     Array<real_t, 3>* psi[], 
-    Array<real_t, 3>* tmp[], 
+    Array<real_t, 3>* [], 
+    Array<real_t, 3>* [], 
     const Range &i, 
     const Range &j, 
     const Range &k, 

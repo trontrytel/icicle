@@ -95,7 +95,8 @@ class adv_mpdata : public adv<real_t>
   template <class idx>
   void op(int dim,
     Array<real_t, 3>* psi[], 
-    Array<real_t, 3>* tmp[], 
+    Array<real_t, 3>* [], 
+    Array<real_t, 3>* tmp_v[], 
     const Range &i, const Range &j, const Range &k, 
     const int n, const int step,
     const Array<real_t, 3> &Cx, 
@@ -114,16 +115,16 @@ class adv_mpdata : public adv<real_t>
       {
         Range iv(i.first()-1, i.last());
         Range ir = iv+1, ic = iv+grid->p_half, il=iv;
-        *tmp[dim] = mpdata_U;
+        *tmp_v[dim] = mpdata_U;
         (*psi[n+1])(idx(i,j,k)) -= (
-          mpdata_F((*psi[n])(idx(i  ,j,k)), (*psi[n])(idx(i+1,j,k)), (*tmp[dim])(idx(i + grid->p_half,j,k))) - 
-          mpdata_F((*psi[n])(idx(i-1,j,k)), (*psi[n])(idx(i  ,j,k)), (*tmp[dim])(idx(i - grid->m_half,j,k)))
+          mpdata_F((*psi[n])(idx(i  ,j,k)), (*psi[n])(idx(i+1,j,k)), (*tmp_v[dim])(idx(i + grid->p_half,j,k))) - 
+          mpdata_F((*psi[n])(idx(i-1,j,k)), (*psi[n])(idx(i  ,j,k)), (*tmp_v[dim])(idx(i - grid->m_half,j,k)))
         );
       }
       else 
       {
-        op_helper<idx>(-1, i  , i+grid->p_half, i+1, i, j, k, psi, n, Cx, Cy, Cz, tmp);
-        op_helper<idx>(+1, i-1, i-grid->m_half, i  , i, j, k, psi, n, Cx, Cy, Cz, tmp);
+        op_helper<idx>(-1, i  , i+grid->p_half, i+1, i, j, k, psi, n, Cx, Cy, Cz, tmp_v);
+        op_helper<idx>(+1, i-1, i-grid->m_half, i  , i, j, k, psi, n, Cx, Cy, Cz, tmp_v);
       }
     }
   }

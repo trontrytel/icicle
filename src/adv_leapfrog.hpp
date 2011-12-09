@@ -27,7 +27,8 @@ class adv_leapfrog : public adv<real_t>
   template <class idx>
   void op(int dim,
     Array<real_t, 3>* psi[], 
-    Array<real_t, 3>* tmp[], 
+    Array<real_t, 3>*[], 
+    Array<real_t, 3>*[], 
     const Range &i, const Range &j, const Range &k, 
     const int n, const int step,
     const Array<real_t, 3> &Cx, const Array<real_t, 3> &, const Array<real_t, 3> &
