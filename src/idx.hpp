@@ -18,6 +18,7 @@
 
 #  include "common.hpp" // Blitz includes
 
+// TODO: merge it into one class template
 class idx_ijk : public RectDomain<3>
 {
   public: idx_ijk(const Range &i, const Range &j, const Range &k) 

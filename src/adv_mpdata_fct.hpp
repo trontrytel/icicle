@@ -41,6 +41,7 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
     : adv_mpdata<real_t>(grid, iord, true), grid(grid)
   { }
 
+/* Aniu! Tak jak obiecalem, nic nie zmieniam :)
 
   public: void op3D(
     Array<real_t, 3> *psi[],
@@ -136,6 +137,7 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
     #undef mpdata_beta_up
     #undef mpdata_beta_dn
   }
+*/
 #  undef C_mon
 #  undef C_adf
 #  undef psi_min

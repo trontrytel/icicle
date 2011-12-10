@@ -11,6 +11,7 @@ for bits in {32,64,128}; do
       for slv in `../../icicle --slv list`; do
 #        for sdom in `../../icicle --sdom list`; do
           for nsd in {1,2,4,5,20}; do
+            for nxyz in {"--nx 20 --vel.uniform.u","--ny 20 --vel.uniform.v","--nz 20 --vel.uniform.w"}; do
 #            for nssdom in {1,2,3}; do
               for nout in {1,5,10}; do
                 for adv in {mpdata,"mpdata --adv.mpdata.iord 1","mpdata --adv.mpdata.iord 3",leapfrog,"mpdata --adv.mpdata.fct 1"}; do
@@ -19,13 +20,13 @@ for bits in {32,64,128}; do
                   if [ $slv = "fork" ]; then continue; fi # TODO: output not ready
                   if [ $slv = "fork+openmp" ]; then continue; fi # TODO: not ready
                   if [ $slv = "fork+threads" ]; then continue; fi # TODO: not ready
-#                  if [ $sdom = "serial" -a $nssdom != 1 ]; then continue; fi
+                  if [ "x$nxyz" > "x--nxx" -a $nsd -gt 1 ]; then continue; fi # parallelism only in X
 
                   # the actual test
                   cmd="../../icicle --ini boxcar --ini.boxcar.b 1"
                   cmd="$cmd --bits $bits --dt 1 --grd.dx 1 --grd.dy 1 --grd.dz 1 --grd arakawa-c-lorenz"
-                  cmd="$cmd --vel uniform --vel.uniform.u $u --vel.uniform.v 0 --vel.uniform.w 0"
-                  cmd="$cmd --nt $nt --nx 20 --ny 1 --nz 1 --adv $adv --slv $slv --out gnuplot --nsd $nsd"
+                  cmd="$cmd --vel uniform $nxyz $u"
+                  cmd="$cmd --nt $nt --adv $adv --slv $slv --out gnuplot --nsd $nsd"
 # TODO: --sdom $sdom --nssdom $nssdom --nout $nout"
                   if [ $slv = "mpi" ]; then cmd="openmpirun -np $nsd $cmd"; fi;
                   ret=`$cmd 2>/dev/null` 
@@ -42,7 +43,7 @@ for bits in {32,64,128}; do
                   echo "OK for: " $cmd
                 done # adv
               done # nout
-#            done # nssdom
+            done # nxyz
           done # nsd
 #        done # sdom
       done # slv

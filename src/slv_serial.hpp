@@ -44,15 +44,14 @@ class slv_serial : public slv<real_t>
     for (int n=0; n < advsch->time_levels(); ++n) 
     {
       psi_guard[n].reset(new Array<real_t, 3>(
-        Range(i_min - halo, i_max + halo),
-        Range(j_min - halo, j_max + halo),
-        Range(k_min - halo, k_max + halo)
+        setup->grid->rng_sclr(i_min, i_max, halo),
+        setup->grid->rng_sclr(j_min, j_max, halo),
+        setup->grid->rng_sclr(k_min, k_max, halo)
       ));
       psi[n] = psi_guard[n].get();
     }
 
     // caches
-    assert(advsch->num_sclr_caches() == 0);
     assert(fllbck == NULL || fllbck->num_sclr_caches() == 0);
     assert(fllbck == NULL || fllbck->num_vctr_caches() == 0);
 
@@ -77,9 +76,9 @@ class slv_serial : public slv<real_t>
       for (int n=0; n < cnt; ++n)
       {
         tmp_s_guard[n].reset(new Array<real_t, 3>(
-          Range(i_min, i_max),
-          Range(j_min, j_max),
-          Range(k_min, k_max)
+          setup->grid->rng_vctr(i_min, i_max),
+          setup->grid->rng_vctr(j_min, j_max),
+          setup->grid->rng_vctr(k_min, k_max)
         ));
         tmp_s[n] = tmp_s_guard[n].get();
       }

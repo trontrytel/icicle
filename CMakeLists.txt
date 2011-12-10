@@ -71,7 +71,7 @@ endif()                                                                #
 #### </Blitz> ##########################################################
 
 #### <Boost.program_options> (mandatory) ###############################
-set(CMAKE_REQUIRED_LIBRARIES "-lboost_program_options")                #
+set(CMAKE_REQUIRED_LIBRARIES "-lboost_program_options-mt")              #
 check_cxx_source_compiles(
   "#include <boost/program_options.hpp>\n int main() { 
     boost::program_options::options_description d; 

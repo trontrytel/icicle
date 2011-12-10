@@ -32,9 +32,20 @@ class out_gnuplot : public out<real_t>
   ) 
   {
     // sanity check
-    if (j.first() != j.last() || k.first() != k.last())
+    if (j.first() == j.last() && k.first() == k.last()) 
+      record_helper<idx_ijk>(psi, i, t);
+    else if (i.first() == i.last() && k.first() == k.last()) 
+      record_helper<idx_jki>(psi, j, t);
+    else if (i.first() == i.last() && j.first() == j.last()) 
+      record_helper<idx_kij>(psi, k, t);
+    else 
       error_macro("gnuplot output works for 1D simulations only") 
-
+  }
+  
+  private:
+  template<class idx>
+  void record_helper(Array<real_t, 3> *psi, const Range &i, const unsigned long t)
+  {
     // end record if needed and output the data + some housekeeping
     if (t_last != -1 && t != t_last)
     {
@@ -42,8 +53,8 @@ class out_gnuplot : public out<real_t>
       i_last = -1;
     }
     assert(i_last + 1 == i.first()); // if data is output in order
-    Array<real_t, 1> a = (*psi)(i, 0, 0);
-    for (int ii=a.lbound(0); ii<=a.ubound(0); ++ii) cout << a(ii) << endl;
+    for (int ii=i.first(); ii<=i.last(); ++ii) 
+      cout << *(*psi)(idx(Range(ii,ii), Range(0,0), Range(0,0))).dataFirst() << endl;
   
     // housekeeping
     t_last = t;
