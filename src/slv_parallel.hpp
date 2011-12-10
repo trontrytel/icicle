@@ -84,13 +84,12 @@ class slv_parallel : public slv<real_t>
   }
 
   // the two below are for MPI/fork + threads/OpenMP nested parallelisations
-  public: Array<real_t, 3> data(int n, 
-    const Range &i, const Range &j, const Range &k) 
+  public: Array<real_t, 3> data(int n, const RectDomain<3> &idx)
   { 
-    int sd = (i.first() - i_min) / nxs;
+    int sd = (idx.lbound(0) - i_min) / nxs;
     assert(sd == 0 || sd == nsd - 1);
-    assert((i.last() - i_min) / nxs == sd);
-    return slvs[sd]->data(n, i, j, k);
+    assert((idx.ubound(0) - i_min) / nxs == sd);
+    return slvs[sd]->data(n, idx); //i, j, k);
   }
 
   public: void hook_neighbour(int s, slv<real_t> *n) 

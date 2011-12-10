@@ -14,6 +14,14 @@
 #  include "adv_leapfrog.hpp"
 #  include "adv_lax-wendroff.hpp"
 
+void opt_adv_desc(po::options_description &desc)
+{
+  desc.add_options()
+    ("adv", po::value<string>(), "advection scheme: leapfrog, upstream, mpdata")
+    ("adv.mpdata.iord", po::value<int>()->default_value(2), "mpdata iord option: 1, 2, ...")
+    ("adv.mpdata.fct", po::value<bool>()->default_value(0), "mpdata FCT option: 0 (off) or 1 (on)");
+}
+
 template <typename real_t>
 void opt_adv(const po::variables_map& vm,
   adv<real_t> **fllbck,

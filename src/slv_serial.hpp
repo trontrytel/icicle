@@ -125,44 +125,29 @@ class slv_serial : public slv<real_t>
     output->record(psi[n], *i, *j, *k, t);
   }
 
-  public: Array<real_t, 3> data(int n, 
-    const Range &i, const Range &j, const Range &k) 
+  public: Array<real_t, 3> data(int n, const RectDomain<3> &idx)
   { 
-    return (*psi[n])(i, j, k);
+    return (*psi[n])(idx);
   }
 
   public: void fill_halos(int n)
-  { // TODO: make it much shorter!!!
-    { // left halo
-      int i_min = i->first() - halo, i_max = i->first() - 1;
-      (*psi[n])(Range(i_min, i_max), *j, *k) = 
-        this->nghbr_data(slv<real_t>::left, n, Range((i_min + nx) % nx, (i_max + nx) % nx), *j, *k);
-    }
-    { // rght halo
-      int i_min = i->last() + 1, i_max = i->last() + halo;
-      (*psi[n])(Range(i_min, i_max), *j, *k) =
-        this->nghbr_data(slv<real_t>::rght, n, Range((i_min + nx) % nx, (i_max + nx) % nx), *j, *k);
-    } 
-    { // fore halo
-      int j_min = j->first() - halo, j_max = j->first() - 1;
-      (*psi[n])(*i, Range(j_min, j_max), *k) = 
-        this->nghbr_data(slv<real_t>::fore, n, *i, Range((j_min + ny) % ny, (j_max + ny) % ny), *k);
-    }
-    { // hind halo
-      int j_min = j->last() + 1, j_max = j->last() + halo;
-      (*psi[n])(*i, Range(j_min, j_max), *k) =
-        this->nghbr_data(slv<real_t>::hind, n, *i, Range((j_min + ny) % ny, (j_max + ny) % ny), *k);
-    } 
-    { // base halo
-      int k_min = k->first() - halo, k_max = k->first() - 1;
-      (*psi[n])(*i, *j, Range(k_min, k_max)) = 
-        this->nghbr_data(slv<real_t>::base, n, *i, *j, Range((k_min + nz) % nz, (k_max + nz) % nz));
-    }
-    { // apex halo
-      int k_min = k->last() + 1, k_max = k->last() + halo;
-      (*psi[n])(*i, *j, Range(k_min, k_max)) =
-        this->nghbr_data(slv<real_t>::apex, n, *i, *j, Range((k_min + nz) % nz, (k_max + nz) % nz));
-    } 
+  {
+    fill_halos_helper<idx_ijk>(psi, slv<real_t>::left, n, i->first() - halo, i->first() - 1, *j, *k, nx);
+    fill_halos_helper<idx_ijk>(psi, slv<real_t>::rght, n, i->last() + 1, i->last() + halo, *j, *k, nx);
+    fill_halos_helper<idx_jki>(psi, slv<real_t>::fore, n, j->first() - halo, j->first() - 1, *k, *i, ny);
+    fill_halos_helper<idx_jki>(psi, slv<real_t>::hind, n, j->last() + 1, j->last() + halo, *k, *i, ny);
+    fill_halos_helper<idx_kij>(psi, slv<real_t>::base, n, k->first() - halo, k->first() - 1, *i, *j, nz);
+    fill_halos_helper<idx_kij>(psi, slv<real_t>::apex, n, k->last() + 1, k->last() + halo, *i, *j, nz);
+  }
+
+  private:
+  template<class idx>
+  void fill_halos_helper(Array<real_t, 3> *psi[], int nghbr, int n, 
+    int i_min, int i_max, const Range &j, const Range &k, int mod
+  )
+  {
+    (*psi[n])(idx(Range(i_min, i_max), j, k)) =
+      this->nghbr_data(nghbr, n, idx(Range((i_min + mod) % mod, (i_max + mod) % mod), j, k));
   }
 
   public: void advect(adv<real_t> *a, int n, int s, quantity<si::time, real_t> dt)

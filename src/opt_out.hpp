@@ -14,6 +14,15 @@
 #  include "out_gnuplot.hpp"
 #  include "out_netcdf.hpp"
 
+void opt_out_desc(po::options_description &desc)
+{
+  desc.add_options()
+    ("out", po::value<string>(), "output: debug, gnuplot, netcdf")
+    ("out.netcdf.file", po::value<string>(), "output filename (e.g. for netcdf)")
+    ("out.netcdf.freq", po::value<int>(), "inverse of output frequency (10 for every 10-th record)")
+    ("out.netcdf.ver", po::value<int>()->default_value(4), "netCDF format version (3 or 4)");
+}
+
 template <typename real_t>
 out<real_t> *opt_out(const po::variables_map& vm, 
   grd<real_t> *grid, int nx, int ny, int nz)

@@ -14,6 +14,20 @@
 #  include "ini_pks_wwg_1989.hpp"
 #  include "ini_cone.hpp"
 
+void opt_ini_desc(po::options_description &desc)
+{
+  desc.add_options()
+    ("ini", po::value<string>(), "initical condition: boxcar, cone, pks_wwg_1989")
+    ("ini.boxcar.a", po::value<string>()->default_value("0"), "a [m]")
+    ("ini.boxcar.b", po::value<string>(), "b [m]")
+    ("ini.boxcar.A", po::value<string>()->default_value("1"), "A [1]")
+    ("ini.boxcar.A0", po::value<string>()->default_value("0"), "A0 [1]")
+    ("ini.cone.h", po::value<string>(), "h [m]")
+    ("ini.cone.x0", po::value<string>(), "x0 [m]")
+    ("ini.cone.z0", po::value<string>(), "z0 [m]")
+    ("ini.cone.r", po::value<string>(), "r [m]");
+}
+
 template <typename real_t>
 ini<real_t> *opt_ini(const po::variables_map& vm, grd<real_t> *grid)
 {

@@ -11,6 +11,15 @@
 #  include "opt.hpp"
 #  include "grd_arakawa-c-lorenz.hpp"
 
+void opt_grd_desc(po::options_description &desc)
+{
+  desc.add_options()
+    ("grd", po::value<string>()->default_value("arakawa-c-lorenz"), "grid: arakawa-c-lorenz")
+    ("grd.dx", po::value<string>(), "gridbox length (X) [m]")
+    ("grd.dy", po::value<string>()->default_value("1"), "gridbox length (Y) [m]")
+    ("grd.dz", po::value<string>()->default_value("1"), "gridbox length (Z) [m]");
+}
+
 template <typename real_t>
 grd<real_t> *opt_grd(const po::variables_map& vm)
 {

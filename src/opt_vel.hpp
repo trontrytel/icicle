@@ -14,6 +14,20 @@
 #  include "vel_rasinski.hpp"
 #  include "vel_test.hpp"
 
+void opt_vel_desc(po::options_description &desc)
+{
+  desc.add_options()
+    ("vel", po::value<string>(), "velocity field: uniform, rasinski")
+    ("vel.uniform.u", po::value<string>()->default_value("0"), "velocity (X) [m/s]")
+    ("vel.uniform.v", po::value<string>()->default_value("0"), "velocity (Y) [m/s]")
+    ("vel.uniform.w", po::value<string>()->default_value("0"), "velocity (Z) [m/s]")
+    ("vel.rasinski.Z_clb", po::value<string>(), "cloud base height [m]")
+    ("vel.rasinski.Z_top", po::value<string>(), "cloud top height [m]")
+    ("vel.rasinski.A", po::value<string>(), "amplitude [m2/s]")
+    ("vel.test.omega", po::value<string>(), "frequency [1/s]")
+    ("vel.test.v", po::value<string>()->default_value("0"), "Y velocity [m/s]");
+}
+
 template <typename real_t>
 vel<real_t> *opt_vel(const po::variables_map& vm,
   grd<real_t> *grid, int nx, int ny, int nz)

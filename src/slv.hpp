@@ -24,16 +24,12 @@ class slv : root
     nghbrs[s] = n; 
   }
 
-  public: virtual Array<real_t, 3> data(
-    int n, const Range &i, const Range &j, const Range &k
-  ) = 0;
+  public: virtual Array<real_t, 3> data(int n, const RectDomain<3> &idx) = 0;
 
-  public: Array<real_t, 3> nghbr_data(
-    int s, int n, const Range &i, const Range &j, const Range &k
-  )
+  public: Array<real_t, 3> nghbr_data(int side, int n, const RectDomain<3> &idx)
   {
-    nghbrs[s]->sync(n);
-    return nghbrs[s]->data(n, i, j, k);
+    nghbrs[side]->sync(n);
+    return nghbrs[side]->data(n, idx);
   }
 
   public: bool choose_an(adv<real_t> **a, int *n, int t, 
