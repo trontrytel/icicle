@@ -14,6 +14,7 @@
 #  include "out_gnuplot.hpp"
 #  include "out_netcdf.hpp"
 
+#  ifdef ICICLE_OPT_DESCS 
 void opt_out_desc(po::options_description &desc)
 {
   desc.add_options()
@@ -22,6 +23,7 @@ void opt_out_desc(po::options_description &desc)
     ("out.netcdf.freq", po::value<int>(), "inverse of output frequency (10 for every 10-th record)")
     ("out.netcdf.ver", po::value<int>()->default_value(4), "netCDF format version (3 or 4)");
 }
+#  endif
 
 template <typename real_t>
 out<real_t> *opt_out(const po::variables_map& vm, 

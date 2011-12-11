@@ -14,6 +14,7 @@
 #  include "vel_rasinski.hpp"
 #  include "vel_test.hpp"
 
+#  ifdef ICICLE_OPT_DESCS 
 void opt_vel_desc(po::options_description &desc)
 {
   desc.add_options()
@@ -27,6 +28,7 @@ void opt_vel_desc(po::options_description &desc)
     ("vel.test.omega", po::value<string>(), "frequency [1/s]")
     ("vel.test.v", po::value<string>()->default_value("0"), "Y velocity [m/s]");
 }
+#  endif
 
 template <typename real_t>
 vel<real_t> *opt_vel(const po::variables_map& vm,

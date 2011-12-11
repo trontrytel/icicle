@@ -16,7 +16,7 @@
 #  include "opt_ini.hpp"
 
 template <typename real_t>
-void model(const po::variables_map& vm) 
+void mdl(const po::variables_map& vm) 
 {
   // some key parameters (TODO: move from here!)
   if (

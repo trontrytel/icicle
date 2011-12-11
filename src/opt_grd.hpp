@@ -11,6 +11,7 @@
 #  include "opt.hpp"
 #  include "grd_arakawa-c-lorenz.hpp"
 
+#  ifdef ICICLE_OPT_DESCS 
 void opt_grd_desc(po::options_description &desc)
 {
   desc.add_options()
@@ -19,6 +20,7 @@ void opt_grd_desc(po::options_description &desc)
     ("grd.dy", po::value<string>()->default_value("1"), "gridbox length (Y) [m]")
     ("grd.dz", po::value<string>()->default_value("1"), "gridbox length (Z) [m]");
 }
+#  endif
 
 template <typename real_t>
 grd<real_t> *opt_grd(const po::variables_map& vm)

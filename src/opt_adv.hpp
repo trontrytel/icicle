@@ -14,6 +14,7 @@
 #  include "adv_leapfrog.hpp"
 #  include "adv_lax-wendroff.hpp"
 
+#  ifdef ICICLE_OPT_DESCS 
 void opt_adv_desc(po::options_description &desc)
 {
   desc.add_options()
@@ -21,6 +22,7 @@ void opt_adv_desc(po::options_description &desc)
     ("adv.mpdata.iord", po::value<int>()->default_value(2), "mpdata iord option: 1, 2, ...")
     ("adv.mpdata.fct", po::value<bool>()->default_value(0), "mpdata FCT option: 0 (off) or 1 (on)");
 }
+#  endif
 
 template <typename real_t>
 void opt_adv(const po::variables_map& vm,

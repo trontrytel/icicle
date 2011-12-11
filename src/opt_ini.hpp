@@ -14,6 +14,7 @@
 #  include "ini_pks_wwg_1989.hpp"
 #  include "ini_cone.hpp"
 
+#  ifdef ICICLE_OPT_DESCS 
 void opt_ini_desc(po::options_description &desc)
 {
   desc.add_options()
@@ -27,6 +28,7 @@ void opt_ini_desc(po::options_description &desc)
     ("ini.cone.z0", po::value<string>(), "z0 [m]")
     ("ini.cone.r", po::value<string>(), "r [m]");
 }
+#  endif
 
 template <typename real_t>
 ini<real_t> *opt_ini(const po::variables_map& vm, grd<real_t> *grid)

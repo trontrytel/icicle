@@ -15,11 +15,13 @@
 #  include "slv_parallel_distmem_mpi.hpp"
 #  include "slv_parallel_distmem_fork.hpp"
 
+#  ifdef ICICLE_OPT_DESCS 
 void opt_slv_desc(po::options_description &desc)
 {
   desc.add_options()
     ("slv", po::value<string>(), "solver: serial, openmp, threads");
 }
+#  endif
 
 template <typename real_t>
 slv<real_t> *opt_slv(const po::variables_map& vm, stp<real_t> *setup,
