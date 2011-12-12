@@ -89,7 +89,7 @@ class slv_parallel : public slv<real_t>
     int sd = (idx.lbound(0) - i_min) / nxs;
     assert(sd == 0 || sd == nsd - 1);
     assert((idx.ubound(0) - i_min) / nxs == sd);
-    return slvs[sd]->data(n, idx); //i, j, k);
+    return slvs[sd]->data(n, idx); 
   }
 
   public: void hook_neighbour(int s, slv<real_t> *n) 

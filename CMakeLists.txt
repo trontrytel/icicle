@@ -181,7 +181,7 @@ else()
 endif()
 #### </Boost.MPI> ######################################################
 
-add_executable(icicle src/mdl_flt.cpp src/mdl_dbl.cpp src/mdl_ldb.cpp src/icicle.cpp)
+add_executable(icicle src/icicle.cpp src/mdl_flt.cpp src/mdl_dbl.cpp src/mdl_ldb.cpp)
 set_target_properties(icicle PROPERTIES LINK_FLAGS ${LINK_FLAGS})
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/src/config.hpp)
 

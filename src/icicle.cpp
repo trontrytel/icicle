@@ -25,7 +25,7 @@ int main(int ac, char* av[])
 {
   cerr << "-- init: icicle starting (built on " << __DATE__;
 #ifdef __FAST_MATH__
-  cerr << " with FAST_MATH enabled!";
+  cerr << " with FAST_MATH enabled!"; // TODO: move into output!
 #endif
   cerr << ")" << endl;
   try

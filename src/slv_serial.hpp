@@ -37,8 +37,20 @@ class slv_serial : public slv<real_t>
   )
     : fllbck(setup->fllbck), advsch(setup->advsch), output(setup->output), nx(nx), ny(ny), nz(nz)
   {
-    // memory allocation
     halo = (advsch->stencil_extent() - 1) / 2;
+
+    // sanity checks
+    {
+      int len;
+      if (halo > (len = i_max - i_min + 1)) 
+        error_macro("halo length (" << halo << ") may not exceed domain extent in X (" << len << ")")
+      if (halo > (len = j_max - j_min + 1))
+        error_macro("halo length (" << halo << ") may not exceed domain extent in X (" << len << ")")
+      if (halo > (len = k_max - k_min + 1))
+        error_macro("halo length (" << halo << ") may not exceed domain extent in X (" << len << ")")
+    }
+
+    // memory allocation
     psi_guard = new auto_ptr<Array<real_t, 3> >[advsch->time_levels()];
     psi = new Array<real_t, 3>*[advsch->time_levels()];
     for (int n=0; n < advsch->time_levels(); ++n) 
@@ -84,7 +96,6 @@ class slv_serial : public slv<real_t>
       }
     }
 
- 
     // indices
     i.reset(new Range(i_min, i_max));
     j.reset(new Range(j_min, j_max));
