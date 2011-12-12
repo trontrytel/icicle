@@ -36,12 +36,10 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
 #  define psi_min (*tmp_s[0])
 #  define psi_max (*tmp_s[1])
 
-  private: grd<real_t> *grid;
+  private: grd_arakawa_c_lorenz<real_t> *grid;
   public: adv_mpdata_fct(grd_arakawa_c_lorenz<real_t> *grid, int iord) 
     : adv_mpdata<real_t>(grid, iord, true), grid(grid)
   { }
-
-/* Aniu! Tak jak obiecalem, nic nie zmieniam :)
 
   public: void op3D(
     Array<real_t, 3> *psi[],
@@ -54,33 +52,53 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
   {
     adv_mpdata<real_t>::op3D(psi, tmp_s, tmp_v, i, j, k, n, step, Cx, Cy, Cz);
 
-#  define neighbours \
-        (*psi[n+1])(i  ,j  ,k  ), \
-        (*psi[n+1])(i-1,j  ,k  ), \
-        (*psi[n+1])(i+1,j  ,k  ), \
-        (*psi[n+1])(i  ,j-1,k  ), \
-        (*psi[n+1])(i  ,j+1,k  ), \
-        (*psi[n+1])(i  ,j  ,k-1), \
-        (*psi[n+1])(i  ,j  ,k+1)
     if (step == 1)
     {
-      psi_min(i,j,k) = min(neighbours); 
-      psi_max(i,j,k) = max(neighbours); 
+      psi_min(i,j,k) = ::min(
+        (*psi[n])(i  ,j  ,k  ), ::min(
+        (*psi[n])(i-1,j  ,k  ), ::min(
+        (*psi[n])(i+1,j  ,k  ), ::min(
+        (*psi[n])(i  ,j-1,k  ), ::min(
+        (*psi[n])(i  ,j+1,k  ), ::min(
+        (*psi[n])(i  ,j  ,k-1), 
+        (*psi[n])(i  ,j  ,k+1)))))));
+      psi_max(i,j,k) = ::max(
+        (*psi[n])(i  ,j  ,k  ), ::max(
+        (*psi[n])(i-1,j  ,k  ), ::max(
+        (*psi[n])(i+1,j  ,k  ), ::max(
+        (*psi[n])(i  ,j-1,k  ), ::max(
+        (*psi[n])(i  ,j+1,k  ), ::max(
+        (*psi[n])(i  ,j  ,k-1), 
+        (*psi[n])(i  ,j  ,k+1)))))));
     }
     else
     {
       // calculating psi_min and psi_max
-      psi_min(i,j,k) = min(psi_min(i,j,k), neighbours); 
-      psi_max(i,j,k) = max(psi_max(i,j,k), neighbours); 
+      psi_min(i,j,k) = ::min(psi_min(i,j,k), ::min(
+        (*psi[n])(i  ,j  ,k  ), ::min(
+        (*psi[n])(i-1,j  ,k  ), ::min(
+        (*psi[n])(i+1,j  ,k  ), ::min(
+        (*psi[n])(i  ,j-1,k  ), ::min(
+        (*psi[n])(i  ,j+1,k  ), ::min(
+        (*psi[n])(i  ,j  ,k-1), 
+        (*psi[n])(i  ,j  ,k+1))))))));
+      psi_max(i,j,k) = ::max(psi_max(i,j,k), ::max(
+        (*psi[n])(i  ,j  ,k  ), ::max(
+        (*psi[n])(i-1,j  ,k  ), ::max(
+        (*psi[n])(i+1,j  ,k  ), ::max(
+        (*psi[n])(i  ,j-1,k  ), ::max(
+        (*psi[n])(i  ,j+1,k  ), ::max(
+        (*psi[n])(i  ,j  ,k-1), 
+        (*psi[n])(i  ,j  ,k+1))))))));
 
       // calculating Cx_mon, Cy_mon, Cz_mon
       fct_helper<idx_ijk>(psi, tmp_s, tmp_v, C_mon(0), C_adf(0), C_adf(1), C_adf(2), i, j, k, n);
       fct_helper<idx_jki>(psi, tmp_s, tmp_v, C_mon(1), C_adf(1), C_adf(2), C_adf(0), j, k, i, n);
       fct_helper<idx_kij>(psi, tmp_s, tmp_v, C_mon(2), C_adf(2), C_adf(0), C_adf(1), k, i, j, n);
 
-      adv_mpdata<real_t>::op3D(psi, tmp_s, tmp_v, i, j, k, n, step, C_mon(0), C_mon(1), C_mon(2));
+      // TODO adv_upstream<>::op3D...
+      adv_mpdata<real_t>::op3D(psi, tmp_s, tmp_v, i, j, k, n, 1, C_mon(0), C_mon(1), C_mon(2));
     }
-#  undef neighbours
 
   }
 
@@ -89,6 +107,7 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
   void fct_helper(
     Array<real_t, 3> *psi[], 
     Array<real_t, 3> *tmp_s[], 
+    Array<real_t, 3> *tmp_v[], 
     const Array<real_t, 3> &C_mon_x, 
     const Array<real_t, 3> &C_adf_x, 
     const Array<real_t, 3> &C_adf_y, 
@@ -101,46 +120,39 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
     // we compute u_{i+1/2} for iv=(i-1, ... i)
     Range iv(i.first()-1, i.last());
 
-#    define mpdata_frac(num, den) (where(den>real_t(0),(num)/(den),real_t(0)))  // TODO: move to mpdata
 #    define mpdata_beta_up(i, j, k) mpdata_frac( \
        psi_max(idx(i,j,k)) - (*psi[n])(idx(i,j,k)), \
-       (*psi[n+1])(max(0,C_adf_x(idx(i - grid->m_half,j,k)))) * (*psi[n])(idx(i-1,j,k)) - \
-       (*psi[n+1])(min(0,C_adf_x(idx(i + grid->p_half,j,k)))) * (*psi[n])(idx(i+1,j,k)) + \
-       (*psi[n+1])(max(0,C_adf_y(idx(i - grid->m_half,j,k)))) * (*psi[n])(idx(i-1,j,k)) - \
-       (*psi[n+1])(min(0,C_adf_y(idx(i + grid->p_half,j,k)))) * (*psi[n])(idx(i+1,j,k)) + \
-       (*psi[n+1])(max(0,C_adf_z(idx(i - grid->m_half,j,k)))) * (*psi[n])(idx(i-1,j,k)) - \
-       (*psi[n+1])(min(0,C_adf_z(idx(i + grid->p_half,j,k)))) * (*psi[n])(idx(i+1,j,k))   \
+       (::max(real_t(0),C_adf_x(idx(i - grid->m_half,j,k)))) * (*psi[n])(idx(i-1,j,k)) - \
+       (::min(real_t(0),C_adf_x(idx(i + grid->p_half,j,k)))) * (*psi[n])(idx(i+1,j,k)) + \
+       (::max(real_t(0),C_adf_y(idx(i,j - grid->m_half,k)))) * (*psi[n])(idx(i,j-1,k)) - \
+       (::min(real_t(0),C_adf_y(idx(i,j + grid->p_half,k)))) * (*psi[n])(idx(i,j+1,k)) + \
+       (::max(real_t(0),C_adf_z(idx(i,j,k - grid->m_half)))) * (*psi[n])(idx(i,j,k-1)) - \
+       (::min(real_t(0),C_adf_z(idx(i,j,k + grid->p_half)))) * (*psi[n])(idx(i,j,k+1))   \
      )
 #    define mpdata_beta_dn(i, j, k) mpdata_frac(\
        (*psi[n])(idx(i,j,k)) - psi_min(idx(i,j,k)), \
-       (*psi[n+1])(max(0,C_adf_x(idx(i + grid->p_half,j,k)))) * (*psi[n])(idx(i,j,k)) - \
-       (*psi[n+1])(min(0,C_adf_x(idx(i - grid->m_half,j,k)))) * (*psi[n])(idx(i,j,k)) + \
-       (*psi[n+1])(max(0,C_adf_y(idx(i + grid->p_half,j,k)))) * (*psi[n])(idx(i,j,k)) - \
-       (*psi[n+1])(min(0,C_adf_y(idx(i - grid->m_half,j,k)))) * (*psi[n])(idx(i,j,k)) + \
-       (*psi[n+1])(max(0,C_adf_z(idx(i + grid->p_half,j,k)))) * (*psi[n])(idx(i,j,k)) - \
-       (*psi[n+1])(min(0,C_adf_z(idx(i - grid->m_half,j,k)))) * (*psi[n])(idx(i,j,k))   \
+       (::max(real_t(0),C_adf_x(idx(i + grid->p_half,j,k)))) * (*psi[n])(idx(i,j,k)) - \
+       (::min(real_t(0),C_adf_x(idx(i - grid->m_half,j,k)))) * (*psi[n])(idx(i,j,k)) + \
+       (::max(real_t(0),C_adf_y(idx(i,j + grid->p_half,k)))) * (*psi[n])(idx(i,j,k)) - \
+       (::min(real_t(0),C_adf_y(idx(i,j - grid->m_half,k)))) * (*psi[n])(idx(i,j,k)) + \
+       (::max(real_t(0),C_adf_z(idx(i,j,k + grid->p_half)))) * (*psi[n])(idx(i,j,k)) - \
+       (::min(real_t(0),C_adf_z(idx(i,j,k - grid->m_half)))) * (*psi[n])(idx(i,j,k))   \
      )
-    // 
     C_mon_x(idx(iv,j,k)) = C_adf_x(idx(iv,j,k)) * where(
       C_adf_x(idx(iv,j,k)) > 0,
-      min(
-        1, 
-        mpdata_beta_dn(iv  , j, k), 
-        mpdata_beta_up(iv+1, j, k)
+      ::min(
+        1, ::min(
+          mpdata_beta_dn(iv  , j, k), 
+          mpdata_beta_up(iv+1, j, k)
+        )
       ),
-      min(
-        1, 
-        mpdata_beta_up(iv  , j, k), 
-        mpdata_beta_dn(iv+1, j, k)
+      ::min(
+        1, ::min(
+          mpdata_beta_up(iv  , j, k), 
+          mpdata_beta_dn(iv+1, j, k)
+        )
       )
     );
-    #undef mpdata_beta_up
-    #undef mpdata_beta_dn
   }
-*/
-#  undef C_mon
-#  undef C_adf
-#  undef psi_min
-#  undef psi_max
 };
 #endif

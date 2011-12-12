@@ -53,6 +53,10 @@ void opt_adv(const po::variables_map& vm,
     else
       *advsch = new adv_mpdata<real_t>(g, vm["adv.mpdata.iord"].as<int>());
   }
+  else if (advscheme == "mpdata-fct") // TODO: temporary!!!
+  {
+    *advsch = new adv_mpdata_fct<real_t>(g, vm["adv.mpdata.iord"].as<int>());
+  }
   else error_macro("unsupported advection scheme: " << advscheme)
 }
 

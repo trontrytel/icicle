@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt          # ?
 from mpl_toolkits.mplot3d import Axes3D  # 3D plot
 from matplotlib import cm                # colormap 
 
-for adv in ('leapfrog','upstream','mpdata'):
+for adv in ('mpdata-fct','leapfrog','upstream','mpdata'):
   print 'running the model...'
   file = 'test_smolar_1983'+adv+'.nc'
   if os.path.exists(file) : os.unlink(file)
@@ -56,17 +56,17 @@ for adv in ('leapfrog','upstream','mpdata'):
   x, y = np.meshgrid(x, y)
 
   print 'saving animation frames...'
-  fig = plt.figure()
   vmin = -.5
   vmax = 4.
   for t in range(psi.shape[0]) :
+    fig = plt.figure()
     axs = fig.gca(projection='3d')
     srf = axs.plot_surface(x, y, psi[t,:,0,:], rstride=1, cstride=1, cmap=cm.gist_ncar, linewidth=0, antialiased=True, vmin=vmin, vmax=vmax)
     axs.set_zlim3d(vmin, vmax)
     fig.colorbar(srf) #shrink=0.5, aspect=5)
     fig.suptitle(adv+" t/dt="+format(t*freq,"04d"))
     fig.savefig('fig1-'+adv+'-'+format(t*freq,"05d")+'.png')
-    fig.clf()
+#    fig.clf()
 
   print 'closing the file...'
   nc.close()

@@ -42,12 +42,12 @@ class slv_serial : public slv<real_t>
     // sanity checks
     {
       int len;
-      if (halo > (len = i_max - i_min + 1)) 
+      if (halo > (len = i_max - i_min + 1) && nx != 1) 
         error_macro("halo length (" << halo << ") may not exceed domain extent in X (" << len << ")")
-      if (halo > (len = j_max - j_min + 1))
-        error_macro("halo length (" << halo << ") may not exceed domain extent in X (" << len << ")")
-      if (halo > (len = k_max - k_min + 1))
-        error_macro("halo length (" << halo << ") may not exceed domain extent in X (" << len << ")")
+      if (halo > (len = j_max - j_min + 1) && ny != 1)
+        error_macro("halo length (" << halo << ") may not exceed domain extent in Y (" << len << ")")
+      if (halo > (len = k_max - k_min + 1) && nz != 1)
+        error_macro("halo length (" << halo << ") may not exceed domain extent in Z (" << len << ")")
     }
 
     // memory allocation
@@ -157,8 +157,10 @@ class slv_serial : public slv<real_t>
     int i_min, int i_max, const Range &j, const Range &k, int mod
   )
   {
-    (*psi[n])(idx(Range(i_min, i_max), j, k)) =
-      this->nghbr_data(nghbr, n, idx(Range((i_min + mod) % mod, (i_max + mod) % mod), j, k));
+    (*psi[n])(idx(Range(i_min, i_max), j, k)) = (mod == 1)
+      ? this->nghbr_data(nghbr, n, idx(Range(0,0), j, k)) // only happens with periodic boundary
+      : this->nghbr_data(nghbr, n, idx(Range((i_min + mod) % mod, (i_max + mod) % mod), j, k));
+    
   }
 
   public: void advect(adv<real_t> *a, int n, int s, quantity<si::time, real_t> dt)
