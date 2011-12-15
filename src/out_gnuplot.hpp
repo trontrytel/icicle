@@ -7,7 +7,9 @@
  *  @section DESCRIPTION
  *    provides gnuplot-digestible ascii-based output facility suitable
  *    for quick-looking the results in 1D, e.g.:
- *    gnuplot> splot '< ./icicle --nx 100 --ny 1 --nz 1 ... ' u 0:-2:1 w lines palette
+ *    gnuplot> splot '< ./icicle --out.gnuplot' u 0:-2:1 w lines palette
+ *    gnuplot> splot '< ./icicle --out.gnuplot --out.gnuplot.using 0:-2:1' u 0:-2:1 w lines palette
+ *    gnuplot> splot '< ./icicle --out.gnuplot --out.gnuplot.using 1:-2:2' u 1:-2:2 w lines palette
  */
 #ifndef OUT_GNUPLOT_HPP
 #  define OUT_GNUPLOT_HPP
@@ -19,11 +21,15 @@ class out_gnuplot : public out<real_t>
 {
   private: unsigned long t_last; // TODO: si::seconds?
   private: int i_last;
+  private: bool steps;
+  private: grd<real_t> *grid;
 
-  public: out_gnuplot() 
+  public: out_gnuplot(grd<real_t> *grid, string usng) 
+    : t_last(-1), i_last(-1), grid(grid)
   { 
-    t_last = -1; 
-    i_last = -1; 
+    if (usng == "1:-2:2") steps = true;
+    else if (usng == "0:-2:1") steps = false;
+    else error_macro("unknown using specification: " << usng << "(should be 1:-2:2 or 0:-2:1)")
   }
 
   public: virtual void record(
@@ -54,7 +60,20 @@ class out_gnuplot : public out<real_t>
     }
     assert(i_last + 1 == i.first()); // if data is output in order
     for (int ii=i.first(); ii<=i.last(); ++ii) 
-      cout << *(*psi)(idx(Range(ii,ii), Range(0,0), Range(0,0))).dataFirst() << endl;
+    {
+      if (steps)
+        cout 
+          << (grid->x(ii,0,0) - real_t(.5) * grid->dx()) / si::metres // TODO: this assumes x 
+          << "\t"
+          << *(*psi)(idx(Range(ii,ii), Range(0,0), Range(0,0))).dataFirst() 
+          << endl
+          << (grid->x(ii,0,0) + real_t(.5) * grid->dx()) / si::metres // TODO: this assumes x
+          << "\t"
+          << *(*psi)(idx(Range(ii,ii), Range(0,0), Range(0,0))).dataFirst() 
+          << endl;
+      else
+        cout << *(*psi)(idx(Range(ii,ii), Range(0,0), Range(0,0))).dataFirst() << endl;
+    }
   
     // housekeeping
     t_last = t;

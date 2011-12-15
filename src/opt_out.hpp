@@ -19,6 +19,7 @@ void opt_out_desc(po::options_description &desc)
 {
   desc.add_options()
     ("out", po::value<string>(), "output: debug, gnuplot, netcdf")
+    ("out.gnuplot.using", po::value<string>()->default_value("0:-2:1"), "using column specification: 0:-2:1 or 1:-2:2")
     ("out.netcdf.file", po::value<string>(), "output filename (e.g. for netcdf)")
     ("out.netcdf.freq", po::value<int>(), "inverse of output frequency (10 for every 10-th record)")
     ("out.netcdf.ver", po::value<int>()->default_value(4), "netCDF format version (3 or 4)");
@@ -31,7 +32,7 @@ out<real_t> *opt_out(const po::variables_map& vm,
 {
   string outtype = vm.count("out") ? vm["out"].as<string>() : "<unspecified>";
   if (outtype == "gnuplot")
-    return new out_gnuplot<real_t>();
+    return new out_gnuplot<real_t>(grid, vm["out.gnuplot.using"].as<string>());
   else
   if (outtype == "debug")
     return new out_debug<real_t>();

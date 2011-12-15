@@ -6,7 +6,7 @@
 #    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
 
 set xlabel "x"
-set view 50,320
+set view 30,340
 set noxtics
 set ztics .5
 set ylabel "t"
@@ -18,25 +18,27 @@ set xyplane at 0
 set palette maxcolors 24 defined ( -.5 "red", -0 "red", 0 "blue", .33 "green", .66 "brown", 1 "black")
 set term svg
 set output "fig1.svg"
+nx=20
+dx=1
 cmd = "../../icicle" \
   ." --dt 1 " \
-  ." --grd.dx 1" \
+  ." --grd.dx ".dx \
   ." --grd.dy 1 " \
   ." --grd.dz 1" \
   ." --vel uniform --vel.uniform.u .4" \
-  ." --nt 25 --nx 20" \
+  ." --nt 25 --nx ".nx \
   ." --slv serial" \
-  ." --out gnuplot" \
+  ." --out gnuplot --out.gnuplot.using 1:-2:2" \
   ." --ini cone --ini.cone.h 1 --ini.cone.x0 3 --ini.cone.z0 0 --ini.cone.r 2.5" 
 set multiplot layout 2,2
   unset colorbox
   set title "upstream"
-  splot "<".cmd." --adv.mpdata.iord 1 --adv mpdata" using 0:-2:1 notitle with lines palette
+  splot "<".cmd." --adv.mpdata.iord 1 --adv mpdata" using 1:-2:2 notitle with lines palette
   set title "MPDATA (iord=2)"
-  splot "<".cmd." --adv.mpdata.iord 2 --adv mpdata" using 0:-2:1 notitle with lines palette
+  splot "<".cmd." --adv.mpdata.iord 2 --adv mpdata" using 1:-2:2 notitle with lines palette
   set title "MPDATA (iord=3)"
-  splot "<".cmd." --adv.mpdata.iord 3 --adv mpdata" using 0:-2:1 notitle with lines palette
+  splot "<".cmd." --adv.mpdata.iord 3 --adv mpdata" using 1:-2:2 notitle with lines palette
   set title "leapfrog"
   set colorbox horiz user origin .2,.55 size .6, .03
-  splot "<".cmd." --adv leapfrog                  " using 0:-2:1 notitle with lines palette
+  splot "<".cmd." --adv leapfrog                  " using 1:-2:2 notitle with lines palette
 unset multiplot
