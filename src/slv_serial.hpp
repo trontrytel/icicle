@@ -88,9 +88,9 @@ class slv_serial : public slv<real_t>
       for (int n=0; n < cnt; ++n)
       {
         tmp_s_guard[n].reset(new Array<real_t, 3>(
-          setup->grid->rng_vctr(i_min, i_max),
-          setup->grid->rng_vctr(j_min, j_max),
-          setup->grid->rng_vctr(k_min, k_max)
+          setup->grid->rng_sclr(i_min, i_max, halo),
+          setup->grid->rng_sclr(j_min, j_max, halo),
+          setup->grid->rng_sclr(k_min, k_max, halo)
         ));
         tmp_s[n] = tmp_s_guard[n].get();
       }
@@ -157,10 +157,13 @@ class slv_serial : public slv<real_t>
     int i_min, int i_max, const Range &j, const Range &k, int mod
   )
   {
-    (*psi[n])(idx(Range(i_min, i_max), j, k)) = (mod == 1)
-      ? this->nghbr_data(nghbr, n, idx(Range(0,0), j, k)) // only happens with periodic boundary
-      : this->nghbr_data(nghbr, n, idx(Range((i_min + mod) % mod, (i_max + mod) % mod), j, k));
-    
+    if (mod == 1)
+      for (int ii = i_min; ii <= i_max; ++ii)
+        (*psi[n])(idx(Range(ii), j, k)) =
+          this->nghbr_data(nghbr, n, idx(Range(0,0), j, k)); // only happens with periodic boundary
+    else 
+      (*psi[n])(idx(Range(i_min, i_max), j, k)) =
+        this->nghbr_data(nghbr, n, idx(Range((i_min + mod) % mod, (i_max + mod) % mod), j, k));
   }
 
   public: void advect(adv<real_t> *a, int n, int s, quantity<si::time, real_t> dt)

@@ -23,11 +23,12 @@ cmd = "../../icicle" \
   ." --grd.dx 1" \
   ." --grd.dy 1 " \
   ." --grd.dz 1" \
-  ." --vel uniform --vel.uniform.u .5" \
-  ." --nt 80 --nx 90" \
+  ." --vel uniform --vel.uniform.u -.75" \
+  ." --nt 5 --nx 90" \
   ." --slv serial" \
   ." --out gnuplot" \
-  ." --ini boxcar --ini.boxcar.b 20 --ini.boxcar.A0 1" 
+  ." --ini boxcar --ini.boxcar.ax 20 --ini.boxcar.bx 40 --ini.boxcar.A0 1 " 
+print cmd
 set multiplot layout 1,2
   set title "MPDATA (iord=2,fct=0)"
   splot "<".cmd." --adv.mpdata.iord 2 --adv mpdata" using 0:-2:1 notitle with lines palette
