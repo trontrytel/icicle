@@ -9,7 +9,7 @@
 cmake_minimum_required(VERSION 2.6) # for simplified if-constructs
 
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffast-math -DNDEBUG")
-set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g") # TODO: -DBZ_DEBUG (needs linking with libblitz?
+set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -DBZ_DEBUG")
 
 if(NOT (
   "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" OR 
