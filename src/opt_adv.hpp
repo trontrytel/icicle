@@ -9,6 +9,7 @@
 #  define OPT_ADV_HPP
 
 #  include "opt.hpp"
+#  include "adv_upstream.hpp"
 #  include "adv_mpdata.hpp"
 #  include "adv_mpdata_fct.hpp"
 #  include "adv_leapfrog.hpp"
@@ -44,7 +45,7 @@ void opt_adv(const po::variables_map& vm,
   }
   else if (advscheme == "upstream")
   {
-    *advsch = new adv_mpdata<real_t>(g, 1);
+    *advsch = new adv_upstream<real_t>(g);
   }
   else if (advscheme == "mpdata")
   {
@@ -52,10 +53,6 @@ void opt_adv(const po::variables_map& vm,
       *advsch = new adv_mpdata_fct<real_t>(g, vm["adv.mpdata.iord"].as<int>());
     else
       *advsch = new adv_mpdata<real_t>(g, vm["adv.mpdata.iord"].as<int>());
-  }
-  else if (advscheme == "mpdata-fct") // TODO: temporary!!!
-  {
-    *advsch = new adv_mpdata_fct<real_t>(g, vm["adv.mpdata.iord"].as<int>());
   }
   else error_macro("unsupported advection scheme: " << advscheme)
 }

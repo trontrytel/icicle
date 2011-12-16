@@ -51,10 +51,7 @@ class out_netcdf : public out<real_t>
         d_t = f->addDim("time"),
         d_xs = f->addDim("X", nx),
         d_ys = f->addDim("Y", ny),
-        d_zs = f->addDim("Z", nz),
-        d_xv = f->addDim("xv", grid->rng_vctr(0, nx-1).length()), // TODO:  
-        d_yv = f->addDim("yv", grid->rng_vctr(0, ny-1).length()), // TODO: that's a kludge
-        d_zv = f->addDim("zv", grid->rng_vctr(0, nz-1).length()); // TODO:
+        d_zs = f->addDim("Z", nz);
       {
         vector<NcDim> sdims(4);
         sdims[0] = d_t;
@@ -65,12 +62,12 @@ class out_netcdf : public out<real_t>
       }
       {
         vector<NcDim> vdims(3);
-        vdims[0] = d_xv;
-        vdims[1] = d_yv;
-        vdims[2] = d_zv;
-        NcVar vu = f->addVar("u", ncFloat, vdims); 
-        NcVar vv = f->addVar("v", ncFloat, vdims); 
-        NcVar vw = f->addVar("w", ncFloat, vdims); 
+        //vdims[0] = d_xv;
+        //vdims[1] = d_yv;
+        //vdims[2] = d_zv;
+        //NcVar vu = f->addVar("u", ncFloat, vdims); 
+        //NcVar vv = f->addVar("v", ncFloat, vdims); 
+        //NcVar vw = f->addVar("w", ncFloat, vdims); 
       }
       // workaround for the lack of netCDF3 nc_enddef() in the netCDF C++4 API
       if (fmt == NcFile::classic) 

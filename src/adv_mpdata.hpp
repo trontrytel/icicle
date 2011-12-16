@@ -86,9 +86,11 @@ class adv_mpdata : public adv<real_t>
     {
       if (cache)
       {
-        Range iv(i.first()-1, i.last());
-        Range ir = iv+1, ic = iv + grid->p_half, il=iv;
-        *tmp_v[dim] = mpdata_U(il, ic, ir);
+        // instead of computing u_{i+1/2} and u_{i-1/2} for all i
+        // we compute u_{i+1/2} for im=(i-1, ... i)
+        Range im(i.first()-1, i.last());
+        Range ir = im+1, ic = im + grid->p_half, il=im;
+        (*tmp_v[dim])(idx(Range(i.first()-grid->m_half,i.last()+grid->p_half),j,k)) = mpdata_U(il, ic, ir);
 //        (*psi[n+1])(idx(i,j,k)) -= (
 //          mpdata_F((*psi[n])(idx(i  ,j,k)), (*psi[n])(idx(i+1,j,k)), (*tmp_v[dim])(idx(i + grid->p_half,j,k))) - 
 //          mpdata_F((*psi[n])(idx(i-1,j,k)), (*psi[n])(idx(i  ,j,k)), (*tmp_v[dim])(idx(i - grid->m_half,j,k)))
@@ -96,14 +98,12 @@ class adv_mpdata : public adv<real_t>
       }
       else 
       {
-        (*psi[n+1])(idx(i,j,k)) -= mpdata_F((*psi[n])(idx(i,  j,k)), (*psi[n])(idx(i+1,j,k)), mpdata_U(i  ,i+grid->p_half,i+1));
-        (*psi[n+1])(idx(i,j,k)) += mpdata_F((*psi[n])(idx(i-1,j,k)), (*psi[n])(idx(i  ,j,k)), mpdata_U(i-1,i-grid->m_half,i  ));
-        // TODO: check why the version below fails with a segfault in:
-        //       blitz::FastArrayIteratorBase<float, 3, blitz::Array<float, 3> const&>::FastArrayIteratorBase ()
-        //(*psi[n+1])(idx(i,j,k)) -= (
-        //  mpdata_F((*psi[n])(idx(i,  j,k)), (*psi[n])(idx(i+1,j,k)), mpdata_U(i  ,i+grid->p_half,i+1)) -
-        //  mpdata_F((*psi[n])(idx(i-1,j,k)), (*psi[n])(idx(i  ,j,k)), mpdata_U(i-1,i-grid->m_half,i  ))
-        //);
+        //(*psi[n+1])(idx(i,j,k)) -= mpdata_F((*psi[n])(idx(i,  j,k)), (*psi[n])(idx(i+1,j,k)), mpdata_U(i  ,i+grid->p_half,i+1));
+        //(*psi[n+1])(idx(i,j,k)) += mpdata_F((*psi[n])(idx(i-1,j,k)), (*psi[n])(idx(i  ,j,k)), mpdata_U(i-1,i-grid->m_half,i  ));
+        (*psi[n+1])(idx(i,j,k)) -= (
+          mpdata_F((*psi[n])(idx(i,  j,k)), (*psi[n])(idx(i+1,j,k)), mpdata_U(i  ,i+grid->p_half,i+1)) -
+          mpdata_F((*psi[n])(idx(i-1,j,k)), (*psi[n])(idx(i  ,j,k)), mpdata_U(i-1,i-grid->m_half,i  ))
+        );
       }
     }
 #    undef mpdata_V

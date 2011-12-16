@@ -18,8 +18,8 @@
 #undef ICICLE_OPT_DESCS
 
 extern void mdl_flt(const po::variables_map&);
-extern void mdl_dbl(const po::variables_map&);
-extern void mdl_ldb(const po::variables_map&);
+//extern void mdl_dbl(const po::variables_map&);
+//extern void mdl_ldb(const po::variables_map&);
 
 int main(int ac, char* av[])
 {
@@ -89,8 +89,8 @@ int main(int ac, char* av[])
     // --bits (floating point precision choice)
     int bits = vm["bits"].as<int>();
     if (sizeof(float) * 8 == bits) mdl_flt(vm);
-    else if (sizeof(double) * 8 == bits) mdl_dbl(vm);
-    else if (sizeof(long double) * 8 == bits) mdl_ldb(vm);
+//    else if (sizeof(double) * 8 == bits) mdl_dbl(vm);
+//    else if (sizeof(long double) * 8 == bits) mdl_ldb(vm);
     else error_macro("unsupported number of bits (" << bits << ")")
   }
   catch (exception &e)

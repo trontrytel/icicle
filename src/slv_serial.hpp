@@ -61,6 +61,7 @@ class slv_serial : public slv<real_t>
         setup->grid->rng_sclr(k_min, k_max, halo)
       ));
       psi[n] = psi_guard[n].get();
+      *psi[n] = quiet_NaN(real_t(0)); // TODO
     }
 
     // caches
@@ -74,9 +75,9 @@ class slv_serial : public slv<real_t>
       for (int n=0; n < cnt; ++n)
       {
         tmp_v_guard[n].reset(new Array<real_t, 3>(
-          setup->grid->rng_vctr(i_min, i_max),
-          setup->grid->rng_vctr(j_min, j_max),
-          setup->grid->rng_vctr(k_min, k_max)
+          setup->grid->rng_vctr(i_min, i_max, halo),
+          setup->grid->rng_vctr(j_min, j_max, halo),
+          setup->grid->rng_vctr(k_min, k_max, halo)
         ));
         tmp_v[n] = tmp_v_guard[n].get();
       }
@@ -111,15 +112,32 @@ class slv_serial : public slv<real_t>
     // velocity fields
     {
       Range 
-        ii = setup->grid->rng_vctr(i->first(), i->last()),
-        jj = setup->grid->rng_vctr(j->first(), j->last()),
-        kk = setup->grid->rng_vctr(k->first(), k->last());
-      //TODO dla nx=3 ny=3 Cx powinno być 4x3 a nie 4x4
-      Cx.reset(new Array<real_t, 3>(ii, jj, kk));
-      Cy.reset(new Array<real_t, 3>(ii, jj, kk));
-      Cz.reset(new Array<real_t, 3>(ii, jj, kk));
+        ix = setup->grid->rng_vctr(i->first(), i->last(), halo),
+        jx = setup->grid->rng_sclr(j->first(), j->last(), halo),
+        kx = setup->grid->rng_sclr(k->first(), k->last(), halo);
+      Cx.reset(new Array<real_t, 3>(ix, jx, kx));
+      *Cx.get() = quiet_NaN(real_t(0)); // TODO
+      Range 
+        iy = setup->grid->rng_sclr(i->first(), i->last(), halo),
+        jy = setup->grid->rng_vctr(j->first(), j->last(), halo),
+        ky = setup->grid->rng_sclr(k->first(), k->last(), halo);
+      Cy.reset(new Array<real_t, 3>(iy, jy, ky));
+      *Cx.get() = quiet_NaN(real_t(0)); // TODO
+      Range 
+        iz = setup->grid->rng_sclr(i->first(), i->last(), halo),
+        jz = setup->grid->rng_sclr(j->first(), j->last(), halo),
+        kz = setup->grid->rng_vctr(k->first(), k->last(), halo);
+      Cz.reset(new Array<real_t, 3>(iz, jz, kz));
+      *Cx.get() = quiet_NaN(real_t(0)); // TODO
 
-      setup->grid->populate_courant_fields(ii, jj, kk, Cx.get(), Cy.get(), Cz.get(), setup->velocity, dt);
+      setup->grid->populate_courant_fields(
+        ix, jx, kx, 
+        iy, jy, ky, 
+        iz, jz, kz, 
+        Cx.get(), Cy.get(), Cz.get(), 
+        setup->velocity, dt, 
+        nx, ny, nz
+      );
     }
   }
 

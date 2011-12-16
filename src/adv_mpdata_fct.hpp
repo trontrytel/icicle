@@ -88,7 +88,7 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
         (*psi[n])(ii  ,jj+1,kk  ), ::min(
         (*psi[n])(ii  ,jj  ,kk-1), 
         (*psi[n])(ii  ,jj  ,kk+1))))))));
-      psi_max(i,j,k) = ::max(psi_max(ii,jj,kk), ::max(
+      psi_max(ii,jj,kk) = ::max(psi_max(ii,jj,kk), ::max(
         (*psi[n])(ii  ,jj  ,kk  ), ::max(
         (*psi[n])(ii-1,jj  ,kk  ), ::max(
         (*psi[n])(ii+1,jj  ,kk  ), ::max(

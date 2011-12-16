@@ -10,6 +10,10 @@
 
 #  include "out.hpp"
 
+extern "C" {
+#  include <unistd.h>
+}
+
 template <typename real_t>
 class out_debug : public out<real_t>
 {
@@ -18,11 +22,14 @@ class out_debug : public out<real_t>
     const Range &i, const Range &j, const Range &k, const unsigned long t
   ) 
   {
-    cerr // non-buffered?
+    ostringstream tmp;
+    tmp
+      << "{pid: " << getpid() << "} :" 
       << "[" << i << "," << j << "," << k << "] @ t/dt=" << t
       << endl
       << (*psi)(i, j, k) 
       << endl;
+    cerr << tmp.str(); // non-buffered?
   }
 };
 
