@@ -18,7 +18,7 @@ class slv_parallel_distmem : public shrdmem_class
   {
     private: slv_parallel_distmem<real_t, shrdmem_class> *nghbr;
     private: int peer, cnt;
-    private: auto_ptr<Array<real_t, 3> > ibuf, obuf;
+    private: auto_ptr<arr<real_t> > ibuf, obuf;
     private: Range ixr, oxr, yr, zr;
 
     public: slv_halo(slv_parallel_distmem<real_t, shrdmem_class> *nghbr, int peer,
@@ -26,8 +26,8 @@ class slv_parallel_distmem : public shrdmem_class
     )
       : nghbr(nghbr), peer(peer), ixr(ixr), oxr(oxr), yr(yr), zr(zr)
     { 
-      ibuf.reset(new Array<real_t, 3>(ixr, yr, zr));
-      obuf.reset(new Array<real_t, 3>(oxr, yr, zr));
+      ibuf.reset(new arr<real_t>(ixr, yr, zr));
+      obuf.reset(new arr<real_t>(oxr, yr, zr));
       cnt = ibuf->cols() * ibuf->rows() * ibuf->depth();
     }
 
@@ -38,7 +38,7 @@ class slv_parallel_distmem : public shrdmem_class
  
     public: void sync(int n)
     {
-      *obuf = nghbr->data(n, idx_ijk(oxr, yr, zr));
+      (*obuf)(ixr, yr, zr) = nghbr->data(n, idx_ijk(oxr, yr, zr));
       nghbr->sndrcv(peer, cnt, ibuf->data(), obuf->data());
     }
 
@@ -51,7 +51,7 @@ class slv_parallel_distmem : public shrdmem_class
 
   private: int size, rank;
   private: auto_ptr<slv_halo> lhalo, rhalo;
-  private: auto_ptr<Array<real_t, 3> > libuf, ribuf, lobuf, robuf;
+  private: auto_ptr<arr<real_t> > libuf, ribuf, lobuf, robuf;
 
   private: int i_min(int nx, int rank, int size) { return (rank + 0) * nx / size; }
   private: int i_max(int nx, int rank, int size) { return i_min(nx, rank + 1, size) - 1; }

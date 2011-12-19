@@ -8,10 +8,37 @@
 #ifndef ADV_HPP
 #  define ADV_HPP
 
-#  include "config.hpp" // USE_* defines
 #  include "common.hpp" // root class, error reporting, ...
 #  include "grd.hpp" // m_half, p_half, ...
 #  include "idx.hpp"
+
+// C++ forbins virtual template methods so we do a preprocessor workaround:
+// the macro below has to be included in every class inheriting from adv
+#  define adv_hack_macro \
+  public: void op_ijk( \
+    arr<real_t> *psi[], \
+    arr<real_t> *tmp_s[], \
+    arr<real_t> *tmp_v[], \
+    const Range &i, const Range &j, const Range &k, \
+    const int n, const int step, \
+    const arr<real_t> &Cx, const arr<real_t> &Cy, const arr<real_t> &Cz \
+  ) { op<idx_ijk>(0, psi, tmp_s, tmp_v, i, j, k, n, step, Cx, Cy, Cz); } \
+  public: void op_jki( \
+    arr<real_t> *psi[], \
+    arr<real_t> *tmp_s[], \
+    arr<real_t> *tmp_v[], \
+    const Range &i, const Range &j, const Range &k, \
+    const int n, const int step, \
+    const arr<real_t> &Cx, const arr<real_t> &Cy, const arr<real_t> &Cz \
+  ) { op<idx_jki>(1, psi, tmp_s, tmp_v, j, k, i, n, step, Cy, Cz, Cx); } \
+  public: void op_kij( \
+    arr<real_t> *psi[], \
+    arr<real_t> *tmp_s[], \
+    arr<real_t> *tmp_v[], \
+    const Range &i, const Range &j, const Range &k, \
+    const int n, const int step, \
+    const arr<real_t> &Cx, const arr<real_t> &Cy, const arr<real_t> &Cz \
+  ) { op<idx_kij>(2, psi, tmp_s, tmp_v, k, i, j, n, step, Cz, Cx, Cy); }
 
 template <typename real_t>
 class adv : root
@@ -23,48 +50,45 @@ class adv : root
   public: virtual const int num_vctr_caches() { return 0; }
 
   private: virtual void op_ijk(
-    Array<real_t, 3> *psi[], 
-    Array<real_t, 3> *tmp_s[], 
-    Array<real_t, 3> *tmp_v[], 
+    arr<real_t> *psi[], 
+    arr<real_t> *tmp_s[], 
+    arr<real_t> *tmp_v[], 
     const Range &i, const Range &j, const Range &k, 
     const int n, const int step,
-    const Array<real_t, 3> &Cx, const Array<real_t, 3> &Cy, const Array<real_t, 3> &Cz
+    const arr<real_t> &Cx, const arr<real_t> &Cy, const arr<real_t> &Cz
   ) = 0;
 
   private: virtual void op_jki(
-    Array<real_t, 3> *psi[], 
-    Array<real_t, 3> *tmp_s[], 
-    Array<real_t, 3> *tmp_v[], 
+    arr<real_t> *psi[], 
+    arr<real_t> *tmp_s[], 
+    arr<real_t> *tmp_v[], 
     const Range &i, const Range &j, const Range &k, 
     const int n, const int step,
-    const Array<real_t, 3> &Cx, const Array<real_t, 3> &Cy, const Array<real_t, 3> &Cz
+    const arr<real_t> &Cx, const arr<real_t> &Cy, const arr<real_t> &Cz
   ) = 0; 
 
   private: virtual void op_kij(
-    Array<real_t, 3> *psi[], 
-    Array<real_t, 3> *tmp_s[], 
-    Array<real_t, 3> *tmp_v[], 
+    arr<real_t> *psi[], 
+    arr<real_t> *tmp_s[], 
+    arr<real_t> *tmp_v[], 
     const Range &i, const Range &j, const Range &k, 
     const int n, const int step,
-    const Array<real_t, 3> &Cx, const Array<real_t, 3> &Cy, const Array<real_t, 3> &Cz
+    const arr<real_t> &Cx, const arr<real_t> &Cy, const arr<real_t> &Cz
   ) = 0;
 
   public: virtual void op3D(
-    Array<real_t, 3> *psi[], 
-    Array<real_t, 3> *tmp_s[], 
-    Array<real_t, 3> *tmp_v[], 
-    const Range &i, 
-    const Range &j, 
-    const Range &k, 
+    arr<real_t> *psi[], 
+    arr<real_t> *tmp_s[], 
+    arr<real_t> *tmp_v[], 
+    const Range &i, const Range &j, const Range &k, 
     const int n, const int s,
-    Array<real_t, 3> &Cx,
-    Array<real_t, 3> &Cy,
-    Array<real_t, 3> &Cz
+    arr<real_t> &Cx, arr<real_t> &Cy, arr<real_t> &Cz
   )
   {
     // op() uses the -= operator so the first assignment happens here
     *psi[n+1] = *psi[0];
 
+    // we use the same code for each dimension switching the indices accordingly
     if (true)  
       op_ijk(psi, tmp_s, tmp_v, i, j, k, n, s, Cx, Cy, Cz); // X
     if (j.first() != j.last())

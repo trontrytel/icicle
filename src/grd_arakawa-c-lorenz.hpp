@@ -45,21 +45,28 @@ class grd_arakawa_c_lorenz : public grd<real_t>
   public: quantity<si::length, real_t> dy() { return dy_; }
   public: quantity<si::length, real_t> dz() { return dz_; }
 
-  public: Range rng_sclr(int first, int last, int halo) { return Range(first - halo, last + halo); }
-  public: Range rng_vctr(int first, int last) { return Range(first - m_half, last + p_half); }
+  public: Range rng_sclr(int first, int last, int halo) 
+  { 
+    return Range(first - halo, last + halo); 
+  }
+  public: Range rng_vctr(int first, int last, int halo) 
+  { 
+    assert(halo > 0);
+    return Range(first - m_half - halo, last + p_half + halo); 
+  }
 
   // coordinates at which u(x,y,z), v(x,y,z), w(x,y,z) are evaluated
-  public: quantity<si::length, real_t> u_x(int i, int  , int  ) { return (i + real_t(.5)) * dx_; }
-  public: quantity<si::length, real_t> u_y(int  , int j, int  ) { return real_t(j) * dy_; }
-  public: quantity<si::length, real_t> u_z(int  , int  , int k) { return real_t(k) * dz_; }
+  public: quantity<si::length, real_t> u_x(int i, int  , int  ) { return real_t(i) * dx_; }
+  public: quantity<si::length, real_t> u_y(int  , int j, int  ) { return (j + real_t(.5)) * dy_; }
+  public: quantity<si::length, real_t> u_z(int  , int  , int k) { return (k + real_t(.5)) * dz_; }
 
-  public: quantity<si::length, real_t> v_x(int i, int  , int  ) { return real_t(i) * dx_; }
-  public: quantity<si::length, real_t> v_y(int  , int j, int  ) { return (j + real_t(.5)) * dy_; }
-  public: quantity<si::length, real_t> v_z(int  , int  , int k) { return real_t(k) * dz_; }
+  public: quantity<si::length, real_t> v_x(int i, int  , int  ) { return (i + real_t(.5)) * dx_; }
+  public: quantity<si::length, real_t> v_y(int  , int j, int  ) { return real_t(j) * dy_; }
+  public: quantity<si::length, real_t> v_z(int  , int  , int k) { return (k + real_t(.5)) * dz_; }
 
-  public: quantity<si::length, real_t> w_x(int i, int  , int  ) { return real_t(i) * dx_; }
-  public: quantity<si::length, real_t> w_y(int  , int j, int  ) { return real_t(j) * dy_; }
-  public: quantity<si::length, real_t> w_z(int  , int  , int k) { return (k + real_t(.5)) * dz_; }
+  public: quantity<si::length, real_t> w_x(int i, int  , int  ) { return (i + real_t(.5)) * dx_; }
+  public: quantity<si::length, real_t> w_y(int  , int j, int  ) { return (j + real_t(.5)) * dy_; }
+  public: quantity<si::length, real_t> w_z(int  , int  , int k) { return real_t(k) * dz_; }
 
   public: quantity<si::length, real_t> x(int i, int  , int  ) { return (i + real_t(.5)) * dx_; };
   public: quantity<si::length, real_t> y(int  , int j, int  ) { return (j + real_t(.5)) * dy_; };

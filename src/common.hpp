@@ -13,12 +13,6 @@
 #  include <boost/units/systems/si.hpp>
 using namespace boost::units;
 
-#  if defined(USE_BOOST_THREAD) || defined(_OPENMP)
-#    define BZ_THREADSAFE
-#  endif
-#  include <blitz/array.h>
-using namespace blitz;
-
 // overloading the default d-tor with a virtual one (enforces execution of child d-tors)
 class root { public: virtual ~root() {} };
 

@@ -24,7 +24,7 @@ for bits in {32,64,128}; do
                   if [ "$adv" = "mpdata --adv.mpdata.fct 1" -a $nsd = 20 ]; then continue; fi # halo > nx
 
                   # the actual test
-                  cmd="../../icicle --ini boxcar --ini.boxcar.b 1"
+                  cmd="../../icicle --ini boxcar --ini.boxcar.bx 1"
                   cmd="$cmd --bits $bits --dt 1 --grd.dx 1 --grd.dy 1 --grd.dz 1 --grd arakawa-c-lorenz"
                   cmd="$cmd --vel uniform $nxyz $u"
                   cmd="$cmd --nt $nt --adv $adv --slv $slv --out gnuplot --nsd $nsd"

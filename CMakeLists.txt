@@ -9,7 +9,7 @@
 cmake_minimum_required(VERSION 2.6) # for simplified if-constructs
 
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffast-math -DNDEBUG")
-set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -DBZ_DEBUG")
+set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -DBZ_DEBUG" CACHE STRING "Debug options." FORCE)
 
 if(NOT (
   "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" OR 
@@ -24,6 +24,10 @@ if(NOT (
     \$ cmake . -DCMAKE_BUILD_TYPE=None    \# (CXX_FLAGS=\$CXXFLAGS)")
 endif()
 
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug") 
+  set(LINK_FLAGS "${LINK_FLAGS} -lblitz")
+  # TODO: check if debugging actually works, if not suggest recompiling blitz with --enable-shared
+endif()
 project(icicle CXX)
 
 set(TMP "src/config.hpp")
@@ -195,4 +199,4 @@ endif()
 enable_testing()
 
 add_subdirectory(tests)
-add_subdirectory(src) 
+#add_subdirectory(src) 

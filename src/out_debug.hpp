@@ -18,7 +18,7 @@ template <typename real_t>
 class out_debug : public out<real_t>
 {
   public: virtual void record(
-    Array<real_t, 3> *psi,
+    arr<real_t> *psi,
     const Range &i, const Range &j, const Range &k, const unsigned long t
   ) 
   {

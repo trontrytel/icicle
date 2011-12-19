@@ -14,16 +14,20 @@
 template <typename real_t>
 class ini_boxcar : public ini<real_t>
 {
-  private: quantity<si::length, real_t> a, b;
+  private: quantity<si::length, real_t> ax, bx, ay, by, az, bz;
   private: quantity<si::dimensionless, real_t> A, A0;
 
   public: ini_boxcar(
-    const quantity<si::length, real_t> &a,
-    const quantity<si::length, real_t> &b,
+    const quantity<si::length, real_t> &ax,
+    const quantity<si::length, real_t> &bx,
+    const quantity<si::length, real_t> &ay,
+    const quantity<si::length, real_t> &by,
+    const quantity<si::length, real_t> &az,
+    const quantity<si::length, real_t> &bz,
     const quantity<si::dimensionless, real_t> &A,
     const quantity<si::dimensionless, real_t> &A0
   )
-    : a(a), b(b), A(A), A0(A0)
+    : ax(ax), bx(bx), ay(ay), by(by), az(az), bz(bz), A(A), A0(A0)
   {}
 
   public: quantity<si::dimensionless, real_t> psi(
@@ -33,9 +37,9 @@ class ini_boxcar : public ini<real_t>
   ) 
   {
     if (
-      x < a || x > b || 
-      y < a || y > b || 
-      z < a || z > b
+      x < ax || x > bx || 
+      y < ay || y > by || 
+      z < az || z > bz
     ) return A0;
     return A0 + A;
   }

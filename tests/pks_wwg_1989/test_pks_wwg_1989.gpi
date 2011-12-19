@@ -14,8 +14,11 @@ set ylabel "t"
 #set cbrange [-.5:1]
 #set cbtics .5
 set zrange [.8:2.2]
+set cbrange [.8:2.2]
+unset autoscale
+set autoscale xy
 set xyplane at 0
-set palette defined ( .8 "red", 1 "red", 1 "blue", 2 "blue", 2 "green", 2.2 "green")
+set palette defined ( .8 "red", 1 "red", 1 "blue", 2 "green", 2 "red", 2.2 "red")
 #set term svg
 #set output "fig1.svg"
 cmd = "../../icicle" \
@@ -23,15 +26,18 @@ cmd = "../../icicle" \
   ." --grd.dx 1" \
   ." --grd.dy 1 " \
   ." --grd.dz 1" \
-  ." --vel uniform --vel.uniform.u .5" \
+  ." --vel uniform --vel.uniform.u .75" \
   ." --nt 80 --nx 90" \
   ." --slv serial" \
-  ." --out gnuplot" \
-  ." --ini boxcar --ini.boxcar.b 20 --ini.boxcar.A0 1" 
+  ." --out gnuplot --out.gnuplot.using 1:-2:2" \
+  ." --ini boxcar --ini.boxcar.ax 20 --ini.boxcar.bx 40 --ini.boxcar.A0 1 " 
+print cmd
 set multiplot layout 1,2
-  set title "MPDATA (iord=2,fct=0)"
-  splot "<".cmd." --adv.mpdata.iord 2 --adv mpdata" using 0:-2:1 notitle with lines palette
+  set title "MPDATA (iord=1,fct=0)"
+ # splot "<".cmd." --adv.mpdata.iord 1 --adv mpdata" using 1:-2:2 notitle with lines palette
+  set title "upstream"
+  splot "<".cmd." --adv upstream" using 1:-2:2 notitle with lines palette
   set title "MPDATA (iord=2,fct=1)"
-  splot "<".cmd." --adv.mpdata.iord 3 --adv.mpdata.fct 1 --adv mpdata" using 0:-2:1 notitle with lines palette
+  splot "<".cmd." --adv.mpdata.iord 2 --adv.mpdata.fct 1 --adv mpdata" using 1:-2:2 notitle with lines palette
 unset multiplot
 pause -1

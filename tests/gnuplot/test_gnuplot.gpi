@@ -11,11 +11,11 @@ set noxtics
 set ztics .5
 set ylabel "t"
 set noytics
-set cbrange [-.5:1]
+set cbrange [.5:2]
 set cbtics .5
-set zrange [-.5:1]
+set zrange [.5:2]
 set xyplane at 0
-set palette maxcolors 24 defined ( -.5 "red", -0 "red", 0 "blue", .33 "green", .66 "brown", 1 "black")
+set palette maxcolors 24 defined ( .5 "red", 1 "red", 1 "blue", 1.33 "green", 1.66 "brown", 2 "black")
 set term svg
 set output "fig1.svg"
 nx=20
@@ -29,16 +29,22 @@ cmd = "../../icicle" \
   ." --nt 25 --nx ".nx \
   ." --slv serial" \
   ." --out gnuplot --out.gnuplot.using 1:-2:2" \
-  ." --ini cone --ini.cone.h 1 --ini.cone.x0 3 --ini.cone.z0 0 --ini.cone.r 2.5" 
-set multiplot layout 2,2
+  ." --ini cone --ini.cone.h 1 --ini.cone.x0 3 --ini.cone.z0 0 --ini.cone.r 2.5 --ini.cone.h0 1" 
+set term x11
+set multiplot layout 3,2
   unset colorbox
   set title "upstream"
   splot "<".cmd." --adv.mpdata.iord 1 --adv mpdata" using 1:-2:2 notitle with lines palette
+  set title "leapfrog"
+  splot "<".cmd." --adv leapfrog                  " using 1:-2:2 notitle with lines palette
   set title "MPDATA (iord=2)"
   splot "<".cmd." --adv.mpdata.iord 2 --adv mpdata" using 1:-2:2 notitle with lines palette
+  set title "MPDATA (iord=2,fct=1)"
+  splot "<".cmd." --adv.mpdata.iord 2 --adv.mpdata.fct 1 --adv mpdata" using 1:-2:2 notitle with lines palette
+  set title "MPDATA (iord=3,fct=1)"
+  splot "<".cmd." --adv.mpdata.iord 3 --adv.mpdata.fct 1 --adv mpdata" using 1:-2:2 notitle with lines palette
+  set colorbox horiz user origin .2,.55 size .6, .03
   set title "MPDATA (iord=3)"
   splot "<".cmd." --adv.mpdata.iord 3 --adv mpdata" using 1:-2:2 notitle with lines palette
-  set title "leapfrog"
-  set colorbox horiz user origin .2,.55 size .6, .03
-  splot "<".cmd." --adv leapfrog                  " using 1:-2:2 notitle with lines palette
 unset multiplot
+pause -1

@@ -12,6 +12,7 @@
 #  include "common.hpp" // root class, error reporting
 #  include "vel.hpp"
 #  include "ini.hpp"
+#  include "arr.hpp"
 
 template<typename real_t>
 class grd : root
@@ -20,10 +21,10 @@ class grd : root
   public: virtual quantity<si::length, real_t> dy() = 0;
   public: virtual quantity<si::length, real_t> dz() = 0;
 
-  // returns ranges to be passed as constructors to Array
+  // returns ranges to be passed as constructors to arr
   // first and last reflect scalar indices
-  public: virtual Range rng_sclr(int first, int last, int halo = 0) = 0;
-  public: virtual Range rng_vctr(int first, int last) = 0;
+  public: virtual Range rng_sclr(int first, int last, int halo) = 0;
+  public: virtual Range rng_vctr(int first, int last, int halo) = 0;
 
   public: virtual quantity<si::length, real_t> x(int i, int j, int k) = 0;
   public: virtual quantity<si::length, real_t> y(int i, int j, int k) = 0;
@@ -41,30 +42,42 @@ class grd : root
 
   // ... Nothing is real and nothing to get hung about.
   // courant fields forever ...
-  public: virtual void populate_courant_fields(Range &ir, Range &jr, Range &kr,
-    Array<real_t, 3> *Cx, 
-    Array<real_t, 3> *Cy, 
-    Array<real_t, 3> *Cz, 
+  public: virtual void populate_courant_fields(
+    Range &ix, Range &jx, Range &kx,
+    Range &iy, Range &jy, Range &ky,
+    Range &iz, Range &jz, Range &kz,
+    arr<real_t> *Cx, 
+    arr<real_t> *Cy, 
+    arr<real_t> *Cz, 
     vel<real_t> *velocity,
-    quantity<si::time, real_t> dt
+    quantity<si::time, real_t> dt,
+    int nx, int ny, int nz
   ) 
   {
-    for (int i = ir.first(); i <= ir.last(); ++i)
-      for (int j = jr.first(); j <= jr.last(); ++j)
-        for (int k = kr.first(); k <= kr.last(); ++k)
-        {
+    quantity<si::length, real_t> 
+      mx = real_t(nx) * dx(),
+      my = real_t(ny) * dy(),
+      mz = real_t(nz) * dz();
+    for (int i = ix.first(); i <= ix.last(); ++i)
+      for (int j = jx.first(); j <= jx.last(); ++j)
+        for (int k = kx.first(); k <= kx.last(); ++k)
           (*Cx)(i, j, k) = dt / dx() *
-            velocity->u(u_x(i, j, k), u_y(i, j, k), u_z(i, j, k));
+            velocity->u(fmod(u_x(i, j, k), mx), fmod(u_y(i, j, k), my), fmod(u_z(i, j, k), mz));
+    for (int i = iy.first(); i <= iy.last(); ++i)
+      for (int j = jy.first(); j <= jy.last(); ++j)
+        for (int k = ky.first(); k <= ky.last(); ++k)
           (*Cy)(i, j, k) = dt / dy() *
-            velocity->v(v_x(i, j, k), v_y(i, j, k), v_z(i, j, k));
+            velocity->v(fmod(v_x(i, j, k), mx), fmod(v_y(i, j, k), my), fmod(v_z(i, j, k), mz));
+    for (int i = iz.first(); i <= iz.last(); ++i)
+      for (int j = jz.first(); j <= jz.last(); ++j)
+        for (int k = kz.first(); k <= kz.last(); ++k)
           (*Cz)(i, j, k) = dt / dz() *
-            velocity->w(w_x(i, j, k), w_y(i, j, k), w_z(i, j, k));
-        }
+            velocity->w(fmod(w_x(i, j, k), mx), fmod(w_y(i, j, k), my), fmod(w_z(i, j, k), mz));
   }
 
   public: virtual void populate_scalar_field(
     const Range &ii, const Range &jj, const Range &kk,
-    Array<real_t, 3> *psi, ini<real_t> *intcond
+    arr<real_t> *psi, ini<real_t> *intcond
   )
   {
     for (int i = ii.first(); i <= ii.last(); ++i)

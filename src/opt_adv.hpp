@@ -9,6 +9,7 @@
 #  define OPT_ADV_HPP
 
 #  include "opt.hpp"
+#  include "adv_upstream.hpp"
 #  include "adv_mpdata.hpp"
 #  include "adv_mpdata_fct.hpp"
 #  include "adv_leapfrog.hpp"
@@ -40,11 +41,11 @@ void opt_adv(const po::variables_map& vm,
   if (advscheme == "leapfrog")
   {
     *advsch = new adv_leapfrog<real_t>(g);
-    *fllbck = new adv_mpdata<real_t>(g, 1);
+    *fllbck = new adv_upstream<real_t>(g);
   }
   else if (advscheme == "upstream")
   {
-    *advsch = new adv_mpdata<real_t>(g, 1);
+    *advsch = new adv_upstream<real_t>(g);
   }
   else if (advscheme == "mpdata")
   {

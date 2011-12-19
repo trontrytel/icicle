@@ -17,6 +17,7 @@
 template <typename real_t> 
 class adv_lax_wendroff : public adv<real_t> 
 {
+  adv_hack_macro // workaround for virtual template methods
   public: const int stencil_extent() { return 3; }
   public: const int time_levels() { return 3; } // ?
   public: const int num_steps() { return 1; } // ?
@@ -24,16 +25,16 @@ class adv_lax_wendroff : public adv<real_t>
   public: 
   template <class idx>
   void op(int dim,
-    Array<real_t, 3>* psi[], 
-    Array<real_t, 3>* [], 
-    Array<real_t, 3>* [], 
+    arr<real_t>* psi[], 
+    arr<real_t>* [], 
+    arr<real_t>* [], 
     const Range &i, 
     const Range &j, 
     const Range &k, 
     const int n, const int step,
-    const Array<real_t, 3> &Cx, 
-    const Array<real_t, 3> &, 
-    const Array<real_t, 3> &
+    const arr<real_t> &Cx, 
+    const arr<real_t> &, 
+    const arr<real_t> &
   )
   {
     assert(step == 1);
@@ -45,6 +46,5 @@ class adv_lax_wendroff : public adv<real_t>
       * ( (*psi[n])(i+1) - (*psi[n])(i-1) );
 */
   }
-#  include "adv_hack.cpp"
 };
 #endif

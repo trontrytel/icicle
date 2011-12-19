@@ -33,7 +33,7 @@ class out_gnuplot : public out<real_t>
   }
 
   public: virtual void record(
-    Array<real_t, 3> *psi,
+    arr<real_t> *psi,
     const Range &i, const Range &j, const Range &k, const unsigned long t
   ) 
   {
@@ -50,7 +50,7 @@ class out_gnuplot : public out<real_t>
   
   private:
   template<class idx>
-  void record_helper(Array<real_t, 3> *psi, const Range &i, const unsigned long t)
+  void record_helper(arr<real_t> *psi, const Range &i, const unsigned long t)
   {
     // end record if needed and output the data + some housekeeping
     if (t_last != -1 && t != t_last)
@@ -63,11 +63,11 @@ class out_gnuplot : public out<real_t>
     {
       if (steps)
         cout 
-          << (grid->x(ii,0,0) - real_t(.5) * grid->dx()) / si::metres // TODO: this assumes x 
+          << real_t((grid->x(ii,0,0) - real_t(.5) * grid->dx()) / si::metres) // TODO: this assumes x 
           << "\t"
           << *(*psi)(idx(Range(ii,ii), Range(0,0), Range(0,0))).dataFirst() 
           << endl
-          << (grid->x(ii,0,0) + real_t(.5) * grid->dx()) / si::metres // TODO: this assumes x
+          << real_t((grid->x(ii,0,0) + real_t(.5) * grid->dx()) / si::metres) // TODO: this assumes x
           << "\t"
           << *(*psi)(idx(Range(ii,ii), Range(0,0), Range(0,0))).dataFirst() 
           << endl;

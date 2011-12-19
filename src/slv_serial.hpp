@@ -10,6 +10,7 @@
 
 #  include "slv.hpp"
 #  include "stp.hpp"
+#  include "arr.hpp" // TODO: somewhere else
 
 template <typename real_t>
 class slv_serial : public slv<real_t>
@@ -17,17 +18,17 @@ class slv_serial : public slv<real_t>
   private: adv<real_t> *fllbck, *advsch;
   private: auto_ptr<Range> i, j, k;
   private: out<real_t> *output;
-  private: int nx, ny, nz, halo;//, halo, zhalo;
+  private: int nx, ny, nz, halo;
 
-  private: auto_ptr<Array<real_t, 3> > Cx, Cy, Cz;
+  private: auto_ptr<arr<real_t> > Cx, Cy, Cz;
 
-  private: auto_ptr<Array<real_t, 3> > *psi_guard;
-  private: Array<real_t, 3> **psi;
+  private: auto_ptr<arr<real_t> > *psi_guard;
+  private: arr<real_t> **psi; 
 
-  private: auto_ptr<Array<real_t, 3> > *tmp_s_guard;
-  private: Array<real_t, 3> **tmp_s;
-  private: auto_ptr<Array<real_t, 3> > *tmp_v_guard;
-  private: Array<real_t, 3> **tmp_v;
+  private: auto_ptr<arr<real_t> > *tmp_s_guard;
+  private: arr<real_t> **tmp_s;
+  private: auto_ptr<arr<real_t> > *tmp_v_guard;
+  private: arr<real_t> **tmp_v;
 
   public: slv_serial(stp<real_t> *setup,
     int i_min, int i_max, int nx,
@@ -42,20 +43,20 @@ class slv_serial : public slv<real_t>
     // sanity checks
     {
       int len;
-      if (halo > (len = i_max - i_min + 1)) 
+      if (halo > (len = i_max - i_min + 1) && nx != 1) 
         error_macro("halo length (" << halo << ") may not exceed domain extent in X (" << len << ")")
-      if (halo > (len = j_max - j_min + 1))
-        error_macro("halo length (" << halo << ") may not exceed domain extent in X (" << len << ")")
-      if (halo > (len = k_max - k_min + 1))
-        error_macro("halo length (" << halo << ") may not exceed domain extent in X (" << len << ")")
+      if (halo > (len = j_max - j_min + 1) && ny != 1)
+        error_macro("halo length (" << halo << ") may not exceed domain extent in Y (" << len << ")")
+      if (halo > (len = k_max - k_min + 1) && nz != 1)
+        error_macro("halo length (" << halo << ") may not exceed domain extent in Z (" << len << ")")
     }
 
     // memory allocation
-    psi_guard = new auto_ptr<Array<real_t, 3> >[advsch->time_levels()];
-    psi = new Array<real_t, 3>*[advsch->time_levels()];
+    psi_guard = new auto_ptr<arr<real_t> >[advsch->time_levels()];
+    psi = new arr<real_t>*[advsch->time_levels()];
     for (int n=0; n < advsch->time_levels(); ++n) 
     {
-      psi_guard[n].reset(new Array<real_t, 3>(
+      psi_guard[n].reset(new arr<real_t>(
         setup->grid->rng_sclr(i_min, i_max, halo),
         setup->grid->rng_sclr(j_min, j_max, halo),
         setup->grid->rng_sclr(k_min, k_max, halo)
@@ -69,28 +70,28 @@ class slv_serial : public slv<real_t>
 
     {
       int cnt = advsch->num_vctr_caches();
-      tmp_v_guard = new auto_ptr<Array<real_t, 3> >[cnt];
-      tmp_v = new Array<real_t, 3>*[cnt];
+      tmp_v_guard = new auto_ptr<arr<real_t> >[cnt];
+      tmp_v = new arr<real_t>*[cnt];
       for (int n=0; n < cnt; ++n)
       {
-        tmp_v_guard[n].reset(new Array<real_t, 3>(
-          setup->grid->rng_vctr(i_min, i_max),
-          setup->grid->rng_vctr(j_min, j_max),
-          setup->grid->rng_vctr(k_min, k_max)
+        tmp_v_guard[n].reset(new arr<real_t>(
+          setup->grid->rng_vctr(i_min, i_max, halo),
+          setup->grid->rng_vctr(j_min, j_max, halo),
+          setup->grid->rng_vctr(k_min, k_max, halo)
         ));
         tmp_v[n] = tmp_v_guard[n].get();
       }
     }
     {
       int cnt = advsch->num_sclr_caches();
-      tmp_s_guard = new auto_ptr<Array<real_t, 3> >[cnt];
-      tmp_s = new Array<real_t, 3>*[cnt];
+      tmp_s_guard = new auto_ptr<arr<real_t> >[cnt];
+      tmp_s = new arr<real_t>*[cnt];
       for (int n=0; n < cnt; ++n)
       {
-        tmp_s_guard[n].reset(new Array<real_t, 3>(
-          setup->grid->rng_vctr(i_min, i_max),
-          setup->grid->rng_vctr(j_min, j_max),
-          setup->grid->rng_vctr(k_min, k_max)
+        tmp_s_guard[n].reset(new arr<real_t>(
+          setup->grid->rng_sclr(i_min, i_max, halo),
+          setup->grid->rng_sclr(j_min, j_max, halo),
+          setup->grid->rng_sclr(k_min, k_max, halo)
         ));
         tmp_s[n] = tmp_s_guard[n].get();
       }
@@ -111,15 +112,29 @@ class slv_serial : public slv<real_t>
     // velocity fields
     {
       Range 
-        ii = setup->grid->rng_vctr(i->first(), i->last()),
-        jj = setup->grid->rng_vctr(j->first(), j->last()),
-        kk = setup->grid->rng_vctr(k->first(), k->last());
-      //TODO dla nx=3 ny=3 Cx powinno być 4x3 a nie 4x4
-      Cx.reset(new Array<real_t, 3>(ii, jj, kk));
-      Cy.reset(new Array<real_t, 3>(ii, jj, kk));
-      Cz.reset(new Array<real_t, 3>(ii, jj, kk));
+        ix = setup->grid->rng_vctr(i->first(), i->last(), halo),
+        jx = setup->grid->rng_sclr(j->first(), j->last(), halo),
+        kx = setup->grid->rng_sclr(k->first(), k->last(), halo);
+      Cx.reset(new arr<real_t>(ix, jx, kx));
+      Range 
+        iy = setup->grid->rng_sclr(i->first(), i->last(), halo),
+        jy = setup->grid->rng_vctr(j->first(), j->last(), halo),
+        ky = setup->grid->rng_sclr(k->first(), k->last(), halo);
+      Cy.reset(new arr<real_t>(iy, jy, ky));
+      Range 
+        iz = setup->grid->rng_sclr(i->first(), i->last(), halo),
+        jz = setup->grid->rng_sclr(j->first(), j->last(), halo),
+        kz = setup->grid->rng_vctr(k->first(), k->last(), halo);
+      Cz.reset(new arr<real_t>(iz, jz, kz));
 
-      setup->grid->populate_courant_fields(ii, jj, kk, Cx.get(), Cy.get(), Cz.get(), setup->velocity, dt);
+      setup->grid->populate_courant_fields(
+        ix, jx, kx, 
+        iy, jy, ky, 
+        iz, jz, kz, 
+        Cx.get(), Cy.get(), Cz.get(), 
+        setup->velocity, dt, 
+        nx, ny, nz
+      );
     }
   }
 
@@ -153,12 +168,17 @@ class slv_serial : public slv<real_t>
 
   private:
   template<class idx>
-  void fill_halos_helper(Array<real_t, 3> *psi[], int nghbr, int n, 
+  void fill_halos_helper(arr<real_t> *psi[], int nghbr, int n, 
     int i_min, int i_max, const Range &j, const Range &k, int mod
   )
   {
-    (*psi[n])(idx(Range(i_min, i_max), j, k)) =
-      this->nghbr_data(nghbr, n, idx(Range((i_min + mod) % mod, (i_max + mod) % mod), j, k));
+    if (mod == 1)
+      for (int ii = i_min; ii <= i_max; ++ii)
+        (*psi[n])(idx(Range(ii), j, k)) =
+          this->nghbr_data(nghbr, n, idx(Range(0,0), j, k)); // only happens with periodic boundary
+    else 
+      (*psi[n])(idx(Range(i_min, i_max), j, k)) =
+        this->nghbr_data(nghbr, n, idx(Range((i_min + mod) % mod, (i_max + mod) % mod), j, k));
   }
 
   public: void advect(adv<real_t> *a, int n, int s, quantity<si::time, real_t> dt)
