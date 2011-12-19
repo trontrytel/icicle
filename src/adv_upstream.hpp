@@ -42,8 +42,12 @@ class adv_upstream : public adv<real_t>
   )
   {
     assert(step == 1);
-   // eq. (2) from Smolarkiewicz & Margolin 1998
+    // eq. (2) from Smolarkiewicz & Margolin 1998
+    /// eq. (3 a-d) in Smolarkiewicz & Margolin 1998 (J. Comp. Phys., 140, 459-480)
+    /// \f$ F(\psi_l, \psi_r, U) = 0.5 \cdot (U + |U|) \cdot \psi_l + 0.5 \cdot (U - |U|) \cdot \psi_r \f$
 #  define mpdata_F(p1, p2, U) (real_t(.5) * (U + abs(U)) * p1 + real_t(.5) * (U - abs(U)) * p2)
+    /// \f$ \psi^{n+1}_i = \psi^{n}_i - \left[ F( \psi^{n}_{i}, \psi^{n}_{i+1}, U ) - F( \psi^{n}_{i-1}, \psi^{n}_{i}, U ) \right] \f$
+    /// eq. (2) in Smolarkiewicz & Margolin 1998 (J. Comp. Phys., 140, 459-480)
     (*psi[n+1])(idx(i,j,k)) -= (
       mpdata_F((*psi[n])(idx(i  ,j,k)), (*psi[n])(idx(i+1,j,k)), Cx(idx(i + grid->p_half,j,k))) - 
       mpdata_F((*psi[n])(idx(i-1,j,k)), (*psi[n])(idx(i  ,j,k)), Cx(idx(i - grid->m_half,j,k)))

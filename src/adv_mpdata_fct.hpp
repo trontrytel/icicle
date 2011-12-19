@@ -68,6 +68,7 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
       this->template mpdata_U<idx_ijk>(&C_adf(0), psi, n, i, j, k, Cx, Cy, Cz);
       this->template mpdata_U<idx_jki>(&C_adf(1), psi, n, j, k, i, Cy, Cz, Cx);
       this->template mpdata_U<idx_kij>(&C_adf(2), psi, n, k, i, j, Cz, Cx, Cy);
+      // TODO: this could be implemented with just one cache for C_mon!
       fct_helper<idx_ijk>(psi, tmp_s, tmp_v, C_mon(0), C_adf(0), C_adf(1), C_adf(2), i, j, k, n);
       fct_helper<idx_jki>(psi, tmp_s, tmp_v, C_mon(1), C_adf(1), C_adf(2), C_adf(0), j, k, i, n);
       fct_helper<idx_kij>(psi, tmp_s, tmp_v, C_mon(2), C_adf(2), C_adf(0), C_adf(1), k, i, j, n);

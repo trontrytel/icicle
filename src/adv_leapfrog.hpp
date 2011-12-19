@@ -36,6 +36,8 @@ class adv_leapfrog : public adv<real_t>
   )
   {
     assert(step == 1);
+    /// \f$ \psi^{n+1}_i = \psi^{n-1}_i - C \cdot (\psi^{n}_{i+1} - \psi^{n}_{i-1}) \f$
+    // TODO: to powy¿ej nie uwzglêdnia u¶rednienia liczby Couranta
     (*psi[n+1])(idx(i,j,k)) -= 
       .5 * (Cx(idx(i + grid->p_half,j,k)) + Cx(idx(i - grid->m_half,j,k))) // average Courant number!
       * ( (*psi[n])(idx(i+1,j,k)) - (*psi[n])(idx(i-1,j,k)) );

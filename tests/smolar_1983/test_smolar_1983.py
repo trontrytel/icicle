@@ -27,7 +27,7 @@ for adv in ('mpdata','leapfrog','upstream','mpdata-fct'):
     '--grd.dx','1',
     '--grd.dy','1',
     '--grd.dz','1',
-    '--nt','1256', # should be 6*628 !
+    '--nt','256', # should be 6*628 !
     '--nx','100',
     '--nz','100',
     '--vel','test',
@@ -39,7 +39,7 @@ for adv in ('mpdata','leapfrog','upstream','mpdata-fct'):
     '--ini.cone.z0','50', 
     '--ini.cone.r','15',
     '--ini.cone.h0','1',
-    '--slv','threads','--nsd','4',
+    '--slv','threads','--nsd','2',
     '--out','netcdf', 
     '--out.netcdf.ver','3', 
     '--out.netcdf.freq',str(freq),
