@@ -48,8 +48,18 @@ class adv_mpdata : public adv_upstream<real_t>
     const arr<real_t> &Cx, const arr<real_t> &Cy, const arr<real_t> &Cz
   )
   {
+
+    /// multidimensional antidiffusive velocity: \n
+    /// \f$ \tilde{U}^{I}_{i+1/2}=\left[ |U^{I}_{i+1/2}| \Delta x^{I} - \Delta t (u^{I}_{i+1/2})^2 \right] \cdot
+    ///  \frac{\psi^{*}_{i+1}-\psi^{*}_{i}}{(\psi^{*}_{i+1}+\psi^{*}_{i}) \Delta x^{I}} -  \f$ \n
+    /// \f$ - \sum\limits_{J=1,J \ne I} 0.5 \Delta t U^{I}_{i+1/2} \bar{U}^{J}_{i+1/2} \cdot
+    /// \frac{\psi^{*}_{i+1,j+1}+\psi^{*}_{i,j+1}-\psi^{*}_{i+1,j-1}-\psi^{*}_{i,j-1}}
+    /// {\psi^{*}_{i+1,j+1}+\psi^{*}_{i,j+1}+\psi^{*}_{i+1,j-1}+\psi^{*}_{i,j-1}} \f$ \n
+    /// eq. (13-14) in Smolarkiewicz 1984 (J. Comp. Phys.,54,352-362) \n
+
     // instead of computing u_{i+1/2} and u_{i-1/2} for all i
     // we compute u_{i+1/2} for im=(i-1, ... i)
+
     Range im(i.first() - 1, i.last());
     Range ir = im + 1, ic = im + grid->p_half, il = im;
     (*C_adf)(idx(Range(i.first() - grid->m_half, i.last() + grid->p_half), j, k)) = (
@@ -91,6 +101,12 @@ class adv_mpdata : public adv_upstream<real_t>
       adv_upstream<real_t>::template op<idx>(dim, psi, NULL, NULL, i, j, k, n, 1, Cx, Cy, Cz);
     else 
     {
+    /// 
+    /// \f$ \psi^{n+1}_{i} = \psi^{*}_{i} -\sum\limits_{I} \left[ F^{I}( \psi^{*}_{i}, \psi^{*}_{i+1}, \tilde{U}^{I}_{i+1/2} )
+    /// - F^{I}( \psi^{*}_{i-1}, \psi^{*}_{i}, \tilde{U}^{I}_{i-1/2} ) \right] \f$ \n
+    /// where \f$ I \f$ denotes the sum over all dimensions and \f$ \tilde{U} \f$ is multidimensional antidiffusive velocity \n
+    /// eq. (12) in Smolarkiewicz 1984 (J. Comp. Phys.,54,352-362) 
+
       mpdata_U<idx>(tmp_v[0], psi, n, i, j, k, Cx, Cy, Cz);
       adv_upstream<real_t>::template op<idx>(dim, psi, NULL, NULL, i, j, k, n, 1, *tmp_v[0], *tmp_v[1], *tmp_v[2]);
       //                                                                                     ^^^^^^^^^^^^^^^^^^^^ TODO: these are non-existant!

@@ -36,8 +36,10 @@ class adv_leapfrog : public adv<real_t>
   )
   {
     assert(step == 1);
-    /// \f$ \psi^{n+1}_i = \psi^{n-1}_i - C \cdot (\psi^{n}_{i+1} - \psi^{n}_{i-1}) \f$
-    // TODO: to powy¿ej nie uwzglêdnia u¶rednienia liczby Couranta
+    ///  \f$ \psi^{n+1}_i = \psi^{n-1}_i - C^{n}_{i} \cdot (\psi^{n}_{i+1} - \psi^{n}_{i-1}) \f$ \n
+    ///  where C is the average Courant number \n
+    ///  for Arakawa C grid: \f$ C^{n}_i=0.5\cdot(C^{n}_{i+1/2} + C^{n}_{i-1/2}) \f$
+
     (*psi[n+1])(idx(i,j,k)) -= 
       .5 * (Cx(idx(i + grid->p_half,j,k)) + Cx(idx(i - grid->m_half,j,k))) // average Courant number!
       * ( (*psi[n])(idx(i+1,j,k)) - (*psi[n])(idx(i-1,j,k)) );
