@@ -51,6 +51,10 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
      (*psi[n])(i  ,j  ,k-1), \
      (*psi[n])(i  ,j  ,k+1)))))) \
    ) 
+    ///
+    /// \f$ \psi^{max}_{i}=max_{I}(\psi^{n}_{i-1},\psi^{n}_{i},\psi^{n}_{i+1},\psi^{*}_{i-1},\psi^{*}_{i},\psi^{*}_{i+1}) \f$ \n
+    /// \f$ \psi^{min}_{i}=min_{I}(\psi^{n}_{i-1},\psi^{n}_{i},\psi^{n}_{i+1},\psi^{*}_{i-1},\psi^{*}_{i},\psi^{*}_{i+1}) \f$ \n
+    /// eq.(20a, 20b) in Smolarkiewicz & Grabowski 1990 (J.Comp.Phys.,86,355-375)
     if (step == 1)
     {
       // calculating psi_min and psi_max from the previous time step
@@ -86,6 +90,15 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
     const Range &i, const Range &j, const Range &k, int n
   )  
   {
+///
+/// \f$ \beta^{\uparrow}_{i} = \frac { \psi^{max}_{i}- \psi^{*}_{i} }
+/// { \sum\limits_{I} \frac{\Delta t}{\Delta x^{I}} \left( [u^{I}_{i-1/2}]^{+} \psi^{*}_{i-1} - 
+/// [u^{I}_{i+1/2}]^{-} \psi^{*}_{i+1} \right)  } \f$ \n
+/// \f$ \beta^{\downarrow}_{i} = \frac { \psi^{*}_{i}- \psi^{min}_{i} }
+/// { \sum\limits_{I} \frac{\Delta t}{\Delta x^{I}} \left( [u^{I}_{i+1/2}]^{+} \psi^{*}_{i} - 
+/// [u^{I}_{i-1/2}]^{-} \psi^{*}_{i} \right)  } \f$ \n
+/// eq.(19a, 19b) in Smolarkiewicz & Grabowski 1990 (J.Comp.Phys.,86,355-375)
+
 #  define mpdata_fct_beta_up(_i, _j, _k) mpdata_frac( \
      psi_max(idx(_i,_j,_k)) - (*psi[n])(idx(_i,_j,_k)), \
      (::max(real_t(0),C_adf_x(idx(_i - grid->m_half,_j,_k)))) * (*psi[n])(idx(_i-1,_j,_k)) - \
@@ -106,6 +119,12 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
    )
     // as in mpdata_U, we compute u_{i+1/2} for iv=(i-1, ... i) instead of u_{i+1/2} and u_{i-1/2} for all i
     Range iv(i.first()-1, i.last());
+    /// nonoscillatory antidiffusive velocity: \n
+    /// \f$ U^{MON}_{i+1/2}=min(1,\beta ^{\downarrow}_i,\beta ^{\uparrow} _{i+1})[U_{i+1/2}]^{+} 
+    /// + min(1,\beta^{\uparrow}_{i},\beta^{\downarrow}_{i+1/2})[u_{i+1/2}]^{-} \f$ \n
+    /// where \f$ [\cdot]^{+}=max(\cdot,0) \f$ and \f$ [\cdot]^{-}=min(\cdot,0) \f$ \n
+    /// eq.(18) in Smolarkiewicz & Grabowski 1990 (J.Comp.Phys.,86,355-375)
+
     C_mon_x(idx(iv + grid->p_half,j,k)) = C_adf_x(idx(iv + grid->p_half,j,k)) * where(
       C_adf_x(idx(iv + grid->p_half,j,k)) > 0,
       ::min(1, ::min(mpdata_fct_beta_dn(iv, j, k), mpdata_fct_beta_up(iv+1, j, k))),
