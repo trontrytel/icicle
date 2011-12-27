@@ -75,9 +75,9 @@ class slv_serial : public slv<real_t>
       for (int n=0; n < cnt; ++n)
       {
         tmp_v_guard[n].reset(new arr<real_t>(
-          setup->grid->rng_vctr(i_min, i_max, halo),
-          setup->grid->rng_vctr(j_min, j_max, halo),
-          setup->grid->rng_vctr(k_min, k_max, halo)
+          setup->grid->rng_vctr(i_min, i_max, halo), // TODO: one of these should be scalar!
+          setup->grid->rng_vctr(j_min, j_max, halo), // TODO: ditto!
+          setup->grid->rng_vctr(k_min, k_max, halo)  // TODO: ditto!
         ));
         tmp_v[n] = tmp_v_guard[n].get();
       }

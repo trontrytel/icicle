@@ -30,7 +30,7 @@ class adv_upstream : public adv<real_t>
 
   public: 
   template <class idx>
-  void op(int dim,
+  void op(
     arr<real_t>* psi[], 
     arr<real_t>* [], 
     arr<real_t>* tmp_v[], 

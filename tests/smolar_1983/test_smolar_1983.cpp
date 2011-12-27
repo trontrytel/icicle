@@ -9,9 +9,9 @@
  *  @section DESCRIPTION
  *  @section RESULTS
  *    \include "smolar_1983/test_smolar_1983.py"
- *    \image html "../../tests/smolar_1983/fig-leapfrog.gif"
- *    \image html "../../tests/smolar_1983/fig-upstream.gif"
- *    \image html "../../tests/smolar_1983/fig-mpdata.gif"
+ *    \image html "../../tests/smolar_1983/fig-leapfrog-2d.gif"
+ *    \image html "../../tests/smolar_1983/fig-upstream-2d.gif"
+ *    \image html "../../tests/smolar_1983/fig-mpdata-2d.gif"
  */
 
 #include <cstdlib>

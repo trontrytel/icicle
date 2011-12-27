@@ -22,7 +22,7 @@
     const Range &i, const Range &j, const Range &k, \
     const int n, const int step, \
     const arr<real_t> &Cx, const arr<real_t> &Cy, const arr<real_t> &Cz \
-  ) { op<idx_ijk>(0, psi, tmp_s, tmp_v, i, j, k, n, step, Cx, Cy, Cz); } \
+  ) { op<idx_ijk>(psi, tmp_s, tmp_v, i, j, k, n, step, Cx, Cy, Cz); } \
   public: void op_jki( \
     arr<real_t> *psi[], \
     arr<real_t> *tmp_s[], \
@@ -30,7 +30,7 @@
     const Range &i, const Range &j, const Range &k, \
     const int n, const int step, \
     const arr<real_t> &Cx, const arr<real_t> &Cy, const arr<real_t> &Cz \
-  ) { op<idx_jki>(1, psi, tmp_s, tmp_v, j, k, i, n, step, Cy, Cz, Cx); } \
+  ) { op<idx_jki>(psi, tmp_s, tmp_v, j, k, i, n, step, Cy, Cz, Cx); } \
   public: void op_kij( \
     arr<real_t> *psi[], \
     arr<real_t> *tmp_s[], \
@@ -38,7 +38,7 @@
     const Range &i, const Range &j, const Range &k, \
     const int n, const int step, \
     const arr<real_t> &Cx, const arr<real_t> &Cy, const arr<real_t> &Cz \
-  ) { op<idx_kij>(2, psi, tmp_s, tmp_v, k, i, j, n, step, Cz, Cx, Cy); }
+  ) { op<idx_kij>(psi, tmp_s, tmp_v, k, i, j, n, step, Cz, Cx, Cy); }
 
 template <typename real_t>
 class adv : root

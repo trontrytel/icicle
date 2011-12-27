@@ -42,14 +42,14 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
     Range ii = Range(i.first() - 1, i.last() + 1),
           jj = Range(j.first() - 1, j.last() + 1),
           kk = Range(k.first() - 1, k.last() + 1);
-#  define mpdata_fct_minmax(fun, psi, n, i, j, k) ::fun( \
-     (*psi[n])(i  ,j  ,k  ), ::fun( \
-     (*psi[n])(i-1,j  ,k  ), ::fun( \
-     (*psi[n])(i+1,j  ,k  ), ::fun( \
-     (*psi[n])(i  ,j-1,k  ), ::fun( \
-     (*psi[n])(i  ,j+1,k  ), ::fun( \
-     (*psi[n])(i  ,j  ,k-1), \
-     (*psi[n])(i  ,j  ,k+1)))))) \
+#  define mpdata_fct_minmax(fun, psi_, n_, i_, j_, k_) ::fun( \
+     (*psi_[n_])(i_  ,j_  ,k_  ), ::fun( \
+     (*psi_[n_])(i_-1,j_  ,k_  ), ::fun( \
+     (*psi_[n_])(i_+1,j_  ,k_  ), ::fun( \
+     (*psi_[n_])(i_  ,j_-1,k_  ), ::fun( \
+     (*psi_[n_])(i_  ,j_+1,k_  ), ::fun( \
+     (*psi_[n_])(i_  ,j_  ,k_-1), \
+     (*psi_[n_])(i_  ,j_  ,k_+1)))))) \
    ) 
     ///
     /// \f$ \psi^{max}_{i}=max_{I}(\psi^{n}_{i-1},\psi^{n}_{i},\psi^{n}_{i+1},\psi^{*}_{i-1},\psi^{*}_{i},\psi^{*}_{i+1}) \f$ \n
@@ -70,12 +70,12 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
       psi_max(ii,jj,kk) = ::max(psi_max(ii,jj,kk), mpdata_fct_minmax(max, psi, n, ii, jj, kk));
       // calculating Cx_mon, Cy_mon, Cz_mon
       this->template mpdata_U<idx_ijk>(&C_adf(0), psi, n, i, j, k, Cx, Cy, Cz);
-      this->template mpdata_U<idx_jki>(&C_adf(1), psi, n, j, k, i, Cy, Cz, Cx);
-      this->template mpdata_U<idx_kij>(&C_adf(2), psi, n, k, i, j, Cz, Cx, Cy);
+      this->template mpdata_U<idx_jki>(&C_adf(1), psi, n, j, k, i, Cy, Cz, Cx); // TODO only if 3D?
+      this->template mpdata_U<idx_kij>(&C_adf(2), psi, n, k, i, j, Cz, Cx, Cy); // TODO only for 2D and 3D?
       // TODO: this could be implemented with just one cache for C_mon!
       fct_helper<idx_ijk>(psi, tmp_s, tmp_v, C_mon(0), C_adf(0), C_adf(1), C_adf(2), i, j, k, n);
-      fct_helper<idx_jki>(psi, tmp_s, tmp_v, C_mon(1), C_adf(1), C_adf(2), C_adf(0), j, k, i, n);
-      fct_helper<idx_kij>(psi, tmp_s, tmp_v, C_mon(2), C_adf(2), C_adf(0), C_adf(1), k, i, j, n);
+      fct_helper<idx_jki>(psi, tmp_s, tmp_v, C_mon(1), C_adf(1), C_adf(2), C_adf(0), j, k, i, n); // TODO: only if 3D?
+      fct_helper<idx_kij>(psi, tmp_s, tmp_v, C_mon(2), C_adf(2), C_adf(0), C_adf(1), k, i, j, n); // TODO: only for 2D and 3D?
       // performing upstream advection using the calculated ''monotonic'' velocities
       adv_upstream<real_t>::op3D(psi, NULL, NULL, i, j, k, n, 1, C_mon(0), C_mon(1), C_mon(2));
     }

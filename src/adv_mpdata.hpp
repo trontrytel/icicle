@@ -48,7 +48,6 @@ class adv_mpdata : public adv_upstream<real_t>
     const arr<real_t> &Cx, const arr<real_t> &Cy, const arr<real_t> &Cz
   )
   {
-
     /// multidimensional antidiffusive velocity: \n
     /// \f$ \tilde{U}^{I}_{i+1/2}=\left[ |U^{I}_{i+1/2}| \Delta x^{I} - \Delta t (u^{I}_{i+1/2})^2 \right] \cdot
     ///  \frac{\psi^{*}_{i+1}-\psi^{*}_{i}}{(\psi^{*}_{i+1}+\psi^{*}_{i}) \Delta x^{I}} -  \f$ \n
@@ -88,7 +87,7 @@ class adv_mpdata : public adv_upstream<real_t>
 
   public: 
   template <class idx>
-  void op(int dim,
+  void op(
     arr<real_t>* psi[], 
     arr<real_t>* [], 
     arr<real_t>* tmp_v[], 
@@ -98,7 +97,7 @@ class adv_mpdata : public adv_upstream<real_t>
   )
   {
     if (step == 1) 
-      adv_upstream<real_t>::template op<idx>(dim, psi, NULL, NULL, i, j, k, n, 1, Cx, Cy, Cz);
+      adv_upstream<real_t>::template op<idx>(psi, NULL, NULL, i, j, k, n, 1, Cx, Cy, Cz);
     else 
     {
     /// 
@@ -108,8 +107,8 @@ class adv_mpdata : public adv_upstream<real_t>
     /// eq. (12) in Smolarkiewicz 1984 (J. Comp. Phys.,54,352-362) 
 
       mpdata_U<idx>(tmp_v[0], psi, n, i, j, k, Cx, Cy, Cz);
-      adv_upstream<real_t>::template op<idx>(dim, psi, NULL, NULL, i, j, k, n, 1, *tmp_v[0], *tmp_v[1], *tmp_v[2]);
-      //                                                                                     ^^^^^^^^^^^^^^^^^^^^ TODO: these are non-existant!
+      adv_upstream<real_t>::template op<idx>(psi, NULL, NULL, i, j, k, n, 1, *tmp_v[0], *tmp_v[1], *tmp_v[2]);
+      //                                                                                ^^^^^^^^^^^^^^^^^^^^ TODO: these are non-existant!
     }
   }
 };

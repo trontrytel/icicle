@@ -6,17 +6,17 @@
 #    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
 
 set xlabel "x"
-set view 30,340
+set view 65,330
 set noxtics
 set ztics .5
-set ylabel "t"
+set ylabel "        t"
 set noytics
 set cbrange [.5:2]
 set cbtics .5
 set zrange [.5:2]
-set xyplane at 0
-set palette maxcolors 24 defined ( .5 "red", 1 "red", 1 "blue", 1.33 "green", 1.66 "brown", 2 "black")
-set term svg
+set xyplane at 1.
+set palette maxcolors 18 defined ( .5 "red", 1 "red", 1 "blue", 1.33 "green", 1.66 "brown", 2 "black")
+set term svg size 1000,600 dynamic
 set output "fig1.svg"
 nx=20
 dx=1
@@ -30,8 +30,7 @@ cmd = "../../icicle" \
   ." --slv serial" \
   ." --out gnuplot --out.gnuplot.using 1:-2:2" \
   ." --ini cone --ini.cone.h 1 --ini.cone.x0 3 --ini.cone.z0 0 --ini.cone.r 2.5 --ini.cone.h0 1" 
-set term x11
-set multiplot layout 3,2
+set multiplot layout 2,3
   unset colorbox
   set title "upstream"
   splot "<".cmd." --adv.mpdata.iord 1 --adv mpdata" using 1:-2:2 notitle with lines palette
@@ -41,10 +40,8 @@ set multiplot layout 3,2
   splot "<".cmd." --adv.mpdata.iord 2 --adv mpdata" using 1:-2:2 notitle with lines palette
   set title "MPDATA (iord=2,fct=1)"
   splot "<".cmd." --adv.mpdata.iord 2 --adv.mpdata.fct 1 --adv mpdata" using 1:-2:2 notitle with lines palette
+  set colorbox horiz user origin .7,.2 size .25, .04
   set title "MPDATA (iord=3,fct=1)"
   splot "<".cmd." --adv.mpdata.iord 3 --adv.mpdata.fct 1 --adv mpdata" using 1:-2:2 notitle with lines palette
-  set colorbox horiz user origin .2,.55 size .6, .03
-  set title "MPDATA (iord=3)"
-  splot "<".cmd." --adv.mpdata.iord 3 --adv mpdata" using 1:-2:2 notitle with lines palette
+  unset colorbox
 unset multiplot
-pause -1
