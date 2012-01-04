@@ -1,0 +1,25 @@
+coding conventions in icicle:
+  - ...
+  - KISS
+  - no file should be longer than 100 lines :)
+  - double space indentation (no tabs)
+  - both opening and closing braces on separate lines
+  - only Unix-style carriage returns ("\n")
+  - avoiding preprocessor macros
+  - "two or more, use a for" (E.W. Dijkstra)
+  - declare local variables as near to their use as possible
+  - avoid overly long lines...
+
+- code organisation:
+  - one class per one header file (CERN C05)
+  - each header file should be self-contained (CERN C01)
+  - avoid unnecessary inclusions (CERN C02)
+  - protect header files from multiple inclusion (CERN C03)
+  - avoid multiple inheritance (CERN CB5)
+  - filenames reflecting class structure with underscore 
+    indicating inheritance, e.g. adv_lax-wendroff.hpp
+  - filenames should be all-lowercase
+
+- identifier names:
+  - all variable, class and method named are lowercase
+    optionally with underscores

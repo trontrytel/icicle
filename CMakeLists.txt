@@ -185,9 +185,46 @@ else()
 endif()
 #### </Boost.MPI> ######################################################
 
+#### <Boost.Timer> (optional) ##########################################
+if ("${TIMER}" STREQUAL "NO") # handles -DTIMER=NO                     #
+  message("-- Building without Boost.Timer (-DTIMER=NO specified)")
+else()
+  set(CMAKE_REQUIRED_LIBRARIES "-lboost_timer-mt -lboost_system-mt")
+  check_cxx_source_compiles(
+    "#include <boost/timer/timer.hpp>
+     int main() { boost::timer::auto_cpu_timer t; }" 
+    Find_Boost_Timer
+  )
+  if(NOT Find_Boost_Timer) 
+    message(WARNING "
+      Boost.Timer not found! (cf. CMakeFiles/CMakeError.log) 
+      Simulation timing will not be available.
+        suitable Debian/Ubuntu package: libboost-dev (ver >= 1.48)
+        suitable Macports port: boost / boost+openmpi (ver >= 1.48)
+        (after installation delete CMakeCache.txt before running cmake)
+    ")
+  else()
+    set(USE_BOOST_TIMER ${Find_Boost_Timer})
+    set(LINK_FLAGS "${LINK_FLAGS} ${CMAKE_REQUIRED_LIBRARIES}") 
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+  endif()
+endif()                                                                #
+#### </Boost.Timer> ####################################################
+
 add_executable(icicle src/icicle.cpp src/mdl_flt.cpp src/mdl_dbl.cpp src/mdl_ldb.cpp)
 set_target_properties(icicle PROPERTIES LINK_FLAGS ${LINK_FLAGS})
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/src/config.hpp)
+
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug") 
+  set(INFO_CXX_FLAGS "${CMAKE_CXX_FLAGS_DEBUG} ${CMAKE_CXX_FLAGS}")
+elseif("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+  set(INFO_CXX_FLAGS "${CMAKE_CXX_FLAGS_RELEASE} ${CMAKE_CXX_FLAGS}")
+else()
+  set(INFO_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+endif()
+execute_process(COMMAND "whoami" OUTPUT_VARIABLE INFO_WHOAMI OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND "hostname" OUTPUT_VARIABLE INFO_HOSTNAME OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND "${CMAKE_CXX_COMPILER}" "--version" COMMAND "head" "-1" OUTPUT_VARIABLE INFO_CXX_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cfg.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/src/cfg.hpp)
 
 find_package(Doxygen)
 if (DOXYGEN_FOUND)
@@ -199,4 +236,4 @@ endif()
 enable_testing()
 
 add_subdirectory(tests)
-#add_subdirectory(src) 
+add_subdirectory(src) 

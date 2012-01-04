@@ -8,8 +8,8 @@
 #ifndef OUT_HPP
 #  define OUT_HPP
 
-#  include "config.hpp" // USE_* defines
-#  include "common.hpp" // root class, error reporting
+#  include "cmn.hpp" // root class
+#  include "arr.hpp" // Blitz includes
 
 template <typename real_t>
 class out : root

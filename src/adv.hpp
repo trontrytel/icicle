@@ -8,9 +8,8 @@
 #ifndef ADV_HPP
 #  define ADV_HPP
 
-#  include "common.hpp" // root class, error reporting, ...
+#  include "cmn.hpp" // root class, error reporting, ...
 #  include "grd.hpp" // m_half, p_half, ...
-#  include "idx.hpp"
 
 // C++ forbins virtual template methods so we do a preprocessor workaround:
 // the macro below has to be included in every class inheriting from adv

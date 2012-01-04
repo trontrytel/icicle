@@ -25,8 +25,7 @@
 #ifndef VEL_RASINSKI_HPP
 #  define VEL_RASINSKI_HPP
 
-#  include "config.hpp" // USE_* defines
-#  include "common.hpp" // root class, error reporting
+#  include "cmn.hpp" // root class, error reporting
 #  include "vel.hpp"
 
 template <typename real_t>

@@ -6,8 +6,8 @@
  *    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
  */
 
-#ifndef COMMON_HPP
-#  define COMMON_HPP
+#ifndef CMN_HPP
+#  define CMN_HPP
 
 // most common includes
 #  include <boost/units/systems/si.hpp>

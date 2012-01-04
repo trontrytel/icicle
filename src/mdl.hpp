@@ -16,7 +16,7 @@
 #  include "opt_ini.hpp"
 
 template <typename real_t>
-void mdl(const po::variables_map& vm) 
+void mdl(const po::variables_map &vm, const string &options) 
 {
   // some key parameters (TODO: move from here!)
   if (
@@ -49,7 +49,7 @@ void mdl(const po::variables_map& vm)
   }
 
   // output choice
-  auto_ptr<out<real_t> > output(opt_out<real_t>(vm, grid.get(), nx, ny, nz));
+  auto_ptr<out<real_t> > output(opt_out<real_t>(vm, grid.get(), nx, ny, nz, options));
 
   // velocity choice
   auto_ptr<vel<real_t> > velocity(opt_vel<real_t>(vm, grid.get(), nx, ny, nz));

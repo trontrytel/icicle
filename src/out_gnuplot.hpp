@@ -15,6 +15,7 @@
 #  define OUT_GNUPLOT_HPP
 
 #  include "out.hpp"
+#  include "grd.hpp"
 
 template <typename real_t>
 class out_gnuplot : public out<real_t>

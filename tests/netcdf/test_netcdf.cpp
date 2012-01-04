@@ -17,6 +17,7 @@
 
 int main() 
 { 
+  unlink("test_netcdf.nc");
   int status;
   std::string cmd =
     "../../icicle"
@@ -26,8 +27,7 @@ int main()
     " --adv mpdata"
     " --slv serial"
     " --out netcdf --out.netcdf.file test_netcdf.nc"
-    " --ini origin-one";
-
+    " --ini boxcar --ini.boxcar.bx 1";
   if (0 != system(cmd.c_str())) 
     exit(EXIT_FAILURE);
   if (0 != system("test \"`ncdump -k test_netcdf.nc`\" = \"netCDF-4\"")) 

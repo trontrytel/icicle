@@ -43,6 +43,7 @@ ini<real_t> *opt_ini(const po::variables_map& vm, grd<real_t> *grid)
     return new ini_pks_wwg_1989<real_t>(grid->dx());
   else if (initype == "boxcar")
   {
+    if (!vm.count("ini.boxcar.bx")) error_macro("ini.boxcar.bx must be specified")
     quantity<si::length, real_t> 
       ax = boost::lexical_cast<real_t>(vm["ini.boxcar.ax"].as<string>()) * si::metres,
       bx = boost::lexical_cast<real_t>(vm["ini.boxcar.bx"].as<string>()) * si::metres,

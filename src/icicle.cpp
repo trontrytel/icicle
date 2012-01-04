@@ -5,10 +5,16 @@
  *  @section LICENSE
  *    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
  */
+/** @mainpage notitle
+ *  @section README README file (incl. installation instructions)
+ *  @verbinclude "../README"
+ *  @section HACKING HACKING file (coding conventions)
+ *  @verbinclude "../HACKING"
+ */
 
-#include "config.hpp"
-#include "common.hpp"
-#define ICICLE_OPT_DESCS 
+#include "cfg.hpp"
+#include "cmn.hpp"
+#define ICICLE_OPT_DESCS
 #include "opt_adv.hpp"
 #include "opt_grd.hpp"
 #include "opt_ini.hpp"
@@ -17,17 +23,13 @@
 #include "opt_vel.hpp"
 #undef ICICLE_OPT_DESCS
 
-extern void mdl_flt(const po::variables_map&);
-extern void mdl_dbl(const po::variables_map&);
-extern void mdl_ldb(const po::variables_map&);
+extern void mdl_flt(const po::variables_map&, const string&);
+extern void mdl_dbl(const po::variables_map&, const string&);
+extern void mdl_ldb(const po::variables_map&, const string&);
 
 int main(int ac, char* av[])
 {
-  cerr << "-- init: icicle starting (built on " << __DATE__;
-#ifdef __FAST_MATH__
-  cerr << " with FAST_MATH enabled!"; // TODO: move into output!
-#endif
-  cerr << ")" << endl;
+  cerr << "-- init: icicle starting (built on " << __DATE__ << ")" << endl;
   try
   {
     // options list
@@ -86,11 +88,16 @@ int main(int ac, char* av[])
       exit(EXIT_FAILURE);
     }
 
+    // string containing all passed options (e.g. for archiving in a netCDF file)
+    ostringstream options;
+    options << string(av[0]);
+    for (int i = 1; i < ac; ++i) options << string(" ") << string(av[i]);
+
     // --bits (floating point precision choice)
     int bits = vm["bits"].as<int>();
-    if (sizeof(float) * 8 == bits) mdl_flt(vm);
-    else if (sizeof(double) * 8 == bits) mdl_dbl(vm);
-    else if (sizeof(long double) * 8 == bits) mdl_ldb(vm);
+    if (sizeof(float) * 8 == bits) mdl_flt(vm, options.str());
+    else if (sizeof(double) * 8 == bits) mdl_dbl(vm, options.str());
+    else if (sizeof(long double) * 8 == bits) mdl_ldb(vm, options.str());
     else error_macro("unsupported number of bits (" << bits << ")")
   }
   catch (exception &e)

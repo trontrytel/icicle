@@ -8,8 +8,7 @@
 #ifndef INI_HPP
 #  define INI_HPP
 
-#  include "config.hpp" // USE_* defines
-#  include "common.hpp" // root class, error reporting
+#  include "cmn.hpp" // root class, error reporting
 
 template <typename real_t>
 class ini : root

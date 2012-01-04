@@ -10,6 +10,7 @@
 #  ifdef USE_NETCDF
 
 #    include "out.hpp"
+#    include "inf.hpp"
 
 // fixes preprocessor macro redefinition conflict with MPI
 // cf. http://www.unidata.ucar.edu/mailing_lists/archives/netcdfgroup/2009/msg00350.html
@@ -22,7 +23,6 @@
 using namespace netCDF;
 using namespace netCDF::exceptions;
 
-// TODO: #include <boost/timer/timer.hpp> (requires Boost 1.48)
 // TODO: ncFloat vs. ncDouble, ... ?
 // TODO: add X_sclr i X_vctr variables! (e.g. for axis labelling)
 // TODO: is the order of dimensions optimal?
@@ -33,9 +33,10 @@ class out_netcdf : public out<real_t>
   private: auto_ptr<NcFile> f;
   private: NcVar vpsi;
   private: int freq; 
+  private: inf info;
 
-  public: out_netcdf(string file, grd<real_t> *grid, int nx, int ny, int nz, int freq, int ver) 
-    : freq(freq)
+  public: out_netcdf(const string &file, grd<real_t> *grid, int nx, int ny, int nz, int freq, int ver, const string &options) 
+    : freq(freq), info(options)
   { 
     try
     {
@@ -47,6 +48,7 @@ class out_netcdf : public out<real_t>
         default: error_macro("unsupported netCDF format version: " << ver)
       }
       f.reset(new NcFile(file, NcFile::newFile, fmt)); 
+
       NcDim 
         d_t = f->addDim("time"),
         d_xs = f->addDim("X", nx),
@@ -78,6 +80,14 @@ class out_netcdf : public out<real_t>
       }
     }
     catch (NcException& e) error_macro(e.what())
+  }
+
+  public: ~out_netcdf()
+  {
+    // TODO: distmem concurency logic! (e.g. MPI)
+    map<string,string> im = info.get_map();
+    for (map<string,string>::iterator it = im.begin(); it != im.end(); ++it) 
+      f->putAtt(it->first, it->second);
   }
 
   public: virtual void record(

@@ -4,13 +4,23 @@ dimensions:
 	X = 20 ;
 	Y = 1 ;
 	Z = 1 ;
-	xv = 21 ;
-	yv = 2 ;
-	zv = 2 ;
 variables:
 	float psi(time, X, Y, Z) ;
-	float u(xv, yv, zv) ;
-	float v(xv, yv, zv) ;
-	float w(xv, yv, zv) ;
+
+// global attributes:
+		:built_date = "Jan  4 2012" ;
+		:command_line = "../../icicle --dt 1 --grd.dx 1 --grd.dy 1 --grd.dz 1 --grd arakawa-c-lorenz --vel uniform --vel.uniform.u -1 --nt 10 --nx 20 --adv mpdata --slv serial --out netcdf --out.netcdf.file test_netcdf.nc --ini boxcar --ini.boxcar.bx 1" ;
+		:compiler = "/opt/local/bin/clang++" ;
+		:compiler_CXX_FLAGS = "-O0 -g -DBZ_DEBUG -I/opt/local/include  -pthread -pthread" ;
+		:compiler_LINK_FLAGS = " -lblitz -lboost_program_options-mt -lnetcdf_c++4 -lboost_thread-mt -lboost_timer-mt -lboost_system-mt" ;
+		:compiler_system = "Darwin-10.6.0 i386" ;
+		:compiler_target = "Darwin-10.6.0 i386" ;
+		:compiler_user = "slayoo@eyrie.prac.igf" ;
+		:compiler_version = "clang version 2.9 (tags/RELEASE_29/final)" ;
+		:runtime_system = "Darwin i386" ;
+		:runtime_user = "slayoo@eyrie.prac.igf" ;
+		:system_time_seconds = "0.01" ;
+		:user_time_seconds = "0.07" ;
+		:wall_time_seconds = "0.544292" ;
 data:
 }

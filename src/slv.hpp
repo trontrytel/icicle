@@ -8,8 +8,7 @@
 #ifndef SLV_HPP
 #  define SLV_HPP
 
-#  include "config.hpp" // USE_* defines
-#  include "common.hpp" // root class, error reporting
+#  include "cmn.hpp" // root class, error reporting
 #  include "adv.hpp"
 
 template <typename real_t>

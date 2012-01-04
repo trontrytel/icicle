@@ -8,8 +8,7 @@
 #ifndef GRD_HPP
 #  define GRD_HPP
 
-#  include "config.hpp" // USE_* defines
-#  include "common.hpp" // root class, error reporting
+#  include "cmn.hpp" // root class, error reporting
 #  include "vel.hpp"
 #  include "ini.hpp"
 #  include "arr.hpp"

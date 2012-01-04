@@ -8,8 +8,7 @@
 #ifndef OPT_HPP
 #  define OPT_HPP
 
-#  include "config.hpp" // USE_* defines
-#  include "common.hpp" // root class, error reporting
+#  include "cmn.hpp" // root class, error reporting
 
 #  include <boost/program_options.hpp>
 namespace po = boost::program_options;
