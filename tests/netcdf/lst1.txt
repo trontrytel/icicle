@@ -8,11 +8,17 @@ variables:
 	float psi(time, X, Y, Z) ;
 
 // global attributes:
+		:blitz_compiler_name = "/opt/local/bin/clang++" ;
+		:blitz_compiler_options = "-ansi" ;
+		:blitz_config_date = "Wed Jan  4 18:14:22 CET 2012" ;
+		:blitz_os_name = "Darwin eyrie.prac.igf 10.6.0 Darwin Kernel Version 10.6.0: Wed Nov 10 18:13:17 PST 2010; root:xnu-1504.9.26~3/RELEASE_I386 i386" ;
+		:blitz_platform = "x86_64-apple-darwin10.6.0" ;
+		:blitz_version = "0.10" ;
 		:built_date = "Jan  4 2012" ;
 		:command_line = "../../icicle --dt 1 --grd.dx 1 --grd.dy 1 --grd.dz 1 --grd arakawa-c-lorenz --vel uniform --vel.uniform.u -1 --nt 10 --nx 20 --adv mpdata --slv serial --out netcdf --out.netcdf.file test_netcdf.nc --ini boxcar --ini.boxcar.bx 1" ;
 		:compiler = "/opt/local/bin/clang++" ;
-		:compiler_CXX_FLAGS = "-O0 -g -DBZ_DEBUG -I/opt/local/include  -pthread -pthread" ;
-		:compiler_LINK_FLAGS = " -lblitz -lboost_program_options-mt -lnetcdf_c++4 -lboost_thread-mt -lboost_timer-mt -lboost_system-mt" ;
+		:compiler_CXX_FLAGS = "-I/opt/local/include  -pthread -pthread" ;
+		:compiler_LINK_FLAGS = " -lboost_program_options-mt -lnetcdf_c++4 -lboost_thread-mt -lboost_timer-mt -lboost_system-mt" ;
 		:compiler_system = "Darwin-10.6.0 i386" ;
 		:compiler_target = "Darwin-10.6.0 i386" ;
 		:compiler_user = "slayoo@eyrie.prac.igf" ;
@@ -20,7 +26,7 @@ variables:
 		:runtime_system = "Darwin i386" ;
 		:runtime_user = "slayoo@eyrie.prac.igf" ;
 		:system_time_seconds = "0.01" ;
-		:user_time_seconds = "0.07" ;
-		:wall_time_seconds = "0.544292" ;
+		:user_time_seconds = "0.05" ;
+		:wall_time_seconds = "0.220137" ;
 data:
 }

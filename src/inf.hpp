@@ -31,6 +31,14 @@ class inf : root
     im["command_line"] = options;
     im["built_date"] = string(__DATE__);
 
+    // Blitz++ settings
+    im["blitz_version"] = string(BZ_VERSION);
+    im["blitz_compiler_name"] = string(BZ__compiler_name);
+    im["blitz_compiler_options"] = string(BZ__compiler_options);
+    im["blitz_config_date"] = string(BZ__config_date);
+    im["blitz_os_name"] = string(BZ__os_name);
+    im["blitz_platform"] = string(BZ__platform);
+
     // compile-time info defined in cfg.hpp
     im["compiler"] = string(INFO_COMPILER);
     im["compiler_version"] = string(INFO_COMPILER_VERSION);

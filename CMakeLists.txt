@@ -30,13 +30,14 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
 endif()
 project(icicle CXX)
 
-set(TMP "src/config.hpp")
+set(TMP "src/cfg.hpp")
 foreach(d .;doc;tests;src)
   set(TMP "${TMP};${d}/Makefile;${d}/CMakeCache.txt;${d}/cmake_install.cmake;${d}/CMakeFiles;${d}/Testing;${d}/CTestTestfile.cmake")
 endforeach()
 set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${TMP}")
 
 include(CheckCXXSourceCompiles) 
+include(CheckCXXSourceRuns)
 
 #### <Boost.units> (mandatory) #########################################
 check_cxx_source_compiles(                                             #
@@ -64,7 +65,7 @@ endif()                                                                #
 
 #### <Blitz> (mandatory) ###############################################
 check_cxx_source_compiles(                                             #
-  "#include <blitz/array.h>\n int main() {}" 
+  "#include <blitz/array.h>\n int main() {}"
   Find_Blitz
 )
 if(NOT Find_Blitz) 
@@ -72,6 +73,19 @@ if(NOT Find_Blitz)
     (cf. CMakeFiles/CMakeError.log, fix, rm CMakeCache.txt and rerun)"
   )
 endif()                                                                #
+check_cxx_source_runs("
+  #include <blitz/array.h>
+  int main() { 
+    assert(std::string(BZ__compiler_name) == std::string(\"${CMAKE_CXX_COMPILER}\"));
+  }
+  " Blitz_Configured_With_The_Same_Compiler
+)
+if (NOT Blitz_Configured_With_The_Same_Compiler)
+  message(WARNING "Blitz++ seem not to have been configured with the same compiler!
+    Consider reconfiguring Blitz++ with CXX=${CMAKE_CXX_COMPILER} 
+    (cf. CMakeFiles/CMakeError.log, fix, rm CMakeCache.txt and rerun)"
+  )
+endif()
 #### </Blitz> ##########################################################
 
 #### <Boost.program_options> (mandatory) ###############################
