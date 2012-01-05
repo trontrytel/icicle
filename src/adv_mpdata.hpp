@@ -93,11 +93,11 @@ class adv_mpdata : public adv_upstream<real_t>
     arr<real_t>* tmp_v[], 
     const Range &i, const Range &j, const Range &k, 
     const int n, const int step,
-    const arr<real_t> &Cx, const arr<real_t> &Cy, const arr<real_t> &Cz
+    const arr<real_t> * const Cx, const arr<real_t> * const Cy, const arr<real_t> * const Cz
   )
   {
     if (step == 1) 
-      adv_upstream<real_t>::template op<idx>(psi, NULL, NULL, i, j, k, n, 1, Cx, Cy, Cz);
+      adv_upstream<real_t>::template op<idx>(psi, NULL, NULL, i, j, k, n, 1, Cx, NULL, NULL);
     else 
     {
     /// 
@@ -106,9 +106,8 @@ class adv_mpdata : public adv_upstream<real_t>
     /// where \f$ I \f$ denotes the sum over all dimensions and \f$ \tilde{U} \f$ is multidimensional antidiffusive velocity \n
     /// eq. (12) in Smolarkiewicz 1984 (J. Comp. Phys.,54,352-362) 
 
-      mpdata_U<idx>(tmp_v[0], psi, n, i, j, k, Cx, Cy, Cz);
-      adv_upstream<real_t>::template op<idx>(psi, NULL, NULL, i, j, k, n, 1, *tmp_v[0], *tmp_v[1], *tmp_v[2]);
-      //                                                                                ^^^^^^^^^^^^^^^^^^^^ TODO: these are non-existant!
+      mpdata_U<idx>(tmp_v[0], psi, n, i, j, k, *Cx, *Cy, *Cz);
+      adv_upstream<real_t>::template op<idx>(psi, NULL, NULL, i, j, k, n, 1, tmp_v[0], NULL, NULL);
     }
   }
 };

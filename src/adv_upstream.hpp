@@ -36,9 +36,9 @@ class adv_upstream : public adv<real_t>
     arr<real_t>* tmp_v[], 
     const Range &i, const Range &j, const Range &k, 
     const int n, const int step,
-    const arr<real_t> &Cx, 
-    const arr<real_t> &Cy, 
-    const arr<real_t> &Cz
+    const arr<real_t> * const Cx, 
+    const arr<real_t> * const, 
+    const arr<real_t> * const 
   )
   {
     assert(step == 1);
@@ -52,8 +52,8 @@ class adv_upstream : public adv<real_t>
     /// eq. (2) in Smolarkiewicz & Margolin 1998 (J. Comp. Phys., 140, 459-480) \n
 
     (*psi[n+1])(idx(i,j,k)) -= (
-      mpdata_F((*psi[n])(idx(i  ,j,k)), (*psi[n])(idx(i+1,j,k)), Cx(idx(i + grid->p_half,j,k))) - 
-      mpdata_F((*psi[n])(idx(i-1,j,k)), (*psi[n])(idx(i  ,j,k)), Cx(idx(i - grid->m_half,j,k)))
+      mpdata_F((*psi[n])(idx(i  ,j,k)), (*psi[n])(idx(i+1,j,k)), (*Cx)(idx(i + grid->p_half,j,k))) - 
+      mpdata_F((*psi[n])(idx(i-1,j,k)), (*psi[n])(idx(i  ,j,k)), (*Cx)(idx(i - grid->m_half,j,k)))
     );
 #  undef mpdata_F
   }

@@ -183,7 +183,7 @@ class slv_serial : public slv<real_t>
 
   public: void advect(adv<real_t> *a, int n, int s, quantity<si::time, real_t> dt)
   {
-    a->op3D(psi, tmp_s, tmp_v, *i, *j, *k, n, s, *Cx, *Cy, *Cz);
+    a->op3D(psi, tmp_s, tmp_v, *i, *j, *k, n, s, Cx.get(), Cy.get(), Cz.get());
   }
 
   public: void cycle_arrays(const int n)

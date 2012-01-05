@@ -20,7 +20,7 @@
 
 * optional libraries:
   - Boost C++ libraries, incl.: ........ http://www.boost.org/
-    - Boost headers & shared libs (Thread, MPI)
+    - Boost headers & shared libs (Thread, MPI, Timer)
   - NetCDF C++ library ... http://www.unidata.ucar.edu/netcdf/
     (configured with netCDF4 support)
   - NetCDF C++4 bindings . http://www.unidata.ucar.edu/netcdf/
