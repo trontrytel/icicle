@@ -18,7 +18,7 @@
     arr<real_t> *psi[], \
     arr<real_t> *tmp_s[], \
     arr<real_t> *tmp_v[], \
-    const Range &i, const Range &j, const Range &k, \
+    const rng &i, const rng &j, const rng &k, \
     const int n, const int step, \
     const arr<real_t> * const Cx, const arr<real_t> * const Cy, const arr<real_t> * const Cz \
   ) { op<idx_ijk>(psi, tmp_s, tmp_v, i, j, k, n, step, Cx, Cy, Cz); } \
@@ -26,7 +26,7 @@
     arr<real_t> *psi[], \
     arr<real_t> *tmp_s[], \
     arr<real_t> *tmp_v[], \
-    const Range &i, const Range &j, const Range &k, \
+    const rng &i, const rng &j, const rng &k, \
     const int n, const int step, \
     const arr<real_t> * const Cx, const arr<real_t> * const Cy, const arr<real_t> * const Cz \
   ) { op<idx_jki>(psi, tmp_s, tmp_v, j, k, i, n, step, Cy, Cz, Cx); } \
@@ -34,7 +34,7 @@
     arr<real_t> *psi[], \
     arr<real_t> *tmp_s[], \
     arr<real_t> *tmp_v[], \
-    const Range &i, const Range &j, const Range &k, \
+    const rng &i, const rng &j, const rng &k, \
     const int n, const int step, \
     const arr<real_t> * const Cx, const arr<real_t> * const Cy, const arr<real_t> * const Cz \
   ) { op<idx_kij>(psi, tmp_s, tmp_v, k, i, j, n, step, Cz, Cx, Cy); }
@@ -52,7 +52,7 @@ class adv : root
     arr<real_t> *psi[], 
     arr<real_t> *tmp_s[], 
     arr<real_t> *tmp_v[], 
-    const Range &i, const Range &j, const Range &k, 
+    const rng &i, const rng &j, const rng &k, 
     const int n, const int step,
     const arr<real_t> * const Cx, const arr<real_t> * const Cy, const arr<real_t> * const Cz
   ) = 0;
@@ -61,7 +61,7 @@ class adv : root
     arr<real_t> *psi[], 
     arr<real_t> *tmp_s[], 
     arr<real_t> *tmp_v[], 
-    const Range &i, const Range &j, const Range &k, 
+    const rng &i, const rng &j, const rng &k, 
     const int n, const int step,
     const arr<real_t> * const Cx, const arr<real_t> * const Cy, const arr<real_t> * const Cz
   ) = 0; 
@@ -70,7 +70,7 @@ class adv : root
     arr<real_t> *psi[], 
     arr<real_t> *tmp_s[], 
     arr<real_t> *tmp_v[], 
-    const Range &i, const Range &j, const Range &k, 
+    const rng &i, const rng &j, const rng &k, 
     const int n, const int step,
     const arr<real_t> * const Cx, const arr<real_t> * const Cy, const arr<real_t> * const Cz
   ) = 0;
@@ -79,7 +79,7 @@ class adv : root
     arr<real_t> *psi[], 
     arr<real_t> *tmp_s[], 
     arr<real_t> *tmp_v[], 
-    const Range &i, const Range &j, const Range &k, 
+    const rng &i, const rng &j, const rng &k, 
     const int n, const int s,
     const arr<real_t> * const Cx, const arr<real_t> * const Cy, const arr<real_t> * const Cz
   )

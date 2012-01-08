@@ -32,16 +32,16 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
 
   public: void op3D(
     arr<real_t> *psi[], arr<real_t> *tmp_s[], arr<real_t> *tmp_v[],
-    const Range &i, const Range &j, const Range &k,
+    const rng &i, const rng &j, const rng &k,
     const int n, const int step,
     const arr<real_t> * const Cx, const arr<real_t> * const Cy, const arr<real_t> * const Cz
   )
   {
     assert(min(*psi[n]) >= real_t(0)); // accepting positive scalars only
 
-    Range ii = Range(i.first() - 1, i.last() + 1),
-          jj = Range(j.first() - 1, j.last() + 1),
-          kk = Range(k.first() - 1, k.last() + 1);
+    rng ii = rng(i.first() - 1, i.last() + 1),
+          jj = rng(j.first() - 1, j.last() + 1),
+          kk = rng(k.first() - 1, k.last() + 1);
 #  define mpdata_fct_minmax(fun, psi_, n_, i_, j_, k_) ::fun( \
      (*psi_[n_])(i_  ,j_  ,k_  ), ::fun( \
      (*psi_[n_])(i_-1,j_  ,k_  ), ::fun( \
@@ -100,7 +100,7 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
     arr<real_t> *psi[], arr<real_t> *tmp_s[], arr<real_t> *[], 
     const arr<real_t> &C_mon_x, 
     const arr<real_t> &C_adf_x, const arr<real_t> &C_adf_y, const arr<real_t> &C_adf_z, 
-    const Range &i, const Range &j, const Range &k, int n
+    const rng &i, const rng &j, const rng &k, int n
   )  
   {
 ///
@@ -131,7 +131,7 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
      (::min(real_t(0),C_adf_z(idx(_i,_j,_k - grid->m_half)))) * (*psi[n])(idx(_i,_j,_k))   \
    )
     // as in mpdata_U, we compute u_{i+1/2} for iv=(i-1, ... i) instead of u_{i+1/2} and u_{i-1/2} for all i
-    Range iv(i.first()-1, i.last());
+    rng iv(i.first()-1, i.last());
     /// nonoscillatory antidiffusive velocity: \n
     /// \f$ U^{MON}_{i+1/2}=min(1,\beta ^{\downarrow}_i,\beta ^{\uparrow} _{i+1})[U_{i+1/2}]^{+} 
     /// + min(1,\beta^{\uparrow}_{i},\beta^{\downarrow}_{i+1/2})[u_{i+1/2}]^{-} \f$ \n

@@ -91,7 +91,7 @@ class out_netcdf : public out<real_t>
 
   public: virtual void record(
     arr<real_t> *psi,
-    const Range &i, const Range &j, const Range &k, const unsigned long t
+    const rng &i, const rng &j, const rng &k, const unsigned long t
   ) 
   {
     if (t % freq != 0) return;

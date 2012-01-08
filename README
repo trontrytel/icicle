@@ -52,10 +52,10 @@
 --------------------------------------------------------------
 * usage:
   $ ./icicle --help
-  $ ./icicle ... --dom serial
-  $ ./icicle ... --dom threads --nsdom N
-  $ ./icicle ... --dom openmp --nsdom N
-  $ [open]mpirun -np N ./icicle ... --dom mpi --nsdom N
+  $ ./icicle ... --slv serial
+  $ ./icicle ... --slv threads --nsd N
+  $ ./icicle ... --slv openmp --nsd N
+  $ [open]mpirun -np N ./icicle ... --slv mpi --nsd N
 
 --------------------------------------------------------------
 * developers' documentation draft:

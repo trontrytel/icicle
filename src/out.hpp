@@ -16,7 +16,7 @@ class out : root
 {
   public: virtual void record( // TODO: t should be in seconds
     arr<real_t> *psi, 
-    const Range &i, const Range &j, const Range &k, const unsigned long t
+    const rng &i, const rng &j, const rng &k, const unsigned long t
   ) = 0;
 };
 

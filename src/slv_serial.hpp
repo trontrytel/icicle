@@ -16,7 +16,7 @@ template <typename real_t>
 class slv_serial : public slv<real_t>
 {
   private: adv<real_t> *fllbck, *advsch;
-  private: auto_ptr<Range> i, j, k;
+  private: auto_ptr<rng> i, j, k;
   private: out<real_t> *output;
   private: int nx, ny, nz, halo;
 
@@ -99,9 +99,9 @@ class slv_serial : public slv<real_t>
     }
 
     // indices
-    i.reset(new Range(i_min, i_max));
-    j.reset(new Range(j_min, j_max));
-    k.reset(new Range(k_min, k_max));
+    i.reset(new rng(i_min, i_max));
+    j.reset(new rng(j_min, j_max));
+    k.reset(new rng(k_min, k_max));
 
     // initial condition
     setup->grid->populate_scalar_field(*i, *j, *k, psi[0], setup->intcond);
@@ -113,17 +113,17 @@ class slv_serial : public slv<real_t>
     // velocity fields
     {
       // TODO: this is grid-related logic! - to be moved from here
-      Range 
+      rng 
         ix = setup->grid->rng_vctr(i->first(), i->last(), halo),
         jx = setup->grid->rng_sclr(j->first(), j->last(), halo),
         kx = setup->grid->rng_sclr(k->first(), k->last(), halo);
       Cx.reset(new arr<real_t>(ix, jx, kx));
-      Range 
+      rng 
         iy = setup->grid->rng_sclr(i->first(), i->last(), halo),
         jy = setup->grid->rng_vctr(j->first(), j->last(), halo),
         ky = setup->grid->rng_sclr(k->first(), k->last(), halo);
       Cy.reset(new arr<real_t>(iy, jy, ky));
-      Range 
+      rng 
         iz = setup->grid->rng_sclr(i->first(), i->last(), halo),
         jz = setup->grid->rng_sclr(j->first(), j->last(), halo),
         kz = setup->grid->rng_vctr(k->first(), k->last(), halo);
@@ -153,7 +153,7 @@ class slv_serial : public slv<real_t>
     output->record(psi[n], *i, *j, *k, t);
   }
 
-  public: Array<real_t, 3> data(int n, const RectDomain<3> &idx)
+  public: typename arr<real_t>::arr_ret data(int n, const idx &idx)
   { 
     return (*psi[n])(idx);
   }
@@ -171,16 +171,16 @@ class slv_serial : public slv<real_t>
   private:
   template<class idx>
   void fill_halos_helper(arr<real_t> *psi[], int nghbr, int n, 
-    int i_min, int i_max, const Range &j, const Range &k, int mod
+    int i_min, int i_max, const rng &j, const rng &k, int mod
   )
   {
     if (mod == 1)
       for (int ii = i_min; ii <= i_max; ++ii)
-        (*psi[n])(idx(Range(ii), j, k)) =
-          this->nghbr_data(nghbr, n, idx(Range(0,0), j, k)); // only happens with periodic boundary
+        (*psi[n])(idx(rng(ii), j, k)) =
+          this->nghbr_data(nghbr, n, idx(rng(0,0), j, k)); // only happens with periodic boundary
     else 
-      (*psi[n])(idx(Range(i_min, i_max), j, k)) =
-        this->nghbr_data(nghbr, n, idx(Range((i_min + mod) % mod, (i_max + mod) % mod), j, k));
+      (*psi[n])(idx(rng(i_min, i_max), j, k)) =
+        this->nghbr_data(nghbr, n, idx(rng((i_min + mod) % mod, (i_max + mod) % mod), j, k));
   }
 
   public: void advect(adv<real_t> *a, int n, int s, quantity<si::time, real_t> dt)

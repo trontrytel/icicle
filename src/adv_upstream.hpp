@@ -34,7 +34,7 @@ class adv_upstream : public adv<real_t>
     arr<real_t>* psi[], 
     arr<real_t>* [], 
     arr<real_t>* tmp_v[], 
-    const Range &i, const Range &j, const Range &k, 
+    const rng &i, const rng &j, const rng &k, 
     const int n, const int step,
     const arr<real_t> * const Cx, 
     const arr<real_t> * const, 

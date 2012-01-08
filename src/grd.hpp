@@ -22,8 +22,8 @@ class grd : root
 
   // returns ranges to be passed as constructors to arr
   // first and last reflect scalar indices
-  public: virtual Range rng_sclr(int first, int last, int halo) = 0;
-  public: virtual Range rng_vctr(int first, int last, int halo) = 0;
+  public: virtual rng rng_sclr(int first, int last, int halo) = 0;
+  public: virtual rng rng_vctr(int first, int last, int halo) = 0;
 
   public: virtual quantity<si::length, real_t> x(int i, int j, int k) = 0;
   public: virtual quantity<si::length, real_t> y(int i, int j, int k) = 0;
@@ -42,9 +42,9 @@ class grd : root
   // ... Nothing is real and nothing to get hung about.
   // courant fields forever ...
   public: virtual void populate_courant_fields(
-    Range &ix, Range &jx, Range &kx,
-    Range &iy, Range &jy, Range &ky,
-    Range &iz, Range &jz, Range &kz,
+    rng &ix, rng &jx, rng &kx,
+    rng &iy, rng &jy, rng &ky,
+    rng &iz, rng &jz, rng &kz,
     arr<real_t> *Cx, 
     arr<real_t> *Cy, 
     arr<real_t> *Cz, 
@@ -75,7 +75,7 @@ class grd : root
   }
 
   public: virtual void populate_scalar_field(
-    const Range &ii, const Range &jj, const Range &kk,
+    const rng &ii, const rng &jj, const rng &kk,
     arr<real_t> *psi, ini<real_t> *intcond
   )
   {

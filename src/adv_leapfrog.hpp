@@ -30,7 +30,7 @@ class adv_leapfrog : public adv<real_t>
     arr<real_t>* psi[], 
     arr<real_t>*[], 
     arr<real_t>*[], 
-    const Range &i, const Range &j, const Range &k, 
+    const rng &i, const rng &j, const rng &k, 
     const int n, const int step,
     const arr<real_t> * const Cx, const arr<real_t> * const, const arr<real_t> * const 
   )

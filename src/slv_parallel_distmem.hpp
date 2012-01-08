@@ -19,10 +19,10 @@ class slv_parallel_distmem : public shrdmem_class
     private: slv_parallel_distmem<real_t, shrdmem_class> *nghbr;
     private: int peer, cnt;
     private: auto_ptr<arr<real_t> > ibuf, obuf;
-    private: Range ixr, oxr, yr, zr;
+    private: rng ixr, oxr, yr, zr;
 
     public: slv_halo(slv_parallel_distmem<real_t, shrdmem_class> *nghbr, int peer,
-      const Range &ixr, const Range &oxr, const Range &yr, const Range &zr
+      const rng &ixr, const rng &oxr, const rng &yr, const rng &zr
     )
       : nghbr(nghbr), peer(peer), ixr(ixr), oxr(oxr), yr(yr), zr(zr)
     { 
@@ -31,7 +31,7 @@ class slv_parallel_distmem : public shrdmem_class
       cnt = ibuf->cols() * ibuf->rows() * ibuf->depth();
     }
 
-    public: Array<real_t, 3> data(int n, const RectDomain<3> &idx)
+    public: typename arr<real_t>::arr_ret data(int n, const idx &idx)
     { 
       return (*ibuf)(idx); 
     }
@@ -79,23 +79,23 @@ class slv_parallel_distmem : public shrdmem_class
       int peer_left = (size + rank - 1) % size;
       int peer_rght = (size + rank + 1) % size;
 
-      Range ixr, oxr, yr(0, ny - 1), zr(nz - 1);
+      rng ixr, oxr, yr(0, ny - 1), zr(nz - 1);
 
-      ixr = Range( // input xr (halo)
+      ixr = rng( // input xr (halo)
         (i_min(nx, rank, size) - halo + nx) % nx, 
         (i_min(nx, rank, size) - 1    + nx) % nx  
       );
-      oxr = Range( // output xr (edge)
+      oxr = rng( // output xr (edge)
         i_min(nx, rank, size), 
         i_min(nx, rank, size) + halo - 1
       );
       lhalo.reset(new slv_halo(this, peer_left, ixr, oxr, yr, zr));
 
-      ixr = Range( // input xr (halo)
+      ixr = rng( // input xr (halo)
         (i_max(nx, rank, size) + 1    + nx) % nx, 
         (i_max(nx, rank, size) + halo + nx) % nx
       );
-      oxr = Range( // output xr (edge)
+      oxr = rng( // output xr (edge)
         i_max(nx, rank, size) - halo + 1,
         i_max(nx, rank, size)  
       );
