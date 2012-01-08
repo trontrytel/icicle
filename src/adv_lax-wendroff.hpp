@@ -32,19 +32,13 @@ class adv_lax_wendroff : public adv<real_t>
     const Range &j, 
     const Range &k, 
     const int n, const int step,
-    const arr<real_t> &Cx, 
-    const arr<real_t> &, 
-    const arr<real_t> &
+    const arr<real_t> * const Cx, 
+    const arr<real_t> * const, 
+    const arr<real_t> * const
   )
   {
     assert(step == 1);
     error_macro("not implemented yet")
-/*
-    (*psi[n+1])(i) -= 
-      .5 * 
-      (Cx(i+grid.p_half) + Cx(i-grid.m_half)) 
-      * ( (*psi[n])(i+1) - (*psi[n])(i-1) );
-*/
   }
 };
 #endif

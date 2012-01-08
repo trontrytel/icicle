@@ -71,23 +71,22 @@ class out_netcdf : public out<real_t>
         //NcVar vv = f->addVar("v", ncFloat, vdims); 
         //NcVar vw = f->addVar("w", ncFloat, vdims); 
       }
-      // workaround for the lack of netCDF3 nc_enddef() in the netCDF C++4 API
-      if (fmt == NcFile::classic) 
-      {
-        f.reset(); // closing the file
-        f.reset(new NcFile(file, NcFile::write, fmt)); // reopening it
-        vpsi = f->getVar("psi");
-      }
     }
     catch (NcException& e) error_macro(e.what())
   }
 
   public: ~out_netcdf()
   {
-    // TODO: distmem concurency logic! (e.g. MPI)
-    map<string,string> im = info.get_map();
-    for (map<string,string>::iterator it = im.begin(); it != im.end(); ++it) 
-      f->putAtt(it->first, it->second);
+    // from a destructor results in undefined behaviour 
+    // so trying to handle the exceptions here
+    try
+    {
+      // TODO: distmem concurency logic! (e.g. MPI)
+      map<string,string> im = info.get_map();
+      for (map<string,string>::iterator it = im.begin(); it != im.end(); ++it) 
+        f->putAtt(it->first, it->second);
+    }
+    catch (NcException& e) warning_macro(e.what())
   }
 
   public: virtual void record(
