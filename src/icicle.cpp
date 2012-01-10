@@ -21,6 +21,7 @@
 #include "opt_out.hpp"
 #include "opt_slv.hpp"
 #include "opt_vel.hpp"
+#include "opt_eqs.hpp"
 #undef ICICLE_OPT_DESCS
 
 extern void mdl_flt(const po::variables_map&, const string&);
@@ -51,6 +52,7 @@ int main(int ac, char* av[])
     opt_grd_desc(desc);
     opt_vel_desc(desc);
     opt_ini_desc(desc);
+    opt_eqs_desc(desc);
     po::variables_map vm;
     po::store(po::parse_command_line(ac, av, desc), vm);
     po::notify(vm);

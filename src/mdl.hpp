@@ -14,6 +14,7 @@
 #  include "opt_slv.hpp"
 #  include "opt_out.hpp" // has to be included after slv/MPI
 #  include "opt_ini.hpp"
+#  include "opt_eqs.hpp"
 
 template <typename real_t>
 void mdl(const po::variables_map &vm, const string &options) 
@@ -48,14 +49,17 @@ void mdl(const po::variables_map &vm, const string &options)
     if (fllbckp != NULL) fllbck.reset(fllbckp);
   }
 
-  // output choice
-  auto_ptr<out<real_t> > output(opt_out<real_t>(vm, grid.get(), nx, ny, nz, options));
-
   // velocity choice
   auto_ptr<vel<real_t> > velocity(opt_vel<real_t>(vm, grid.get(), nx, ny, nz));
 
   // initial condition
   auto_ptr<ini<real_t> > intcond(opt_ini<real_t>(vm, grid.get()));
+
+  // equations
+  auto_ptr<eqs<real_t> > equations(opt_eqs<real_t>(vm));
+
+  // output choice
+  auto_ptr<out<real_t> > output(opt_out<real_t>(vm, grid.get(), *equations, nx, ny, nz, options));
 
   // grouping all above into a single set-up object
   auto_ptr<stp<real_t> > setup(new stp<real_t>(

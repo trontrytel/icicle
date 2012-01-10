@@ -11,6 +11,7 @@
 
 #    include "out.hpp"
 #    include "inf.hpp"
+#    include "eqs.hpp"
 
 // fixes preprocessor macro redefinition conflict with MPI
 // cf. http://www.unidata.ucar.edu/mailing_lists/archives/netcdfgroup/2009/msg00350.html
@@ -23,7 +24,7 @@
 using namespace netCDF;
 using namespace netCDF::exceptions;
 
-// TODO: ncFloat vs. ncDouble, ... ?
+// TODO: ncFloat vs. ncDouble as a command-line option (but it float computations and double requeste -> error)
 // TODO: add X_sclr i X_vctr variables! (e.g. for axis labelling)
 // TODO: is the order of dimensions optimal?
 
@@ -31,11 +32,12 @@ template <typename real_t>
 class out_netcdf : public out<real_t>
 {
   private: auto_ptr<NcFile> f;
-  private: NcVar vpsi;
+  private: vector<NcVar> vars;
   private: int freq; 
   private: inf info;
 
-  public: out_netcdf(const string &file, grd<real_t> *grid, int nx, int ny, int nz, int freq, int ver, const string &options) 
+  public: out_netcdf(const string &file, grd<real_t> *grid, eqs<real_t> &equations, 
+    int nx, int ny, int nz, int freq, int ver, const string &options) 
     : freq(freq), info(options)
   { 
     try
@@ -56,11 +58,16 @@ class out_netcdf : public out<real_t>
         d_zs = f->addDim("Z", nz);
       {
         vector<NcDim> sdims(4);
+        // TODO: skip dimensions of size 1?
         sdims[0] = d_t;
         sdims[1] = d_xs;
         sdims[2] = d_ys;
         sdims[3] = d_zs;
-        vpsi = f->addVar("psi", ncFloat, sdims); 
+        for (int v = 0; v < equations.n_vars(); ++v)
+        {
+          vars.push_back(f->addVar(equations.var_name(v), ncFloat, sdims)); 
+          vars.at(v).putAtt("unit", equations.var_unit(v));
+        }
       }
       {
         vector<NcDim> vdims(3);
@@ -110,7 +117,10 @@ class out_netcdf : public out<real_t>
         startp[3] = k.first();
         try 
         {
-          vpsi.putVar(startp, countp, (*psi)(i_int, j_int, k).dataFirst());
+          for (int v = 0; v < vars.size(); ++v)
+          {
+            vars.at(v).putVar(startp, countp, (*psi)(i_int, j_int, k).dataFirst());
+          }
         }
         catch (NcException& e) error_macro(e.what());
       }

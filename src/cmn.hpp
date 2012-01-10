@@ -11,6 +11,7 @@
 
 // most common includes
 #  include <boost/units/systems/si.hpp>
+#  include <boost/units/io.hpp>
 using namespace boost::units;
 
 // overloading the default d-tor with a virtual one (enforces execution of child d-tors)

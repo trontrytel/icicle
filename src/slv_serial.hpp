@@ -10,7 +10,7 @@
 
 #  include "slv.hpp"
 #  include "stp.hpp"
-#  include "arr.hpp" // TODO: somewhere else
+#  include "tmp.hpp"
 
 template <typename real_t>
 class slv_serial : public slv<real_t>
@@ -25,10 +25,7 @@ class slv_serial : public slv<real_t>
   private: auto_ptr<arr<real_t> > *psi_guard;
   private: arr<real_t> **psi; 
 
-  private: auto_ptr<arr<real_t> > *tmp_s_guard;
-  private: arr<real_t> **tmp_s;
-  private: auto_ptr<arr<real_t> > *tmp_v_guard;
-  private: arr<real_t> **tmp_v;
+  private: auto_ptr<tmp<real_t> > cache; 
 
   public: slv_serial(stp<real_t> *setup,
     int i_min, int i_max, int nx,
@@ -38,6 +35,7 @@ class slv_serial : public slv<real_t>
   )
     : fllbck(setup->fllbck), advsch(setup->advsch), output(setup->output), nx(nx), ny(ny), nz(nz)
   {
+    if (fllbck != NULL) assert(advsch->stencil_extent() >= fllbck->stencil_extent());
     halo = (advsch->stencil_extent() - 1) / 2;
 
     // sanity checks
@@ -67,36 +65,11 @@ class slv_serial : public slv<real_t>
     // caches
     assert(fllbck == NULL || fllbck->num_sclr_caches() == 0);
     assert(fllbck == NULL || fllbck->num_vctr_caches() == 0);
-
-    {
-      int cnt = advsch->num_vctr_caches();
-      tmp_v_guard = new auto_ptr<arr<real_t> >[cnt];
-      tmp_v = new arr<real_t>*[cnt];
-      for (int n=0; n < cnt; ++n)
-      {
-        tmp_v_guard[n].reset(new arr<real_t>(
-          // 3 x rng_vctr guarantees the temp space may be used for all dimensions
-          setup->grid->rng_vctr(i_min, i_max, halo), 
-          setup->grid->rng_vctr(j_min, j_max, halo), 
-          setup->grid->rng_vctr(k_min, k_max, halo)  
-        ));
-        tmp_v[n] = tmp_v_guard[n].get();
-      }
-    }
-    {
-      int cnt = advsch->num_sclr_caches();
-      tmp_s_guard = new auto_ptr<arr<real_t> >[cnt];
-      tmp_s = new arr<real_t>*[cnt];
-      for (int n=0; n < cnt; ++n)
-      {
-        tmp_s_guard[n].reset(new arr<real_t>(
-          setup->grid->rng_sclr(i_min, i_max, halo),
-          setup->grid->rng_sclr(j_min, j_max, halo),
-          setup->grid->rng_sclr(k_min, k_max, halo)
-        ));
-        tmp_s[n] = tmp_s_guard[n].get();
-      }
-    }
+    cache.reset(new tmp<real_t>(advsch->num_vctr_caches(), advsch->num_sclr_caches(), setup->grid, halo,
+      i_min, i_max,
+      j_min, j_max,
+      k_min, k_max
+    ));
 
     // indices
     i.reset(new rng(i_min, i_max));
@@ -144,8 +117,6 @@ class slv_serial : public slv<real_t>
   {
     delete[] psi;
     delete[] psi_guard;
-    //delete[] tmp_{s,v}; TODO!!!
-    //delete[] tmp_{s,v}_guard; TODO!!!
   }
 
   public: void record(const int n, const unsigned long t)
@@ -185,7 +156,7 @@ class slv_serial : public slv<real_t>
 
   public: void advect(adv<real_t> *a, int n, int s, quantity<si::time, real_t> dt)
   {
-    a->op3D(psi, tmp_s, tmp_v, *i, *j, *k, n, s, Cx.get(), Cy.get(), Cz.get());
+    a->op3D(psi, cache->sclr, cache->vctr, *i, *j, *k, n, s, Cx.get(), Cy.get(), Cz.get());
   }
 
   public: void cycle_arrays(const int n)
