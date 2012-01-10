@@ -20,7 +20,7 @@
 
 * optional libraries:
   - Boost C++ libraries, incl.: ........ http://www.boost.org/
-    - Boost headers & shared libs (Thread, MPI)
+    - Boost headers & shared libs (Thread, MPI, Timer)
   - NetCDF C++ library ... http://www.unidata.ucar.edu/netcdf/
     (configured with netCDF4 support)
   - NetCDF C++4 bindings . http://www.unidata.ucar.edu/netcdf/
@@ -51,10 +51,10 @@
 --------------------------------------------------------------
 * usage:
   $ ./icicle --help
-  $ ./icicle ... --dom serial
-  $ ./icicle ... --dom threads --nsdom N
-  $ ./icicle ... --dom openmp --nsdom N
-  $ [open]mpirun -np N ./icicle ... --dom mpi --nsdom N
+  $ ./icicle ... --slv serial
+  $ ./icicle ... --slv threads --nsd N
+  $ ./icicle ... --slv openmp --nsd N
+  $ [open]mpirun -np N ./icicle ... --slv mpi --nsd N
 
 --------------------------------------------------------------
 * developers' documentation draft:

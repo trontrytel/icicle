@@ -21,6 +21,7 @@
 #include "opt_out.hpp"
 #include "opt_slv.hpp"
 #include "opt_vel.hpp"
+#include "opt_eqs.hpp"
 #undef ICICLE_OPT_DESCS
 
 extern void mdl_flt(const po::variables_map&, const string&);
@@ -39,7 +40,6 @@ int main(int ac, char* av[])
       ("bits", po::value<int>()->default_value(32), "floating point bits: sizeof(float), sizeof(double), sizeof(long double)");
 // <TODO> move somewhere else...
     desc.add_options()
-      ("nsd", po::value<int>(), "number of subdomains (nx/nsd must be int)")
       ("nx", po::value<int>()->default_value(1), "number of grid points (X)")
       ("ny", po::value<int>()->default_value(1), "number of grid points (Y)")
       ("nz", po::value<int>()->default_value(1), "number of grid points (Z)")
@@ -52,6 +52,7 @@ int main(int ac, char* av[])
     opt_grd_desc(desc);
     opt_vel_desc(desc);
     opt_ini_desc(desc);
+    opt_eqs_desc(desc);
     po::variables_map vm;
     po::store(po::parse_command_line(ac, av, desc), vm);
     po::notify(vm);

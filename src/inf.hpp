@@ -8,6 +8,8 @@
 #ifndef INF_HPP
 #  define INF_HPP
 
+#  include "cmn.hpp"
+
 #  ifdef USE_BOOST_TIMER
 #    include <boost/timer/timer.hpp>
 using namespace boost::timer;

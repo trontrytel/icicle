@@ -28,7 +28,8 @@ void opt_out_desc(po::options_description &desc)
 
 template <typename real_t>
 out<real_t> *opt_out(const po::variables_map &vm, 
-  grd<real_t> *grid, int nx, int ny, int nz, const string &options)
+  grd<real_t> *grid, eqs<real_t> &equation,
+  int nx, int ny, int nz, const string &options)
 {
   string outtype = vm.count("out") ? vm["out"].as<string>() : "<unspecified>";
   if (outtype == "gnuplot")
@@ -42,7 +43,8 @@ out<real_t> *opt_out(const po::variables_map &vm,
   {
     if (!vm.count("out.netcdf.file")) error_macro("output filename not specified (--out.netcdf.file option)")
     int freq = vm.count("out.netcdf.freq") ? vm["out.netcdf.freq"].as<int>() : 1;
-    return new out_netcdf<real_t>(vm["out.netcdf.file"].as<string>(), grid, nx, ny, nz, freq, vm["out.netcdf.ver"].as<int>(), options);
+    return new out_netcdf<real_t>(vm["out.netcdf.file"].as<string>(), grid, equation, 
+      nx, ny, nz, freq, vm["out.netcdf.ver"].as<int>(), options);
   }
   else
 #  endif

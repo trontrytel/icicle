@@ -10,13 +10,13 @@
 
 #  include "slv.hpp"
 #  include "stp.hpp"
-#  include "arr.hpp" // TODO: somewhere else
+#  include "tmp.hpp"
 
 template <typename real_t>
 class slv_serial : public slv<real_t>
 {
   private: adv<real_t> *fllbck, *advsch;
-  private: auto_ptr<Range> i, j, k;
+  private: auto_ptr<rng> i, j, k;
   private: out<real_t> *output;
   private: int nx, ny, nz, halo;
 
@@ -25,10 +25,7 @@ class slv_serial : public slv<real_t>
   private: auto_ptr<arr<real_t> > *psi_guard;
   private: arr<real_t> **psi; 
 
-  private: auto_ptr<arr<real_t> > *tmp_s_guard;
-  private: arr<real_t> **tmp_s;
-  private: auto_ptr<arr<real_t> > *tmp_v_guard;
-  private: arr<real_t> **tmp_v;
+  private: auto_ptr<tmp<real_t> > cache; 
 
   public: slv_serial(stp<real_t> *setup,
     int i_min, int i_max, int nx,
@@ -38,6 +35,7 @@ class slv_serial : public slv<real_t>
   )
     : fllbck(setup->fllbck), advsch(setup->advsch), output(setup->output), nx(nx), ny(ny), nz(nz)
   {
+    if (fllbck != NULL) assert(advsch->stencil_extent() >= fllbck->stencil_extent());
     halo = (advsch->stencil_extent() - 1) / 2;
 
     // sanity checks
@@ -67,40 +65,16 @@ class slv_serial : public slv<real_t>
     // caches
     assert(fllbck == NULL || fllbck->num_sclr_caches() == 0);
     assert(fllbck == NULL || fllbck->num_vctr_caches() == 0);
-
-    {
-      int cnt = advsch->num_vctr_caches();
-      tmp_v_guard = new auto_ptr<arr<real_t> >[cnt];
-      tmp_v = new arr<real_t>*[cnt];
-      for (int n=0; n < cnt; ++n)
-      {
-        tmp_v_guard[n].reset(new arr<real_t>(
-          setup->grid->rng_vctr(i_min, i_max, halo), // TODO: one of these should be scalar!
-          setup->grid->rng_vctr(j_min, j_max, halo), // TODO: ditto!
-          setup->grid->rng_vctr(k_min, k_max, halo)  // TODO: ditto!
-        ));
-        tmp_v[n] = tmp_v_guard[n].get();
-      }
-    }
-    {
-      int cnt = advsch->num_sclr_caches();
-      tmp_s_guard = new auto_ptr<arr<real_t> >[cnt];
-      tmp_s = new arr<real_t>*[cnt];
-      for (int n=0; n < cnt; ++n)
-      {
-        tmp_s_guard[n].reset(new arr<real_t>(
-          setup->grid->rng_sclr(i_min, i_max, halo),
-          setup->grid->rng_sclr(j_min, j_max, halo),
-          setup->grid->rng_sclr(k_min, k_max, halo)
-        ));
-        tmp_s[n] = tmp_s_guard[n].get();
-      }
-    }
+    cache.reset(new tmp<real_t>(advsch->num_vctr_caches(), advsch->num_sclr_caches(), setup->grid, halo,
+      i_min, i_max,
+      j_min, j_max,
+      k_min, k_max
+    ));
 
     // indices
-    i.reset(new Range(i_min, i_max));
-    j.reset(new Range(j_min, j_max));
-    k.reset(new Range(k_min, k_max));
+    i.reset(new rng(i_min, i_max));
+    j.reset(new rng(j_min, j_max));
+    k.reset(new rng(k_min, k_max));
 
     // initial condition
     setup->grid->populate_scalar_field(*i, *j, *k, psi[0], setup->intcond);
@@ -111,17 +85,18 @@ class slv_serial : public slv<real_t>
  
     // velocity fields
     {
-      Range 
+      // TODO: this is grid-related logic! - to be moved from here
+      rng 
         ix = setup->grid->rng_vctr(i->first(), i->last(), halo),
         jx = setup->grid->rng_sclr(j->first(), j->last(), halo),
         kx = setup->grid->rng_sclr(k->first(), k->last(), halo);
       Cx.reset(new arr<real_t>(ix, jx, kx));
-      Range 
+      rng 
         iy = setup->grid->rng_sclr(i->first(), i->last(), halo),
         jy = setup->grid->rng_vctr(j->first(), j->last(), halo),
         ky = setup->grid->rng_sclr(k->first(), k->last(), halo);
       Cy.reset(new arr<real_t>(iy, jy, ky));
-      Range 
+      rng 
         iz = setup->grid->rng_sclr(i->first(), i->last(), halo),
         jz = setup->grid->rng_sclr(j->first(), j->last(), halo),
         kz = setup->grid->rng_vctr(k->first(), k->last(), halo);
@@ -142,8 +117,6 @@ class slv_serial : public slv<real_t>
   {
     delete[] psi;
     delete[] psi_guard;
-    //delete[] tmp_{s,v}; TODO!!!
-    //delete[] tmp_{s,v}_guard; TODO!!!
   }
 
   public: void record(const int n, const unsigned long t)
@@ -151,7 +124,7 @@ class slv_serial : public slv<real_t>
     output->record(psi[n], *i, *j, *k, t);
   }
 
-  public: Array<real_t, 3> data(int n, const RectDomain<3> &idx)
+  public: typename arr<real_t>::arr_ret data(int n, const idx &idx)
   { 
     return (*psi[n])(idx);
   }
@@ -169,21 +142,21 @@ class slv_serial : public slv<real_t>
   private:
   template<class idx>
   void fill_halos_helper(arr<real_t> *psi[], int nghbr, int n, 
-    int i_min, int i_max, const Range &j, const Range &k, int mod
+    int i_min, int i_max, const rng &j, const rng &k, int mod
   )
   {
     if (mod == 1)
       for (int ii = i_min; ii <= i_max; ++ii)
-        (*psi[n])(idx(Range(ii), j, k)) =
-          this->nghbr_data(nghbr, n, idx(Range(0,0), j, k)); // only happens with periodic boundary
+        (*psi[n])(idx(rng(ii), j, k)) =
+          this->nghbr_data(nghbr, n, idx(rng(0,0), j, k)); // only happens with periodic boundary
     else 
-      (*psi[n])(idx(Range(i_min, i_max), j, k)) =
-        this->nghbr_data(nghbr, n, idx(Range((i_min + mod) % mod, (i_max + mod) % mod), j, k));
+      (*psi[n])(idx(rng(i_min, i_max), j, k)) =
+        this->nghbr_data(nghbr, n, idx(rng((i_min + mod) % mod, (i_max + mod) % mod), j, k));
   }
 
   public: void advect(adv<real_t> *a, int n, int s, quantity<si::time, real_t> dt)
   {
-    a->op3D(psi, tmp_s, tmp_v, *i, *j, *k, n, s, *Cx, *Cy, *Cz);
+    a->op3D(psi, cache->sclr, cache->vctr, *i, *j, *k, n, s, Cx.get(), Cy.get(), Cz.get());
   }
 
   public: void cycle_arrays(const int n)

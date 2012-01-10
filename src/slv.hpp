@@ -23,9 +23,9 @@ class slv : root
     nghbrs[s] = n; 
   }
 
-  public: virtual Array<real_t, 3> data(int n, const RectDomain<3> &idx) = 0;
+  public: virtual typename arr<real_t>::arr_ret data(int n, const idx &idx) = 0;
 
-  public: Array<real_t, 3> nghbr_data(int side, int n, const RectDomain<3> &idx)
+  public: typename arr<real_t>::arr_ret nghbr_data(int side, int n, const idx &idx)
   {
     nghbrs[side]->sync(n);
     return nghbrs[side]->data(n, idx);

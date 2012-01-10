@@ -18,10 +18,10 @@ template <typename real_t>
 class adv_mpdata_fct : public adv_mpdata<real_t> 
 {
   public: const int stencil_extent() { return 5; }
-  public: const int num_vctr_caches() { return 6; }
+  public: const int num_vctr_caches() { return 4; }
 #  define C_adf(dim) (*tmp_v[0+dim])
-#  define C_mon(dim) (*tmp_v[3+dim])
-  public: const int num_sclr_caches() { return 2; }
+#  define C_mon (*tmp_v[3])
+  public: const int num_sclr_caches() { return 2; } 
 #  define psi_min (*tmp_s[0])
 #  define psi_max (*tmp_s[1])
 
@@ -32,16 +32,16 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
 
   public: void op3D(
     arr<real_t> *psi[], arr<real_t> *tmp_s[], arr<real_t> *tmp_v[],
-    const Range &i, const Range &j, const Range &k,
+    const rng &i, const rng &j, const rng &k,
     const int n, const int step,
-    arr<real_t> &Cx, arr<real_t> &Cy, arr<real_t> &Cz
+    const arr<real_t> * const Cx, const arr<real_t> * const Cy, const arr<real_t> * const Cz
   )
   {
     assert(min(*psi[n]) >= real_t(0)); // accepting positive scalars only
 
-    Range ii = Range(i.first() - 1, i.last() + 1),
-          jj = Range(j.first() - 1, j.last() + 1),
-          kk = Range(k.first() - 1, k.last() + 1);
+    rng ii = rng(i.first() - 1, i.last() + 1),
+          jj = rng(j.first() - 1, j.last() + 1),
+          kk = rng(k.first() - 1, k.last() + 1);
 #  define mpdata_fct_minmax(fun, psi_, n_, i_, j_, k_) ::fun( \
      (*psi_[n_])(i_  ,j_  ,k_  ), ::fun( \
      (*psi_[n_])(i_-1,j_  ,k_  ), ::fun( \
@@ -68,26 +68,39 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
       // calculating psi_min and psi_max from the previous time step and previous iord
       psi_min(ii,jj,kk) = ::min(psi_min(ii,jj,kk), mpdata_fct_minmax(min, psi, n, ii, jj, kk));
       psi_max(ii,jj,kk) = ::max(psi_max(ii,jj,kk), mpdata_fct_minmax(max, psi, n, ii, jj, kk));
+
       // calculating Cx_mon, Cy_mon, Cz_mon
-      this->template mpdata_U<idx_ijk>(&C_adf(0), psi, n, i, j, k, Cx, Cy, Cz);
-      this->template mpdata_U<idx_jki>(&C_adf(1), psi, n, j, k, i, Cy, Cz, Cx); // TODO only if 3D?
-      this->template mpdata_U<idx_kij>(&C_adf(2), psi, n, k, i, j, Cz, Cx, Cy); // TODO only for 2D and 3D?
-      // TODO: this could be implemented with just one cache for C_mon!
-      fct_helper<idx_ijk>(psi, tmp_s, tmp_v, C_mon(0), C_adf(0), C_adf(1), C_adf(2), i, j, k, n);
-      fct_helper<idx_jki>(psi, tmp_s, tmp_v, C_mon(1), C_adf(1), C_adf(2), C_adf(0), j, k, i, n); // TODO: only if 3D?
-      fct_helper<idx_kij>(psi, tmp_s, tmp_v, C_mon(2), C_adf(2), C_adf(0), C_adf(1), k, i, j, n); // TODO: only for 2D and 3D?
-      // performing upstream advection using the calculated ''monotonic'' velocities
-      adv_upstream<real_t>::op3D(psi, NULL, NULL, i, j, k, n, 1, C_mon(0), C_mon(1), C_mon(2));
+      this->template mpdata_U<idx_ijk>(&C_adf(0), psi, n, i, j, k, *Cx, *Cy, *Cz);
+      this->template mpdata_U<idx_jki>(&C_adf(1), psi, n, j, k, i, *Cy, *Cz, *Cx);
+      this->template mpdata_U<idx_kij>(&C_adf(2), psi, n, k, i, j, *Cz, *Cx, *Cy); 
+   
+      // performing upstream advection using the ''monotonic'' velocities (logic from adv::op3D)
+      *psi[n+1] = *psi[0];
+      if (true)  
+      {
+        fct_helper<idx_ijk>(psi, tmp_s, tmp_v, C_mon, C_adf(0), C_adf(1), C_adf(2), i, j, k, n);
+        adv_upstream<real_t>::template op<idx_ijk>(psi, NULL, NULL, i, j, k, n, 1, &C_mon, NULL, NULL); 
+      }
+      if (j.first() != j.last())
+      {
+        fct_helper<idx_jki>(psi, tmp_s, tmp_v, C_mon, C_adf(1), C_adf(2), C_adf(0), j, k, i, n); 
+        adv_upstream<real_t>::template op<idx_jki>(psi, NULL, NULL, j, k, i, n, 1, &C_mon, NULL, NULL); 
+      }
+      if (k.first() != k.last())
+      {
+        fct_helper<idx_kij>(psi, tmp_s, tmp_v, C_mon, C_adf(2), C_adf(0), C_adf(1), k, i, j, n); 
+        adv_upstream<real_t>::template op<idx_kij>(psi, NULL, NULL, k, i, j, n, 1, &C_mon, NULL, NULL); 
+      }
     }
   }
 
   private:
   template <class idx>
   void fct_helper(
-    arr<real_t> *psi[], arr<real_t> *tmp_s[], arr<real_t> *tmp_v[], 
+    arr<real_t> *psi[], arr<real_t> *tmp_s[], arr<real_t> *[], 
     const arr<real_t> &C_mon_x, 
     const arr<real_t> &C_adf_x, const arr<real_t> &C_adf_y, const arr<real_t> &C_adf_z, 
-    const Range &i, const Range &j, const Range &k, int n
+    const rng &i, const rng &j, const rng &k, int n
   )  
   {
 ///
@@ -118,7 +131,7 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
      (::min(real_t(0),C_adf_z(idx(_i,_j,_k - grid->m_half)))) * (*psi[n])(idx(_i,_j,_k))   \
    )
     // as in mpdata_U, we compute u_{i+1/2} for iv=(i-1, ... i) instead of u_{i+1/2} and u_{i-1/2} for all i
-    Range iv(i.first()-1, i.last());
+    rng iv(i.first()-1, i.last());
     /// nonoscillatory antidiffusive velocity: \n
     /// \f$ U^{MON}_{i+1/2}=min(1,\beta ^{\downarrow}_i,\beta ^{\uparrow} _{i+1})[U_{i+1/2}]^{+} 
     /// + min(1,\beta^{\uparrow}_{i},\beta^{\downarrow}_{i+1/2})[u_{i+1/2}]^{-} \f$ \n

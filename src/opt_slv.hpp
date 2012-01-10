@@ -19,7 +19,8 @@
 void opt_slv_desc(po::options_description &desc)
 {
   desc.add_options()
-    ("slv", po::value<string>(), "solver: serial, openmp, threads");
+    ("slv", po::value<string>(), "solver: serial, openmp, threads, mpi, fork, mpi+threads, mpi+openmp")
+    ("nsd", po::value<int>(), "subdomain number [1]");
 }
 #  endif
 

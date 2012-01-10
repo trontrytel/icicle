@@ -21,6 +21,7 @@ template <typename real_t>
 class stp : root
 {
   // that should probably be the only place where public fields are used
+  // TODO: but maybe better offer public const-ref-returning methods?
   public: adv<real_t> *fllbck, *advsch;
   public: out<real_t> *output;
   public: vel<real_t> *velocity;

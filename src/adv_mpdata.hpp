@@ -44,7 +44,7 @@ class adv_mpdata : public adv_upstream<real_t>
   void mpdata_U(
     arr<real_t> *C_adf,
     arr<real_t> *psi[], const int n,
-    const Range &i, const Range &j, const Range &k,
+    const rng &i, const rng &j, const rng &k,
     const arr<real_t> &Cx, const arr<real_t> &Cy, const arr<real_t> &Cz
   )
   {
@@ -59,9 +59,10 @@ class adv_mpdata : public adv_upstream<real_t>
     // instead of computing u_{i+1/2} and u_{i-1/2} for all i
     // we compute u_{i+1/2} for im=(i-1, ... i)
 
-    Range im(i.first() - 1, i.last());
-    Range ir = im + 1, ic = im + grid->p_half, il = im;
-    (*C_adf)(idx(Range(i.first() - grid->m_half, i.last() + grid->p_half), j, k)) = (
+    rng im(i.first() - 1, i.last());
+    rng ir = im + 1, ic = im + grid->p_half, il = im;
+
+    (*C_adf)(idx(rng(i.first() - grid->m_half, i.last() + grid->p_half), j, k)) = (
       mpdata_CA( 
         (*psi[n])(idx(ir, j, k)), (*psi[n])(idx(il, j, k)), /* pl, pr */ 
         Cx(idx(ic, j, k)) 
@@ -91,13 +92,13 @@ class adv_mpdata : public adv_upstream<real_t>
     arr<real_t>* psi[], 
     arr<real_t>* [], 
     arr<real_t>* tmp_v[], 
-    const Range &i, const Range &j, const Range &k, 
+    const rng &i, const rng &j, const rng &k, 
     const int n, const int step,
-    const arr<real_t> &Cx, const arr<real_t> &Cy, const arr<real_t> &Cz
+    const arr<real_t> * const Cx, const arr<real_t> * const Cy, const arr<real_t> * const Cz
   )
   {
     if (step == 1) 
-      adv_upstream<real_t>::template op<idx>(psi, NULL, NULL, i, j, k, n, 1, Cx, Cy, Cz);
+      adv_upstream<real_t>::template op<idx>(psi, NULL, NULL, i, j, k, n, 1, Cx, NULL, NULL);
     else 
     {
     /// 
@@ -106,9 +107,8 @@ class adv_mpdata : public adv_upstream<real_t>
     /// where \f$ I \f$ denotes the sum over all dimensions and \f$ \tilde{U} \f$ is multidimensional antidiffusive velocity \n
     /// eq. (12) in Smolarkiewicz 1984 (J. Comp. Phys.,54,352-362) 
 
-      mpdata_U<idx>(tmp_v[0], psi, n, i, j, k, Cx, Cy, Cz);
-      adv_upstream<real_t>::template op<idx>(psi, NULL, NULL, i, j, k, n, 1, *tmp_v[0], *tmp_v[1], *tmp_v[2]);
-      //                                                                                ^^^^^^^^^^^^^^^^^^^^ TODO: these are non-existant!
+      mpdata_U<idx>(tmp_v[0], psi, n, i, j, k, *Cx, *Cy, *Cz);
+      adv_upstream<real_t>::template op<idx>(psi, NULL, NULL, i, j, k, n, 1, tmp_v[0], NULL, NULL);
     }
   }
 };
