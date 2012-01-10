@@ -44,10 +44,9 @@
   $ make test
   $ make clean 
 
-  CMake honors the CXX env. var, so one may use e.g.
+  To chose a non-defalt compiler or library path:
   $ export CXX=openmpic++
-  $ export LDFLAGS=-L/opt/local/lib 
-  $ export CXXFLAGS=-I/opt/local/include
+  $ export CMAKE_PREFIX_PATH=/usr/local/
 
 --------------------------------------------------------------
 * usage:
