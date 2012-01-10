@@ -19,14 +19,16 @@ template <typename real_t>
 class adv_mpdata : public adv_upstream<real_t> 
 {
   adv_hack_macro // workaround for virtual template methods
+  public: const int stencil_extent() {return third_order ? 5 : 3; }
   public: const int num_steps() { return iord; }
   public: virtual const int num_vctr_caches() { return 1; }
 
   private: int iord;
+  private: bool cross_terms, third_order;
   private: grd_arakawa_c_lorenz<real_t> *grid;
 
-  public: adv_mpdata(grd_arakawa_c_lorenz<real_t> *grid, int iord) 
-    : iord(iord), grid(grid), adv_upstream<real_t>(grid)
+  public: adv_mpdata(grd_arakawa_c_lorenz<real_t> *grid, int iord, bool cross_terms, bool third_order) // TODO: enums?
+    : iord(iord), cross_terms(cross_terms), third_order(third_order), grid(grid), adv_upstream<real_t>(grid)
   {
     if (iord <= 0) error_macro("iord (the number of iterations) must be > 0")
   }
@@ -38,6 +40,12 @@ class adv_mpdata : public adv_upstream<real_t>
 #    define mpdata_V(Vru, Vlu, Vrd, Vld) (real_t(.25) * (Vru + Vlu + Vrd + Vld))
 #    define mpdata_CA(pr, pl, U) ((abs(U) - pow(U,2)) * mpdata_A(pr, pl))
 #    define mpdata_CB(pru, plu, prd, pld, U, V) (U * V * mpdata_B(pru, plu, prd, pld)) 
+    // macros for 3rd order terms:
+#    define mpdata_3rd_xx(pp2, pp1, pp0, U) (\
+       (real_t(3)*U*abs(U)-real_t(2)*U*pow(U,3)-U) / real_t(6) \
+       * mpdata_frac(pp2-real_t(2)*pp1+pp0, pp1) \
+     )
+
 
   protected:
   template <class idx>
@@ -66,24 +74,43 @@ class adv_mpdata : public adv_upstream<real_t>
       mpdata_CA( 
         (*psi[n])(idx(ir, j, k)), (*psi[n])(idx(il, j, k)), /* pl, pr */ 
         Cx(idx(ic, j, k)) 
-      ) - 
-      mpdata_CB( 
-        (*psi[n])(idx(ir, j+1, k)), (*psi[n])(idx(il, j+1, k)), /* pru, plu */ 
-        (*psi[n])(idx(ir, j-1, k)), (*psi[n])(idx(il, j-1, k)), /* prd, pld */ 
-        Cx(idx(ic, j, k)), mpdata_V( 
-          Cy(idx(ir, j + grid->p_half, k)), Cy(idx(il, j + grid->p_half, k)), /* Vru, Vlu */ 
-          Cy(idx(ir, j - grid->m_half, k)), Cy(idx(il, j - grid->m_half, k))  /* Vrd, Vld */ 
-        ) 
-      ) - 
-      mpdata_CB( 
-        (*psi[n])(idx(ir, j, k+1)), (*psi[n])(idx(il, j, k+1)), /* pru, plu */ 
-        (*psi[n])(idx(ir, j, k-1)), (*psi[n])(idx(il, j, k-1)), /* prd, pld */ 
-        Cx(idx(ic, j, k)), mpdata_V( 
-          Cz(idx(ir, j, k + grid->p_half)), Cz(idx(il, j, k + grid->p_half)), /* Vru, Vlu */ 
-          Cz(idx(ir, j, k - grid->m_half)), Cz(idx(il, j, k - grid->m_half))  /* Vrd, Vld */ 
-        ) 
-      )  
-    );
+      )
+    );  
+    if (cross_terms) 
+    {
+      (*C_adf)(idx(rng(i.first() - grid->m_half, i.last() + grid->p_half), j, k)) -= (
+        mpdata_CB( 
+          (*psi[n])(idx(ir, j+1, k)), (*psi[n])(idx(il, j+1, k)), /* pru, plu */ 
+          (*psi[n])(idx(ir, j-1, k)), (*psi[n])(idx(il, j-1, k)), /* prd, pld */ 
+          Cx(idx(ic, j, k)), mpdata_V( 
+            Cy(idx(ir, j + grid->p_half, k)), Cy(idx(il, j + grid->p_half, k)), /* Vru, Vlu */ 
+            Cy(idx(ir, j - grid->m_half, k)), Cy(idx(il, j - grid->m_half, k))  /* Vrd, Vld */ 
+          ) 
+        ) + 
+        mpdata_CB( 
+          (*psi[n])(idx(ir, j, k+1)), (*psi[n])(idx(il, j, k+1)), /* pru, plu */ 
+          (*psi[n])(idx(ir, j, k-1)), (*psi[n])(idx(il, j, k-1)), /* prd, pld */ 
+          Cx(idx(ic, j, k)), mpdata_V( 
+            Cz(idx(ir, j, k + grid->p_half)), Cz(idx(il, j, k + grid->p_half)), /* Vru, Vlu */ 
+            Cz(idx(ir, j, k - grid->m_half)), Cz(idx(il, j, k - grid->m_half))  /* Vrd, Vld */ 
+          ) 
+        )  
+      );
+      if (third_order) assert(false); //TODO
+    }
+    if (third_order)
+    { 
+      (*C_adf)(idx(rng(i.first() - grid->m_half, i.last() + grid->p_half), j, k)) +=(
+        mpdata_3rd_xx(
+          (*psi[n])(idx(im+2, j, k)), 
+          (*psi[n])(idx(im+1, j, k)), 
+          (*psi[n])(idx(im, j, k)), 
+          real_t(.5) * (
+            Cx(idx(im + grid->p_half ,j,k)) + Cx(idx(im + 1+ grid->p_half,j,k))
+          )
+        )
+      );  
+    }
   }
 
   public: 

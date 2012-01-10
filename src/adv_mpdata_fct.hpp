@@ -26,8 +26,8 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
 #  define psi_max (*tmp_s[1])
 
   private: grd_arakawa_c_lorenz<real_t> *grid;
-  public: adv_mpdata_fct(grd_arakawa_c_lorenz<real_t> *grid, int iord) 
-    : adv_mpdata<real_t>(grid, iord), grid(grid)
+  public: adv_mpdata_fct(grd_arakawa_c_lorenz<real_t> *grid, int iord, bool cross_terms, bool third_order) 
+    : adv_mpdata<real_t>(grid, iord, cross_terms, third_order), grid(grid)
   {}
 
   public: void op3D(

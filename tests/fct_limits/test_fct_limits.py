@@ -27,7 +27,7 @@ for iord in (1,2,3,4):
   Cy = -.5
   Cz = -.1
   cmd = (
-    '../../icicle',
+    '../../icicle','--bits','32',
     '--dt','1', 
     '--grd.dx','1',
     '--grd.dy','1',
@@ -65,7 +65,7 @@ for iord in (1,2,3,4):
 
   for t in range(psi.shape[0]) :
     data = psi[t,:,:,:]
-    print data.min()-min, data.max()- max
+    print "data.min()-min:", data.min()-min, "data.max()-max", data.max()- max
     if (round(data.min(),digits) < min) or (round(data.max(),digits) > max) :
       print data.min(), " < ", min, " or ", data.max(), " > ", max
       sys.exit(1)
