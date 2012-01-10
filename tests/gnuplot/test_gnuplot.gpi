@@ -33,11 +33,13 @@ cmd = "../../icicle" \
 set multiplot layout 2,3
   unset colorbox
   set title "upstream"
-  splot "<".cmd." --adv.mpdata.iord 1 --adv mpdata" using 1:-2:2 notitle with lines palette
+  splot "<".cmd." --adv upstream" using 1:-2:2 notitle with lines palette
   set title "leapfrog"
   splot "<".cmd." --adv leapfrog                  " using 1:-2:2 notitle with lines palette
   set title "MPDATA (iord=2)"
   splot "<".cmd." --adv.mpdata.iord 2 --adv mpdata" using 1:-2:2 notitle with lines palette
+  set title "MPDATA (iord=2,third_order=1)"
+  splot "<".cmd." --adv mpdata --adv.mpdata.third_order 1 --adv.mpdata.cross_terms 0" using 1:-2:2 notitle with lines palette
   set title "MPDATA (iord=2,fct=1)"
   splot "<".cmd." --adv.mpdata.iord 2 --adv.mpdata.fct 1 --adv mpdata" using 1:-2:2 notitle with lines palette
   set colorbox horiz user origin .7,.2 size .25, .04

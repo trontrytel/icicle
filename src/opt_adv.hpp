@@ -20,8 +20,10 @@ void opt_adv_desc(po::options_description &desc)
 {
   desc.add_options()
     ("adv", po::value<string>(), "advection scheme: leapfrog, upstream, mpdata")
-    ("adv.mpdata.iord", po::value<int>()->default_value(2), "mpdata iord option: 1, 2, ...")
-    ("adv.mpdata.fct", po::value<bool>()->default_value(0), "mpdata FCT option: 0 (off) or 1 (on)");
+    ("adv.mpdata.iord", po::value<int>()->default_value(2), "MPDATA iteration count: 1, 2, ...")
+    ("adv.mpdata.cross_terms", po::value<bool>()->default_value(true), "MPDATA cross terms: 0 (off) or 1 (on)")
+    ("adv.mpdata.third_order", po::value<bool>()->default_value(false), "MPDATA 3rd order terms: 0 (off) or 1 (on)")
+    ("adv.mpdata.fct", po::value<bool>()->default_value(0), "MPDATA FCT option: 0 (off) or 1 (on)");
 }
 #  endif
 
@@ -50,9 +52,17 @@ void opt_adv(const po::variables_map& vm,
   else if (advscheme == "mpdata")
   {
     if (vm["adv.mpdata.fct"].as<bool>())
-      *advsch = new adv_mpdata_fct<real_t>(g, vm["adv.mpdata.iord"].as<int>());
+      *advsch = new adv_mpdata_fct<real_t>(g, 
+        vm["adv.mpdata.iord"].as<int>(),
+        vm["adv.mpdata.cross_terms"].as<bool>(),
+        vm["adv.mpdata.third_order"].as<bool>()
+      );
     else
-      *advsch = new adv_mpdata<real_t>(g, vm["adv.mpdata.iord"].as<int>());
+      *advsch = new adv_mpdata<real_t>(g, 
+        vm["adv.mpdata.iord"].as<int>(),
+        vm["adv.mpdata.cross_terms"].as<bool>(),
+        vm["adv.mpdata.third_order"].as<bool>()
+      );
   }
   else error_macro("unsupported advection scheme: " << advscheme)
 }

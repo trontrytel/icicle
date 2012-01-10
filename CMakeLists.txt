@@ -11,6 +11,9 @@ cmake_minimum_required(VERSION 2.6) # for simplified if-constructs
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffast-math -DNDEBUG")
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -DBZ_DEBUG" CACHE STRING "Debug options." FORCE)
 
+set(BOOST_SUFFIX "")
+#set(BOOST_SUFFIX "-mt")
+
 if(NOT (
   "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" OR 
   "${CMAKE_BUILD_TYPE}" STREQUAL "Release" OR
@@ -72,7 +75,7 @@ if(NOT Find_Blitz)
   message(FATAL_ERROR "Blitz++ not found!
     (cf. CMakeFiles/CMakeError.log, fix, rm CMakeCache.txt and rerun)"
   )
-endif()                                                                #
+endif()                                                                
 check_cxx_source_runs("
   #include <blitz/array.h>
   int main() { 
@@ -85,11 +88,11 @@ if (NOT Blitz_Configured_With_The_Same_Compiler)
     Consider reconfiguring Blitz++ with CXX=${CMAKE_CXX_COMPILER} 
     (cf. CMakeFiles/CMakeError.log, fix, rm CMakeCache.txt and rerun)"
   )
-endif()
+endif()                                                                #
 #### </Blitz> ##########################################################
 
 #### <Boost.program_options> (mandatory) ###############################
-set(CMAKE_REQUIRED_LIBRARIES "-lboost_program_options-mt")              #
+set(CMAKE_REQUIRED_LIBRARIES "-lboost_program_options${BOOST_SUFFIX}") #
 check_cxx_source_compiles(
   "#include <boost/program_options.hpp>\n int main() { 
     boost::program_options::options_description d; 
@@ -150,7 +153,7 @@ endif()                                                                #
 if ("${THREADS}" STREQUAL "NO") # handles -DTHREADS=NO                 #
   message("-- Building without Boost.Thread (-DTHREADS=NO specified)")
 else()
-  set(CMAKE_REQUIRED_LIBRARIES "-lboost_thread-mt")
+  set(CMAKE_REQUIRED_LIBRARIES "-lboost_thread${BOOST_SUFFIX}")
   check_cxx_source_compiles(
     "#include <boost/thread.hpp>\n int main() { boost::thread th; }" 
     Find_Boost_Thread
@@ -175,7 +178,7 @@ endif()                                                                #
 if ("${MPI}" STREQUAL "NO") # handles -DMPI=NO
   message("-- Building without Boost.MPI (-DMPI=NO specified)")
 else()
-  set(CMAKE_REQUIRED_LIBRARIES "-lboost_mpi-mt")
+  set(CMAKE_REQUIRED_LIBRARIES "-lboost_mpi${BOOST_SUFFIX}")
   check_cxx_source_compiles(
     "#include <boost/mpi.hpp>
      int main() {boost::mpi::communicator().send(1,0,0.);}"
@@ -203,7 +206,7 @@ endif()
 if ("${TIMER}" STREQUAL "NO") # handles -DTIMER=NO                     #
   message("-- Building without Boost.Timer (-DTIMER=NO specified)")
 else()
-  set(CMAKE_REQUIRED_LIBRARIES "-lboost_timer-mt -lboost_system-mt")
+  set(CMAKE_REQUIRED_LIBRARIES "-lboost_timer${BOOST_SUFFIX} -lboost_system${BOOST_SUFFIX}")
   check_cxx_source_compiles(
     "#include <boost/timer/timer.hpp>
      int main() { boost::timer::auto_cpu_timer t; }" 
