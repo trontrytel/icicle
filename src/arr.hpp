@@ -13,7 +13,7 @@
 #  endif
 #  include <blitz/array.h>
 #  include <blitz/numinquire.h>
-using namespace blitz; // TODO: to be removed!
+//using namespace blitz; // TODO: to be removed!
 
 typedef blitz::Range rng;
 
@@ -25,9 +25,9 @@ class arr : public blitz::Array<real_t, 3>
   public: arr(const blitz::Range &i, const blitz::Range &j, const blitz::Range &k) 
     : blitz::Array<real_t, 3>(i, j, k)
   { 
-    (*this)(i,j,k) = has_signalling_NaN(real_t(0)) 
-      ? signalling_NaN(real_t(0)) 
-      : quiet_NaN(real_t(0));
+    (*this)(i,j,k) = blitz::has_signalling_NaN(real_t(0)) 
+      ? blitz::signalling_NaN(real_t(0)) 
+      : blitz::quiet_NaN(real_t(0));
   } 
 };
 

@@ -42,12 +42,12 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
     rng ii = rng(i.first() - 1, i.last() + 1),
           jj = rng(j.first() - 1, j.last() + 1),
           kk = rng(k.first() - 1, k.last() + 1);
-#  define mpdata_fct_minmax(fun, psi_, n_, i_, j_, k_) ::fun( \
-     (*psi_[n_])(i_  ,j_  ,k_  ), ::fun( \
-     (*psi_[n_])(i_-1,j_  ,k_  ), ::fun( \
-     (*psi_[n_])(i_+1,j_  ,k_  ), ::fun( \
-     (*psi_[n_])(i_  ,j_-1,k_  ), ::fun( \
-     (*psi_[n_])(i_  ,j_+1,k_  ), ::fun( \
+#  define mpdata_fct_minmax(fun, psi_, n_, i_, j_, k_) blitz::fun( \
+     (*psi_[n_])(i_  ,j_  ,k_  ), blitz::fun( \
+     (*psi_[n_])(i_-1,j_  ,k_  ), blitz::fun( \
+     (*psi_[n_])(i_+1,j_  ,k_  ), blitz::fun( \
+     (*psi_[n_])(i_  ,j_-1,k_  ), blitz::fun( \
+     (*psi_[n_])(i_  ,j_+1,k_  ), blitz::fun( \
      (*psi_[n_])(i_  ,j_  ,k_-1), \
      (*psi_[n_])(i_  ,j_  ,k_+1)))))) \
    ) 
@@ -66,8 +66,8 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
     else
     {
       // calculating psi_min and psi_max from the previous time step and previous iord
-      psi_min(ii,jj,kk) = ::min(psi_min(ii,jj,kk), mpdata_fct_minmax(min, psi, n, ii, jj, kk));
-      psi_max(ii,jj,kk) = ::max(psi_max(ii,jj,kk), mpdata_fct_minmax(max, psi, n, ii, jj, kk));
+      psi_min(ii,jj,kk) = blitz::min(psi_min(ii,jj,kk), mpdata_fct_minmax(min, psi, n, ii, jj, kk));
+      psi_max(ii,jj,kk) = blitz::max(psi_max(ii,jj,kk), mpdata_fct_minmax(max, psi, n, ii, jj, kk));
 
       // calculating Cx_mon, Cy_mon, Cz_mon
       this->template mpdata_U<idx_ijk>(&C_adf(0), psi, n, i, j, k, *Cx, *Cy, *Cz);
@@ -114,21 +114,21 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
 
 #  define mpdata_fct_beta_up(_i, _j, _k) mpdata_frac( \
      psi_max(idx(_i,_j,_k)) - (*psi[n])(idx(_i,_j,_k)), \
-     (::max(real_t(0),C_adf_x(idx(_i - grid->m_half,_j,_k)))) * (*psi[n])(idx(_i-1,_j,_k)) - \
-     (::min(real_t(0),C_adf_x(idx(_i + grid->p_half,_j,_k)))) * (*psi[n])(idx(_i+1,_j,_k)) + \
-     (::max(real_t(0),C_adf_y(idx(_i,_j - grid->m_half,_k)))) * (*psi[n])(idx(_i,_j-1,_k)) - \
-     (::min(real_t(0),C_adf_y(idx(_i,_j + grid->p_half,_k)))) * (*psi[n])(idx(_i,_j+1,_k)) + \
-     (::max(real_t(0),C_adf_z(idx(_i,_j,_k - grid->m_half)))) * (*psi[n])(idx(_i,_j,_k-1)) - \
-     (::min(real_t(0),C_adf_z(idx(_i,_j,_k + grid->p_half)))) * (*psi[n])(idx(_i,_j,_k+1))   \
+     (blitz::max(real_t(0),C_adf_x(idx(_i - grid->m_half,_j,_k)))) * (*psi[n])(idx(_i-1,_j,_k)) - \
+     (blitz::min(real_t(0),C_adf_x(idx(_i + grid->p_half,_j,_k)))) * (*psi[n])(idx(_i+1,_j,_k)) + \
+     (blitz::max(real_t(0),C_adf_y(idx(_i,_j - grid->m_half,_k)))) * (*psi[n])(idx(_i,_j-1,_k)) - \
+     (blitz::min(real_t(0),C_adf_y(idx(_i,_j + grid->p_half,_k)))) * (*psi[n])(idx(_i,_j+1,_k)) + \
+     (blitz::max(real_t(0),C_adf_z(idx(_i,_j,_k - grid->m_half)))) * (*psi[n])(idx(_i,_j,_k-1)) - \
+     (blitz::min(real_t(0),C_adf_z(idx(_i,_j,_k + grid->p_half)))) * (*psi[n])(idx(_i,_j,_k+1))   \
    )
 #  define mpdata_fct_beta_dn(_i, _j, _k) mpdata_frac(\
      (*psi[n])(idx(_i,_j,_k)) - psi_min(idx(_i,_j,_k)), \
-     (::max(real_t(0),C_adf_x(idx(_i + grid->p_half,_j,_k)))) * (*psi[n])(idx(_i,_j,_k)) - \
-     (::min(real_t(0),C_adf_x(idx(_i - grid->m_half,_j,_k)))) * (*psi[n])(idx(_i,_j,_k)) + \
-     (::max(real_t(0),C_adf_y(idx(_i,_j + grid->p_half,_k)))) * (*psi[n])(idx(_i,_j,_k)) - \
-     (::min(real_t(0),C_adf_y(idx(_i,_j - grid->m_half,_k)))) * (*psi[n])(idx(_i,_j,_k)) + \
-     (::max(real_t(0),C_adf_z(idx(_i,_j,_k + grid->p_half)))) * (*psi[n])(idx(_i,_j,_k)) - \
-     (::min(real_t(0),C_adf_z(idx(_i,_j,_k - grid->m_half)))) * (*psi[n])(idx(_i,_j,_k))   \
+     (blitz::max(real_t(0),C_adf_x(idx(_i + grid->p_half,_j,_k)))) * (*psi[n])(idx(_i,_j,_k)) - \
+     (blitz::min(real_t(0),C_adf_x(idx(_i - grid->m_half,_j,_k)))) * (*psi[n])(idx(_i,_j,_k)) + \
+     (blitz::max(real_t(0),C_adf_y(idx(_i,_j + grid->p_half,_k)))) * (*psi[n])(idx(_i,_j,_k)) - \
+     (blitz::min(real_t(0),C_adf_y(idx(_i,_j - grid->m_half,_k)))) * (*psi[n])(idx(_i,_j,_k)) + \
+     (blitz::max(real_t(0),C_adf_z(idx(_i,_j,_k + grid->p_half)))) * (*psi[n])(idx(_i,_j,_k)) - \
+     (blitz::min(real_t(0),C_adf_z(idx(_i,_j,_k - grid->m_half)))) * (*psi[n])(idx(_i,_j,_k))   \
    )
     // as in mpdata_U, we compute u_{i+1/2} for iv=(i-1, ... i) instead of u_{i+1/2} and u_{i-1/2} for all i
     rng iv(i.first()-1, i.last());
@@ -140,8 +140,8 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
 
     C_mon_x(idx(iv + grid->p_half,j,k)) = C_adf_x(idx(iv + grid->p_half,j,k)) * where(
       C_adf_x(idx(iv + grid->p_half,j,k)) > 0,
-      ::min(1, ::min(mpdata_fct_beta_dn(iv, j, k), mpdata_fct_beta_up(iv+1, j, k))),
-      ::min(1, ::min(mpdata_fct_beta_up(iv, j, k), mpdata_fct_beta_dn(iv+1, j, k)))
+      blitz::min(1, blitz::min(mpdata_fct_beta_dn(iv, j, k), mpdata_fct_beta_up(iv+1, j, k))),
+      blitz::min(1, blitz::min(mpdata_fct_beta_up(iv, j, k), mpdata_fct_beta_dn(iv+1, j, k)))
     );
   }
 };

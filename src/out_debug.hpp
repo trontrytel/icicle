@@ -22,14 +22,14 @@ class out_debug : public out<real_t>
     const rng &i, const rng &j, const rng &k, const unsigned long t
   ) 
   {
-    ostringstream tmp;
+    std::ostringstream tmp;
     tmp
       << "{pid: " << getpid() << "} :" 
       << "[" << i << "," << j << "," << k << "] @ t/dt=" << t
       << endl
       << (*psi)(i, j, k) 
       << endl;
-    cerr << tmp.str(); // non-buffered?
+    std::cerr << tmp.str(); // non-buffered?
   }
 };
 

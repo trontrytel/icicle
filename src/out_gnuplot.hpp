@@ -56,24 +56,24 @@ class out_gnuplot : public out<real_t>
     // end record if needed and output the data + some housekeeping
     if (t_last != -1 && t != t_last)
     {
-      cout << endl << endl;
+      std::cout << std::endl << std::endl;
       i_last = -1;
     }
     assert(i_last + 1 == i.first()); // if data is output in order
     for (int ii=i.first(); ii<=i.last(); ++ii) 
     {
       if (steps)
-        cout 
+        std::cout 
           << real_t((grid->x(ii,0,0) - real_t(.5) * grid->dx()) / si::metres) // TODO: this assumes x 
           << "\t"
           << *(*psi)(idx(rng(ii,ii), rng(0,0), rng(0,0))).dataFirst() 
-          << endl
+          << std::endl
           << real_t((grid->x(ii,0,0) + real_t(.5) * grid->dx()) / si::metres) // TODO: this assumes x
           << "\t"
           << *(*psi)(idx(rng(ii,ii), rng(0,0), rng(0,0))).dataFirst() 
-          << endl;
+          << std::endl;
       else
-        cout << *(*psi)(idx(rng(ii,ii), rng(0,0), rng(0,0))).dataFirst() << endl;
+        std::cout << *(*psi)(idx(rng(ii,ii), rng(0,0), rng(0,0))).dataFirst() << std::endl;
     }
   
     // housekeeping

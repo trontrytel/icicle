@@ -2,7 +2,7 @@ coding conventions in icicle:
   - ...
   - KISS
   - no file should be longer than 100 lines :)
-  - double space indentation (no tabs)
+  - double space indentation - no tabs (Google 'Spaces vs. Tabs')
   - both opening and closing braces on separate lines
   - only Unix-style carriage returns ("\n")
   - avoiding preprocessor macros
@@ -23,3 +23,9 @@ coding conventions in icicle:
 - identifier names:
   - all variable, class and method named are lowercase
     optionally with underscores
+
+References:
+[CERN] - CERN C++ Coding Standard Specification
+  http://pst.web.cern.ch/PST/HandBookWorkBook/Handbook/Programming/CodingStandard/c++standard.pdf
+[Google] - Google C++ Style Guide
+  http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml
