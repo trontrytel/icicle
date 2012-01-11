@@ -11,9 +11,6 @@ cmake_minimum_required(VERSION 2.6) # for simplified if-constructs
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffast-math -DNDEBUG")
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -DBZ_DEBUG" CACHE STRING "Debug options." FORCE)
 
-set(BOOST_SUFFIX "")
-#set(BOOST_SUFFIX "-mt")
-
 if(NOT (
   "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" OR 
   "${CMAKE_BUILD_TYPE}" STREQUAL "Release" OR
@@ -39,6 +36,7 @@ foreach(d .;doc;tests;src)
 endforeach()
 set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${TMP}")
 
+# we use CheckCXXSource* macros only not to require a C compiler
 include(CheckCXXSourceCompiles) 
 include(CheckCXXSourceRuns)
 
@@ -92,13 +90,21 @@ endif()                                                                #
 #### </Blitz> ##########################################################
 
 #### <Boost.program_options> (mandatory) ###############################
-set(CMAKE_REQUIRED_LIBRARIES "-lboost_program_options${BOOST_SUFFIX}") #
-check_cxx_source_compiles(
-  "#include <boost/program_options.hpp>\n int main() { 
-    boost::program_options::options_description d; 
-  }" 
-  Find_Boost_Program_Options
-)
+foreach(sfx "-mt" "") # tagged installation layout issue               #
+  set(CMAKE_REQUIRED_LIBRARIES "-lboost_program_options${sfx}") 
+  check_cxx_source_compiles(
+    "#include <boost/program_options.hpp>\n int main() { 
+      boost::program_options::options_description d; 
+    }" 
+    Find_Boost_Program_Options
+  )
+  if (Find_Boost_Program_Options) 
+    break()
+  else()
+    message("-- Retrying without the -mt suffix...")
+    unset(Find_Boost_Program_Options CACHE)
+  endif()
+endforeach()
 if(NOT Find_Boost_Program_Options) 
   message(FATAL_ERROR "Boost.Program_Options not found! 
     (cf. CMakeFiles/CMakeError.log, fix, rm CMakeCache.txt and rerun)"
@@ -153,11 +159,19 @@ endif()                                                                #
 if ("${THREADS}" STREQUAL "NO") # handles -DTHREADS=NO                 #
   message("-- Building without Boost.Thread (-DTHREADS=NO specified)")
 else()
-  set(CMAKE_REQUIRED_LIBRARIES "-lboost_thread${BOOST_SUFFIX}")
-  check_cxx_source_compiles(
-    "#include <boost/thread.hpp>\n int main() { boost::thread th; }" 
-    Find_Boost_Thread
-  )
+  foreach(sfx "-mt" "") # tagged installation layout issue  
+    set(CMAKE_REQUIRED_LIBRARIES "-lboost_thread${sfx}")
+    check_cxx_source_compiles(
+      "#include <boost/thread.hpp>\n int main() { boost::thread th; }" 
+      Find_Boost_Thread
+    )
+    if (Find_Boost_Thread) 
+      break()
+    else()
+      message("-- Retrying without the -mt suffix...")
+      unset(Find_Boost_Thread CACHE)
+    endif()
+  endforeach()
   if(NOT Find_Boost_Thread) 
     message(WARNING "
       Boost.Thread not found! (cf. CMakeFiles/CMakeError.log) 
@@ -178,12 +192,20 @@ endif()                                                                #
 if ("${MPI}" STREQUAL "NO") # handles -DMPI=NO
   message("-- Building without Boost.MPI (-DMPI=NO specified)")
 else()
-  set(CMAKE_REQUIRED_LIBRARIES "-lboost_mpi${BOOST_SUFFIX}")
-  check_cxx_source_compiles(
-    "#include <boost/mpi.hpp>
-     int main() {boost::mpi::communicator().send(1,0,0.);}"
-    Find_Boost_MPI
-  )
+  foreach(sfx "-mt" "") # tagged installation layout issue 
+    set(CMAKE_REQUIRED_LIBRARIES "-lboost_mpi${sfx}")
+    check_cxx_source_compiles(
+      "#include <boost/mpi.hpp>
+       int main() {boost::mpi::communicator().send(1,0,0.);}"
+      Find_Boost_MPI
+    )
+    if (Find_Boost_MPI) 
+      break()
+    else()
+      message("-- Retrying without the -mt suffix...")
+      unset(Find_Boost_MPI CACHE)
+    endif()
+  endforeach()
   if(NOT Find_Boost_MPI)
     message(WARNING "
       Boost.MPI not found! (cf. CMakeFiles/CMakeError.log)
@@ -206,12 +228,20 @@ endif()
 if ("${TIMER}" STREQUAL "NO") # handles -DTIMER=NO                     #
   message("-- Building without Boost.Timer (-DTIMER=NO specified)")
 else()
-  set(CMAKE_REQUIRED_LIBRARIES "-lboost_timer${BOOST_SUFFIX} -lboost_system${BOOST_SUFFIX}")
-  check_cxx_source_compiles(
-    "#include <boost/timer/timer.hpp>
-     int main() { boost::timer::auto_cpu_timer t; }" 
-    Find_Boost_Timer
-  )
+  foreach(sfx "-mt" "") # tagged installation layout issue     
+    set(CMAKE_REQUIRED_LIBRARIES "-lboost_timer${sfx} -lboost_system${sfx}")
+    check_cxx_source_compiles(
+      "#include <boost/timer/timer.hpp>
+       int main() { boost::timer::auto_cpu_timer t; }" 
+      Find_Boost_Timer
+    )
+    if (Find_Boost_Timer) 
+      break()
+    else()
+      message("-- Retrying without the -mt suffix...")
+      unset(Find_Boost_Timer CACHE)
+    endif()
+  endforeach()
   if(NOT Find_Boost_Timer) 
     message(WARNING "
       Boost.Timer not found! (cf. CMakeFiles/CMakeError.log) 
