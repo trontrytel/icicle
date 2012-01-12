@@ -25,6 +25,7 @@ class arr : public blitz::Array<real_t, 3>
   public: arr(const blitz::Range &i, const blitz::Range &j, const blitz::Range &k) 
     : blitz::Array<real_t, 3>(i, j, k)
   { 
+// TODO: move to solver, and make arr a typedef
     (*this)(i,j,k) = blitz::has_signalling_NaN(real_t(0)) 
       ? blitz::signalling_NaN(real_t(0)) 
       : blitz::quiet_NaN(real_t(0));

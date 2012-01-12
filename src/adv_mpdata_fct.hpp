@@ -70,9 +70,22 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
       psi_max(ii,jj,kk) = blitz::max(psi_max(ii,jj,kk), mpdata_fct_minmax(max, psi, n, ii, jj, kk));
 
       // calculating Cx_mon, Cy_mon, Cz_mon
-      this->template mpdata_U<idx_ijk>(&C_adf(0), psi, n, i, j, k, *Cx, *Cy, *Cz);
-      this->template mpdata_U<idx_jki>(&C_adf(1), psi, n, j, k, i, *Cy, *Cz, *Cx);
-      this->template mpdata_U<idx_kij>(&C_adf(2), psi, n, k, i, j, *Cz, *Cx, *Cy); 
+      {
+        if (step == 2)
+        {
+          this->template mpdata_U<idx_ijk>(&C_adf(0), psi, n, step, i, j, k, *Cx, *Cy, *Cz);
+          this->template mpdata_U<idx_jki>(&C_adf(1), psi, n, step, j, k, i, *Cy, *Cz, *Cx);
+          this->template mpdata_U<idx_kij>(&C_adf(2), psi, n, step, k, i, j, *Cz, *Cx, *Cy); 
+        }
+        else
+        {
+          // TODO: this will not work! we need three more caches!
+          assert(false);
+          this->template mpdata_U<idx_ijk>(&C_adf(0), psi, n, step, i, j, k, C_adf(0), C_adf(1), C_adf(2));
+          this->template mpdata_U<idx_jki>(&C_adf(1), psi, n, step, j, k, i, C_adf(1), C_adf(2), C_adf(0));
+          this->template mpdata_U<idx_kij>(&C_adf(2), psi, n, step, k, i, j, C_adf(2), C_adf(0), C_adf(1)); 
+        }
+      }
    
       // performing upstream advection using the ''monotonic'' velocities (logic from adv::op3D)
       *psi[n+1] = *psi[0];
