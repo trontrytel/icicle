@@ -18,16 +18,15 @@ template <typename real_t>
 class adv_mpdata_fct : public adv_mpdata<real_t> 
 {
   public: const int stencil_extent() { return 5; }
-  public: const int num_vctr_caches() { return 4; }
-#  define C_adf(dim) (*tmp_v[0+dim])
-#  define C_mon (*tmp_v[3])
+  public: const int num_vctr_caches() { return 1 + (iord < 3 ? 3 : 6); }
   public: const int num_sclr_caches() { return 2; } 
 #  define psi_min (*tmp_s[0])
 #  define psi_max (*tmp_s[1])
 
+  private: int iord;
   private: grd_arakawa_c_lorenz<real_t> *grid;
   public: adv_mpdata_fct(grd_arakawa_c_lorenz<real_t> *grid, int iord, bool cross_terms, bool third_order) 
-    : adv_mpdata<real_t>(grid, iord, cross_terms, third_order), grid(grid)
+    : adv_mpdata<real_t>(grid, iord, cross_terms, third_order), iord(iord), grid(grid)
   {}
 
   public: void op3D(
@@ -70,39 +69,52 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
       psi_max(ii,jj,kk) = blitz::max(psi_max(ii,jj,kk), mpdata_fct_minmax(max, psi, n, ii, jj, kk));
 
       // calculating Cx_mon, Cy_mon, Cz_mon
-      {
-        if (step == 2)
+      int 
+        x_old = -1, y_old = -1, z_old = -1, 
+        x_new =  1, y_new =  2, z_new =  3; 
+      if (iord > 2)
+      {   
+        if (step > 2)
         {
-          this->template mpdata_U<idx_ijk>(&C_adf(0), psi, n, step, i, j, k, *Cx, *Cy, *Cz);
-          this->template mpdata_U<idx_jki>(&C_adf(1), psi, n, step, j, k, i, *Cy, *Cz, *Cx);
-          this->template mpdata_U<idx_kij>(&C_adf(2), psi, n, step, k, i, j, *Cz, *Cx, *Cy); 
-        }
-        else
-        {
-          // TODO: this will not work! we need three more caches!
-          assert(false);
-          this->template mpdata_U<idx_ijk>(&C_adf(0), psi, n, step, i, j, k, C_adf(0), C_adf(1), C_adf(2));
-          this->template mpdata_U<idx_jki>(&C_adf(1), psi, n, step, j, k, i, C_adf(1), C_adf(2), C_adf(0));
-          this->template mpdata_U<idx_kij>(&C_adf(2), psi, n, step, k, i, j, C_adf(2), C_adf(0), C_adf(1)); 
+          x_old = 1, y_old = 2, z_old = 3;
+          if (step % 2 == 0)  
+            x_old += 3, y_old += 3, z_old += 3;
+          else 
+            x_new += 3, y_new += 3, z_new += 3;
         }
       }
+
+      const arr<real_t> 
+        * const Cx_unco = (step < 3 ? Cx : tmp_v[x_old]), 
+        *       Cx_corr = tmp_v[x_new],
+        *       Cx_mono = tmp_v[0],
+        * const Cy_unco = (step < 3 ? Cy : tmp_v[y_old]), 
+        *       Cy_corr = tmp_v[y_new],
+        *       Cy_mono = tmp_v[0],
+        * const Cz_unco = (step < 3 ? Cz : tmp_v[z_old]), 
+        *       Cz_corr = tmp_v[z_new],
+        *       Cz_mono = tmp_v[0];
+
+      this->template mpdata_U<idx_ijk>(Cx_corr, psi, n, step, i, j, k, *Cx_unco, *Cy_unco, *Cz_unco);
+      this->template mpdata_U<idx_jki>(Cy_corr, psi, n, step, j, k, i, *Cy_unco, *Cz_unco, *Cx_unco);
+      this->template mpdata_U<idx_kij>(Cz_corr, psi, n, step, k, i, j, *Cz_unco, *Cx_unco, *Cy_unco); 
    
       // performing upstream advection using the ''monotonic'' velocities (logic from adv::op3D)
-      *psi[n+1] = *psi[0];
+      *psi[n+1] = *psi[0]; // TODO: at least this should be placed in adv... and the leapfrog & upstream in adv_dimsplit?
       if (true)  
       {
-        fct_helper<idx_ijk>(psi, tmp_s, tmp_v, C_mon, C_adf(0), C_adf(1), C_adf(2), i, j, k, n);
-        adv_upstream<real_t>::template op<idx_ijk>(psi, NULL, NULL, i, j, k, n, 1, &C_mon, NULL, NULL); 
+        fct_helper<idx_ijk>(psi, tmp_s, tmp_v, *Cx_mono, *Cx_corr, *Cy_corr, *Cz_corr, i, j, k, n);
+        adv_upstream<real_t>::template op<idx_ijk>(psi, NULL, NULL, i, j, k, n, 1, Cx_mono, NULL, NULL); 
       }
       if (j.first() != j.last())
       {
-        fct_helper<idx_jki>(psi, tmp_s, tmp_v, C_mon, C_adf(1), C_adf(2), C_adf(0), j, k, i, n); 
-        adv_upstream<real_t>::template op<idx_jki>(psi, NULL, NULL, j, k, i, n, 1, &C_mon, NULL, NULL); 
+        fct_helper<idx_jki>(psi, tmp_s, tmp_v, *Cy_mono, *Cy_corr, *Cz_corr, *Cx_corr, j, k, i, n); 
+        adv_upstream<real_t>::template op<idx_jki>(psi, NULL, NULL, j, k, i, n, 1, Cy_mono, NULL, NULL); 
       }
       if (k.first() != k.last())
       {
-        fct_helper<idx_kij>(psi, tmp_s, tmp_v, C_mon, C_adf(2), C_adf(0), C_adf(1), k, i, j, n); 
-        adv_upstream<real_t>::template op<idx_kij>(psi, NULL, NULL, k, i, j, n, 1, &C_mon, NULL, NULL); 
+        fct_helper<idx_kij>(psi, tmp_s, tmp_v, *Cz_mono, *Cz_corr, *Cx_corr, *Cy_corr, k, i, j, n); 
+        adv_upstream<real_t>::template op<idx_kij>(psi, NULL, NULL, k, i, j, n, 1, Cz_mono, NULL, NULL); 
       }
     }
   }

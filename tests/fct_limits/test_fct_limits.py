@@ -12,7 +12,7 @@ import os                                # unlink()
 import sys                               # exit
 
 file = 'tmp.nc'
-for iord in (3,4): #TEMP!
+for iord in (4,10): #TEMP!
   print 'running 3D MPDATA-FCT simulation with iord=',str(iord),' ...'
   min = 1.
   max = 3.
@@ -41,8 +41,8 @@ for iord in (3,4): #TEMP!
     '--vel.uniform.v',str(Cy),
     '--vel.uniform.w',str(Cz),
     '--adv','mpdata',
-      '--adv.mpdata.fct','0', # TEMP!!!
-      '--adv.mpdata.cross_terms','1', # TEMP!!!
+      '--adv.mpdata.fct','1', # TEMP!!!
+      '--adv.mpdata.cross_terms','0', # TEMP!!!
       '--adv.mpdata.third_order','0', # TEMP!!!
       '--adv.mpdata.iord',str(iord),
     '--ini','boxcar', 

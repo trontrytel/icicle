@@ -23,11 +23,16 @@ class adv_mpdata : public adv_upstream<real_t>
     int halo = 1;
     if (cross_terms && iord > 2) halo += (iord - 2);
     if (third_order && halo < 2) halo = 2;
-cerr << "halo:" << halo << endl;
     return 1 + 2 * halo;
   }
   public: const int num_steps() { return iord; }
-  public: virtual const int num_vctr_caches() { return iord == 2 ? 1 : 6; }
+  public: virtual const int num_vctr_caches() 
+  { 
+    if (iord == 1) return 0;
+    if (iord == 2) return 1; // storing anti-diff vel. instead of calculating it twice: for u_{i+1/2} and for u_{i-1/2}
+    if (iord == 3) return 4; // storing all components of anti-diff vel. for the next iteration + ditto
+    return 6; // for higher iords we have to save all components repeatedly
+  }
 
   private: int iord;
   // TODO; cross_term = !1D
@@ -109,7 +114,7 @@ cerr << "halo:" << halo << endl;
   protected:
   template <class idx>
   void mpdata_U(
-    arr<real_t> *C_adf,
+    const arr<real_t> * C_adf,
     arr<real_t> *psi[], const int n, const int step,
     const rng &i, const rng &j, const rng &k,
     const arr<real_t> &Cx, const arr<real_t> &Cy, const arr<real_t> &Cz
@@ -123,18 +128,19 @@ cerr << "halo:" << halo << endl;
     /// {\psi^{*}_{i+1,j+1}+\psi^{*}_{i,j+1}+\psi^{*}_{i+1,j-1}+\psi^{*}_{i,j-1}} \f$ \n
     /// eq. (13-14) in Smolarkiewicz 1984 (J. Comp. Phys.,54,352-362) \n
 
-    int iord_halo = (iord - 2) + (iord - step + 1);
+    int iord_halo_yz = (iord > 2 && cross_terms) ? iord - step     : 0; 
+    int iord_halo_x  = (iord > 3 && cross_terms) ? iord - step - 1 : 0;
     rng // modified indices
-      im(i.first() - 1, i.last()), // instead of computing u_{i+1/2} and u_{i-1/2} for all i we compute u_{i+1/2} for im=(i-1, ... i)
-      jm(j.first() - iord_halo, j.last() + iord_halo), // 
-      km(k.first() - iord_halo, k.last() + iord_halo); // 
+      im(i.first() - 1 - iord_halo_x, i.last() + iord_halo_x), // instead of computing u_{i+1/2} and u_{i-1/2} for all i we compute u_{i+1/2} for im=(i-1, ... i)
+      jm(j.first() - iord_halo_yz, j.last() + iord_halo_yz), // 
+      km(k.first() - iord_halo_yz, k.last() + iord_halo_yz); // 
     rng // forward-in-space perspective
       ir = im + 1,            // right
       ic = im + grid->p_half, // center
       il = im;                // left
     idx // output indices
       adfidx = idx(
-        rng(i.first() - grid->m_half, i.last() + grid->p_half), 
+        rng(i.first() - grid->m_half - iord_halo_x, i.last() + grid->p_half + iord_halo_x), 
         jm, 
         km
     );
@@ -238,68 +244,47 @@ cerr << "halo:" << halo << endl;
     const arr<real_t> * const Cx, const arr<real_t> * const Cy, const arr<real_t> * const Cz
   )
   {
-    switch (step)
+    int 
+      x_old = -1, y_old = -1, z_old = -1, // \__valid for iord < 3
+      x_new =  0, y_new =  0, z_new =  0; // /  
+    if (iord > 2)
     {
-      case 1: 
+      x_old = 0, y_old = 1, z_old = 2;
+      x_new = 0, y_new = 1, z_new = 2;
+      if (iord == 3 && step == 3) x_new = y_new = z_new = 3; // saving memory for iord=3
+      else
       {
-        *psi[n+1] = *psi[0]; // TODO...
-        if (true)
-          adv_upstream<real_t>::template op<idx_ijk>(psi, NULL, NULL, i, j, k, n, 1, Cx, NULL, NULL);
-        if (j.first() != j.last())
-          adv_upstream<real_t>::template op<idx_jki>(psi, NULL, NULL, j, k, i, n, 1, Cy, NULL, NULL);
-        if (k.first() != k.last())
-          adv_upstream<real_t>::template op<idx_kij>(psi, NULL, NULL, k, i, j, n, 1, Cz, NULL, NULL);
-        break;
-      }
-      case 2: // for iord=2 the antidiffusive vel. are computed from the actual Courant numbers
-      {
-        *psi[n+1] = *psi[0]; // TODO...
-        if (true)
-        {
-          mpdata_U<idx_ijk>(tmp_v[0], psi, n, step, i, j, k, *Cx, *Cy, *Cz);
-          adv_upstream<real_t>::template op<idx_ijk>(psi, NULL, NULL, i, j, k, n, 1, tmp_v[0], NULL, NULL);
-        }
-        if (j.first() != j.last())
-        {
-          int d = (iord == 2 ? 0 : 1);
-          mpdata_U<idx_jki>(tmp_v[d], psi, n, step, j, k, i, *Cy, *Cz, *Cx);
-          adv_upstream<real_t>::template op<idx_jki>(psi, NULL, NULL, j, k, i, n, 1, tmp_v[d], NULL, NULL);
-        }
-        if (k.first() != k.last())
-        {
-          int d = (iord == 2 ? 0 : 2);
-          mpdata_U<idx_kij>(tmp_v[d], psi, n, step, k, i, j, *Cz, *Cx, *Cy);
-          adv_upstream<real_t>::template op<idx_kij>(psi, NULL, NULL, k, i, j, n, 1, tmp_v[d], NULL, NULL);
-        }
-        break;
-      }
-      default: // for higher iords they are computed from antidiffusive vel. from previous step
-      {
-        *psi[n+1] = *psi[0]; // TODO: at least this should be placed in adv... and the leapfrog & upstream in adv_dimsplit?
-        int x_new = 0, y_new = 1, z_new = 2, x_old = 0, y_old = 1, z_old = 2;
         if (step % 2 == 0) 
-        {
-          x_old += 3;
-          y_old += 3;
-          z_old += 3;
-        }
+          x_old += 3, y_old += 3, z_old += 3;
         else 
-        {
-          x_new += 3;
-          y_new += 3;
-          z_new += 3;
-        }
-        mpdata_U<idx_ijk>(tmp_v[x_new], psi, n, step, i, j, k, *tmp_v[x_old], *tmp_v[y_old], *tmp_v[z_old]);
-        mpdata_U<idx_jki>(tmp_v[y_new], psi, n, step, j, k, i, *tmp_v[y_old], *tmp_v[z_old], *tmp_v[x_old]);
-        mpdata_U<idx_kij>(tmp_v[z_new], psi, n, step, k, i, j, *tmp_v[z_old], *tmp_v[x_old], *tmp_v[y_old]);
-        if (true)
-          adv_upstream<real_t>::template op<idx_ijk>(psi, NULL, NULL, i, j, k, n, 1, tmp_v[x_new], NULL, NULL);
-        if (j.first() != j.last())
-          adv_upstream<real_t>::template op<idx_jki>(psi, NULL, NULL, j, k, i, n, 1, tmp_v[y_new], NULL, NULL);
-        if (k.first() != k.last())
-          adv_upstream<real_t>::template op<idx_kij>(psi, NULL, NULL, k, i, j, n, 1, tmp_v[z_new], NULL, NULL);
-        break;
+          x_new += 3, y_new += 3, z_new += 3;
       }
+    }
+
+    const arr<real_t> 
+      * const Cx_unco = (step < 3 ? Cx : tmp_v[x_old]), 
+      *       Cx_corr = (step < 2 ? Cx : tmp_v[x_new]),
+      * const Cy_unco = (step < 3 ? Cy : tmp_v[y_old]), 
+      *       Cy_corr = (step < 2 ? Cy : tmp_v[y_new]),
+      * const Cz_unco = (step < 3 ? Cz : tmp_v[z_old]), 
+      *       Cz_corr = (step < 2 ? Cz : tmp_v[z_new]);
+     
+    *psi[n+1] = *psi[0]; // TODO: at least this should be placed in adv... and the leapfrog & upstream in adv_dimsplit?
+
+    if (true)
+    {
+      if (step > 1) mpdata_U<idx_ijk>(Cx_corr, psi, n, step, i, j, k, *Cx_unco, *Cy_unco, *Cz_unco);
+      adv_upstream<real_t>::template op<idx_ijk>(psi, NULL, NULL, i, j, k, n, 1, Cx_corr, NULL, NULL);
+    }
+    if (j.first() != j.last())
+    {
+      if (step > 1) mpdata_U<idx_jki>(Cy_corr, psi, n, step, j, k, i, *Cy_unco, *Cz_unco, *Cx_unco);
+      adv_upstream<real_t>::template op<idx_jki>(psi, NULL, NULL, j, k, i, n, 1, Cy_corr, NULL, NULL);
+    }
+    if (k.first() != k.last())
+    {
+      if (step > 1) mpdata_U<idx_kij>(Cz_corr, psi, n, step, k, i, j, *Cz_unco, *Cx_unco, *Cy_unco);
+      adv_upstream<real_t>::template op<idx_kij>(psi, NULL, NULL, k, i, j, n, 1, Cz_corr, NULL, NULL);
     }
   }
 };
