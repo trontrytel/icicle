@@ -2,11 +2,11 @@
  *  @author Sylwester Arabas <slayoo@igf.fuw.edu.pl>
  *  @author Anna Jaruga <ajaruga@igf.fuw.edu.pl>
  *  @copyright University of Warsaw
- *  @date November 2011
+ *  @date November 2011 - January 2012
  *  @section LICENSE
  *    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
  *  @section DESCRIPTION
- *    Flux Corrected Transport aka non-oscillatory aka monotonic
+ *    Flux Corrected Transport (aka non-oscillatory, monotonic, sign-preserving)
  *    option for MPDATA (for the transport of positive scalars only)
  */
 #ifndef ADV_MPDATA_FCT_HPP
@@ -17,8 +17,16 @@
 template <typename real_t> 
 class adv_mpdata_fct : public adv_mpdata<real_t> 
 {
-  public: const int stencil_extent() { return 5; }
-  public: const int num_vctr_caches() { return 1 + (iord < 3 ? 3 : 6); }
+  public: const int stencil_extent() 
+  {
+    int halo = (adv_mpdata<real_t>::stencil_extent() - 1) / 2; 
+    halo += 1; // cf. ii, jj & kk below
+    return 1 + 2 * halo;
+  }
+  public: const int num_vctr_caches() 
+  { 
+    return 1 + (iord < 3 ? 3 : 6); 
+  }
   public: const int num_sclr_caches() { return 2; } 
 #  define psi_min (*tmp_s[0])
 #  define psi_max (*tmp_s[1])
@@ -36,11 +44,20 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
     const arr<real_t> * const Cx, const arr<real_t> * const Cy, const arr<real_t> * const Cz
   )
   {
-    assert(min(*psi[n]) >= real_t(0)); // accepting positive scalars only
+    assert(min((*psi[n])(i,j,k)) >= real_t(0)); // accepting positive scalars only
 
     rng ii = rng(i.first() - 1, i.last() + 1),
-          jj = rng(j.first() - 1, j.last() + 1),
-          kk = rng(k.first() - 1, k.last() + 1);
+        jj = rng(j.first() - 1, j.last() + 1),
+        kk = rng(k.first() - 1, k.last() + 1);
+
+    assert(finite(sum((*psi[n])(ii  , jj  , kk  ))));
+    assert(finite(sum((*psi[n])(ii-1, jj  , kk  ))));
+    assert(finite(sum((*psi[n])(ii+1, jj  , kk  ))));
+    assert(finite(sum((*psi[n])(ii  , jj-1, kk  ))));
+    assert(finite(sum((*psi[n])(ii  , jj+1, kk  ))));
+    assert(finite(sum((*psi[n])(ii  , jj  , kk-1))));
+    assert(finite(sum((*psi[n])(ii  , jj  , kk+1))));
+
 #  define mpdata_fct_minmax(fun, psi_, n_, i_, j_, k_) blitz::fun( \
      (*psi_[n_])(i_  ,j_  ,k_  ), blitz::fun( \
      (*psi_[n_])(i_-1,j_  ,k_  ), blitz::fun( \
@@ -50,6 +67,7 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
      (*psi_[n_])(i_  ,j_  ,k_-1), \
      (*psi_[n_])(i_  ,j_  ,k_+1)))))) \
    ) 
+
     ///
     /// \f$ \psi^{max}_{i}=max_{I}(\psi^{n}_{i-1},\psi^{n}_{i},\psi^{n}_{i+1},\psi^{*}_{i-1},\psi^{*}_{i},\psi^{*}_{i+1}) \f$ \n
     /// \f$ \psi^{min}_{i}=min_{I}(\psi^{n}_{i-1},\psi^{n}_{i},\psi^{n}_{i+1},\psi^{*}_{i-1},\psi^{*}_{i},\psi^{*}_{i+1}) \f$ \n
@@ -95,13 +113,13 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
         *       Cz_corr = tmp_v[z_new],
         *       Cz_mono = tmp_v[0];
 
-      this->template mpdata_U<idx_ijk>(Cx_corr, psi, n, step, i, j, k, *Cx_unco, *Cy_unco, *Cz_unco);
-      this->template mpdata_U<idx_jki>(Cy_corr, psi, n, step, j, k, i, *Cy_unco, *Cz_unco, *Cx_unco);
-      this->template mpdata_U<idx_kij>(Cz_corr, psi, n, step, k, i, j, *Cz_unco, *Cx_unco, *Cy_unco); 
+      this->template mpdata_U<idx_ijk>(Cx_corr, psi, n, step, ii, jj, kk, *Cx_unco, *Cy_unco, *Cz_unco);
+      this->template mpdata_U<idx_jki>(Cy_corr, psi, n, step, jj, kk, ii, *Cy_unco, *Cz_unco, *Cx_unco);
+      this->template mpdata_U<idx_kij>(Cz_corr, psi, n, step, kk, ii, jj, *Cz_unco, *Cx_unco, *Cy_unco); 
    
       // performing upstream advection using the ''monotonic'' velocities (logic from adv::op3D)
       *psi[n+1] = *psi[0]; // TODO: at least this should be placed in adv... and the leapfrog & upstream in adv_dimsplit?
-      if (true)  
+      if (i.first() != i.last())  
       {
         fct_helper<idx_ijk>(psi, tmp_s, tmp_v, *Cx_mono, *Cx_corr, *Cy_corr, *Cz_corr, i, j, k, n);
         adv_upstream<real_t>::template op<idx_ijk>(psi, NULL, NULL, i, j, k, n, 1, Cx_mono, NULL, NULL); 
@@ -155,13 +173,38 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
      (blitz::max(real_t(0),C_adf_z(idx(_i,_j,_k + grid->p_half)))) * (*psi[n])(idx(_i,_j,_k)) - \
      (blitz::min(real_t(0),C_adf_z(idx(_i,_j,_k - grid->m_half)))) * (*psi[n])(idx(_i,_j,_k))   \
    )
-    // as in mpdata_U, we compute u_{i+1/2} for iv=(i-1, ... i) instead of u_{i+1/2} and u_{i-1/2} for all i
-    rng iv(i.first()-1, i.last());
     /// nonoscillatory antidiffusive velocity: \n
     /// \f$ U^{MON}_{i+1/2}=min(1,\beta ^{\downarrow}_i,\beta ^{\uparrow} _{i+1})[U_{i+1/2}]^{+} 
     /// + min(1,\beta^{\uparrow}_{i},\beta^{\downarrow}_{i+1/2})[u_{i+1/2}]^{-} \f$ \n
     /// where \f$ [\cdot]^{+}=max(\cdot,0) \f$ and \f$ [\cdot]^{-}=min(\cdot,0) \f$ \n
     /// eq.(18) in Smolarkiewicz & Grabowski 1990 (J.Comp.Phys.,86,355-375)
+
+    // as in mpdata_U, we compute u_{i+1/2} for iv=(i-1, ... i) instead of u_{i+1/2} and u_{i-1/2} for all i
+    rng iv(i.first()-1, i.last());
+
+    assert(finite(sum((*psi[n])(idx(iv    ,j ,  k  )))));
+    assert(finite(sum((*psi[n])(idx(iv+1  ,j ,  k  )))));
+    assert(finite(sum((*psi[n])(idx(iv  -1,j ,  k  )))));
+    assert(finite(sum((*psi[n])(idx(iv+1+1,j ,  k  )))));
+    assert(finite(sum((*psi[n])(idx(iv,    j-1, k  )))));
+    assert(finite(sum((*psi[n])(idx(iv+1,  j+1, k  )))));
+    assert(finite(sum((*psi[n])(idx(iv,    j  , k-1)))));
+    assert(finite(sum((*psi[n])(idx(iv+1,  j  , k+1)))));
+
+    assert(finite(sum(C_adf_x(idx(iv     + grid->p_half,j,k)))));
+    assert(finite(sum(C_adf_x(idx(iv     - grid->m_half,j,k)))));
+    assert(finite(sum(C_adf_x(idx(iv + 1 + grid->p_half,j,k)))));
+    assert(finite(sum(C_adf_x(idx(iv + 1 - grid->m_half,j,k)))));
+
+    assert(finite(sum(C_adf_y(idx(iv,     j + grid->p_half,k)))));
+    assert(finite(sum(C_adf_y(idx(iv,     j - grid->m_half,k)))));
+    assert(finite(sum(C_adf_y(idx(iv + 1, j + grid->p_half,k)))));
+    assert(finite(sum(C_adf_y(idx(iv + 1, j - grid->m_half,k)))));
+
+    assert(finite(sum(C_adf_z(idx(iv,     j, k + grid->p_half)))));
+    assert(finite(sum(C_adf_z(idx(iv,     j, k - grid->m_half)))));
+    assert(finite(sum(C_adf_z(idx(iv + 1, j, k + grid->p_half)))));
+    assert(finite(sum(C_adf_z(idx(iv + 1, j, k - grid->m_half)))));
 
     C_mon_x(idx(iv + grid->p_half,j,k)) = C_adf_x(idx(iv + grid->p_half,j,k)) * where(
       C_adf_x(idx(iv + grid->p_half,j,k)) > 0,

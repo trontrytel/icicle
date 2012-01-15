@@ -33,8 +33,10 @@ class slv_parallel : public slv<real_t>
     nxs = nxl / nsd;
     if (nxs != ((1.*nxl) / (1.*nsd))) 
       error_macro("nxl/nsd must be an integer value (" << nxl << "/" << nsd << " given)")
+    if (nxs == 1)
+      error_macro("subdomains of 1-element length not supported")
 
-    // serial solver allocation (TODO: there could be just one psi for all subdomains...)
+    // serial solver allocation
     slvs = new auto_ptr<slv_serial<real_t> >[nsd];
     for (int sd=0; sd < nsd; ++sd) 
       slvs[sd].reset(new slv_serial<real_t>(setup,

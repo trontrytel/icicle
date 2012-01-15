@@ -2,12 +2,13 @@
  *  @author Sylwester Arabas <slayoo@igf.fuw.edu.pl>
  *  @author Anna Jaruga <ajaruga@igf.fuw.edu.pl>
  *  @copyright University of Warsaw
- *  @date November 2011
+ *  @date November 2011 - January 2012
  *  @section LICENSE
  *    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
  *  @section DESCRIPTION
- *    C++ implementation of the MPDATA scheme for the Arakawa-C grid
- *    (for solenoidal flows on a uniformly spaced grid)
+ *    C++ implementation of the second- and third-order MPDATA scheme 
+ *    for solenoidal flows of scalar fields on a uniformly spaced 
+ *    1D, 2D and 3D Arakawa-C grid 
  */
 #ifndef ADV_MPDATA_HPP
 #  define ADV_MPDATA_HPP
@@ -26,7 +27,7 @@ class adv_mpdata : public adv_upstream<real_t>
     return 1 + 2 * halo;
   }
   public: const int num_steps() { return iord; }
-  public: virtual const int num_vctr_caches() 
+  public: const int num_vctr_caches() 
   { 
     if (iord == 1) return 0;
     if (iord == 2) return 1; // storing anti-diff vel. instead of calculating it twice: for u_{i+1/2} and for u_{i-1/2}
@@ -35,7 +36,6 @@ class adv_mpdata : public adv_upstream<real_t>
   }
 
   private: int iord;
-  // TODO; cross_term = !1D
   private: bool cross_terms, third_order;
   private: grd_arakawa_c_lorenz<real_t> *grid;
 
@@ -48,6 +48,8 @@ class adv_mpdata : public adv_upstream<real_t>
   // TODO: enclose all arguments in parenthesis, i.e. U -> (U)
   // using preprocessor macros as it's tricky make methods return parts of Blitz expressions 
 #    define mpdata_frac(num, den) (where(den > real_t(0), (num) / (den), real_t(0)))
+
+  // macros for 2nd order terms:
 #    define mpdata_A(pr, pl) mpdata_frac(pr - pl, pr + pl) 
 #    define mpdata_B(pru, plu, prd, pld) (real_t(.5) * mpdata_frac(pru + plu - prd - pld, pru + plu + prd + pld))
 #    define mpdata_V(Vru, Vlu, Vrd, Vld) (real_t(.25) * (Vru + Vlu + Vrd + Vld))
@@ -115,7 +117,7 @@ class adv_mpdata : public adv_upstream<real_t>
   template <class idx>
   void mpdata_U(
     const arr<real_t> * C_adf,
-    arr<real_t> *psi[], const int n, const int step,
+    const arr<real_t> * const psi[], const int n, const int step,
     const rng &i, const rng &j, const rng &k,
     const arr<real_t> &Cx, const arr<real_t> &Cy, const arr<real_t> &Cz
   )
@@ -128,8 +130,8 @@ class adv_mpdata : public adv_upstream<real_t>
     /// {\psi^{*}_{i+1,j+1}+\psi^{*}_{i,j+1}+\psi^{*}_{i+1,j-1}+\psi^{*}_{i,j-1}} \f$ \n
     /// eq. (13-14) in Smolarkiewicz 1984 (J. Comp. Phys.,54,352-362) \n
 
-    int iord_halo_yz = (iord > 2 && cross_terms) ? iord - step     : 0; 
-    int iord_halo_x  = (iord > 3 && cross_terms) ? iord - step - 1 : 0;
+    int iord_halo_yz = (iord > 2 && cross_terms) ? iord - step : 0; 
+    int iord_halo_x  = (iord > 3 && cross_terms && iord != step) ? iord - step - 1 : 0;
     rng // modified indices
       im(i.first() - 1 - iord_halo_x, i.last() + iord_halo_x), // instead of computing u_{i+1/2} and u_{i-1/2} for all i we compute u_{i+1/2} for im=(i-1, ... i)
       jm(j.first() - iord_halo_yz, j.last() + iord_halo_yz), // 
@@ -145,6 +147,10 @@ class adv_mpdata : public adv_upstream<real_t>
         km
     );
 
+    assert(finite(sum((*psi[n])(idx(ir, jm, km)))));
+    assert(finite(sum((*psi[n])(idx(il, jm, km)))));
+    assert(finite(sum(Cx(idx(ic, jm, km)))));
+
     (*C_adf)(adfidx) = (
       mpdata_CA( 
         (*psi[n])(idx(ir, jm, km)), (*psi[n])(idx(il, jm, km)), /* pl, pr */ 
@@ -153,73 +159,124 @@ class adv_mpdata : public adv_upstream<real_t>
     );  
     if (cross_terms) 
     {
-      (*C_adf)(adfidx) -= (
-        mpdata_CB( 
-          (*psi[n])(idx(ir, jm+1, km)), (*psi[n])(idx(il, jm+1, km)), /* pru, plu */ 
-          (*psi[n])(idx(ir, jm-1, km)), (*psi[n])(idx(il, jm-1, km)), /* prd, pld */ 
-          Cx(idx(ic, jm, km)), mpdata_V( 
-            Cy(idx(ir, jm + grid->p_half, km)), Cy(idx(il, jm + grid->p_half, km)), /* Vru, Vlu */ 
-            Cy(idx(ir, jm - grid->m_half, km)), Cy(idx(il, jm - grid->m_half, km))  /* Vrd, Vld */ 
-          ) 
-        ) + 
-        mpdata_CB( 
-          (*psi[n])(idx(ir, jm, km+1)), (*psi[n])(idx(il, jm, km+1)), /* pru, plu */ 
-          (*psi[n])(idx(ir, jm, km-1)), (*psi[n])(idx(il, jm, km-1)), /* prd, pld */ 
-          Cx(idx(ic, jm, km)), mpdata_W( 
-            Cz(idx(ir, jm, km + grid->p_half)), Cz(idx(il, jm, km + grid->p_half)), /* Wru, Wlu */ 
-            Cz(idx(ir, jm, km - grid->m_half)), Cz(idx(il, jm, km - grid->m_half))  /* Wrd, Wld */ 
-          ) 
-        )  
-      );
-      if (third_order) 
+      if (j.first() != j.last()) 
       {
-        (*C_adf)(adfidx) +=(
-          mpdata_3rd_xy(
-            (*psi[n])(idx(im  , jm+1, km)), // pip0jp1, 
-            (*psi[n])(idx(im  , jm-1, km)), // pip0jm1, 
-            (*psi[n])(idx(im+1, jm+1, km)), // pip1jp1, 
-            (*psi[n])(idx(im+1, jm-1, km)), // pip1jm1, 
-            Cx(idx(ic,jm,km)), // U, 
-            mpdata_V( // V
+        assert(finite(sum((*psi[n])(idx(ir, jm+1, km)))));
+        assert(finite(sum((*psi[n])(idx(il, jm+1, km)))));
+        assert(finite(sum((*psi[n])(idx(ir, jm-1, km)))));
+        assert(finite(sum((*psi[n])(idx(il, jm-1, km)))));
+        assert(finite(sum(Cy(idx(ir, jm + grid->p_half, km)))));
+        assert(finite(sum(Cy(idx(il, jm + grid->p_half, km)))));
+        assert(finite(sum(Cy(idx(ir, jm - grid->m_half, km)))));
+        assert(finite(sum(Cy(idx(il, jm - grid->m_half, km)))));
+
+        (*C_adf)(adfidx) -= (
+          mpdata_CB( 
+            (*psi[n])(idx(ir, jm+1, km)), (*psi[n])(idx(il, jm+1, km)), /* pru, plu */ 
+            (*psi[n])(idx(ir, jm-1, km)), (*psi[n])(idx(il, jm-1, km)), /* prd, pld */ 
+            Cx(idx(ic, jm, km)), mpdata_V( 
               Cy(idx(ir, jm + grid->p_half, km)), Cy(idx(il, jm + grid->p_half, km)), /* Vru, Vlu */ 
               Cy(idx(ir, jm - grid->m_half, km)), Cy(idx(il, jm - grid->m_half, km))  /* Vrd, Vld */ 
-            ) 
-          ) +
-          mpdata_3rd_xz(
-            (*psi[n])(idx(im  , jm, km+1)), // pip0kp1, 
-            (*psi[n])(idx(im  , jm, km-1)), // pip0km1, 
-            (*psi[n])(idx(im+1, jm, km+1)), // pip1kp1, 
-            (*psi[n])(idx(im+1, jm, km-1)), // pip1km1, 
-            Cx(idx(ic,jm,km)), // U, 
-            mpdata_W( // W
-              Cz(idx(ir, jm, km + grid->p_half)), Cz(idx(il, jm, km + grid->p_half)), /* Wru, Wlu */ 
-              Cz(idx(ir, jm, km - grid->m_half)), Cz(idx(il, jm, km - grid->m_half))  /* Wrd, Wld */ 
-            ) 
-          ) -
-          mpdata_3rd_yz(
-            (*psi[n])(idx(im  , jm+1, km+1)), // pip0jp1kp1, 
-            (*psi[n])(idx(im  , jm-1, km+1)), // pip0jm1kp1, 
-            (*psi[n])(idx(im+1, jm+1, km+1)), // pip1jp1kp1, 
-            (*psi[n])(idx(im+1, jm-1, km+1)), // pip1jm1kp1, 
-            (*psi[n])(idx(im  , jm+1, km-1)), // pip0jp1km1, 
-            (*psi[n])(idx(im  , jm-1, km-1)), // pip0jm1km1, 
-            (*psi[n])(idx(im+1, jm+1, km-1)), // pip1jp1km1, 
-            (*psi[n])(idx(im+1, jm-1, km-1)), // pip1jm1km1, 
-            Cx(idx(ic,jm,km)), // U
-            mpdata_V( // V
-              Cy(idx(ir, jm + grid->p_half, km)), Cy(idx(il, jm + grid->p_half, km)), /* Vru, Vlu */ 
-              Cy(idx(ir, jm - grid->m_half, km)), Cy(idx(il, jm - grid->m_half, km))  /* Vrd, Vld */ 
-            ), 
-            mpdata_W( // W
-              Cz(idx(ir, jm, km + grid->p_half)), Cz(idx(il, jm, km + grid->p_half)), /* Wru, Wlu */ 
-              Cz(idx(ir, jm, km - grid->m_half)), Cz(idx(il, jm, km - grid->m_half))  /* Wrd, Wld */ 
             ) 
           )
         );
       }
+      if (k.first() != k.last()) 
+      {
+        assert(finite(sum((*psi[n])(idx(ir, jm, km+1)))));
+        assert(finite(sum((*psi[n])(idx(il, jm, km+1)))));
+        assert(finite(sum((*psi[n])(idx(ir, jm, km-1)))));
+        assert(finite(sum((*psi[n])(idx(il, jm, km-1)))));
+        assert(finite(sum(Cz(idx(ir, jm, km + grid->p_half)))));
+        assert(finite(sum(Cz(idx(il, jm, km + grid->p_half)))));
+        assert(finite(sum(Cz(idx(ir, jm, km - grid->m_half)))));
+        assert(finite(sum(Cz(idx(il, jm, km - grid->m_half)))));
+
+        (*C_adf)(adfidx) -= ( // otherwise Cz is uninitialised!
+          mpdata_CB( 
+            (*psi[n])(idx(ir, jm, km+1)), (*psi[n])(idx(il, jm, km+1)), /* pru, plu */ 
+            (*psi[n])(idx(ir, jm, km-1)), (*psi[n])(idx(il, jm, km-1)), /* prd, pld */ 
+            Cx(idx(ic, jm, km)), mpdata_W( 
+              Cz(idx(ir, jm, km + grid->p_half)), Cz(idx(il, jm, km + grid->p_half)), /* Wru, Wlu */ 
+              Cz(idx(ir, jm, km - grid->m_half)), Cz(idx(il, jm, km - grid->m_half))  /* Wrd, Wld */ 
+            ) 
+          )  
+        );
+      }
+      if (third_order) 
+      {
+        if (j.first() != j.last()) 
+        {
+          (*C_adf)(adfidx) += ( // otherwise Cy is uninitialised
+            mpdata_3rd_xy(
+              (*psi[n])(idx(im  , jm+1, km)), // pip0jp1, 
+              (*psi[n])(idx(im  , jm-1, km)), // pip0jm1, 
+              (*psi[n])(idx(im+1, jm+1, km)), // pip1jp1, 
+              (*psi[n])(idx(im+1, jm-1, km)), // pip1jm1, 
+              Cx(idx(ic,jm,km)), // U, 
+              mpdata_V( // V
+                Cy(idx(ir, jm + grid->p_half, km)), Cy(idx(il, jm + grid->p_half, km)), /* Vru, Vlu */ 
+                Cy(idx(ir, jm - grid->m_half, km)), Cy(idx(il, jm - grid->m_half, km))  /* Vrd, Vld */ 
+              ) 
+            )
+          );
+        }
+        if (k.first() != k.last()) 
+        {
+          (*C_adf)(adfidx) += ( // otherwise Cz is uninitialised
+            mpdata_3rd_xz(
+              (*psi[n])(idx(im  , jm, km+1)), // pip0kp1, 
+              (*psi[n])(idx(im  , jm, km-1)), // pip0km1, 
+              (*psi[n])(idx(im+1, jm, km+1)), // pip1kp1, 
+              (*psi[n])(idx(im+1, jm, km-1)), // pip1km1, 
+              Cx(idx(ic,jm,km)), // U, 
+              mpdata_W( // W
+                Cz(idx(ir, jm, km + grid->p_half)), Cz(idx(il, jm, km + grid->p_half)), /* Wru, Wlu */ 
+                Cz(idx(ir, jm, km - grid->m_half)), Cz(idx(il, jm, km - grid->m_half))  /* Wrd, Wld */ 
+              ) 
+            )
+          ); 
+        }
+        if ((j.first() != j.last()) && (k.first() != k.last())) 
+        {
+          assert(finite(sum((*psi[n])(idx(im  , jm+1, km+1)))));
+          assert(finite(sum((*psi[n])(idx(im  , jm-1, km+1)))));
+          assert(finite(sum((*psi[n])(idx(im+1, jm+1, km+1)))));
+          assert(finite(sum((*psi[n])(idx(im+1, jm-1, km+1)))));
+          assert(finite(sum((*psi[n])(idx(im  , jm+1, km-1)))));
+          assert(finite(sum((*psi[n])(idx(im  , jm-1, km-1)))));
+          assert(finite(sum((*psi[n])(idx(im+1, jm+1, km-1)))));
+          assert(finite(sum((*psi[n])(idx(im+1, jm-1, km-1)))));
+
+          (*C_adf)(adfidx) -= ( // otherwise Cx & Cz are uninitialised
+            mpdata_3rd_yz(
+              (*psi[n])(idx(im  , jm+1, km+1)), // pip0jp1kp1, 
+              (*psi[n])(idx(im  , jm-1, km+1)), // pip0jm1kp1, 
+              (*psi[n])(idx(im+1, jm+1, km+1)), // pip1jp1kp1, 
+              (*psi[n])(idx(im+1, jm-1, km+1)), // pip1jm1kp1, 
+              (*psi[n])(idx(im  , jm+1, km-1)), // pip0jp1km1, 
+              (*psi[n])(idx(im  , jm-1, km-1)), // pip0jm1km1, 
+              (*psi[n])(idx(im+1, jm+1, km-1)), // pip1jp1km1, 
+              (*psi[n])(idx(im+1, jm-1, km-1)), // pip1jm1km1, 
+              Cx(idx(ic,jm,km)), // U
+              mpdata_V( // V
+                Cy(idx(ir, jm + grid->p_half, km)), Cy(idx(il, jm + grid->p_half, km)), /* Vru, Vlu */ 
+                Cy(idx(ir, jm - grid->m_half, km)), Cy(idx(il, jm - grid->m_half, km))  /* Vrd, Vld */ 
+              ), 
+              mpdata_W( // W
+                Cz(idx(ir, jm, km + grid->p_half)), Cz(idx(il, jm, km + grid->p_half)), /* Wru, Wlu */ 
+                Cz(idx(ir, jm, km - grid->m_half)), Cz(idx(il, jm, km - grid->m_half))  /* Wrd, Wld */ 
+              ) 
+            )
+          );
+        }
+      }
     }
     if (third_order)
     { 
+      assert(finite(sum((*psi[n])(idx(im+2, jm, km)))));
+      assert(finite(sum((*psi[n])(idx(im-1, jm, km)))));
+
       (*C_adf)(adfidx) +=(
         mpdata_3rd_xx(
           (*psi[n])(idx(im+2, jm, km)), 
@@ -270,8 +327,7 @@ class adv_mpdata : public adv_upstream<real_t>
       *       Cz_corr = (step < 2 ? Cz : tmp_v[z_new]);
      
     *psi[n+1] = *psi[0]; // TODO: at least this should be placed in adv... and the leapfrog & upstream in adv_dimsplit?
-
-    if (true)
+    if (i.first() != i.last()) 
     {
       if (step > 1) mpdata_U<idx_ijk>(Cx_corr, psi, n, step, i, j, k, *Cx_unco, *Cy_unco, *Cz_unco);
       adv_upstream<real_t>::template op<idx_ijk>(psi, NULL, NULL, i, j, k, n, 1, Cx_corr, NULL, NULL);

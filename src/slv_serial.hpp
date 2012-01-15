@@ -16,7 +16,7 @@ template <typename real_t>
 class slv_serial : public slv<real_t>
 {
   private: adv<real_t> *fllbck, *advsch;
-  private: auto_ptr<rng> i, j, k;
+  private: auto_ptr<rng> i, j, k, i_all, j_all, k_all;
   private: out<real_t> *output;
   private: int nx, ny, nz, halo;
 
@@ -75,6 +75,9 @@ class slv_serial : public slv<real_t>
     i.reset(new rng(i_min, i_max));
     j.reset(new rng(j_min, j_max));
     k.reset(new rng(k_min, k_max));
+    i_all.reset(new rng(i_min - halo, i_max + halo));
+    j_all.reset(new rng(j_min - halo, j_max + halo));
+    k_all.reset(new rng(k_min - halo, k_max + halo));
 
     // initial condition
     setup->grid->populate_scalar_field(*i, *j, *k, psi[0], setup->intcond);
@@ -132,11 +135,11 @@ class slv_serial : public slv<real_t>
   public: void fill_halos(int n)
   {
     fill_halos_helper<idx_ijk>(psi, slv<real_t>::left, n, i->first() - halo, i->first() - 1, *j, *k, nx);
-    fill_halos_helper<idx_ijk>(psi, slv<real_t>::rght, n, i->last() + 1, i->last() + halo, *j, *k, nx);
-    fill_halos_helper<idx_jki>(psi, slv<real_t>::fore, n, j->first() - halo, j->first() - 1, *k, *i, ny);
-    fill_halos_helper<idx_jki>(psi, slv<real_t>::hind, n, j->last() + 1, j->last() + halo, *k, *i, ny);
-    fill_halos_helper<idx_kij>(psi, slv<real_t>::base, n, k->first() - halo, k->first() - 1, *i, *j, nz);
-    fill_halos_helper<idx_kij>(psi, slv<real_t>::apex, n, k->last() + 1, k->last() + halo, *i, *j, nz);
+    fill_halos_helper<idx_ijk>(psi, slv<real_t>::rght, n, i->last() + 1, i->last() + halo,   *j, *k, nx);
+    fill_halos_helper<idx_jki>(psi, slv<real_t>::fore, n, j->first() - halo, j->first() - 1, *k, *i_all, ny);
+    fill_halos_helper<idx_jki>(psi, slv<real_t>::hind, n, j->last() + 1, j->last() + halo,   *k, *i_all, ny);
+    fill_halos_helper<idx_kij>(psi, slv<real_t>::base, n, k->first() - halo, k->first() - 1, *i_all, *j_all, nz);
+    fill_halos_helper<idx_kij>(psi, slv<real_t>::apex, n, k->last() + 1, k->last() + halo,   *i_all, *j_all, nz);
   }
 
   private:
@@ -146,12 +149,16 @@ class slv_serial : public slv<real_t>
   )
   {
     if (mod == 1)
+    {
       for (int ii = i_min; ii <= i_max; ++ii)
         (*psi[n])(idx(rng(ii), j, k)) =
           this->nghbr_data(nghbr, n, idx(rng(0,0), j, k)); // only happens with periodic boundary
+    }
     else 
+    {
       (*psi[n])(idx(rng(i_min, i_max), j, k)) =
         this->nghbr_data(nghbr, n, idx(rng((i_min + mod) % mod, (i_max + mod) % mod), j, k));
+    }
   }
 
   public: void advect(adv<real_t> *a, int n, int s, quantity<si::time, real_t> dt)

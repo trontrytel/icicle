@@ -88,12 +88,9 @@ class adv : root
     *psi[n+1] = *psi[0];
 
     // we use the same code for each dimension switching the indices accordingly
-    if (true)  
-      op_ijk(psi, tmp_s, tmp_v, i, j, k, n, s, Cx, Cy, Cz); // X
-    if (j.first() != j.last())
-      op_jki(psi, tmp_s, tmp_v, i, j, k, n, s, Cx, Cy, Cz); // Y
-    if (k.first() != k.last())
-      op_kij(psi, tmp_s, tmp_v, i, j, k, n, s, Cx, Cy, Cz); // Z
+    if (i.first() != i.last()) op_ijk(psi, tmp_s, tmp_v, i, j, k, n, s, Cx, Cy, Cz); // X
+    if (j.first() != j.last()) op_jki(psi, tmp_s, tmp_v, i, j, k, n, s, Cx, Cy, Cz); // Y
+    if (k.first() != k.last()) op_kij(psi, tmp_s, tmp_v, i, j, k, n, s, Cx, Cy, Cz); // Z
   }
 };
 #endif
