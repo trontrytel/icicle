@@ -15,6 +15,14 @@
 #  include "adv.hpp"
 #  include "grd_arakawa-c-lorenz.hpp"
 
+#  ifdef MPDATA_NEGPOSPART_ABS
+#    define mpdata_pospart(x) (real_t(.5) * (x + abs(x)))
+#    define mpdata_negpart(x) (real_t(.5) * (x - abs(x)))
+#  else
+#    define mpdata_pospart(x) max(real_t(0), x)
+#    define mpdata_negpart(x) min(real_t(0), x)
+#  endif
+
 template <typename real_t> 
 class adv_upstream : public adv<real_t> 
 {
@@ -47,7 +55,7 @@ class adv_upstream : public adv<real_t>
 
     /// \f$ F(\psi_l, \psi_r, U) = 0.5 \cdot (U + |U|) \cdot \psi_l + 0.5 \cdot (U - |U|) \cdot \psi_r \f$ \n
     /// eq. (3 a-d) in Smolarkiewicz & Margolin 1998 (J. Comp. Phys., 140, 459-480) \n
-#  define mpdata_F(p1, p2, U) (real_t(.5) * (U + abs(U)) * p1 + real_t(.5) * (U - abs(U)) * p2)
+#  define mpdata_F(p1, p2, U) (mpdata_pospart(U) * p1 + mpdata_negpart(U) * p2)
     /// \f$ \psi^{n+1}_i = \psi^{n}_i - \left[ F( \psi^{n}_{i}, \psi^{n}_{i+1}, U_{i+1/2} ) - F( \psi^{n}_{i-1}, \psi^{n}_{i}, U_{i-1/2} ) \right] \f$ \n
     /// eq. (2) in Smolarkiewicz & Margolin 1998 (J. Comp. Phys., 140, 459-480) \n
 

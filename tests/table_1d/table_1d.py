@@ -93,7 +93,7 @@ for iord in (1,2,3,4) : #,40) :
 
         print 'closing and deleting the file...'
         nc.close()
-#        if os.path.exists(file) : os.unlink(file)
+        if os.path.exists(file) : os.unlink(file)
 print table.draw()
 open('tab1.txt','w').write(table.draw() + '\n')
 plt.annotate(table.draw(), (.4,.73), xycoords='figure fraction', fontsize=6, family='monospace')

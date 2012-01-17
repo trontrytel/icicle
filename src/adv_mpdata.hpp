@@ -47,7 +47,11 @@ class adv_mpdata : public adv_upstream<real_t>
 
   // TODO: enclose all arguments in parenthesis, i.e. U -> (U)
   // using preprocessor macros as it's tricky make methods return parts of Blitz expressions 
-#    define mpdata_frac(num, den) (where(den > real_t(0), (num) / (den), real_t(0)))
+#    ifdef MPDATA_FRAC_EPSILON
+#      define mpdata_frac(num, den) ((num) / (den + blitz::epsilon(real_t(0))))
+#    else
+#      define mpdata_frac(num, den) (where(den > real_t(0), (num) / (den), real_t(0)))
+#    endif
 
   // macros for 2nd order terms:
 #    define mpdata_A(pr, pl) mpdata_frac(pr - pl, pr + pl) 
