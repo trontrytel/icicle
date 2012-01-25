@@ -34,24 +34,24 @@ class out_gnuplot : public out<real_t>
   }
 
   public: virtual void record(
-    arr<real_t> *psi,
-    const rng &i, const rng &j, const rng &k, const unsigned long t
+    mtx::arr<real_t> *psi,
+    const mtx::rng &i, const mtx::rng &j, const mtx::rng &k, const unsigned long t
   ) 
   {
     // sanity check
     if (j.first() == j.last() && k.first() == k.last()) 
-      record_helper<idx_ijk>(psi, i, t);
+      record_helper<mtx::idx_ijk>(psi, i, t);
     else if (i.first() == i.last() && k.first() == k.last()) 
-      record_helper<idx_jki>(psi, j, t);
+      record_helper<mtx::idx_jki>(psi, j, t);
     else if (i.first() == i.last() && j.first() == j.last()) 
-      record_helper<idx_kij>(psi, k, t);
+      record_helper<mtx::idx_kij>(psi, k, t);
     else 
       error_macro("gnuplot output works for 1D simulations only") 
   }
   
   private:
   template<class idx>
-  void record_helper(arr<real_t> *psi, const rng &i, const unsigned long t)
+  void record_helper(mtx::arr<real_t> *psi, const mtx::rng &i, const unsigned long t)
   {
     // end record if needed and output the data + some housekeeping
     if (t_last != -1 && t != t_last)
@@ -66,14 +66,14 @@ class out_gnuplot : public out<real_t>
         std::cout 
           << real_t((grid->x(ii,0,0) - real_t(.5) * grid->dx()) / si::metres) // TODO: this assumes x 
           << "\t"
-          << *(*psi)(idx(rng(ii,ii), rng(0,0), rng(0,0))).dataFirst() 
+          << *(*psi)(idx(mtx::rng(ii,ii), mtx::rng(0,0), mtx::rng(0,0))).dataFirst() 
           << std::endl
           << real_t((grid->x(ii,0,0) + real_t(.5) * grid->dx()) / si::metres) // TODO: this assumes x
           << "\t"
-          << *(*psi)(idx(rng(ii,ii), rng(0,0), rng(0,0))).dataFirst() 
+          << *(*psi)(idx(mtx::rng(ii,ii), mtx::rng(0,0), mtx::rng(0,0))).dataFirst() 
           << std::endl;
       else
-        std::cout << *(*psi)(idx(rng(ii,ii), rng(0,0), rng(0,0))).dataFirst() << std::endl;
+        std::cout << *(*psi)(idx(mtx::rng(ii,ii), mtx::rng(0,0), mtx::rng(0,0))).dataFirst() << std::endl;
     }
   
     // housekeeping

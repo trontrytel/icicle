@@ -18,27 +18,27 @@ class slv_parallel_distmem : public shrdmem_class
   {
     private: slv_parallel_distmem<real_t, shrdmem_class> *nghbr;
     private: int peer, cnt;
-    private: auto_ptr<arr<real_t> > ibuf, obuf;
-    private: rng ixr, oxr, yr, zr;
+    private: auto_ptr<mtx::arr<real_t> > ibuf, obuf;
+    private: mtx::rng ixr, oxr, yr, zr;
 
     public: slv_halo(slv_parallel_distmem<real_t, shrdmem_class> *nghbr, int peer,
-      const rng &ixr, const rng &oxr, const rng &yr, const rng &zr
+      const mtx::rng &ixr, const mtx::rng &oxr, const mtx::rng &yr, const mtx::rng &zr
     )
       : nghbr(nghbr), peer(peer), ixr(ixr), oxr(oxr), yr(yr), zr(zr)
     { 
-      ibuf.reset(new arr<real_t>(ixr, yr, zr));
-      obuf.reset(new arr<real_t>(oxr, yr, zr));
+      ibuf.reset(new mtx::arr<real_t>(ixr, yr, zr));
+      obuf.reset(new mtx::arr<real_t>(oxr, yr, zr));
       cnt = ibuf->cols() * ibuf->rows() * ibuf->depth();
     }
 
-    public: typename arr<real_t>::arr_ret data(int n, const idx &idx)
+    public: typename mtx::arr<real_t>::type data(int n, const mtx::idx &idx)
     { 
       return (*ibuf)(idx); 
     }
  
     public: void sync(int n)
     {
-      (*obuf)(ixr, yr, zr) = nghbr->data(n, idx_ijk(oxr, yr, zr));
+      (*obuf)(ixr, yr, zr) = nghbr->data(n, mtx::idx_ijk(oxr, yr, zr));
       nghbr->sndrcv(peer, cnt, ibuf->data(), obuf->data());
     }
 
@@ -51,7 +51,7 @@ class slv_parallel_distmem : public shrdmem_class
 
   private: int size, rank;
   private: auto_ptr<slv_halo> lhalo, rhalo;
-  private: auto_ptr<arr<real_t> > libuf, ribuf, lobuf, robuf;
+  private: auto_ptr<mtx::arr<real_t> > libuf, ribuf, lobuf, robuf;
 
   private: int i_min(int nx, int rank, int size) { return (rank + 0) * nx / size; }
   private: int i_max(int nx, int rank, int size) { return i_min(nx, rank + 1, size) - 1; }
@@ -78,23 +78,23 @@ class slv_parallel_distmem : public shrdmem_class
       int peer_left = (size + rank - 1) % size;
       int peer_rght = (size + rank + 1) % size;
 
-      rng ixr, oxr, yr(0, setup->ny - 1), zr(setup->nz - 1);
+      mtx::rng ixr, oxr, yr(0, setup->ny - 1), zr(setup->nz - 1);
 
-      ixr = rng( // input xr (halo)
+      ixr = mtx::rng( // input xr (halo)
         (i_min(setup->nx, rank, size) - halo + setup->nx) % setup->nx, 
         (i_min(setup->nx, rank, size) - 1    + setup->nx) % setup->nx  
       );
-      oxr = rng( // output xr (edge)
+      oxr = mtx::rng( // output xr (edge)
         i_min(setup->nx, rank, size), 
         i_min(setup->nx, rank, size) + halo - 1
       );
       lhalo.reset(new slv_halo(this, peer_left, ixr, oxr, yr, zr));
 
-      ixr = rng( // input xr (halo)
+      ixr = mtx::rng( // input xr (halo)
         (i_max(setup->nx, rank, size) + 1    + setup->nx) % setup->nx, 
         (i_max(setup->nx, rank, size) + halo + setup->nx) % setup->nx
       );
-      oxr = rng( // output xr (edge)
+      oxr = mtx::rng( // output xr (edge)
         i_max(setup->nx, rank, size) - halo + 1,
         i_max(setup->nx, rank, size)  
       );

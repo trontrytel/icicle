@@ -90,7 +90,7 @@ class slv_parallel : public slv<real_t>
   }
 
   // the two below are for MPI/fork + threads/OpenMP nested parallelisations
-  public: typename arr<real_t>::arr_ret data(int n, const idx &idx)
+  public: typename mtx::arr<real_t>::type data(int n, const mtx::idx &idx)
   { 
     int sd = (idx.lbound(0) - i_min) / nxs;
     assert(sd == 0 || sd == nsd - 1);

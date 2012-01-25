@@ -48,7 +48,7 @@ class adv_mpdata : public adv_upstream<real_t>
   // TODO: enclose all arguments in parenthesis, i.e. U -> (U)
   // using preprocessor macros as it's tricky make methods return parts of Blitz expressions 
 #    ifdef MPDATA_FRAC_EPSILON
-#      define mpdata_frac(num, den) ((num) / (den + blitz::epsilon(real_t(0))))
+#      define mpdata_frac(num, den) ((num) / (den + mtx::eps<real_t>()))
 #    else
 #      define mpdata_frac(num, den) (where(den > real_t(0), (num) / (den), real_t(0)))
 #    endif
@@ -120,10 +120,10 @@ class adv_mpdata : public adv_upstream<real_t>
   protected:
   template <class idx>
   void mpdata_U(
-    const arr<real_t> * C_adf,
-    const arr<real_t> * const psi[], const int n, const int step,
-    const rng &i, const rng &j, const rng &k,
-    const arr<real_t> &Cx, const arr<real_t> &Cy, const arr<real_t> &Cz
+    const mtx::arr<real_t> * C_adf,
+    const mtx::arr<real_t> * const psi[], const int n, const int step,
+    const mtx::rng &i, const mtx::rng &j, const mtx::rng &k,
+    const mtx::arr<real_t> &Cx, const mtx::arr<real_t> &Cy, const mtx::arr<real_t> &Cz
   )
   {
     /// multidimensional antidiffusive velocity: \n
@@ -136,17 +136,17 @@ class adv_mpdata : public adv_upstream<real_t>
 
     int iord_halo_yz = (iord > 2 && cross_terms) ? iord - step : 0; 
     int iord_halo_x  = (iord > 3 && cross_terms && iord != step) ? iord - step - 1 : 0;
-    rng // modified indices
+    mtx::rng // modified indices
       im(i.first() - 1 - iord_halo_x, i.last() + iord_halo_x), // instead of computing u_{i+1/2} and u_{i-1/2} for all i we compute u_{i+1/2} for im=(i-1, ... i)
       jm(j.first() - iord_halo_yz, j.last() + iord_halo_yz), // 
       km(k.first() - iord_halo_yz, k.last() + iord_halo_yz); // 
-    rng // forward-in-space perspective
+    mtx::rng // forward-in-space perspective
       ir = im + 1,            // right
       ic = im + grid->p_half, // center
       il = im;                // left
     idx // output indices
       adfidx = idx(
-        rng(i.first() - grid->m_half - iord_halo_x, i.last() + grid->p_half + iord_halo_x), 
+        mtx::rng(i.first() - grid->m_half - iord_halo_x, i.last() + grid->p_half + iord_halo_x), 
         jm, 
         km
     );
@@ -299,10 +299,10 @@ class adv_mpdata : public adv_upstream<real_t>
     /// where \f$ I \f$ denotes the sum over all dimensions and \f$ \tilde{U} \f$ is multidimensional antidiffusive velocity \n
     /// eq. (12) in Smolarkiewicz 1984 (J. Comp. Phys.,54,352-362) 
   public: void op3D(
-    arr<real_t> *psi[], arr<real_t> *[], arr<real_t> *tmp_v[],
-    const rng &i, const rng &j, const rng &k, 
+    mtx::arr<real_t> *psi[], mtx::arr<real_t> *[], mtx::arr<real_t> *tmp_v[],
+    const mtx::rng &i, const mtx::rng &j, const mtx::rng &k, 
     const int n, const int step,
-    const arr<real_t> * const Cx, const arr<real_t> * const Cy, const arr<real_t> * const Cz
+    const mtx::arr<real_t> * const Cx, const mtx::arr<real_t> * const Cy, const mtx::arr<real_t> * const Cz
   )
   {
     int 
@@ -322,7 +322,7 @@ class adv_mpdata : public adv_upstream<real_t>
       }
     }
 
-    const arr<real_t> 
+    const mtx::arr<real_t> 
       * const Cx_unco = (step < 3 ? Cx : tmp_v[x_old]), 
       *       Cx_corr = (step < 2 ? Cx : tmp_v[x_new]),
       * const Cy_unco = (step < 3 ? Cy : tmp_v[y_old]), 
@@ -333,18 +333,18 @@ class adv_mpdata : public adv_upstream<real_t>
     *psi[n+1] = *psi[0]; // TODO: at least this should be placed in adv... and the leapfrog & upstream in adv_dimsplit?
     if (i.first() != i.last()) 
     {
-      if (step > 1) mpdata_U<idx_ijk>(Cx_corr, psi, n, step, i, j, k, *Cx_unco, *Cy_unco, *Cz_unco);
-      adv_upstream<real_t>::template op<idx_ijk>(psi, NULL, NULL, i, j, k, n, 1, Cx_corr, NULL, NULL);
+      if (step > 1) mpdata_U<mtx::idx_ijk>(Cx_corr, psi, n, step, i, j, k, *Cx_unco, *Cy_unco, *Cz_unco);
+      adv_upstream<real_t>::template op<mtx::idx_ijk>(psi, NULL, NULL, i, j, k, n, 1, Cx_corr, NULL, NULL);
     }
     if (j.first() != j.last())
     {
-      if (step > 1) mpdata_U<idx_jki>(Cy_corr, psi, n, step, j, k, i, *Cy_unco, *Cz_unco, *Cx_unco);
-      adv_upstream<real_t>::template op<idx_jki>(psi, NULL, NULL, j, k, i, n, 1, Cy_corr, NULL, NULL);
+      if (step > 1) mpdata_U<mtx::idx_jki>(Cy_corr, psi, n, step, j, k, i, *Cy_unco, *Cz_unco, *Cx_unco);
+      adv_upstream<real_t>::template op<mtx::idx_jki>(psi, NULL, NULL, j, k, i, n, 1, Cy_corr, NULL, NULL);
     }
     if (k.first() != k.last())
     {
-      if (step > 1) mpdata_U<idx_kij>(Cz_corr, psi, n, step, k, i, j, *Cz_unco, *Cx_unco, *Cy_unco);
-      adv_upstream<real_t>::template op<idx_kij>(psi, NULL, NULL, k, i, j, n, 1, Cz_corr, NULL, NULL);
+      if (step > 1) mpdata_U<mtx::idx_kij>(Cz_corr, psi, n, step, k, i, j, *Cz_unco, *Cx_unco, *Cy_unco);
+      adv_upstream<real_t>::template op<mtx::idx_kij>(psi, NULL, NULL, k, i, j, n, 1, Cz_corr, NULL, NULL);
     }
   }
 };

@@ -113,8 +113,8 @@ class out_netcdf : public out<real_t>
   }
 
   public: virtual void record(
-    arr<real_t> *psi,
-    const rng &i, const rng &j, const rng &k, const unsigned long t // t is the number of the record!
+    mtx::arr<real_t> *psi,
+    const mtx::rng &i, const mtx::rng &j, const mtx::rng &k, const unsigned long t // t is the number of the record!
   ) 
   {
     vector<size_t> startp(4), countp(4, 1);

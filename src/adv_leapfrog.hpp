@@ -30,12 +30,12 @@ class adv_leapfrog : public adv<real_t>
   public: 
   template <class idx>
   void op(
-    arr<real_t>* psi[], 
-    arr<real_t>*[], 
-    arr<real_t>*[], 
-    const rng &i, const rng &j, const rng &k, 
+    mtx::arr<real_t>* psi[], 
+    mtx::arr<real_t>*[], 
+    mtx::arr<real_t>*[], 
+    const mtx::rng &i, const mtx::rng &j, const mtx::rng &k, 
     const int n, const int step,
-    const arr<real_t> * const Cx, const arr<real_t> * const, const arr<real_t> * const 
+    const mtx::arr<real_t> * const Cx, const mtx::arr<real_t> * const, const mtx::arr<real_t> * const 
   )
   {
     assert(step == 1);

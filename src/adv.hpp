@@ -15,29 +15,29 @@
 // the macro below has to be included in every class inheriting from adv
 #  define adv_hack_macro \
   public: void op_ijk( \
-    arr<real_t> *psi[], \
-    arr<real_t> *tmp_s[], \
-    arr<real_t> *tmp_v[], \
-    const rng &i, const rng &j, const rng &k, \
+    mtx::arr<real_t> *psi[], \
+    mtx::arr<real_t> *tmp_s[], \
+    mtx::arr<real_t> *tmp_v[], \
+    const mtx::rng &i, const mtx::rng &j, const mtx::rng &k, \
     const int n, const int step, \
-    const arr<real_t> * const Cx, const arr<real_t> * const Cy, const arr<real_t> * const Cz \
-  ) { op<idx_ijk>(psi, tmp_s, tmp_v, i, j, k, n, step, Cx, Cy, Cz); } \
+    const mtx::arr<real_t> * const Cx, const mtx::arr<real_t> * const Cy, const mtx::arr<real_t> * const Cz \
+  ) { op<mtx::idx_ijk>(psi, tmp_s, tmp_v, i, j, k, n, step, Cx, Cy, Cz); } \
   public: void op_jki( \
-    arr<real_t> *psi[], \
-    arr<real_t> *tmp_s[], \
-    arr<real_t> *tmp_v[], \
-    const rng &i, const rng &j, const rng &k, \
+    mtx::arr<real_t> *psi[], \
+    mtx::arr<real_t> *tmp_s[], \
+    mtx::arr<real_t> *tmp_v[], \
+    const mtx::rng &i, const mtx::rng &j, const mtx::rng &k, \
     const int n, const int step, \
-    const arr<real_t> * const Cx, const arr<real_t> * const Cy, const arr<real_t> * const Cz \
-  ) { op<idx_jki>(psi, tmp_s, tmp_v, j, k, i, n, step, Cy, Cz, Cx); } \
+    const mtx::arr<real_t> * const Cx, const mtx::arr<real_t> * const Cy, const mtx::arr<real_t> * const Cz \
+  ) { op<mtx::idx_jki>(psi, tmp_s, tmp_v, j, k, i, n, step, Cy, Cz, Cx); } \
   public: void op_kij( \
-    arr<real_t> *psi[], \
-    arr<real_t> *tmp_s[], \
-    arr<real_t> *tmp_v[], \
-    const rng &i, const rng &j, const rng &k, \
+    mtx::arr<real_t> *psi[], \
+    mtx::arr<real_t> *tmp_s[], \
+    mtx::arr<real_t> *tmp_v[], \
+    const mtx::rng &i, const mtx::rng &j, const mtx::rng &k, \
     const int n, const int step, \
-    const arr<real_t> * const Cx, const arr<real_t> * const Cy, const arr<real_t> * const Cz \
-  ) { op<idx_kij>(psi, tmp_s, tmp_v, k, i, j, n, step, Cz, Cx, Cy); }
+    const mtx::arr<real_t> * const Cx, const mtx::arr<real_t> * const Cy, const mtx::arr<real_t> * const Cz \
+  ) { op<mtx::idx_kij>(psi, tmp_s, tmp_v, k, i, j, n, step, Cz, Cx, Cy); }
 
 template <typename real_t>
 class adv : root
@@ -52,39 +52,39 @@ class adv : root
   public: virtual const real_t courant_min() = 0;
 
   private: virtual void op_ijk(
-    arr<real_t> *psi[], 
-    arr<real_t> *tmp_s[], 
-    arr<real_t> *tmp_v[], 
-    const rng &i, const rng &j, const rng &k, 
+    mtx::arr<real_t> *psi[], 
+    mtx::arr<real_t> *tmp_s[], 
+    mtx::arr<real_t> *tmp_v[], 
+    const mtx::rng &i, const mtx::rng &j, const mtx::rng &k, 
     const int n, const int step,
-    const arr<real_t> * const Cx, const arr<real_t> * const Cy, const arr<real_t> * const Cz
+    const mtx::arr<real_t> * const Cx, const mtx::arr<real_t> * const Cy, const mtx::arr<real_t> * const Cz
   ) = 0;
 
   private: virtual void op_jki(
-    arr<real_t> *psi[], 
-    arr<real_t> *tmp_s[], 
-    arr<real_t> *tmp_v[], 
-    const rng &i, const rng &j, const rng &k, 
+    mtx::arr<real_t> *psi[], 
+    mtx::arr<real_t> *tmp_s[], 
+    mtx::arr<real_t> *tmp_v[], 
+    const mtx::rng &i, const mtx::rng &j, const mtx::rng &k, 
     const int n, const int step,
-    const arr<real_t> * const Cx, const arr<real_t> * const Cy, const arr<real_t> * const Cz
+    const mtx::arr<real_t> * const Cx, const mtx::arr<real_t> * const Cy, const mtx::arr<real_t> * const Cz
   ) = 0; 
 
   private: virtual void op_kij(
-    arr<real_t> *psi[], 
-    arr<real_t> *tmp_s[], 
-    arr<real_t> *tmp_v[], 
-    const rng &i, const rng &j, const rng &k, 
+    mtx::arr<real_t> *psi[], 
+    mtx::arr<real_t> *tmp_s[], 
+    mtx::arr<real_t> *tmp_v[], 
+    const mtx::rng &i, const mtx::rng &j, const mtx::rng &k, 
     const int n, const int step,
-    const arr<real_t> * const Cx, const arr<real_t> * const Cy, const arr<real_t> * const Cz
+    const mtx::arr<real_t> * const Cx, const mtx::arr<real_t> * const Cy, const mtx::arr<real_t> * const Cz
   ) = 0;
 
   public: virtual void op3D(
-    arr<real_t> *psi[], 
-    arr<real_t> *tmp_s[], 
-    arr<real_t> *tmp_v[], 
-    const rng &i, const rng &j, const rng &k, 
+    mtx::arr<real_t> *psi[], 
+    mtx::arr<real_t> *tmp_s[], 
+    mtx::arr<real_t> *tmp_v[], 
+    const mtx::rng &i, const mtx::rng &j, const mtx::rng &k, 
     const int n, const int s,
-    const arr<real_t> * const Cx, const arr<real_t> * const Cy, const arr<real_t> * const Cz
+    const mtx::arr<real_t> * const Cx, const mtx::arr<real_t> * const Cy, const mtx::arr<real_t> * const Cz
   )
   {
     // op() uses the -= operator so the first assignment happens here

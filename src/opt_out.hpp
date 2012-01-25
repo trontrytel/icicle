@@ -10,6 +10,8 @@
 
 #  include "opt.hpp"
 #  include "grd.hpp"
+#  include "stp.hpp"
+#  include "eqs.hpp"
 #  include "out_debug.hpp"
 #  include "out_gnuplot.hpp"
 #  include "out_netcdf.hpp"

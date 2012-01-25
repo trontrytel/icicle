@@ -11,7 +11,7 @@
 #  include "cmn.hpp" // root class, error reporting
 #  include "vel.hpp"
 #  include "ini.hpp"
-#  include "arr.hpp"
+#  include "mtx.hpp"
 
 template<typename real_t>
 class grd : root
@@ -22,8 +22,8 @@ class grd : root
 
   // returns ranges to be passed as constructors to arr
   // first and last reflect scalar indices
-  public: virtual rng rng_sclr(int first, int last, int halo) = 0;
-  public: virtual rng rng_vctr(int first, int last, int halo) = 0;
+  public: virtual mtx::rng rng_sclr(int first, int last, int halo) = 0;
+  public: virtual mtx::rng rng_vctr(int first, int last, int halo) = 0;
 
   public: virtual quantity<si::length, real_t> x(int i, int j, int k) = 0;
   public: virtual quantity<si::length, real_t> y(int i, int j, int k) = 0;
@@ -42,12 +42,12 @@ class grd : root
   // ... Nothing is real and nothing to get hung about.
   // courant fields forever ...
   public: virtual void populate_courant_fields(
-    rng &ix, rng &jx, rng &kx,
-    rng &iy, rng &jy, rng &ky,
-    rng &iz, rng &jz, rng &kz,
-    arr<real_t> *Cx, 
-    arr<real_t> *Cy, 
-    arr<real_t> *Cz, 
+    mtx::rng &ix, mtx::rng &jx, mtx::rng &kx,
+    mtx::rng &iy, mtx::rng &jy, mtx::rng &ky,
+    mtx::rng &iz, mtx::rng &jz, mtx::rng &kz,
+    mtx::arr<real_t> *Cx, 
+    mtx::arr<real_t> *Cy, 
+    mtx::arr<real_t> *Cz, 
     vel<real_t> *velocity,
     quantity<si::time, real_t> dt,
     int nx, int ny, int nz
@@ -75,8 +75,8 @@ class grd : root
   }
 
   public: virtual void populate_scalar_field(
-    const rng &ii, const rng &jj, const rng &kk,
-    arr<real_t> *psi, ini<real_t> *intcond
+    const mtx::rng &ii, const mtx::rng &jj, const mtx::rng &kk,
+    mtx::arr<real_t> *psi, ini<real_t> *intcond
   )
   {
     for (int i = ii.first(); i <= ii.last(); ++i)

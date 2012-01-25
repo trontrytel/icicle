@@ -53,19 +53,19 @@ class stp : root
 
     // TODO! merge with the logic from slv ctor and move into grid
     int halo = (advsch->stencil_extent() -1) / 2;
-    rng
+    mtx::rng
       ix = grid->rng_vctr(0, nx - 1, halo),
       jx = grid->rng_sclr(0, ny - 1, halo),
       kx = grid->rng_sclr(0, nz - 1, halo);
-    rng
+    mtx::rng
       iy = grid->rng_sclr(0, nx - 1, halo),
       jy = grid->rng_vctr(0, ny - 1, halo),
       ky = grid->rng_sclr(0, nz - 1, halo);
-    rng
+    mtx::rng
       iz = grid->rng_sclr(0, nx - 1, halo),
       jz = grid->rng_sclr(0, ny - 1, halo),
       kz = grid->rng_vctr(0, nz - 1, halo);
-    arr<real_t>
+    mtx::arr<real_t>
       Cx(ix, jx, kx),
       Cy(iy, jy, ky),
       Cz(iz, jz, kz);

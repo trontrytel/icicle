@@ -45,14 +45,14 @@ class grd_arakawa_c_lorenz : public grd<real_t>
   public: quantity<si::length, real_t> dy() { return dy_; }
   public: quantity<si::length, real_t> dz() { return dz_; }
 
-  public: rng rng_sclr(int first, int last, int halo) 
+  public: mtx::rng rng_sclr(int first, int last, int halo) 
   { 
-    return rng(first - halo, last + halo); 
+    return mtx::rng(first - halo, last + halo); 
   }
-  public: rng rng_vctr(int first, int last, int halo) 
+  public: mtx::rng rng_vctr(int first, int last, int halo) 
   { 
     assert(halo > 0);
-    return rng(first - m_half - halo, last + p_half + halo); 
+    return mtx::rng(first - m_half - halo, last + p_half + halo); 
   }
 
   // coordinates at which u(x,y,z), v(x,y,z), w(x,y,z) are evaluated

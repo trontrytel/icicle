@@ -9,6 +9,7 @@
 #  define EQS_HPP
 
 #  include "cmn.hpp" // root class, error reporting
+#  include <vector>
 
 template <typename real_t>
 class eqs : root

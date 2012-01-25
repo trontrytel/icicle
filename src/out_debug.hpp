@@ -18,8 +18,8 @@ template <typename real_t>
 class out_debug : public out<real_t>
 {
   public: virtual void record(
-    arr<real_t> *psi,
-    const rng &i, const rng &j, const rng &k, const unsigned long t
+    mtx::arr<real_t> *psi,
+    const mtx::rng &i, const mtx::rng &j, const mtx::rng &k, const unsigned long t
   ) 
   {
     std::ostringstream tmp;

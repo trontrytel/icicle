@@ -38,17 +38,17 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
   {}
 
   public: void op3D(
-    arr<real_t> *psi[], arr<real_t> *tmp_s[], arr<real_t> *tmp_v[],
-    const rng &i, const rng &j, const rng &k,
+    mtx::arr<real_t> *psi[], mtx::arr<real_t> *tmp_s[], mtx::arr<real_t> *tmp_v[],
+    const mtx::rng &i, const mtx::rng &j, const mtx::rng &k,
     const int n, const int step,
-    const arr<real_t> * const Cx, const arr<real_t> * const Cy, const arr<real_t> * const Cz
+    const mtx::arr<real_t> * const Cx, const mtx::arr<real_t> * const Cy, const mtx::arr<real_t> * const Cz
   )
   {
     assert(min((*psi[n])(i,j,k)) >= real_t(0)); // accepting positive scalars only
 
-    rng ii = rng(i.first() - 1, i.last() + 1),
-        jj = rng(j.first() - 1, j.last() + 1),
-        kk = rng(k.first() - 1, k.last() + 1);
+    mtx::rng ii = mtx::rng(i.first() - 1, i.last() + 1),
+        jj = mtx::rng(j.first() - 1, j.last() + 1),
+        kk = mtx::rng(k.first() - 1, k.last() + 1);
 
     assert(finite(sum((*psi[n])(ii  , jj  , kk  ))));
     assert(finite(sum((*psi[n])(ii-1, jj  , kk  ))));
@@ -102,7 +102,7 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
         }
       }
 
-      const arr<real_t> 
+      const mtx::arr<real_t> 
         * const Cx_unco = (step < 3 ? Cx : tmp_v[x_old]), 
         *       Cx_corr = tmp_v[x_new],
         *       Cx_mono = tmp_v[0],
@@ -113,26 +113,26 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
         *       Cz_corr = tmp_v[z_new],
         *       Cz_mono = tmp_v[0];
 
-      this->template mpdata_U<idx_ijk>(Cx_corr, psi, n, step, ii, jj, kk, *Cx_unco, *Cy_unco, *Cz_unco);
-      this->template mpdata_U<idx_jki>(Cy_corr, psi, n, step, jj, kk, ii, *Cy_unco, *Cz_unco, *Cx_unco);
-      this->template mpdata_U<idx_kij>(Cz_corr, psi, n, step, kk, ii, jj, *Cz_unco, *Cx_unco, *Cy_unco); 
+      this->template mpdata_U<mtx::idx_ijk>(Cx_corr, psi, n, step, ii, jj, kk, *Cx_unco, *Cy_unco, *Cz_unco);
+      this->template mpdata_U<mtx::idx_jki>(Cy_corr, psi, n, step, jj, kk, ii, *Cy_unco, *Cz_unco, *Cx_unco);
+      this->template mpdata_U<mtx::idx_kij>(Cz_corr, psi, n, step, kk, ii, jj, *Cz_unco, *Cx_unco, *Cy_unco); 
    
       // performing upstream advection using the ''monotonic'' velocities (logic from adv::op3D)
       *psi[n+1] = *psi[0]; // TODO: at least this should be placed in adv... and the leapfrog & upstream in adv_dimsplit?
       if (i.first() != i.last())  
       {
-        fct_helper<idx_ijk>(psi, tmp_s, tmp_v, *Cx_mono, *Cx_corr, *Cy_corr, *Cz_corr, i, j, k, n);
-        adv_upstream<real_t>::template op<idx_ijk>(psi, NULL, NULL, i, j, k, n, 1, Cx_mono, NULL, NULL); 
+        fct_helper<mtx::idx_ijk>(psi, tmp_s, tmp_v, *Cx_mono, *Cx_corr, *Cy_corr, *Cz_corr, i, j, k, n);
+        adv_upstream<real_t>::template op<mtx::idx_ijk>(psi, NULL, NULL, i, j, k, n, 1, Cx_mono, NULL, NULL); 
       }
       if (j.first() != j.last())
       {
-        fct_helper<idx_jki>(psi, tmp_s, tmp_v, *Cy_mono, *Cy_corr, *Cz_corr, *Cx_corr, j, k, i, n); 
-        adv_upstream<real_t>::template op<idx_jki>(psi, NULL, NULL, j, k, i, n, 1, Cy_mono, NULL, NULL); 
+        fct_helper<mtx::idx_jki>(psi, tmp_s, tmp_v, *Cy_mono, *Cy_corr, *Cz_corr, *Cx_corr, j, k, i, n); 
+        adv_upstream<real_t>::template op<mtx::idx_jki>(psi, NULL, NULL, j, k, i, n, 1, Cy_mono, NULL, NULL); 
       }
       if (k.first() != k.last())
       {
-        fct_helper<idx_kij>(psi, tmp_s, tmp_v, *Cz_mono, *Cz_corr, *Cx_corr, *Cy_corr, k, i, j, n); 
-        adv_upstream<real_t>::template op<idx_kij>(psi, NULL, NULL, k, i, j, n, 1, Cz_mono, NULL, NULL); 
+        fct_helper<mtx::idx_kij>(psi, tmp_s, tmp_v, *Cz_mono, *Cz_corr, *Cx_corr, *Cy_corr, k, i, j, n); 
+        adv_upstream<real_t>::template op<mtx::idx_kij>(psi, NULL, NULL, k, i, j, n, 1, Cz_mono, NULL, NULL); 
       }
     }
   }
@@ -140,10 +140,10 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
   private:
   template <class idx>
   void fct_helper(
-    arr<real_t> *psi[], arr<real_t> *tmp_s[], arr<real_t> *[], 
-    const arr<real_t> &C_mon_x, 
-    const arr<real_t> &C_adf_x, const arr<real_t> &C_adf_y, const arr<real_t> &C_adf_z, 
-    const rng &i, const rng &j, const rng &k, int n
+    mtx::arr<real_t> *psi[], mtx::arr<real_t> *tmp_s[], mtx::arr<real_t> *[], 
+    const mtx::arr<real_t> &C_mon_x, 
+    const mtx::arr<real_t> &C_adf_x, const mtx::arr<real_t> &C_adf_y, const mtx::arr<real_t> &C_adf_z, 
+    const mtx::rng &i, const mtx::rng &j, const mtx::rng &k, int n
   )  
   {
 ///
@@ -180,7 +180,7 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
     /// eq.(18) in Smolarkiewicz & Grabowski 1990 (J.Comp.Phys.,86,355-375)
 
     // as in mpdata_U, we compute u_{i+1/2} for iv=(i-1, ... i) instead of u_{i+1/2} and u_{i-1/2} for all i
-    rng iv(i.first()-1, i.last());
+    mtx::rng iv(i.first()-1, i.last());
 
     assert(finite(sum((*psi[n])(idx(iv    ,j ,  k  )))));
     assert(finite(sum((*psi[n])(idx(iv+1  ,j ,  k  )))));

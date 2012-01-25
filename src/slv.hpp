@@ -23,9 +23,9 @@ class slv : root
     nghbrs[s] = n; 
   }
 
-  public: virtual typename arr<real_t>::arr_ret data(int n, const idx &idx) = 0;
+  public: virtual typename mtx::arr<real_t>::type data(int n, const mtx::idx &idx) = 0;
 
-  public: typename arr<real_t>::arr_ret nghbr_data(int side, int n, const idx &idx)
+  public: typename mtx::arr<real_t>::type nghbr_data(int side, int n, const mtx::idx &idx)
   {
     nghbrs[side]->sync(n);
     return nghbrs[side]->data(n, idx);

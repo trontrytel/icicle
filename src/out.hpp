@@ -9,14 +9,14 @@
 #  define OUT_HPP
 
 #  include "cmn.hpp" // root class
-#  include "arr.hpp" // Blitz includes
+#  include "mtx.hpp" // Blitz includes
 
 template <typename real_t>
 class out : root
 {
   public: virtual void record( // TODO: t should be in seconds
-    arr<real_t> *psi, 
-    const rng &i, const rng &j, const rng &k, const unsigned long t
+    mtx::arr<real_t> *psi, 
+    const mtx::rng &i, const mtx::rng &j, const mtx::rng &k, const unsigned long t
   ) = 0;
 };
 
