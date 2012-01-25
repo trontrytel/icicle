@@ -20,13 +20,18 @@ set term svg size 1000,900 dynamic
 set output "fig1.svg"
 nx=20
 dx=1
+dt=1
+t_max=25
+dt_out=dt
 cmd = "../../icicle" \
-  ." --dt 1 " \
+  ." --dt ".dt \
   ." --grd.dx ".dx \
   ." --grd.dy 1 " \
   ." --grd.dz 1" \
   ." --vel uniform --vel.uniform.u .4" \
-  ." --nt 25 --nx ".nx \
+  ." --t_max ".t_max \
+  ." --dt_out ".dt_out \
+  ." --nx ".nx \
   ." --slv serial" \
   ." --out gnuplot --out.gnuplot.using 1:-2:2" \
   ." --ini cone --ini.cone.h 1 --ini.cone.x0 3 --ini.cone.z0 0 --ini.cone.r 2.5 --ini.cone.h0 1" 

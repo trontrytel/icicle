@@ -42,7 +42,7 @@ class slv_parallel_distmem : public shrdmem_class
       nghbr->sndrcv(peer, cnt, ibuf->data(), obuf->data());
     }
 
-    public: void integ_loop(long unsigned, quantity<si::time, real_t>) 
+    public: void integ_loop() 
     { 
       assert(false); 
     }
@@ -56,13 +56,12 @@ class slv_parallel_distmem : public shrdmem_class
   private: int i_min(int nx, int rank, int size) { return (rank + 0) * nx / size; }
   private: int i_max(int nx, int rank, int size) { return i_min(nx, rank + 1, size) - 1; }
 
-  public: slv_parallel_distmem(stp<real_t> *setup,
-    int nx, int ny, int nz, quantity<si::time, real_t> dt, int size, int rank)
-    : shrdmem_class(setup,
-      i_min(nx, rank, size), i_max(nx, rank, size), nx,
-      0, ny - 1, ny,
-      0, nz - 1, nz,
-      dt,
+  public: slv_parallel_distmem(stp<real_t> *setup, out<real_t> *output,
+    int size, int rank)
+    : shrdmem_class(setup, output,
+      i_min(setup->nx, rank, size), i_max(setup->nx, rank, size), 
+      0, setup->ny - 1,
+      0, setup->nz - 1,
       1 // FIXME: MPI+OpenMP and MPI+threads 
     ), size(size), rank(rank)
   {
@@ -70,8 +69,8 @@ class slv_parallel_distmem : public shrdmem_class
     if (size <= 2) error_macro("at least three subdomains are needed for distmem parallelisations")
 
     // subdomain length
-    int nxs = nx / size;
-    if (nxs != ((1.*nx) / (1.*size))) error_macro("nx/nk must be an integer value (" << nx << "/" << size << " given)")
+    int nxs = setup->nx / size;
+    if (nxs != ((1.*setup->nx) / (1.*size))) error_macro("nx/nk must be an integer value (" << setup->nx << "/" << size << " given)")
 
     // halo containers for halo domain (TODO: use some clever Blitz constructor to save memory)
     {
@@ -79,25 +78,25 @@ class slv_parallel_distmem : public shrdmem_class
       int peer_left = (size + rank - 1) % size;
       int peer_rght = (size + rank + 1) % size;
 
-      rng ixr, oxr, yr(0, ny - 1), zr(nz - 1);
+      rng ixr, oxr, yr(0, setup->ny - 1), zr(setup->nz - 1);
 
       ixr = rng( // input xr (halo)
-        (i_min(nx, rank, size) - halo + nx) % nx, 
-        (i_min(nx, rank, size) - 1    + nx) % nx  
+        (i_min(setup->nx, rank, size) - halo + setup->nx) % setup->nx, 
+        (i_min(setup->nx, rank, size) - 1    + setup->nx) % setup->nx  
       );
       oxr = rng( // output xr (edge)
-        i_min(nx, rank, size), 
-        i_min(nx, rank, size) + halo - 1
+        i_min(setup->nx, rank, size), 
+        i_min(setup->nx, rank, size) + halo - 1
       );
       lhalo.reset(new slv_halo(this, peer_left, ixr, oxr, yr, zr));
 
       ixr = rng( // input xr (halo)
-        (i_max(nx, rank, size) + 1    + nx) % nx, 
-        (i_max(nx, rank, size) + halo + nx) % nx
+        (i_max(setup->nx, rank, size) + 1    + setup->nx) % setup->nx, 
+        (i_max(setup->nx, rank, size) + halo + setup->nx) % setup->nx
       );
       oxr = rng( // output xr (edge)
-        i_max(nx, rank, size) - halo + 1,
-        i_max(nx, rank, size)  
+        i_max(setup->nx, rank, size) - halo + 1,
+        i_max(setup->nx, rank, size)  
       );
       rhalo.reset(new slv_halo(this, peer_rght, ixr, oxr, yr, zr));
     }

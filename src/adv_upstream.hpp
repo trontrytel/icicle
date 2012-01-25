@@ -30,6 +30,11 @@ class adv_upstream : public adv<real_t>
   public: const int stencil_extent() { return 3; }
   public: const int time_levels() { return 2; }
 
+  // "Donor cell schemes are more accurate for larger Courant numbers"
+  // Margolin & Smolarkiewicz 1998, SIAM J. Sci. Comput. (page 923)
+  public: const real_t courant_max() { return 1.; }
+  public: const real_t courant_min() { return .5; }
+
   private: grd_arakawa_c_lorenz<real_t> *grid;
 
   public: adv_upstream(grd_arakawa_c_lorenz<real_t> *grid) 

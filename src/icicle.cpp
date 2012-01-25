@@ -22,6 +22,7 @@
 #include "opt_slv.hpp"
 #include "opt_vel.hpp"
 #include "opt_eqs.hpp"
+#include "opt_stp.hpp"
 #undef ICICLE_OPT_DESCS
 
 extern void mdl_flt(const po::variables_map&, const string&);
@@ -42,10 +43,9 @@ int main(int ac, char* av[])
     desc.add_options()
       ("nx", po::value<int>()->default_value(1), "number of grid points (X)")
       ("ny", po::value<int>()->default_value(1), "number of grid points (Y)")
-      ("nz", po::value<int>()->default_value(1), "number of grid points (Z)")
-      ("nt", po::value<unsigned long>(), "number of timesteps")
-      ("dt", po::value<string>(), "timestep length [s]");
+      ("nz", po::value<int>()->default_value(1), "number of grid points (Z)");
 // </TODO> 
+    opt_stp_desc(desc);
     opt_adv_desc(desc);
     opt_slv_desc(desc);
     opt_out_desc(desc);

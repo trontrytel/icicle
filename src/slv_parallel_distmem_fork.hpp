@@ -63,17 +63,16 @@ class slv_parallel_distmem_fork : public slv_parallel_distmem<real_t, shrdmem_cl
     return tmp.str();
   }
  
-  public: slv_parallel_distmem_fork(stp<real_t> *setup,
-    int nx, int ny, int nz, quantity<si::time, real_t> dt, int nsd
+  public: slv_parallel_distmem_fork(stp<real_t> *setup, out<real_t> *output, int nsd
   ) 
-    : slv_parallel_distmem<real_t, shrdmem_class>(setup, nx, ny, nz, dt, size=nsd, rank=fork_init(nsd))
+    : slv_parallel_distmem<real_t, shrdmem_class>(setup, output, size=nsd, rank=fork_init(nsd))
   { 
     queues_real = new auto_ptr<message_queue>[2 * nsd];
     queues_bool = new auto_ptr<message_queue>[nsd];
     for (int kk = 0; kk < 2 * size; ++kk) 
     {   
       queues_real[kk].reset(new message_queue(open_or_create, queue_name("real", kk).c_str(), 
-        1, (setup->advsch->stencil_extent() - 1) / 2 * nz * ny * sizeof(real_t))
+        1, (setup->advsch->stencil_extent() - 1) / 2 * setup->nz * setup->ny * sizeof(real_t))
       ); 
     }
     for (int kk = 0; kk < size; ++kk) 

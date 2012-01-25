@@ -18,7 +18,8 @@ class slv_serial : public slv<real_t>
   private: adv<real_t> *fllbck, *advsch;
   private: auto_ptr<rng> i, j, k, i_all, j_all, k_all;
   private: out<real_t> *output;
-  private: int nx, ny, nz, halo;
+  private: stp<real_t> *setup;
+  private: int halo;
 
   private: auto_ptr<arr<real_t> > Cx, Cy, Cz;
 
@@ -27,13 +28,12 @@ class slv_serial : public slv<real_t>
 
   private: auto_ptr<tmp<real_t> > cache; 
 
-  public: slv_serial(stp<real_t> *setup,
-    int i_min, int i_max, int nx,
-    int j_min, int j_max, int ny,
-    int k_min, int k_max, int nz, 
-    quantity<si::time, real_t> dt // TODO: dt should not be needed here!
+  public: slv_serial(stp<real_t> *setup, out<real_t> *output,
+    int i_min, int i_max,
+    int j_min, int j_max,
+    int k_min, int k_max
   )
-    : fllbck(setup->fllbck), advsch(setup->advsch), output(setup->output), nx(nx), ny(ny), nz(nz)
+    : fllbck(setup->fllbck), advsch(setup->advsch), output(output), setup(setup)
   {
     if (fllbck != NULL) assert(advsch->stencil_extent() >= fllbck->stencil_extent());
     halo = (advsch->stencil_extent() - 1) / 2;
@@ -41,11 +41,11 @@ class slv_serial : public slv<real_t>
     // sanity checks
     {
       int len;
-      if (halo > (len = i_max - i_min + 1) && nx != 1) 
+      if (halo > (len = i_max - i_min + 1) && setup->nx != 1) 
         error_macro("halo length (" << halo << ") may not exceed domain extent in X (" << len << ")")
-      if (halo > (len = j_max - j_min + 1) && ny != 1)
+      if (halo > (len = j_max - j_min + 1) && setup->ny != 1)
         error_macro("halo length (" << halo << ") may not exceed domain extent in Y (" << len << ")")
-      if (halo > (len = k_max - k_min + 1) && nz != 1)
+      if (halo > (len = k_max - k_min + 1) && setup->nz != 1)
         error_macro("halo length (" << halo << ") may not exceed domain extent in Z (" << len << ")")
     }
 
@@ -110,8 +110,8 @@ class slv_serial : public slv<real_t>
         iy, jy, ky, 
         iz, jz, kz, 
         Cx.get(), Cy.get(), Cz.get(), 
-        setup->velocity, dt, 
-        nx, ny, nz
+        setup->velocity, setup->dt, 
+        setup->nx, setup->ny, setup->nz
       );
     }
   }
@@ -134,12 +134,12 @@ class slv_serial : public slv<real_t>
 
   public: void fill_halos(int n)
   {
-    fill_halos_helper<idx_ijk>(psi, slv<real_t>::left, n, i->first() - halo, i->first() - 1, *j, *k, nx);
-    fill_halos_helper<idx_ijk>(psi, slv<real_t>::rght, n, i->last() + 1, i->last() + halo,   *j, *k, nx);
-    fill_halos_helper<idx_jki>(psi, slv<real_t>::fore, n, j->first() - halo, j->first() - 1, *k, *i_all, ny);
-    fill_halos_helper<idx_jki>(psi, slv<real_t>::hind, n, j->last() + 1, j->last() + halo,   *k, *i_all, ny);
-    fill_halos_helper<idx_kij>(psi, slv<real_t>::base, n, k->first() - halo, k->first() - 1, *i_all, *j_all, nz);
-    fill_halos_helper<idx_kij>(psi, slv<real_t>::apex, n, k->last() + 1, k->last() + halo,   *i_all, *j_all, nz);
+    fill_halos_helper<idx_ijk>(psi, slv<real_t>::left, n, i->first() - halo, i->first() - 1, *j, *k, setup->nx);
+    fill_halos_helper<idx_ijk>(psi, slv<real_t>::rght, n, i->last() + 1, i->last() + halo,   *j, *k, setup->nx);
+    fill_halos_helper<idx_jki>(psi, slv<real_t>::fore, n, j->first() - halo, j->first() - 1, *k, *i_all, setup->ny);
+    fill_halos_helper<idx_jki>(psi, slv<real_t>::hind, n, j->last() + 1, j->last() + halo,   *k, *i_all, setup->ny);
+    fill_halos_helper<idx_kij>(psi, slv<real_t>::base, n, k->first() - halo, k->first() - 1, *i_all, *j_all, setup->nz);
+    fill_halos_helper<idx_kij>(psi, slv<real_t>::apex, n, k->last() + 1, k->last() + halo,   *i_all, *j_all, setup->nz);
   }
 
   private:
@@ -180,7 +180,7 @@ class slv_serial : public slv<real_t>
     }
   }
 
-  public: void integ_loop(unsigned long nt, quantity<si::time, real_t> dt) 
+  public: void integ_loop() 
   {
     assert(false); // TODO: this should not be needed with proper class hierarchy
   }

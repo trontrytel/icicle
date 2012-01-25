@@ -15,6 +15,8 @@
 template <typename real_t>
 class vel : root
 {
+  public: virtual bool is_constant() = 0;
+
   public: virtual quantity<si::velocity, real_t> u(
     const quantity<si::length, real_t> &x,
     const quantity<si::length, real_t> &y,
