@@ -31,6 +31,8 @@
 template <typename real_t>
 class vel_rasinski : public vel<real_t>
 {
+  public: bool is_constant() { return true; }
+
   private: quantity<si::dimensionless, real_t> pi;
   private: quantity<si::length, real_t> X, Z_clb, Z_top;
   private: quantity<velocity_times_length, real_t> A;

@@ -13,13 +13,13 @@
 template <typename real_t>
 class slv_parallel_serial : public slv_parallel<real_t>
 {
-  public: slv_parallel_serial(stp<real_t> *setup,
-    int i_min, int i_max, int nx, 
-    int j_min, int j_max, int ny, 
-    int k_min, int k_max, int nz, 
-    quantity<si::time, real_t> dt, int nsd = 1
+  public: slv_parallel_serial(stp<real_t> *setup, out<real_t> *output,
+    int i_min, int i_max, 
+    int j_min, int j_max, 
+    int k_min, int k_max, 
+    int nsd = 1
   )
-    : slv_parallel<real_t>(setup, i_min, i_max, nx, j_min, j_max, ny, k_min, k_max, nz, dt, 1
+    : slv_parallel<real_t>(setup, output, i_min, i_max, j_min, j_max, k_min, k_max, 1
     )
   { 
     assert(nsd == 1);
@@ -28,9 +28,9 @@ class slv_parallel_serial : public slv_parallel<real_t>
   public: void barrier() 
   { }
 
-  public: void integ_loop(unsigned long nt, quantity<si::time, real_t> dt)
+  public: void integ_loop()
   {
-    this->integ_loop_sd(nt, dt, 0); 
+    this->integ_loop_sd(0); 
   }
 };
 #endif

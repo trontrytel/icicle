@@ -21,15 +21,14 @@ void opt_out_desc(po::options_description &desc)
     ("out", po::value<string>(), "output: debug, gnuplot, netcdf")
     ("out.gnuplot.using", po::value<string>()->default_value("0:-2:1"), "using column specification: 0:-2:1 or 1:-2:2")
     ("out.netcdf.file", po::value<string>(), "output filename (e.g. for netcdf)")
-    ("out.netcdf.freq", po::value<int>(), "inverse of output frequency (10 for every 10-th record)")
     ("out.netcdf.ver", po::value<int>()->default_value(4), "netCDF format version (3 or 4)");
 }
 #  endif
 
 template <typename real_t>
 out<real_t> *opt_out(const po::variables_map &vm, 
-  grd<real_t> *grid, eqs<real_t> &equation,
-  int nx, int ny, int nz, const string &options)
+  stp<real_t> *setup, grd<real_t> *grid, eqs<real_t> &equation,
+  const string &options)
 {
   string outtype = vm.count("out") ? vm["out"].as<string>() : "<unspecified>";
   if (outtype == "gnuplot")
@@ -42,9 +41,8 @@ out<real_t> *opt_out(const po::variables_map &vm,
   if (outtype == "netcdf")
   {
     if (!vm.count("out.netcdf.file")) error_macro("output filename not specified (--out.netcdf.file option)")
-    int freq = vm.count("out.netcdf.freq") ? vm["out.netcdf.freq"].as<int>() : 1;
-    return new out_netcdf<real_t>(vm["out.netcdf.file"].as<string>(), grid, equation, 
-      nx, ny, nz, freq, vm["out.netcdf.ver"].as<int>(), options);
+    return new out_netcdf<real_t>(vm["out.netcdf.file"].as<string>(), setup, grid, equation, 
+      vm["out.netcdf.ver"].as<int>(), options);
   }
   else
 #  endif

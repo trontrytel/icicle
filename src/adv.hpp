@@ -48,6 +48,9 @@ class adv : root
   public: virtual const int num_sclr_caches() { return 0; }
   public: virtual const int num_vctr_caches() { return 0; }
 
+  public: virtual const real_t courant_max() = 0; 
+  public: virtual const real_t courant_min() = 0;
+
   private: virtual void op_ijk(
     arr<real_t> *psi[], 
     arr<real_t> *tmp_s[], 

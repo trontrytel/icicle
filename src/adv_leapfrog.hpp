@@ -18,6 +18,9 @@ class adv_leapfrog : public adv<real_t>
   public: const int stencil_extent() { return 3; }
   public: const int time_levels() { return 3; }
  
+  public: const real_t courant_max() { return 1.; }
+  public: const real_t courant_min() { return .5; } ; //TODO Wicker Skamarock 2002 
+ 
   private: grd_arakawa_c_lorenz<real_t> *grid;
 
   public: adv_leapfrog(grd_arakawa_c_lorenz<real_t> *grid)

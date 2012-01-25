@@ -29,10 +29,8 @@ class slv_parallel_distmem_mpi : public slv_parallel_distmem<real_t, shrdmem_cla
     return comm->rank();
   }
 
-  public: slv_parallel_distmem_mpi(stp<real_t> *setup,
-    int nx, int ny, int nz, quantity<si::time, real_t> dt, int nsd
-  ) 
-    : slv_parallel_distmem<real_t, shrdmem_class>(setup, nx, ny, nz, dt, nsd, mpi_init()
+  public: slv_parallel_distmem_mpi(stp<real_t> *setup, out<real_t> *output, int nsd) 
+    : slv_parallel_distmem<real_t, shrdmem_class>(setup, output, nsd, mpi_init()
     )
   {
     if (nsd != comm->size()) 

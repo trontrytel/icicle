@@ -42,7 +42,7 @@ class slv : root
     return fallback;
   }
 
-  public: virtual void integ_loop(unsigned long nt, quantity<si::time, real_t> dt) = 0;
+  public: virtual void integ_loop() = 0;
   public: virtual void sync(int n) {};
 };
 

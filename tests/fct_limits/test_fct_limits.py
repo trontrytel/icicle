@@ -26,13 +26,14 @@ for iord in (3,4): # temp
   Cx = -.2
   Cy = -.3
   Cz = -.1
+  dt = 1
   cmd = (
     '../../icicle','--bits','32',
-    '--dt','1', 
+    '--dt',str(dt), 
     '--grd.dx','1',
     '--grd.dy','1',
     '--grd.dz','1',
-    '--nt',str(nt),
+    '--t_max',str(nt * dt),
     '--nx',str(nx),
     '--ny',str(ny),
     '--nz',str(nz),
@@ -57,7 +58,7 @@ for iord in (3,4): # temp
     '--slv','threads','--nsd','2', 
     '--out','netcdf', 
     '--out.netcdf.ver','3', 
-    '--out.netcdf.freq',str(freq),
+    '--dt_out',str(freq*dt),
     '--out.netcdf.file',file
   )
   if os.path.exists(file) : os.unlink(file)

@@ -16,6 +16,8 @@
 template <typename real_t>
 class vel_uniform : public vel<real_t>
 {
+  public: bool is_constant() { return true; }
+
   private: quantity<si::velocity, real_t> uu, vv, ww;
 
   public: vel_uniform(

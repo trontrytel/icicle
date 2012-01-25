@@ -13,7 +13,6 @@
 #  include "adv_mpdata.hpp"
 #  include "adv_mpdata_fct.hpp"
 #  include "adv_leapfrog.hpp"
-#  include "adv_lax-wendroff.hpp"
 
 #  ifdef ICICLE_OPT_DESCS 
 void opt_adv_desc(po::options_description &desc)

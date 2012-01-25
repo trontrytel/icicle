@@ -12,6 +12,7 @@
 #    include "out.hpp"
 #    include "inf.hpp"
 #    include "eqs.hpp"
+#    include "stp.hpp"
 
 // fixes preprocessor macro redefinition conflict with MPI
 // cf. http://www.unidata.ucar.edu/mailing_lists/archives/netcdfgroup/2009/msg00350.html
@@ -33,12 +34,17 @@ class out_netcdf : public out<real_t>
 {
   private: auto_ptr<NcFile> f;
   private: vector<NcVar> vars;
-  private: int freq; 
   private: inf info;
 
-  public: out_netcdf(const string &file, grd<real_t> *grid, eqs<real_t> &equations, 
-    int nx, int ny, int nz, int freq, int ver, const string &options) 
-    : freq(freq), info(options)
+  public: out_netcdf(
+    const string &file, 
+    stp<real_t> *setup, 
+    grd<real_t> *grid,
+    eqs<real_t> &equations, 
+    int ver, 
+    const string &cmdline
+  ) 
+    : info(cmdline)
   { 
     try
     {
@@ -53,30 +59,40 @@ class out_netcdf : public out<real_t>
 
       NcDim 
         d_t = f->addDim("time"),
-        d_xs = f->addDim("X", nx),
-        d_ys = f->addDim("Y", ny),
-        d_zs = f->addDim("Z", nz);
+        d_xs = f->addDim("X", setup->nx),
+        d_ys = f->addDim("Y", setup->ny),
+        d_zs = f->addDim("Z", setup->nz);
       {
+        // dimensions
         vector<NcDim> sdims(4);
-        // TODO: skip dimensions of size 1?
         sdims[0] = d_t;
         sdims[1] = d_xs;
         sdims[2] = d_ys;
-        sdims[3] = d_zs;
+        sdims[3] = d_zs; // TODO: skip dimensions of size 1?
+
+        // scalar fields
         for (int v = 0; v < equations.n_vars(); ++v)
         {
           vars.push_back(f->addVar(equations.var_name(v), ncFloat, sdims)); 
           vars.at(v).putAtt("unit", equations.var_unit(v));
         }
-      }
-      {
-        vector<NcDim> vdims(3);
-        //vdims[0] = d_xv;
-        //vdims[1] = d_yv;
-        //vdims[2] = d_zv;
-        //NcVar vu = f->addVar("u", ncFloat, vdims); 
-        //NcVar vv = f->addVar("v", ncFloat, vdims); 
-        //NcVar vw = f->addVar("w", ncFloat, vdims); 
+
+        // Courant field TODO
+
+        // timesteps
+        NcVar 
+          v_dtadv = f->addVar("dt_adv", ncFloat, vector<NcDim>()),
+          v_dtout = f->addVar("dt_out", ncFloat, vector<NcDim>());
+        v_dtadv.putAtt("unit", "seconds");
+        v_dtout.putAtt("unit", "seconds");
+        {
+          real_t tmp = setup->dt / si::seconds;
+          v_dtadv.putVar(&tmp);
+        }
+        { 
+          real_t tmp = setup->dt * real_t(setup->nout) / si::seconds;
+          v_dtout.putVar(&tmp);
+        }
       }
     }
     catch (NcException& e) error_macro(e.what())
@@ -98,12 +114,11 @@ class out_netcdf : public out<real_t>
 
   public: virtual void record(
     arr<real_t> *psi,
-    const rng &i, const rng &j, const rng &k, const unsigned long t
+    const rng &i, const rng &j, const rng &k, const unsigned long t // t is the number of the record!
   ) 
   {
-    if (t % freq != 0) return;
     vector<size_t> startp(4), countp(4, 1);
-    startp[0] = t / freq;
+    startp[0] = t;
     countp[3] = k.last() - k.first() + 1;
     // due to presence of halos the data to be stored is not contiguous, 
     // hence looping over the two major ranks

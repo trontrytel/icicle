@@ -24,13 +24,14 @@ for adv in ('mpdata',):#'leapfrog','upstream'):
   file = 'tmp/test_smolar_1983'+adv+'.nc'
   if os.path.exists(file) : os.unlink(file)
   freq = 25
+  dt = .1
   cmd = (
     '../../icicle',
-    '--dt','.1', 
+    '--dt',str(dt), 
     '--grd.dx','1',
     '--grd.dy','1',
     '--grd.dz','1',
-    '--nt','1884', # 6*628 in the original paper !
+    '--t_max','188.4', # 6*628 in the original paper !
     '--nx','100',
     '--nz','100',
     '--vel','test',
@@ -48,7 +49,7 @@ for adv in ('mpdata',):#'leapfrog','upstream'):
     '--slv','threads','--nsd','2',
     '--out','netcdf', 
     '--out.netcdf.ver','3', 
-    '--out.netcdf.freq',str(freq),
+    '--dt_out',str(freq * dt),
     '--out.netcdf.file',file
   )
   subprocess.check_call(cmd)

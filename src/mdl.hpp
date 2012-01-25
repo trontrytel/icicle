@@ -15,25 +15,21 @@
 #  include "opt_out.hpp" // has to be included after slv/MPI
 #  include "opt_ini.hpp"
 #  include "opt_eqs.hpp"
+#  include "opt_stp.hpp"
 
 template <typename real_t>
-void mdl(const po::variables_map &vm, const string &options) 
+void mdl(const po::variables_map &vm, const string &cmdline) 
 {
   // some key parameters (TODO: move from here!)
   if (
-    !vm.count("nx") || !vm.count("ny") || !vm.count("nz") || 
-    !vm.count("nt") || !vm.count("dt")
+    !vm.count("nx") || !vm.count("ny") || !vm.count("nz")  
   )
-    error_macro("nx, ny, nz, nt and dt options are mandatory")
-  quantity<si::time, real_t> 
-    dt = boost::lexical_cast<real_t>(vm["dt"].as<string>()) * si::seconds;
+    error_macro("nx, ny, nz options are mandatory") 
   int 
     nx = vm["nx"].as<int>(),
     ny = vm["ny"].as<int>(),
     nz = vm["nz"].as<int>();
-  unsigned long
-    nt = vm["nt"].as<unsigned long>();
-
+  
   // sanity checks
   if (nx <= 0 || ny <= 0 || nz <= 0) error_macro("nx, ny, nz must all be >= 0") 
 
@@ -58,22 +54,16 @@ void mdl(const po::variables_map &vm, const string &options)
   // equations
   auto_ptr<eqs<real_t> > equations(opt_eqs<real_t>(vm));
 
-  // output choice
-  auto_ptr<out<real_t> > output(opt_out<real_t>(vm, grid.get(), *equations, nx, ny, nz, options));
-
   // grouping all above into a single set-up object
-  auto_ptr<stp<real_t> > setup(new stp<real_t>(
-    fllbck.get(), advsch.get(), 
-    output.get(), 
-    velocity.get(),
-    intcond.get(),
-    grid.get()
-  ));
+  auto_ptr<stp<real_t> > setup(opt_stp<real_t>(vm, advsch.get(), fllbck.get(), velocity.get(), intcond.get(), grid.get(), nx, ny, nz));
+
+  // output choice
+  auto_ptr<out<real_t> > output(opt_out<real_t>(vm, setup.get(), grid.get(), *equations, cmdline));
 
   // solver choice
-  auto_ptr<slv<real_t> > solver(opt_slv(vm, setup.get(), nx, ny, nz, dt));
+  auto_ptr<slv<real_t> > solver(opt_slv(vm, setup.get(), output.get()));
 
   // integration
-  solver->integ_loop(nt, dt);
+  solver->integ_loop(); 
 }
 #endif

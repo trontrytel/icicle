@@ -18,17 +18,16 @@ class slv_parallel_threads : public slv_parallel<real_t>
   private: auto_ptr<boost::barrier> b; 
   private: int nsd;
 
-  public: slv_parallel_threads(stp<real_t> *setup, 
-    int i_min, int i_max, int nx, 
-    int j_min, int j_max, int ny, 
-    int k_min, int k_max, int nz, 
-    quantity<si::time, real_t> dt,
+  public: slv_parallel_threads(stp<real_t> *setup, out<real_t> *output,
+    int i_min, int i_max,  
+    int j_min, int j_max,  
+    int k_min, int k_max,  
     int nsd)
-    : slv_parallel<real_t>(setup,
-        i_min, i_max, nx, 
-        j_min, j_max, ny,
-        k_min, k_max, nz, 
-        dt, nsd), nsd(nsd)
+    : slv_parallel<real_t>(setup, output,
+        i_min, i_max, 
+        j_min, j_max,
+        k_min, k_max, 
+        nsd), nsd(nsd)
   {
     int ncpu = boost::thread::hardware_concurrency();
     if (nsd > ncpu) warning_macro("using more threads (" << nsd << ") than CPUs/cores (" << ncpu << ")")
@@ -40,11 +39,11 @@ class slv_parallel_threads : public slv_parallel<real_t>
     b->wait();
   }
 
-  public: void integ_loop(unsigned long nt, quantity<si::time, real_t> dt)
+  public: void integ_loop()
   {
     boost::thread_group threads;
     for (int sd = 0; sd < nsd; ++sd) threads.add_thread(new boost::thread(
-      &slv_parallel<real_t>::integ_loop_sd, this, nt, dt, sd
+      &slv_parallel<real_t>::integ_loop_sd, this,sd
     ));
     threads.join_all();
   }

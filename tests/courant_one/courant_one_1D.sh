@@ -7,10 +7,10 @@
 
 for bits in {32,64,128}; do
   for u in {-1,1}; do
-    for nt in {10,30}; do
+    for t_max in {10,30}; do
       for slv in `../../icicle --slv list`; do
 #        for sdom in `../../icicle --sdom list`; do
-          for nsd in {1,2,4,5,20}; do
+          for nsd in {1,2,4,5}; do
             for nxyz in {"--nx 20 --vel.uniform.u","--ny 20 --vel.uniform.v","--nz 20 --vel.uniform.w"}; do
 #            for nssdom in {1,2,3}; do
               for nout in {1,5,10}; do
@@ -25,9 +25,9 @@ for bits in {32,64,128}; do
 
                   # the actual test
                   cmd="../../icicle --ini boxcar --ini.boxcar.bx 1"
-                  cmd="$cmd --bits $bits --dt 1 --grd.dx 1 --grd.dy 1 --grd.dz 1 --grd arakawa-c-lorenz"
+                  cmd="$cmd --bits $bits --dt_out 1 --grd.dx 1 --grd.dy 1 --grd.dz 1 --grd arakawa-c-lorenz"
                   cmd="$cmd --vel uniform $nxyz $u"
-                  cmd="$cmd --nt $nt --adv $adv --slv $slv --out gnuplot --nsd $nsd"
+                  cmd="$cmd --t_max $t_max --adv $adv --slv $slv --out gnuplot --nsd $nsd"
 # TODO: --sdom $sdom --nssdom $nssdom --nout $nout"
                   if [ $slv = "mpi" ]; then cmd="openmpirun -np $nsd $cmd"; fi;
                   ret=`$cmd 2>/dev/null` 

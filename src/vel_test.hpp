@@ -14,6 +14,8 @@
 template <typename real_t>
 class vel_test : public vel<real_t>
 {
+  public: bool is_constant() { return true; }
+
   private: quantity<si::frequency, real_t> omega;
   private: quantity<si::length, real_t> x0,z0;
   private: quantity<si::velocity, real_t> vv;

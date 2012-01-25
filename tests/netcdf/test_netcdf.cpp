@@ -21,9 +21,9 @@ int main()
   int status;
   std::string cmd =
     "../../icicle"
-    " --dt 1 --grd.dx 1 --grd.dy 1 --grd.dz 1 --grd arakawa-c-lorenz"
+    " --grd.dx 1 --grd.dy 1 --grd.dz 1 --grd arakawa-c-lorenz"
     " --vel uniform --vel.uniform.u -1"
-    " --nt 10 --nx 20"
+    " --t_max 10 --dt_out 1 --nx 20"
     " --adv mpdata"
     " --slv serial"
     " --out netcdf --out.netcdf.file test_netcdf.nc"
