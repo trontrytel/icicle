@@ -23,7 +23,7 @@ extern "C" {
 };
 
 #  include <boost/interprocess/ipc/message_queue.hpp>
-using namespace boost::interprocess;
+namespace ipc = boost::interprocess;
 
 template <typename real_t, class shrdmem_class>
 class slv_parallel_distmem_fork : public slv_parallel_distmem<real_t, shrdmem_class>
@@ -53,8 +53,8 @@ class slv_parallel_distmem_fork : public slv_parallel_distmem<real_t, shrdmem_cl
   }
 
   private: int size, rank;
-  private: auto_ptr<message_queue> *queues_real;
-  private: auto_ptr<message_queue> *queues_bool;
+  private: auto_ptr<ipc::message_queue> *queues_real;
+  private: auto_ptr<ipc::message_queue> *queues_bool;
 
   private: string queue_name(string pfx, int k)
   {
@@ -67,17 +67,17 @@ class slv_parallel_distmem_fork : public slv_parallel_distmem<real_t, shrdmem_cl
   ) 
     : slv_parallel_distmem<real_t, shrdmem_class>(setup, output, size=nsd, rank=fork_init(nsd))
   { 
-    queues_real = new auto_ptr<message_queue>[2 * nsd];
-    queues_bool = new auto_ptr<message_queue>[nsd];
+    queues_real = new auto_ptr<ipc::message_queue>[2 * nsd];
+    queues_bool = new auto_ptr<ipc::message_queue>[nsd];
     for (int kk = 0; kk < 2 * size; ++kk) 
     {   
-      queues_real[kk].reset(new message_queue(open_or_create, queue_name("real", kk).c_str(), 
+      queues_real[kk].reset(new ipc::message_queue(ipc::open_or_create, queue_name("real", kk).c_str(), 
         1, (setup->advsch->stencil_extent() - 1) / 2 * setup->nz * setup->ny * sizeof(real_t))
       ); 
     }
     for (int kk = 0; kk < size; ++kk) 
     {
-      queues_bool[kk].reset(new message_queue(open_or_create, queue_name("bool", kk).c_str(), 
+      queues_bool[kk].reset(new ipc::message_queue(ipc::open_or_create, queue_name("bool", kk).c_str(), 
         kk == 0 ? size - 1 : 1, sizeof(bool))
       ); 
     }  
@@ -89,8 +89,8 @@ class slv_parallel_distmem_fork : public slv_parallel_distmem<real_t, shrdmem_cl
     delete[] queues_bool;
     if (rank == 0)
     {
-      for (int kk = 0; kk < 2 * size; ++kk) message_queue::remove(queue_name("real", kk).c_str());
-      for (int kk = 0; kk < size; ++kk) message_queue::remove(queue_name("bool", kk).c_str());
+      for (int kk = 0; kk < 2 * size; ++kk) ipc::message_queue::remove(queue_name("real", kk).c_str());
+      for (int kk = 0; kk < size; ++kk) ipc::message_queue::remove(queue_name("bool", kk).c_str());
     }
     delete ipckey;
     if (rank == 0)

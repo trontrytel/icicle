@@ -22,8 +22,11 @@
 
 // the Lynton Appel's netCDF-4 C++ API (since netCDF 4.1.1)
 #    include <netcdf>
-using namespace netCDF;
-using namespace netCDF::exceptions;
+using netCDF::NcFile;
+using netCDF::NcVar;
+using netCDF::NcDim;
+using netCDF::ncFloat;
+using netCDF::exceptions::NcException;
 
 // TODO: ncFloat vs. ncDouble as a command-line option (but it float computations and double requeste -> error)
 // TODO: add X_sclr i X_vctr variables! (e.g. for axis labelling)

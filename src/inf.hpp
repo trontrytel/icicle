@@ -13,7 +13,6 @@
 
 #  ifdef USE_BOOST_TIMER
 #    include <boost/timer/timer.hpp>
-using namespace boost::timer;
 #  endif
 
 #  include <sys/utsname.h> // uname 
@@ -23,7 +22,7 @@ using namespace boost::timer;
 class inf : root
 {
 #  ifdef USE_BOOST_TIMER
-  private: cpu_timer tmr;
+  private: boost::timer::cpu_timer tmr;
 #  endif
   private: string options;
   public: inf(const string &options)
@@ -70,7 +69,7 @@ class inf : root
 
 #  ifdef USE_BOOST_TIMER
     {
-      cpu_times t = tmr.elapsed(); // in nanoseconds
+      boost::timer::cpu_times t = tmr.elapsed(); // in nanoseconds
       {
         ostringstream tmp;
         tmp << double(t.wall) * 1e-9;

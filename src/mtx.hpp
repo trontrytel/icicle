@@ -33,7 +33,7 @@ namespace mtx
   }
 
   template <typename real_t>
-  struct arr : public blitz::Array<real_t, 3>
+  struct arr : blitz::Array<real_t, 3>
   {
     typedef blitz::Array<real_t, 3> type;
 
@@ -63,30 +63,30 @@ namespace mtx
  *    may be written once and just called thrice, each time wth
  *    a different value of the template.
  */
-  class idx : public blitz::RectDomain<3> 
+  struct idx : blitz::RectDomain<3> 
   {
-    public: idx(const blitz::TinyVector<blitz::Range, 3> &tv)
+    idx(const blitz::TinyVector<blitz::Range, 3> &tv)
       : blitz::RectDomain<3>(tv)
     { }
   };
 
-  class idx_ijk : public idx
+  struct idx_ijk : idx
   {
-    public: idx_ijk(const blitz::Range &i, const blitz::Range &j, const blitz::Range &k) 
+    idx_ijk(const blitz::Range &i, const blitz::Range &j, const blitz::Range &k) 
       : idx(blitz::TinyVector<blitz::Range, 3>(i,j,k)) 
     { } 
   };
 
-  class idx_jki : public idx
+  struct idx_jki : idx
   {
-    public: idx_jki(const blitz::Range &j, const blitz::Range &k, const blitz::Range &i) 
+    idx_jki(const blitz::Range &j, const blitz::Range &k, const blitz::Range &i) 
       : idx(blitz::TinyVector<blitz::Range, 3>(i,j,k)) 
     { } 
   };
 
-  class idx_kij : public idx
+  struct idx_kij : idx
   {
-    public: idx_kij(const blitz::Range &k, const blitz::Range &i, const blitz::Range &j) 
+    idx_kij(const blitz::Range &k, const blitz::Range &i, const blitz::Range &j) 
       : idx(blitz::TinyVector<blitz::Range, 3>(i,j,k)) 
     { } 
   };

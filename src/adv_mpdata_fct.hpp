@@ -58,12 +58,12 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
     assert(finite(sum((*psi[n])(ii  , jj  , kk-1))));
     assert(finite(sum((*psi[n])(ii  , jj  , kk+1))));
 
-#  define mpdata_fct_minmax(fun, psi_, n_, i_, j_, k_) blitz::fun( \
-     (*psi_[n_])(i_  ,j_  ,k_  ), blitz::fun( \
-     (*psi_[n_])(i_-1,j_  ,k_  ), blitz::fun( \
-     (*psi_[n_])(i_+1,j_  ,k_  ), blitz::fun( \
-     (*psi_[n_])(i_  ,j_-1,k_  ), blitz::fun( \
-     (*psi_[n_])(i_  ,j_+1,k_  ), blitz::fun( \
+#  define mpdata_fct_minmax(fun, psi_, n_, i_, j_, k_) fun( \
+     (*psi_[n_])(i_  ,j_  ,k_  ), fun( \
+     (*psi_[n_])(i_-1,j_  ,k_  ), fun( \
+     (*psi_[n_])(i_+1,j_  ,k_  ), fun( \
+     (*psi_[n_])(i_  ,j_-1,k_  ), fun( \
+     (*psi_[n_])(i_  ,j_+1,k_  ), fun( \
      (*psi_[n_])(i_  ,j_  ,k_-1), \
      (*psi_[n_])(i_  ,j_  ,k_+1)))))) \
    ) 
@@ -83,8 +83,8 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
     else
     {
       // calculating psi_min and psi_max from the previous time step and previous iord
-      psi_min(ii,jj,kk) = blitz::min(psi_min(ii,jj,kk), mpdata_fct_minmax(min, psi, n, ii, jj, kk));
-      psi_max(ii,jj,kk) = blitz::max(psi_max(ii,jj,kk), mpdata_fct_minmax(max, psi, n, ii, jj, kk));
+      psi_min(ii,jj,kk) = min(psi_min(ii,jj,kk), mpdata_fct_minmax(min, psi, n, ii, jj, kk));
+      psi_max(ii,jj,kk) = max(psi_max(ii,jj,kk), mpdata_fct_minmax(max, psi, n, ii, jj, kk));
 
       // calculating Cx_mon, Cy_mon, Cz_mon
       int 
@@ -208,8 +208,8 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
 
     C_mon_x(idx(iv + grid->p_half,j,k)) = C_adf_x(idx(iv + grid->p_half,j,k)) * where(
       C_adf_x(idx(iv + grid->p_half,j,k)) > 0,
-      blitz::min(1, blitz::min(mpdata_fct_beta_dn(iv, j, k), mpdata_fct_beta_up(iv+1, j, k))),
-      blitz::min(1, blitz::min(mpdata_fct_beta_up(iv, j, k), mpdata_fct_beta_dn(iv+1, j, k)))
+      min(1, min(mpdata_fct_beta_dn(iv, j, k), mpdata_fct_beta_up(iv+1, j, k))),
+      min(1, min(mpdata_fct_beta_up(iv, j, k), mpdata_fct_beta_dn(iv+1, j, k)))
     );
   }
 };

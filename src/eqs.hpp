@@ -9,7 +9,6 @@
 #  define EQS_HPP
 
 #  include "cmn.hpp" // root class, error reporting
-#  include <vector>
 
 template <typename real_t>
 class eqs : root
@@ -47,7 +46,7 @@ class eqs : root
   string quan2str(quan q)
   {
     ostringstream tmp;
-    tmp << name_format << q;
+    tmp << boost::units::name_format << q;
     return tmp.str();
   }
 };

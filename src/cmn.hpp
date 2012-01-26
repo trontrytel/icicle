@@ -9,13 +9,23 @@
 #ifndef CMN_HPP
 #  define CMN_HPP
 
-// most common includes
-#  include <boost/units/systems/si.hpp>
-#  include <boost/units/io.hpp>
-using namespace boost::units;
-
-// TODO: ...
-using namespace std;
+// STL includes
+#  include <cmath>
+#  include <iostream>
+#  include <string>
+#  include <vector>
+#  include <map>
+using std::string;
+using std::vector;
+using std::ostringstream;
+using std::map;
+using std::auto_ptr;
+using std::cout;
+using std::cerr;
+using std::endl;
+using std::exception;
+using std::cos;
+using std::sin;
 
 // overloading the default d-tor with a virtual one (enforces execution of child d-tors)
 class root { public: virtual ~root() {} };
@@ -23,16 +33,21 @@ class root { public: virtual ~root() {} };
 // error reporting
 #  define error_macro(msg) \
 { \
-  std::cerr << "-- error: " << msg << std::endl; \
-  throw std::exception(); \
+  cerr << "-- error: " << msg << endl; \
+  throw exception(); \
 }
 #  define warning_macro(msg) \
 { \
-  std::cerr << "-- warning: " << msg << std::endl; \
+  cerr << "-- warning: " << msg << endl; \
 }
 
-// some non-standard units
-typedef multiply_typeof_helper<
+// Boost.Units
+#  include <boost/units/systems/si.hpp>
+#  include <boost/units/io.hpp>
+using boost::units::quantity; 
+namespace si = boost::units::si;
+
+typedef boost::units::multiply_typeof_helper<
     si::velocity,
     si::length
   >::type velocity_times_length;
