@@ -72,7 +72,7 @@ class slv_parallel_distmem_fork : public slv_parallel_distmem<real_t, shrdmem_cl
     for (int kk = 0; kk < 2 * size; ++kk) 
     {   
       queues_real[kk].reset(new ipc::message_queue(ipc::open_or_create, queue_name("real", kk).c_str(), 
-        1, (setup->advsch->stencil_extent() - 1) / 2 * setup->nz * setup->ny * sizeof(real_t))
+        1, (setup->advsch->stencil_extent() - 1) / 2 * setup->grid->nz() * setup->grid->ny() * sizeof(real_t))
       ); 
     }
     for (int kk = 0; kk < size; ++kk) 

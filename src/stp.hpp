@@ -16,6 +16,7 @@
 #  include "vel.hpp"
 #  include "ini.hpp"
 #  include "grd.hpp"
+#  include "eqs.hpp"
 
 template <typename real_t>
 class stp : root
@@ -26,8 +27,9 @@ class stp : root
   public: vel<real_t> *velocity;
   public: ini<real_t> *intcond;
   public: grd<real_t> *grid;
+  public: eqs<real_t> *equations;
 
-  public: int nx, ny, nz, nout;
+  public: int nout;
   public: unsigned long nt;
   public: quantity<si::time, real_t> dt;
 
@@ -37,7 +39,7 @@ class stp : root
     vel<real_t> *velocity,
     ini<real_t> *intcond,
     grd<real_t> *grid,
-    int nx, int ny, int nz, 
+    eqs<real_t> *equations,
     quantity<si::time, real_t> dt_out, 
     quantity<si::time, real_t> t_max,
     quantity<si::time, real_t> dt_arg // if zero then calculate it automagically
@@ -46,7 +48,7 @@ class stp : root
       velocity(velocity), 
       intcond(intcond), 
       grid(grid),
-      nx(nx), ny(ny), nz(nz)
+      equations(equations)
   { 
     bool auto_dt = (dt_arg/si::seconds == 0);
     dt = auto_dt ? real_t(1) * si::seconds : dt_arg;
@@ -54,17 +56,17 @@ class stp : root
     // TODO! merge with the logic from slv ctor and move into grid
     int halo = (advsch->stencil_extent() -1) / 2;
     mtx::rng
-      ix = grid->rng_vctr(0, nx - 1, halo),
-      jx = grid->rng_sclr(0, ny - 1, halo),
-      kx = grid->rng_sclr(0, nz - 1, halo);
+      ix = grid->rng_vctr(0, grid->nx() - 1, halo),
+      jx = grid->rng_sclr(0, grid->ny() - 1, halo),
+      kx = grid->rng_sclr(0, grid->nz() - 1, halo);
     mtx::rng
-      iy = grid->rng_sclr(0, nx - 1, halo),
-      jy = grid->rng_vctr(0, ny - 1, halo),
-      ky = grid->rng_sclr(0, nz - 1, halo);
+      iy = grid->rng_sclr(0, grid->nx() - 1, halo),
+      jy = grid->rng_vctr(0, grid->ny() - 1, halo),
+      ky = grid->rng_sclr(0, grid->nz() - 1, halo);
     mtx::rng
-      iz = grid->rng_sclr(0, nx - 1, halo),
-      jz = grid->rng_sclr(0, ny - 1, halo),
-      kz = grid->rng_vctr(0, nz - 1, halo);
+      iz = grid->rng_sclr(0, grid->nx() - 1, halo),
+      jz = grid->rng_sclr(0, grid->ny() - 1, halo),
+      kz = grid->rng_vctr(0, grid->nz() - 1, halo);
     mtx::arr<real_t>
       Cx(ix, jx, kx),
       Cy(iy, jy, ky),
@@ -76,7 +78,7 @@ class stp : root
       iz, jz, kz,
       &Cx, &Cy, &Cz,
       velocity, dt,
-      nx, ny, nz
+      grid->nx(), grid->ny(), grid->nz()
     );
     
     real_t cmax = max(sqrt(pow2(Cx) + pow2(Cy) + pow2(Cz))); // TODO: check if that's a correct way to calculate it?

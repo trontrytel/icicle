@@ -46,7 +46,7 @@ for iord in (1,2,3,4) : #,40) :
           '--dt','1', 
           '--grd.dx','1',
           '--nt',str(nt),
-          '--nx',str(60),
+          '--grd.nx',str(60),
           '--vel','uniform',
           '--vel.uniform.u',str(courant),
           '--adv','mpdata',

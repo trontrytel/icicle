@@ -32,8 +32,8 @@ for adv in ('mpdata',):#'leapfrog','upstream'):
     '--grd.dy','1',
     '--grd.dz','1',
     '--t_max','188.4', # 6*628 in the original paper !
-    '--nx','100',
-    '--nz','100',
+    '--grd.nx','100',
+    '--grd.nz','100',
     '--vel','test',
     '--vel.test.omega','.1',
     '--adv',adv,

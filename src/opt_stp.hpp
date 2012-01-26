@@ -29,7 +29,7 @@ stp<real_t> *opt_stp(const po::variables_map& vm,
   vel<real_t> *velocity,
   ini<real_t> *intcond,
   grd<real_t> *grid,
-  int nx, int ny, int nz
+  eqs<real_t> *equations
   )
 { 
   quantity<si::time, real_t> dt=0*si::seconds;
@@ -41,7 +41,7 @@ stp<real_t> *opt_stp(const po::variables_map& vm,
     velocity,
     intcond,
     grid,
-    nx, ny, nz,
+    equations,
     boost::lexical_cast<real_t>(vm["dt_out"].as<string>())*si::seconds,
     boost::lexical_cast<real_t>(vm["t_max"].as<string>())*si::seconds,
     dt

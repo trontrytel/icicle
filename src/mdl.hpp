@@ -20,19 +20,6 @@
 template <typename real_t>
 void mdl(const po::variables_map &vm, const string &cmdline) 
 {
-  // some key parameters (TODO: move from here!)
-  if (
-    !vm.count("nx") || !vm.count("ny") || !vm.count("nz")  
-  )
-    error_macro("nx, ny, nz options are mandatory") 
-  int 
-    nx = vm["nx"].as<int>(),
-    ny = vm["ny"].as<int>(),
-    nz = vm["nz"].as<int>();
-  
-  // sanity checks
-  if (nx <= 0 || ny <= 0 || nz <= 0) error_macro("nx, ny, nz must all be >= 0") 
-
   // grid choice
   auto_ptr<grd<real_t> > grid(opt_grd<real_t>(vm));
 
@@ -46,7 +33,7 @@ void mdl(const po::variables_map &vm, const string &cmdline)
   }
 
   // velocity choice
-  auto_ptr<vel<real_t> > velocity(opt_vel<real_t>(vm, grid.get(), nx, ny, nz));
+  auto_ptr<vel<real_t> > velocity(opt_vel<real_t>(vm, grid.get()));
 
   // initial condition
   auto_ptr<ini<real_t> > intcond(opt_ini<real_t>(vm, grid.get()));
@@ -55,10 +42,12 @@ void mdl(const po::variables_map &vm, const string &cmdline)
   auto_ptr<eqs<real_t> > equations(opt_eqs<real_t>(vm));
 
   // grouping all above into a single set-up object
-  auto_ptr<stp<real_t> > setup(opt_stp<real_t>(vm, advsch.get(), fllbck.get(), velocity.get(), intcond.get(), grid.get(), nx, ny, nz));
+  auto_ptr<stp<real_t> > setup(opt_stp<real_t>(vm, 
+    advsch.get(), fllbck.get(), velocity.get(), intcond.get(), grid.get(), equations.get()
+  ));
 
   // output choice
-  auto_ptr<out<real_t> > output(opt_out<real_t>(vm, setup.get(), grid.get(), *equations, cmdline));
+  auto_ptr<out<real_t> > output(opt_out<real_t>(vm, setup.get(), cmdline));
 
   // solver choice
   auto_ptr<slv<real_t> > solver(opt_slv(vm, setup.get(), output.get()));

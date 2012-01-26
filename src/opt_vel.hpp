@@ -31,8 +31,7 @@ void opt_vel_desc(po::options_description &desc)
 #  endif
 
 template <typename real_t>
-vel<real_t> *opt_vel(const po::variables_map& vm,
-  grd<real_t> *grid, int nx, int ny, int nz)
+vel<real_t> *opt_vel(const po::variables_map& vm, grd<real_t> *grid)
 {
   string veltype= vm.count("vel") ? vm["vel"].as<string>() : "<unspecified>";
   if (veltype == "uniform")
@@ -52,7 +51,7 @@ vel<real_t> *opt_vel(const po::variables_map& vm,
     quantity<si::length, real_t> 
       Z_clb = boost::lexical_cast<real_t>(vm["vel.rasinski.Z_clb"].as<string>()) * si::metres,
       Z_top = boost::lexical_cast<real_t>(vm["vel.rasinski.Z_top"].as<string>()) * si::metres,
-      X = real_t(nx) * grid->dx(); // TODO nx+1 dla Arakawa-C ...
+      X = real_t(grid->nx()) * grid->dx(); // TODO nx+1 dla Arakawa-C ...
     quantity<velocity_times_length, real_t>
       A = boost::lexical_cast<real_t>(vm["vel.rasinski.A"].as<string>()) * si::metres * si::metres / si::seconds;
     return new vel_rasinski<real_t>(X, Z_clb, Z_top, A);
@@ -62,7 +61,7 @@ vel<real_t> *opt_vel(const po::variables_map& vm,
     if (!vm.count("vel.test.omega")) error_macro("vel.test.omega must be specified")
     quantity<si::frequency, real_t> omega = boost::lexical_cast<real_t>(vm["vel.test.omega"].as<string>()) / si::seconds;
     quantity<si::velocity, real_t> v = boost::lexical_cast<real_t>(vm["vel.test.v"].as<string>()) * si::metres / si::seconds;
-    return new vel_test<real_t>(omega, real_t(.5 * nx) * grid->dx(), real_t(.5 * nz) * grid->dz(), v);
+    return new vel_test<real_t>(omega, real_t(.5 * grid->nx()) * grid->dx(), real_t(.5 * grid->nz()) * grid->dz(), v);
   }
   else error_macro("unsupported velocity field type: " << veltype)
 }

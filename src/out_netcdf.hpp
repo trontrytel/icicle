@@ -43,7 +43,6 @@ class out_netcdf : public out<real_t>
     const string &file, 
     stp<real_t> *setup, 
     grd<real_t> *grid,
-    eqs<real_t> &equations, 
     int ver, 
     const string &cmdline
   ) 
@@ -62,9 +61,9 @@ class out_netcdf : public out<real_t>
 
       NcDim 
         d_t = f->addDim("time"),
-        d_xs = f->addDim("X", setup->nx),
-        d_ys = f->addDim("Y", setup->ny),
-        d_zs = f->addDim("Z", setup->nz);
+        d_xs = f->addDim("X", setup->grid->nx()),
+        d_ys = f->addDim("Y", setup->grid->ny()),
+        d_zs = f->addDim("Z", setup->grid->nz());
       {
         // dimensions
         vector<NcDim> sdims(4);
@@ -74,10 +73,10 @@ class out_netcdf : public out<real_t>
         sdims[3] = d_zs; // TODO: skip dimensions of size 1?
 
         // scalar fields
-        for (int v = 0; v < equations.n_vars(); ++v)
+        for (int v = 0; v < setup->equations->n_vars(); ++v)
         {
-          vars.push_back(f->addVar(equations.var_name(v), ncFloat, sdims)); 
-          vars.at(v).putAtt("unit", equations.var_unit(v));
+          vars.push_back(f->addVar(setup->equations->var_name(v), ncFloat, sdims)); 
+          vars.at(v).putAtt("unit", setup->equations->var_unit(v));
         }
 
         // Courant field TODO

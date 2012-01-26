@@ -31,7 +31,7 @@ cmd = "../../icicle" \
   ." --vel uniform --vel.uniform.u .4" \
   ." --t_max ".t_max \
   ." --dt_out ".dt_out \
-  ." --nx ".nx \
+  ." --grd.nx ".nx \
   ." --slv serial" \
   ." --out gnuplot --out.gnuplot.using 1:-2:2" \
   ." --ini cone --ini.cone.h 1 --ini.cone.x0 3 --ini.cone.z0 0 --ini.cone.r 2.5 --ini.cone.h0 1" 

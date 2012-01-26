@@ -39,12 +39,6 @@ int main(int ac, char* av[])
     desc.add_options()
       ("help", "print this message")
       ("bits", po::value<int>()->default_value(32), "floating point bits: sizeof(float), sizeof(double), sizeof(long double)");
-// <TODO> move somewhere else...
-    desc.add_options()
-      ("nx", po::value<int>()->default_value(1), "number of grid points (X)")
-      ("ny", po::value<int>()->default_value(1), "number of grid points (Y)")
-      ("nz", po::value<int>()->default_value(1), "number of grid points (Z)");
-// </TODO> 
     opt_stp_desc(desc);
     opt_adv_desc(desc);
     opt_slv_desc(desc);

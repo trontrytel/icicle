@@ -27,7 +27,7 @@ cmd = "../../icicle" \
   ." --grd.dy 1 " \
   ." --grd.dz 1" \
   ." --vel uniform --vel.uniform.u .75" \
-  ." --nt 80 --nx 90" \
+  ." --nt 80 --grd.nx 90" \
   ." --slv serial" \
   ." --out gnuplot --out.gnuplot.using 1:-2:2" \
   ." --ini boxcar --ini.boxcar.ax 20 --ini.boxcar.bx 40 --ini.boxcar.A0 1 " 

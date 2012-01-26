@@ -19,13 +19,15 @@ class grd_arakawa_c_lorenz : public grd<real_t>
   public: static const int p_half = 1;
 
   private: quantity<si::length, real_t> dx_, dy_, dz_;
+  private: int nx_, ny_, nz_;
 
   public: grd_arakawa_c_lorenz(
     quantity<si::length, real_t> dx,
     quantity<si::length, real_t> dy,
-    quantity<si::length, real_t> dz
+    quantity<si::length, real_t> dz,
+    int nx, int ny, int nz
   )
-    : dx_(dx), dy_(dy), dz_(dz)
+    : dx_(dx), dy_(dy), dz_(dz), nx_(nx), ny_(ny), nz_(nz)
   {}
 
   public: quantity<si::length, real_t> i2x(int i) 
@@ -44,6 +46,10 @@ class grd_arakawa_c_lorenz : public grd<real_t>
   public: quantity<si::length, real_t> dx() { return dx_; }
   public: quantity<si::length, real_t> dy() { return dy_; }
   public: quantity<si::length, real_t> dz() { return dz_; }
+
+  public: int nx() { return nx_; }
+  public: int ny() { return ny_; }
+  public: int nz() { return nz_; }
 
   public: mtx::rng rng_sclr(int first, int last, int halo) 
   { 

@@ -20,6 +20,10 @@ class grd : root
   public: virtual quantity<si::length, real_t> dy() = 0;
   public: virtual quantity<si::length, real_t> dz() = 0;
 
+  public: virtual int nx() = 0;
+  public: virtual int ny() = 0;
+  public: virtual int nz() = 0;
+
   // returns ranges to be passed as constructors to arr
   // first and last reflect scalar indices
   public: virtual mtx::rng rng_sclr(int first, int last, int halo) = 0;

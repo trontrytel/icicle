@@ -41,11 +41,11 @@ class slv_serial : public slv<real_t>
     // sanity checks
     {
       int len;
-      if (halo > (len = i_max - i_min + 1) && setup->nx != 1) 
+      if (halo > (len = i_max - i_min + 1) && setup->grid->nx() != 1) 
         error_macro("halo length (" << halo << ") may not exceed domain extent in X (" << len << ")")
-      if (halo > (len = j_max - j_min + 1) && setup->ny != 1)
+      if (halo > (len = j_max - j_min + 1) && setup->grid->ny() != 1)
         error_macro("halo length (" << halo << ") may not exceed domain extent in Y (" << len << ")")
-      if (halo > (len = k_max - k_min + 1) && setup->nz != 1)
+      if (halo > (len = k_max - k_min + 1) && setup->grid->nz() != 1)
         error_macro("halo length (" << halo << ") may not exceed domain extent in Z (" << len << ")")
     }
 
@@ -111,7 +111,7 @@ class slv_serial : public slv<real_t>
         iz, jz, kz, 
         Cx.get(), Cy.get(), Cz.get(), 
         setup->velocity, setup->dt, 
-        setup->nx, setup->ny, setup->nz
+        setup->grid->nx(), setup->grid->ny(), setup->grid->nz()
       );
     }
   }
@@ -134,12 +134,12 @@ class slv_serial : public slv<real_t>
 
   public: void fill_halos(int n)
   {
-    fill_halos_helper<mtx::idx_ijk>(psi, slv<real_t>::left, n, i->first() - halo, i->first() - 1, *j, *k, setup->nx);
-    fill_halos_helper<mtx::idx_ijk>(psi, slv<real_t>::rght, n, i->last() + 1, i->last() + halo,   *j, *k, setup->nx);
-    fill_halos_helper<mtx::idx_jki>(psi, slv<real_t>::fore, n, j->first() - halo, j->first() - 1, *k, *i_all, setup->ny);
-    fill_halos_helper<mtx::idx_jki>(psi, slv<real_t>::hind, n, j->last() + 1, j->last() + halo,   *k, *i_all, setup->ny);
-    fill_halos_helper<mtx::idx_kij>(psi, slv<real_t>::base, n, k->first() - halo, k->first() - 1, *i_all, *j_all, setup->nz);
-    fill_halos_helper<mtx::idx_kij>(psi, slv<real_t>::apex, n, k->last() + 1, k->last() + halo,   *i_all, *j_all, setup->nz);
+    fill_halos_helper<mtx::idx_ijk>(psi, slv<real_t>::left, n, i->first() - halo, i->first() - 1, *j, *k, setup->grid->nx());
+    fill_halos_helper<mtx::idx_ijk>(psi, slv<real_t>::rght, n, i->last() + 1, i->last() + halo,   *j, *k, setup->grid->nx());
+    fill_halos_helper<mtx::idx_jki>(psi, slv<real_t>::fore, n, j->first() - halo, j->first() - 1, *k, *i_all, setup->grid->ny());
+    fill_halos_helper<mtx::idx_jki>(psi, slv<real_t>::hind, n, j->last() + 1, j->last() + halo,   *k, *i_all, setup->grid->ny());
+    fill_halos_helper<mtx::idx_kij>(psi, slv<real_t>::base, n, k->first() - halo, k->first() - 1, *i_all, *j_all, setup->grid->nz());
+    fill_halos_helper<mtx::idx_kij>(psi, slv<real_t>::apex, n, k->last() + 1, k->last() + halo,   *i_all, *j_all, setup->grid->nz());
   }
 
   private:

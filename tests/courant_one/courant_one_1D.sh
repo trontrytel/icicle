@@ -11,7 +11,7 @@ for bits in {32,64,128}; do
       for slv in `../../icicle --slv list`; do
 #        for sdom in `../../icicle --sdom list`; do
           for nsd in {1,2,4,5}; do
-            for nxyz in {"--nx 20 --vel.uniform.u","--ny 20 --vel.uniform.v","--nz 20 --vel.uniform.w"}; do
+            for nxyz in {"--grd.nx 20 --vel.uniform.u","--grd.ny 20 --vel.uniform.v","--grd.nz 20 --vel.uniform.w"}; do
 #            for nssdom in {1,2,3}; do
               for nout in {1,5,10}; do
                 for adv in {mpdata,"mpdata --adv.mpdata.iord 1","mpdata --adv.mpdata.iord 3",leapfrog,"mpdata --adv.mpdata.fct 1"}; do
