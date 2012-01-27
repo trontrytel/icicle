@@ -15,6 +15,7 @@
 #  include <string>
 #  include <vector>
 #  include <map>
+#  include <memory>
 using std::string;
 using std::vector;
 using std::ostringstream;
