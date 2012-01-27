@@ -15,7 +15,8 @@ template <typename real_t>
 class out : root
 {
   public: virtual void record( 
-    mtx::arr<real_t> *psi, 
+    int e,
+    const mtx::arr<real_t> &psi, 
     const mtx::idx &ijk, 
     const unsigned long t
   ) = 0;

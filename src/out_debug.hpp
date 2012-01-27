@@ -18,11 +18,13 @@ template <typename real_t>
 class out_debug : public out<real_t>
 {
   public: virtual void record(
-    mtx::arr<real_t> *psi,
+    int e,
+    const mtx::arr<real_t> &psi,
     const mtx::idx &ijk, 
     const unsigned long t
   ) 
   {
+    assert(e == 0);
     std::ostringstream tmp;
     tmp
       << "{pid: " << getpid() << "} :" 
@@ -32,7 +34,7 @@ class out_debug : public out<real_t>
         << ijk.lbound(2) << "..." << ijk.ubound(2) << "," 
       << "] @ t/dt=" << t
       << endl
-      << (*psi)(ijk) 
+      << psi(ijk) 
       << endl;
     std::cerr << tmp.str(); // non-buffered?
   }

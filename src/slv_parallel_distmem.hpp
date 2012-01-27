@@ -31,14 +31,14 @@ class slv_parallel_distmem : public shrdmem_class
       cnt = ibuf->cols() * ibuf->rows() * ibuf->depth();
     }
 
-    public: typename mtx::arr<real_t>::type data(int n, const mtx::idx &idx)
+    public: typename mtx::arr<real_t>::type data(int e, int n, const mtx::idx &idx)
     { 
       return (*ibuf)(idx); 
     }
  
-    public: void sync(int n)
+    public: void sync(int e, int n)
     {
-      (*obuf)(ixr, yr, zr) = nghbr->data(n, mtx::idx_ijk(oxr, yr, zr));
+      (*obuf)(ixr, yr, zr) = nghbr->data(e, n, mtx::idx_ijk(oxr, yr, zr));
       nghbr->sndrcv(peer, cnt, ibuf->data(), obuf->data());
     }
 

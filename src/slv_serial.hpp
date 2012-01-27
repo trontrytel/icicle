@@ -23,10 +23,7 @@ class slv_serial : public slv<real_t>
   private: int halo;
 
   private: auto_ptr<mtx::arr<real_t> > Cx, Cy, Cz;
-
-  private: auto_ptr<mtx::arr<real_t> > *psi_guard;
-  private: mtx::arr<real_t> **psi; 
-
+  private: vector<ptr_vector<mtx::arr<real_t> > > psi;
   private: auto_ptr<tmp<real_t> > cache; 
 
   public: slv_serial(stp<real_t> *setup, out<real_t> *output,
@@ -51,14 +48,15 @@ class slv_serial : public slv<real_t>
     }
 
     // memory allocation
-    psi_guard = new auto_ptr<mtx::arr<real_t> >[advsch->time_levels()];
-    psi = new mtx::arr<real_t>*[advsch->time_levels()];
-    for (int n=0; n < advsch->time_levels(); ++n) 
+    psi.resize(setup->equations->n_vars());
+    for (int e = 0; e < setup->equations->n_vars(); ++e)
     {
-      psi_guard[n].reset(new mtx::arr<real_t>(
-        setup->grid->rng_sclr(i_min, i_max, j_min, j_max, k_min, k_max, halo)
-      ));
-      psi[n] = psi_guard[n].get();
+      for (int n = 0; n < advsch->time_levels(); ++n) 
+      {
+        psi[e].push_back(new mtx::arr<real_t>(
+          setup->grid->rng_sclr(i_min, i_max, j_min, j_max, k_min, k_max, halo)
+        ));
+      }
     }
 
     // caches
@@ -83,7 +81,9 @@ class slv_serial : public slv<real_t>
     ));
 
     // initial condition
-    setup->grid->populate_scalar_field(*ijk, psi[0], setup->intcond);
+    assert(setup->equations->n_vars() == 1);
+    int e = 0;
+    setup->grid->populate_scalar_field(*ijk, &psi[e][0], setup->intcond); // TODO!!! multiple eqs
 
     // periodic boundary in all directions
     for (int s=this->first; s <= this->last; ++s) 
@@ -96,65 +96,60 @@ class slv_serial : public slv<real_t>
     setup->grid->populate_courant_fields(Cx.get(), Cy.get(), Cz.get(), setup->velocity, setup->dt);
   }
 
-  public: ~slv_serial()
-  {
-    delete[] psi;
-    delete[] psi_guard;
-  }
-
   public: void record(const int n, const unsigned long t)
   {
-    output->record(psi[n], *ijk, t);
+    for (int e = 0; e < setup->equations->n_vars(); ++e)
+      output->record(e, psi[e][n], *ijk, t);
   }
 
-  public: typename mtx::arr<real_t>::type data(int n, const mtx::idx &idx)
+  public: typename mtx::arr<real_t>::type data(int e, int n, const mtx::idx &idx)
   { 
-    return (*psi[n])(idx);
+    return psi[e][n](idx);
   }
 
-  public: void fill_halos(int n)
+  public: void fill_halos(const int e, const int n)
   {
-    fill_halos_helper<mtx::idx_ijk>(psi, slv<real_t>::left, n, ijk->lbound(mtx::i) - halo, ijk->lbound(mtx::i) - 1,    ijk->j, ijk->k, setup->grid->nx());
-    fill_halos_helper<mtx::idx_ijk>(psi, slv<real_t>::rght, n, ijk->ubound(mtx::i) + 1,    ijk->ubound(mtx::i) + halo, ijk->j, ijk->k, setup->grid->nx());
-    fill_halos_helper<mtx::idx_jki>(psi, slv<real_t>::fore, n, ijk->lbound(mtx::j) - halo, ijk->lbound(mtx::j) - 1,    ijk->k, ijk_all->i, setup->grid->ny());
-    fill_halos_helper<mtx::idx_jki>(psi, slv<real_t>::hind, n, ijk->ubound(mtx::j) + 1,    ijk->ubound(mtx::j) + halo, ijk->k, ijk_all->i, setup->grid->ny());
-    fill_halos_helper<mtx::idx_kij>(psi, slv<real_t>::base, n, ijk->lbound(mtx::k) - halo, ijk->lbound(mtx::k) - 1,    ijk_all->i, ijk_all->j, setup->grid->nz());
-    fill_halos_helper<mtx::idx_kij>(psi, slv<real_t>::apex, n, ijk->ubound(mtx::k) + 1,    ijk->ubound(mtx::k) + halo, ijk_all->i, ijk_all->j, setup->grid->nz());
+    fill_halos_helper<mtx::idx_ijk>(slv<real_t>::left, e, n, ijk->lbound(mtx::i) - halo, ijk->lbound(mtx::i) - 1,    ijk->j, ijk->k, setup->grid->nx());
+    fill_halos_helper<mtx::idx_ijk>(slv<real_t>::rght, e, n, ijk->ubound(mtx::i) + 1,    ijk->ubound(mtx::i) + halo, ijk->j, ijk->k, setup->grid->nx());
+    fill_halos_helper<mtx::idx_jki>(slv<real_t>::fore, e, n, ijk->lbound(mtx::j) - halo, ijk->lbound(mtx::j) - 1,    ijk->k, ijk_all->i, setup->grid->ny());
+    fill_halos_helper<mtx::idx_jki>(slv<real_t>::hind, e, n, ijk->ubound(mtx::j) + 1,    ijk->ubound(mtx::j) + halo, ijk->k, ijk_all->i, setup->grid->ny());
+    fill_halos_helper<mtx::idx_kij>(slv<real_t>::base, e, n, ijk->lbound(mtx::k) - halo, ijk->lbound(mtx::k) - 1,    ijk_all->i, ijk_all->j, setup->grid->nz());
+    fill_halos_helper<mtx::idx_kij>(slv<real_t>::apex, e, n, ijk->ubound(mtx::k) + 1,    ijk->ubound(mtx::k) + halo, ijk_all->i, ijk_all->j, setup->grid->nz());
   }
 
   private:
   template<class idx>
-  void fill_halos_helper(mtx::arr<real_t> *psi[], int nghbr, int n, 
-    int i_min, int i_max, const mtx::rng &j, const mtx::rng &k, int mod
+  void fill_halos_helper(const int nghbr, const int e, const int n, 
+    const int i_min, const int i_max, const mtx::rng &j, const mtx::rng &k, int mod
   )
   {
     if (mod == 1)
     {
       for (int ii = i_min; ii <= i_max; ++ii)
-        (*psi[n])(idx(mtx::rng(ii), j, k)) =
-          this->nghbr_data(nghbr, n, idx(mtx::rng(0,0), j, k)); // only happens with periodic boundary
+        psi[e][n](idx(mtx::rng(ii), j, k)) =
+          this->nghbr_data(nghbr, e, n, idx(mtx::rng(0,0), j, k)); // only happens with periodic boundary
     }
     else 
     {
-      (*psi[n])(idx(mtx::rng(i_min, i_max), j, k)) =
-        this->nghbr_data(nghbr, n, idx(mtx::rng((i_min + mod) % mod, (i_max + mod) % mod), j, k));
+      psi[e][n](idx(mtx::rng(i_min, i_max), j, k)) =
+        this->nghbr_data(nghbr, e, n, idx(mtx::rng((i_min + mod) % mod, (i_max + mod) % mod), j, k));
     }
   }
 
-  public: void advect(adv<real_t> *a, int n, int s, quantity<si::time, real_t> dt)
+  public: void advect(int e, int n, int s, adv<real_t> *a)
   {
-    a->op3D(psi, cache->sclr, cache->vctr, *ijk, n, s, Cx.get(), Cy.get(), Cz.get());
+    a->op3D(psi[e].c_array(), cache->sclr, cache->vctr, *ijk, n, s, Cx.get(), Cy.get(), Cz.get());
   }
 
-  public: void cycle_arrays(const int n)
+  public: void cycle_arrays(const int e, const int n)
   {
     switch (advsch->time_levels())
     {
       case 2: // e.g. upstream, mpdata
-        mtx::cycle(*psi[n], *psi[n+1]);
+        mtx::cycle(psi[e][n], psi[e][n+1]);
         break;
       case 3: // e.g. leapfrog
-        mtx::cycle(*psi[n-1], *psi[n], *psi[n+1]);
+        mtx::cycle(psi[e][n-1], psi[e][n], psi[e][n+1]);
         break;
       default: assert(false);
     }

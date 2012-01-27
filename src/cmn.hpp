@@ -54,4 +54,8 @@ typedef boost::units::multiply_typeof_helper<
     si::length
   >::type velocity_times_length;
 
+// Boost.ptr_vector // TODO: should it be checked at 'configure' step?
+#  include <boost/ptr_container/ptr_vector.hpp>
+using boost::ptr_vector;
+
 #endif

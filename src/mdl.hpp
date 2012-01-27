@@ -32,7 +32,7 @@ void mdl(const po::variables_map &vm, const string &cmdline)
     if (fllbckp != NULL) fllbck.reset(fllbckp);
   }
 
-  // velocity choice
+  // velocity field choice
   auto_ptr<vel<real_t> > velocity(opt_vel<real_t>(vm, grid.get()));
 
   // initial condition
@@ -43,7 +43,12 @@ void mdl(const po::variables_map &vm, const string &cmdline)
 
   // grouping all above into a single set-up object
   auto_ptr<stp<real_t> > setup(opt_stp<real_t>(vm, 
-    advsch.get(), fllbck.get(), velocity.get(), intcond.get(), grid.get(), equations.get()
+    advsch.get(), 
+    fllbck.get(), 
+    velocity.get(), 
+    intcond.get(), 
+    grid.get(), 
+    equations.get()
   ));
 
   // output choice

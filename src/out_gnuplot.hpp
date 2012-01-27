@@ -34,11 +34,13 @@ class out_gnuplot : public out<real_t>
   }
 
   public: virtual void record(
-    mtx::arr<real_t> *psi,
+    int e,
+    const mtx::arr<real_t> &psi,
     const mtx::idx &ijk, 
     const unsigned long t
   ) 
   {
+    assert(e == 0); // TODO: maybe allow chosing which to output, or try outputting multiple fields?
     // sanity check
     if (ijk.lbound(mtx::j) == ijk.ubound(mtx::j) && ijk.lbound(mtx::k) == ijk.ubound(mtx::k)) 
       record_helper<mtx::idx_ijk>(psi, ijk.i, t);
@@ -52,7 +54,7 @@ class out_gnuplot : public out<real_t>
   
   private:
   template<class idx>
-  void record_helper(mtx::arr<real_t> *psi, const mtx::rng &i, const unsigned long t)
+  void record_helper(const mtx::arr<real_t> &psi, const mtx::rng &i, const unsigned long t)
   {
     // end record if needed and output the data + some housekeeping
     if (t_last != -1 && t != t_last)
@@ -67,14 +69,14 @@ class out_gnuplot : public out<real_t>
         std::cout 
           << real_t((grid->x(ii,0,0) - real_t(.5) * grid->dx()) / si::metres) // TODO: this assumes x 
           << "\t"
-          << *(*psi)(idx(mtx::rng(ii,ii), mtx::rng(0,0), mtx::rng(0,0))).dataFirst() 
+          << *(psi)(idx(mtx::rng(ii,ii), mtx::rng(0,0), mtx::rng(0,0))).dataFirst() 
           << std::endl
           << real_t((grid->x(ii,0,0) + real_t(.5) * grid->dx()) / si::metres) // TODO: this assumes x
           << "\t"
-          << *(*psi)(idx(mtx::rng(ii,ii), mtx::rng(0,0), mtx::rng(0,0))).dataFirst() 
+          << *(psi)(idx(mtx::rng(ii,ii), mtx::rng(0,0), mtx::rng(0,0))).dataFirst() 
           << std::endl;
       else
-        std::cout << *(*psi)(idx(mtx::rng(ii,ii), mtx::rng(0,0), mtx::rng(0,0))).dataFirst() << std::endl;
+        std::cout << *(psi)(idx(mtx::rng(ii,ii), mtx::rng(0,0), mtx::rng(0,0))).dataFirst() << std::endl;
     }
   
     // housekeeping
