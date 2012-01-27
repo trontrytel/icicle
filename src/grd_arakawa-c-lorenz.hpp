@@ -51,14 +51,51 @@ class grd_arakawa_c_lorenz : public grd<real_t>
   public: int ny() { return ny_; }
   public: int nz() { return nz_; }
 
-  public: mtx::rng rng_sclr(int first, int last, int halo) 
+  private: mtx::rng rng_sclr(int first, int last, int halo) 
   { 
     return mtx::rng(first - halo, last + halo); 
   }
+
   public: mtx::rng rng_vctr(int first, int last, int halo) 
   { 
     assert(halo > 0);
     return mtx::rng(first - m_half - halo, last + p_half + halo); 
+  }
+
+  public: mtx::idx rng_sclr(int i_min, int i_max, int j_min, int j_max, int k_min, int k_max, int halo) 
+  {
+    return mtx::idx_ijk(
+      rng_sclr(i_min, i_max, halo),
+      rng_sclr(j_min, j_max, halo),
+      rng_sclr(k_min, k_max, halo)
+    );
+  }
+
+  public: mtx::idx rng_vctr_x(const mtx::idx &ijk, int halo)
+  {
+    return mtx::idx_ijk(
+      rng_vctr(ijk.lbound(0), ijk.ubound(0), halo),
+      rng_sclr(ijk.lbound(1), ijk.ubound(1), halo),
+      rng_sclr(ijk.lbound(2), ijk.ubound(2), halo)
+    );
+  }
+
+  public: mtx::idx rng_vctr_y(const mtx::idx &ijk, int halo)
+  {
+    return mtx::idx_ijk(
+      rng_sclr(ijk.lbound(0), ijk.ubound(0), halo),
+      rng_vctr(ijk.lbound(1), ijk.ubound(1), halo),
+      rng_sclr(ijk.lbound(2), ijk.ubound(2), halo)
+    );
+  }
+
+  public: mtx::idx rng_vctr_z(const mtx::idx &ijk, int halo)
+  {
+    return mtx::idx_ijk(
+      rng_sclr(ijk.lbound(0), ijk.ubound(0), halo),
+      rng_sclr(ijk.lbound(1), ijk.ubound(1), halo),
+      rng_vctr(ijk.lbound(2), ijk.ubound(2), halo)
+    );
   }
 
   // coordinates at which u(x,y,z), v(x,y,z), w(x,y,z) are evaluated

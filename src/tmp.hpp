@@ -8,7 +8,7 @@
 #ifndef TMP_HPP
 #  define TMP_HPP
 
-#  include "cmn.hpp" // root class, error reporting
+#  include "cmn.hpp" 
 #  include "mtx.hpp"
 #  include "grd.hpp"
 
@@ -31,12 +31,12 @@ class tmp : root
     vctr = new mtx::arr<real_t>*[n_vctr];
     for (int n=0; n < n_vctr; ++n)
     {
-      vctr_guard[n].reset(new mtx::arr<real_t>(
+      vctr_guard[n].reset(new mtx::arr<real_t>(mtx::idx_ijk(
         // 3 x rng_vctr guarantees the temp space may be used for all dimensions
         grid->rng_vctr(i_min, i_max, halo), 
         grid->rng_vctr(j_min, j_max, halo), 
         grid->rng_vctr(k_min, k_max, halo)  
-      ));
+      )));
       vctr[n] = vctr_guard[n].get();
     }
 
@@ -45,9 +45,7 @@ class tmp : root
     for (int n=0; n < n_sclr; ++n)
     {
       sclr_guard[n].reset(new mtx::arr<real_t>(
-        grid->rng_sclr(i_min, i_max, halo),
-        grid->rng_sclr(j_min, j_max, halo),
-        grid->rng_sclr(k_min, k_max, halo)
+        grid->rng_sclr(i_min, i_max, j_min, j_max, k_min, k_max, halo)
       ));
       sclr[n] = sclr_guard[n].get();
     }

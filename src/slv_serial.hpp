@@ -16,7 +16,8 @@ template <typename real_t>
 class slv_serial : public slv<real_t>
 {
   private: adv<real_t> *fllbck, *advsch;
-  private: auto_ptr<mtx::rng> i, j, k, i_all, j_all, k_all;
+  private: auto_ptr<mtx::idx> ijk;
+  private: auto_ptr<mtx::idx> ijk_all;
   private: out<real_t> *output;
   private: stp<real_t> *setup;
   private: int halo;
@@ -55,9 +56,7 @@ class slv_serial : public slv<real_t>
     for (int n=0; n < advsch->time_levels(); ++n) 
     {
       psi_guard[n].reset(new mtx::arr<real_t>(
-        setup->grid->rng_sclr(i_min, i_max, halo),
-        setup->grid->rng_sclr(j_min, j_max, halo),
-        setup->grid->rng_sclr(k_min, k_max, halo)
+        setup->grid->rng_sclr(i_min, i_max, j_min, j_max, k_min, k_max, halo)
       ));
       psi[n] = psi_guard[n].get();
     }
@@ -72,48 +71,29 @@ class slv_serial : public slv<real_t>
     ));
 
     // indices
-    i.reset(new mtx::rng(i_min, i_max));
-    j.reset(new mtx::rng(j_min, j_max));
-    k.reset(new mtx::rng(k_min, k_max));
-    i_all.reset(new mtx::rng(i_min - halo, i_max + halo));
-    j_all.reset(new mtx::rng(j_min - halo, j_max + halo));
-    k_all.reset(new mtx::rng(k_min - halo, k_max + halo));
+    ijk.reset(new mtx::idx_ijk(
+      mtx::rng(i_min, i_max), 
+      mtx::rng(j_min, j_max), 
+      mtx::rng(k_min, k_max)
+    ));
+    ijk_all.reset(new mtx::idx_ijk(
+      mtx::rng(i_min - halo, i_max + halo),
+      mtx::rng(j_min - halo, j_max + halo),
+      mtx::rng(k_min - halo, k_max + halo)
+    ));
 
     // initial condition
-    setup->grid->populate_scalar_field(*i, *j, *k, psi[0], setup->intcond);
+    setup->grid->populate_scalar_field(*ijk, psi[0], setup->intcond);
 
     // periodic boundary in all directions
     for (int s=this->first; s <= this->last; ++s) 
       this->hook_neighbour(s, this);
  
     // velocity fields
-    {
-      // TODO: this is grid-related logic! - to be moved from here
-      mtx::rng 
-        ix = setup->grid->rng_vctr(i->first(), i->last(), halo),
-        jx = setup->grid->rng_sclr(j->first(), j->last(), halo),
-        kx = setup->grid->rng_sclr(k->first(), k->last(), halo);
-      Cx.reset(new mtx::arr<real_t>(ix, jx, kx));
-      mtx::rng 
-        iy = setup->grid->rng_sclr(i->first(), i->last(), halo),
-        jy = setup->grid->rng_vctr(j->first(), j->last(), halo),
-        ky = setup->grid->rng_sclr(k->first(), k->last(), halo);
-      Cy.reset(new mtx::arr<real_t>(iy, jy, ky));
-      mtx::rng 
-        iz = setup->grid->rng_sclr(i->first(), i->last(), halo),
-        jz = setup->grid->rng_sclr(j->first(), j->last(), halo),
-        kz = setup->grid->rng_vctr(k->first(), k->last(), halo);
-      Cz.reset(new mtx::arr<real_t>(iz, jz, kz));
-
-      setup->grid->populate_courant_fields(
-        ix, jx, kx, 
-        iy, jy, ky, 
-        iz, jz, kz, 
-        Cx.get(), Cy.get(), Cz.get(), 
-        setup->velocity, setup->dt, 
-        setup->grid->nx(), setup->grid->ny(), setup->grid->nz()
-      );
-    }
+    Cx.reset(new mtx::arr<real_t>(setup->grid->rng_vctr_x(*ijk, halo)));
+    Cy.reset(new mtx::arr<real_t>(setup->grid->rng_vctr_y(*ijk, halo)));
+    Cz.reset(new mtx::arr<real_t>(setup->grid->rng_vctr_z(*ijk, halo)));
+    setup->grid->populate_courant_fields(Cx.get(), Cy.get(), Cz.get(), setup->velocity, setup->dt);
   }
 
   public: ~slv_serial()
@@ -124,7 +104,7 @@ class slv_serial : public slv<real_t>
 
   public: void record(const int n, const unsigned long t)
   {
-    output->record(psi[n], *i, *j, *k, t);
+    output->record(psi[n], *ijk, t);
   }
 
   public: typename mtx::arr<real_t>::type data(int n, const mtx::idx &idx)
@@ -134,12 +114,12 @@ class slv_serial : public slv<real_t>
 
   public: void fill_halos(int n)
   {
-    fill_halos_helper<mtx::idx_ijk>(psi, slv<real_t>::left, n, i->first() - halo, i->first() - 1, *j, *k, setup->grid->nx());
-    fill_halos_helper<mtx::idx_ijk>(psi, slv<real_t>::rght, n, i->last() + 1, i->last() + halo,   *j, *k, setup->grid->nx());
-    fill_halos_helper<mtx::idx_jki>(psi, slv<real_t>::fore, n, j->first() - halo, j->first() - 1, *k, *i_all, setup->grid->ny());
-    fill_halos_helper<mtx::idx_jki>(psi, slv<real_t>::hind, n, j->last() + 1, j->last() + halo,   *k, *i_all, setup->grid->ny());
-    fill_halos_helper<mtx::idx_kij>(psi, slv<real_t>::base, n, k->first() - halo, k->first() - 1, *i_all, *j_all, setup->grid->nz());
-    fill_halos_helper<mtx::idx_kij>(psi, slv<real_t>::apex, n, k->last() + 1, k->last() + halo,   *i_all, *j_all, setup->grid->nz());
+    fill_halos_helper<mtx::idx_ijk>(psi, slv<real_t>::left, n, ijk->lbound(mtx::i) - halo, ijk->lbound(mtx::i) - 1,    ijk->j, ijk->k, setup->grid->nx());
+    fill_halos_helper<mtx::idx_ijk>(psi, slv<real_t>::rght, n, ijk->ubound(mtx::i) + 1,    ijk->ubound(mtx::i) + halo, ijk->j, ijk->k, setup->grid->nx());
+    fill_halos_helper<mtx::idx_jki>(psi, slv<real_t>::fore, n, ijk->lbound(mtx::j) - halo, ijk->lbound(mtx::j) - 1,    ijk->k, ijk_all->i, setup->grid->ny());
+    fill_halos_helper<mtx::idx_jki>(psi, slv<real_t>::hind, n, ijk->ubound(mtx::j) + 1,    ijk->ubound(mtx::j) + halo, ijk->k, ijk_all->i, setup->grid->ny());
+    fill_halos_helper<mtx::idx_kij>(psi, slv<real_t>::base, n, ijk->lbound(mtx::k) - halo, ijk->lbound(mtx::k) - 1,    ijk_all->i, ijk_all->j, setup->grid->nz());
+    fill_halos_helper<mtx::idx_kij>(psi, slv<real_t>::apex, n, ijk->ubound(mtx::k) + 1,    ijk->ubound(mtx::k) + halo, ijk_all->i, ijk_all->j, setup->grid->nz());
   }
 
   private:
@@ -163,7 +143,7 @@ class slv_serial : public slv<real_t>
 
   public: void advect(adv<real_t> *a, int n, int s, quantity<si::time, real_t> dt)
   {
-    a->op3D(psi, cache->sclr, cache->vctr, *i, *j, *k, n, s, Cx.get(), Cy.get(), Cz.get());
+    a->op3D(psi, cache->sclr, cache->vctr, *ijk, n, s, Cx.get(), Cy.get(), Cz.get());
   }
 
   public: void cycle_arrays(const int n)

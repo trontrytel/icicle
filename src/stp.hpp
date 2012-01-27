@@ -19,21 +19,19 @@
 #  include "eqs.hpp"
 
 template <typename real_t>
-class stp : root
+struct stp : root
 {
-  // that should probably be the only place where public fields are used
-  // TODO: but maybe better offer public const-ref-returning methods?
-  public: adv<real_t> *fllbck, *advsch;
-  public: vel<real_t> *velocity;
-  public: ini<real_t> *intcond;
-  public: grd<real_t> *grid;
-  public: eqs<real_t> *equations;
+  adv<real_t> *fllbck, *advsch;
+  vel<real_t> *velocity;
+  ini<real_t> *intcond;
+  grd<real_t> *grid;
+  eqs<real_t> *equations;
 
-  public: int nout;
-  public: unsigned long nt;
-  public: quantity<si::time, real_t> dt;
+  int nout;
+  unsigned long nt;
+  quantity<si::time, real_t> dt;
 
-  public: stp(
+  stp(
     adv<real_t> *fllbck, 
     adv<real_t> *advsch, 
     vel<real_t> *velocity,
@@ -53,33 +51,17 @@ class stp : root
     bool auto_dt = (dt_arg/si::seconds == 0);
     dt = auto_dt ? real_t(1) * si::seconds : dt_arg;
 
-    // TODO! merge with the logic from slv ctor and move into grid
     int halo = (advsch->stencil_extent() -1) / 2;
-    mtx::rng
-      ix = grid->rng_vctr(0, grid->nx() - 1, halo),
-      jx = grid->rng_sclr(0, grid->ny() - 1, halo),
-      kx = grid->rng_sclr(0, grid->nz() - 1, halo);
-    mtx::rng
-      iy = grid->rng_sclr(0, grid->nx() - 1, halo),
-      jy = grid->rng_vctr(0, grid->ny() - 1, halo),
-      ky = grid->rng_sclr(0, grid->nz() - 1, halo);
-    mtx::rng
-      iz = grid->rng_sclr(0, grid->nx() - 1, halo),
-      jz = grid->rng_sclr(0, grid->ny() - 1, halo),
-      kz = grid->rng_vctr(0, grid->nz() - 1, halo);
-    mtx::arr<real_t>
-      Cx(ix, jx, kx),
-      Cy(iy, jy, ky),
-      Cz(iz, jz, kz);
-
-    grid->populate_courant_fields(
-      ix, jx, kx,
-      iy, jy, ky,
-      iz, jz, kz,
-      &Cx, &Cy, &Cz,
-      velocity, dt,
-      grid->nx(), grid->ny(), grid->nz()
+    mtx::idx_ijk ijk(
+      mtx::rng(0, grid->nx() - 1),
+      mtx::rng(0, grid->ny() - 1),
+      mtx::rng(0, grid->nz() - 1)
     );
+    mtx::arr<real_t>
+      Cx(grid->rng_vctr_x(ijk, halo)),
+      Cy(grid->rng_vctr_y(ijk, halo)),
+      Cz(grid->rng_vctr_z(ijk, halo));
+    grid->populate_courant_fields(&Cx, &Cy, &Cz, velocity, dt);
     
     real_t cmax = max(sqrt(pow2(Cx) + pow2(Cy) + pow2(Cz))); // TODO: check if that's a correct way to calculate it?
 

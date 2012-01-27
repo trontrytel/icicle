@@ -20,7 +20,7 @@ for bits in {32,64,128}; do
                   if [ $slv = "fork" ]; then continue; fi # TODO: output not ready
                   if [ $slv = "fork+openmp" ]; then continue; fi # TODO: not ready
                   if [ $slv = "fork+threads" ]; then continue; fi # TODO: not ready
-                  if [ "x$nxyz" \> "x--nxx" -a $nsd -gt 1 ]; then continue; fi # parallelism only in X
+                  if [ "x$nxyz" \> "x--grd.nxx" -a $nsd -gt 1 ]; then continue; fi # parallelism only in X
                   if [ "$adv" = "mpdata --adv.mpdata.fct 1" -a $nsd = 20 ]; then continue; fi # halo > nx
 
                   # the actual test

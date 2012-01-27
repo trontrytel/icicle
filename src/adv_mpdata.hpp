@@ -300,7 +300,7 @@ class adv_mpdata : public adv_upstream<real_t>
     /// eq. (12) in Smolarkiewicz 1984 (J. Comp. Phys.,54,352-362) 
   public: void op3D(
     mtx::arr<real_t> *psi[], mtx::arr<real_t> *[], mtx::arr<real_t> *tmp_v[],
-    const mtx::rng &i, const mtx::rng &j, const mtx::rng &k, 
+    const mtx::idx &ijk,
     const int n, const int step,
     const mtx::arr<real_t> * const Cx, const mtx::arr<real_t> * const Cy, const mtx::arr<real_t> * const Cz
   )
@@ -331,20 +331,20 @@ class adv_mpdata : public adv_upstream<real_t>
       *       Cz_corr = (step < 2 ? Cz : tmp_v[z_new]);
      
     *psi[n+1] = *psi[0]; // TODO: at least this should be placed in adv... and the leapfrog & upstream in adv_dimsplit?
-    if (i.first() != i.last()) 
+    if (ijk.i_spans)
     {
-      if (step > 1) mpdata_U<mtx::idx_ijk>(Cx_corr, psi, n, step, i, j, k, *Cx_unco, *Cy_unco, *Cz_unco);
-      adv_upstream<real_t>::template op<mtx::idx_ijk>(psi, NULL, NULL, i, j, k, n, 1, Cx_corr, NULL, NULL);
+      if (step > 1) mpdata_U<mtx::idx_ijk>(Cx_corr, psi, n, step, ijk.i, ijk.j, ijk.k, *Cx_unco, *Cy_unco, *Cz_unco);
+      adv_upstream<real_t>::template op<mtx::idx_ijk>(psi, NULL, NULL, ijk.i, ijk.j, ijk.k, n, 1, Cx_corr, NULL, NULL);
     }
-    if (j.first() != j.last())
+    if (ijk.j_spans)
     {
-      if (step > 1) mpdata_U<mtx::idx_jki>(Cy_corr, psi, n, step, j, k, i, *Cy_unco, *Cz_unco, *Cx_unco);
-      adv_upstream<real_t>::template op<mtx::idx_jki>(psi, NULL, NULL, j, k, i, n, 1, Cy_corr, NULL, NULL);
+      if (step > 1) mpdata_U<mtx::idx_jki>(Cy_corr, psi, n, step, ijk.j, ijk.k, ijk.i, *Cy_unco, *Cz_unco, *Cx_unco);
+      adv_upstream<real_t>::template op<mtx::idx_jki>(psi, NULL, NULL, ijk.j, ijk.k, ijk.i, n, 1, Cy_corr, NULL, NULL);
     }
-    if (k.first() != k.last())
+    if (ijk.k_spans)
     {
-      if (step > 1) mpdata_U<mtx::idx_kij>(Cz_corr, psi, n, step, k, i, j, *Cz_unco, *Cx_unco, *Cy_unco);
-      adv_upstream<real_t>::template op<mtx::idx_kij>(psi, NULL, NULL, k, i, j, n, 1, Cz_corr, NULL, NULL);
+      if (step > 1) mpdata_U<mtx::idx_kij>(Cz_corr, psi, n, step, ijk.k, ijk.i, ijk.j, *Cz_unco, *Cx_unco, *Cy_unco);
+      adv_upstream<real_t>::template op<mtx::idx_kij>(psi, NULL, NULL, ijk.k, ijk.i, ijk.j, n, 1, Cz_corr, NULL, NULL);
     }
   }
 };

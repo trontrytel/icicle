@@ -16,6 +16,10 @@
 
 namespace mtx
 {
+  const int i = blitz::firstRank;
+  const int j = blitz::secondRank;
+  const int k = blitz::thirdRank;
+
   typedef blitz::Range rng;
 
   template <typename real_t>
@@ -31,18 +35,6 @@ namespace mtx
   {
     return blitz::epsilon(real_t(0));
   }
-
-  template <typename real_t>
-  struct arr : blitz::Array<real_t, 3>
-  {
-    typedef blitz::Array<real_t, 3> type;
-
-    arr(const blitz::Range &i, const blitz::Range &j, const blitz::Range &k) 
-      : blitz::Array<real_t, 3>(i, j, k)
-    { 
-      (*this)(i,j,k) = nan<real_t>();
-    } 
-  };
 
   template <typename arr> void cycle(arr &a, arr &b) 
   { 
@@ -65,8 +57,15 @@ namespace mtx
  */
   struct idx : blitz::RectDomain<3> 
   {
+    rng i, j, k;
+    bool i_spans, j_spans, k_spans;
+
     idx(const blitz::TinyVector<blitz::Range, 3> &tv)
-      : blitz::RectDomain<3>(tv)
+      : blitz::RectDomain<3>(tv), 
+        i(tv[mtx::i]), j(tv[mtx::j]), k(tv[mtx::k]), 
+        i_spans(i.first() != i.last()),
+        j_spans(j.first() != j.last()),
+        k_spans(k.first() != k.last())
     { }
   };
 
@@ -89,6 +88,24 @@ namespace mtx
     idx_kij(const blitz::Range &k, const blitz::Range &i, const blitz::Range &j) 
       : idx(blitz::TinyVector<blitz::Range, 3>(i,j,k)) 
     { } 
+  };
+
+  template <typename real_t>
+  struct arr : blitz::Array<real_t, 3>
+  {
+    typedef blitz::Array<real_t, 3> type;
+
+    arr(const idx &ijk)
+      : blitz::Array<real_t, 3>(
+        blitz::Range(ijk.lbound(0), ijk.ubound(0)), 
+        blitz::Range(ijk.lbound(1), ijk.ubound(1)), 
+        blitz::Range(ijk.lbound(2), ijk.ubound(2))
+      )
+    {
+#  ifndef NDEBUG
+      (*this)(ijk) = nan<real_t>();
+#  endif
+    }
   };
 };
 

@@ -26,8 +26,8 @@ class slv_parallel_distmem : public shrdmem_class
     )
       : nghbr(nghbr), peer(peer), ixr(ixr), oxr(oxr), yr(yr), zr(zr)
     { 
-      ibuf.reset(new mtx::arr<real_t>(ixr, yr, zr));
-      obuf.reset(new mtx::arr<real_t>(oxr, yr, zr));
+      ibuf.reset(new mtx::arr<real_t>(mtx::idx_ijk(ixr, yr, zr)));
+      obuf.reset(new mtx::arr<real_t>(mtx::idx_ijk(oxr, yr, zr)));
       cnt = ibuf->cols() * ibuf->rows() * ibuf->depth();
     }
 

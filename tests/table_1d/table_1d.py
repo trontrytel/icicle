@@ -40,12 +40,13 @@ for iord in (1,2,3,4) : #,40) :
         # simulation parameters
         nt = 40
         courant = .5
+        dt = 1
         cmd = (
           '../../icicle',
           '--bits',str(bits),
-          '--dt','1', 
+          '--dt',str(dt), 
           '--grd.dx','1',
-          '--nt',str(nt),
+          '--t_max',str(nt*dt),
           '--grd.nx',str(60),
           '--vel','uniform',
           '--vel.uniform.u',str(courant),
@@ -61,7 +62,7 @@ for iord in (1,2,3,4) : #,40) :
           '--slv','serial',
           '--out','netcdf', 
           '--out.netcdf.ver','3', 
-          '--out.netcdf.freq',str(nt), 
+          '--dt_out',str(nt*dt), 
           '--out.netcdf.file',file
         )
         if os.path.exists(file) : os.unlink(file)

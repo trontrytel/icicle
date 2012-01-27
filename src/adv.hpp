@@ -82,7 +82,7 @@ class adv : root
     mtx::arr<real_t> *psi[], 
     mtx::arr<real_t> *tmp_s[], 
     mtx::arr<real_t> *tmp_v[], 
-    const mtx::rng &i, const mtx::rng &j, const mtx::rng &k, 
+    const mtx::idx &ijk,
     const int n, const int s,
     const mtx::arr<real_t> * const Cx, const mtx::arr<real_t> * const Cy, const mtx::arr<real_t> * const Cz
   )
@@ -91,9 +91,9 @@ class adv : root
     *psi[n+1] = *psi[0];
 
     // we use the same code for each dimension switching the indices accordingly
-    if (i.first() != i.last()) op_ijk(psi, tmp_s, tmp_v, i, j, k, n, s, Cx, Cy, Cz); // X
-    if (j.first() != j.last()) op_jki(psi, tmp_s, tmp_v, i, j, k, n, s, Cx, Cy, Cz); // Y
-    if (k.first() != k.last()) op_kij(psi, tmp_s, tmp_v, i, j, k, n, s, Cx, Cy, Cz); // Z
+    if (ijk.i_spans) op_ijk(psi, tmp_s, tmp_v, ijk.i, ijk.j, ijk.k, n, s, Cx, Cy, Cz); // X
+    if (ijk.j_spans) op_jki(psi, tmp_s, tmp_v, ijk.i, ijk.j, ijk.k, n, s, Cx, Cy, Cz); // Y
+    if (ijk.k_spans) op_kij(psi, tmp_s, tmp_v, ijk.i, ijk.j, ijk.k, n, s, Cx, Cy, Cz); // Z
   }
 };
 #endif

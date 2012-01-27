@@ -9,7 +9,6 @@
 #  define INI_CONE_HPP
 
 #  include "ini.hpp" 
-#  include <boost/units/cmath.hpp> // TODO: include somewhere else...
 
 template <typename real_t>
 class ini_cone : public ini<real_t>

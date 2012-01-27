@@ -43,6 +43,7 @@ class root { public: virtual ~root() {} };
 
 // Boost.Units
 #  include <boost/units/systems/si.hpp>
+#  include <boost/units/cmath.hpp> 
 #  include <boost/units/io.hpp>
 using boost::units::quantity; 
 namespace si = boost::units::si;

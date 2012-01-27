@@ -39,16 +39,17 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
 
   public: void op3D(
     mtx::arr<real_t> *psi[], mtx::arr<real_t> *tmp_s[], mtx::arr<real_t> *tmp_v[],
-    const mtx::rng &i, const mtx::rng &j, const mtx::rng &k,
+    const mtx::idx &ijk,
     const int n, const int step,
     const mtx::arr<real_t> * const Cx, const mtx::arr<real_t> * const Cy, const mtx::arr<real_t> * const Cz
   )
   {
-    assert(min((*psi[n])(i,j,k)) >= real_t(0)); // accepting positive scalars only
+    assert(min((*psi[n])(ijk)) >= real_t(0)); // accepting positive scalars only
 
-    mtx::rng ii = mtx::rng(i.first() - 1, i.last() + 1),
-        jj = mtx::rng(j.first() - 1, j.last() + 1),
-        kk = mtx::rng(k.first() - 1, k.last() + 1);
+    mtx::rng 
+      ii = mtx::rng(ijk.lbound(mtx::i) - 1, ijk.ubound(mtx::i) + 1),
+      jj = mtx::rng(ijk.lbound(mtx::j) - 1, ijk.ubound(mtx::j) + 1),
+      kk = mtx::rng(ijk.lbound(mtx::k) - 1, ijk.ubound(mtx::k) + 1);
 
     assert(finite(sum((*psi[n])(ii  , jj  , kk  ))));
     assert(finite(sum((*psi[n])(ii-1, jj  , kk  ))));
@@ -78,7 +79,7 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
       psi_min(ii,jj,kk) = mpdata_fct_minmax(min, psi, n, ii, jj, kk);
       psi_max(ii,jj,kk) = mpdata_fct_minmax(max, psi, n, ii, jj, kk);
       // performing standard upstream advection
-      adv_upstream<real_t>::op3D(psi, NULL, NULL, i, j, k, n, 1, Cx, Cy, Cz);
+      adv_upstream<real_t>::op3D(psi, NULL, NULL, ijk, n, 1, Cx, Cy, Cz);
     }
     else
     {
@@ -119,20 +120,20 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
    
       // performing upstream advection using the ''monotonic'' velocities (logic from adv::op3D)
       *psi[n+1] = *psi[0]; // TODO: at least this should be placed in adv... and the leapfrog & upstream in adv_dimsplit?
-      if (i.first() != i.last())  
+      if (ijk.i_spans)
       {
-        fct_helper<mtx::idx_ijk>(psi, tmp_s, tmp_v, *Cx_mono, *Cx_corr, *Cy_corr, *Cz_corr, i, j, k, n);
-        adv_upstream<real_t>::template op<mtx::idx_ijk>(psi, NULL, NULL, i, j, k, n, 1, Cx_mono, NULL, NULL); 
+        fct_helper<mtx::idx_ijk>(psi, tmp_s, tmp_v, *Cx_mono, *Cx_corr, *Cy_corr, *Cz_corr, ijk.i, ijk.j, ijk.k, n);
+        adv_upstream<real_t>::template op<mtx::idx_ijk>(psi, NULL, NULL, ijk.i, ijk.j, ijk.k, n, 1, Cx_mono, NULL, NULL); 
       }
-      if (j.first() != j.last())
+      if (ijk.j_spans)
       {
-        fct_helper<mtx::idx_jki>(psi, tmp_s, tmp_v, *Cy_mono, *Cy_corr, *Cz_corr, *Cx_corr, j, k, i, n); 
-        adv_upstream<real_t>::template op<mtx::idx_jki>(psi, NULL, NULL, j, k, i, n, 1, Cy_mono, NULL, NULL); 
+        fct_helper<mtx::idx_jki>(psi, tmp_s, tmp_v, *Cy_mono, *Cy_corr, *Cz_corr, *Cx_corr, ijk.j, ijk.k, ijk.i, n); 
+        adv_upstream<real_t>::template op<mtx::idx_jki>(psi, NULL, NULL, ijk.j, ijk.k, ijk.i, n, 1, Cy_mono, NULL, NULL); 
       }
-      if (k.first() != k.last())
+      if (ijk.k_spans)
       {
-        fct_helper<mtx::idx_kij>(psi, tmp_s, tmp_v, *Cz_mono, *Cz_corr, *Cx_corr, *Cy_corr, k, i, j, n); 
-        adv_upstream<real_t>::template op<mtx::idx_kij>(psi, NULL, NULL, k, i, j, n, 1, Cz_mono, NULL, NULL); 
+        fct_helper<mtx::idx_kij>(psi, tmp_s, tmp_v, *Cz_mono, *Cz_corr, *Cx_corr, *Cy_corr, ijk.k, ijk.i, ijk.j, n); 
+        adv_upstream<real_t>::template op<mtx::idx_kij>(psi, NULL, NULL, ijk.k, ijk.i, ijk.j, n, 1, Cz_mono, NULL, NULL); 
       }
     }
   }

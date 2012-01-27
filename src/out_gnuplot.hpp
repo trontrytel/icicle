@@ -20,7 +20,7 @@
 template <typename real_t>
 class out_gnuplot : public out<real_t>
 {
-  private: unsigned long t_last; // TODO: si::seconds?
+  private: unsigned long t_last;
   private: int i_last;
   private: bool steps;
   private: grd<real_t> *grid;
@@ -35,16 +35,17 @@ class out_gnuplot : public out<real_t>
 
   public: virtual void record(
     mtx::arr<real_t> *psi,
-    const mtx::rng &i, const mtx::rng &j, const mtx::rng &k, const unsigned long t
+    const mtx::idx &ijk, 
+    const unsigned long t
   ) 
   {
     // sanity check
-    if (j.first() == j.last() && k.first() == k.last()) 
-      record_helper<mtx::idx_ijk>(psi, i, t);
-    else if (i.first() == i.last() && k.first() == k.last()) 
-      record_helper<mtx::idx_jki>(psi, j, t);
-    else if (i.first() == i.last() && j.first() == j.last()) 
-      record_helper<mtx::idx_kij>(psi, k, t);
+    if (ijk.lbound(mtx::j) == ijk.ubound(mtx::j) && ijk.lbound(mtx::k) == ijk.ubound(mtx::k)) 
+      record_helper<mtx::idx_ijk>(psi, ijk.i, t);
+    else if (ijk.lbound(mtx::i) == ijk.ubound(mtx::i) && ijk.lbound(mtx::k) == ijk.ubound(mtx::k)) 
+      record_helper<mtx::idx_jki>(psi, ijk.j, t);
+    else if (ijk.lbound(mtx::i) == ijk.ubound(mtx::i) && ijk.lbound(mtx::j) == ijk.ubound(mtx::j)) 
+      record_helper<mtx::idx_kij>(psi, ijk.k, t);
     else 
       error_macro("gnuplot output works for 1D simulations only") 
   }

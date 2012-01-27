@@ -42,7 +42,7 @@ out<real_t> *opt_out(const po::variables_map &vm,
   if (outtype == "netcdf")
   {
     if (!vm.count("out.netcdf.file")) error_macro("output filename not specified (--out.netcdf.file option)")
-    return new out_netcdf<real_t>(vm["out.netcdf.file"].as<string>(), setup, setup->grid, // TODO: a po co? 
+    return new out_netcdf<real_t>(vm["out.netcdf.file"].as<string>(), setup, 
       vm["out.netcdf.ver"].as<int>(), cmdline);
   }
   else

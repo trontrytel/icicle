@@ -8,15 +8,16 @@
 #ifndef OUT_HPP
 #  define OUT_HPP
 
-#  include "cmn.hpp" // root class
-#  include "mtx.hpp" // Blitz includes
+#  include "cmn.hpp" 
+#  include "mtx.hpp" 
 
 template <typename real_t>
 class out : root
 {
-  public: virtual void record( // TODO: t should be in seconds
+  public: virtual void record( 
     mtx::arr<real_t> *psi, 
-    const mtx::rng &i, const mtx::rng &j, const mtx::rng &k, const unsigned long t
+    const mtx::idx &ijk, 
+    const unsigned long t
   ) = 0;
 };
 
