@@ -49,9 +49,6 @@ grd<real_t> *opt_grd(const po::variables_map& vm)
     if (nx <= 0 || ny <= 0 || nz <= 0) 
       error_macro("grd.nx, grd.ny and grd.nz must all be > 0")
 
-    // TODO... 
-    assert(dx == dy && dy == dz); 
-
     return new grd_arakawa_c_lorenz<real_t>(dx, dy, dz, nx, ny, nz);
   }
   else error_macro("unsupported grid type: " << grdtype)
