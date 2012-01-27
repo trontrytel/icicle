@@ -51,7 +51,7 @@ class tmp : root
     }
   }
 
-  public: ~tmp()
+  public: ~tmp() // TODO: get rid of it by using ptr_vector as in slv_serial.hpp
   {
     delete[] vctr;
     delete[] vctr_guard;

@@ -23,12 +23,12 @@ class slv : root
     nghbrs[s] = n; 
   }
 
-  public: virtual typename mtx::arr<real_t>::type data(int n, const mtx::idx &idx) = 0;
+  public: virtual typename mtx::arr<real_t>::type data(int e, int n, const mtx::idx &idx) = 0;
 
-  public: typename mtx::arr<real_t>::type nghbr_data(int side, int n, const mtx::idx &idx)
+  public: typename mtx::arr<real_t>::type nghbr_data(int side, int e, int n, const mtx::idx &idx)
   {
-    nghbrs[side]->sync(n);
-    return nghbrs[side]->data(n, idx);
+    nghbrs[side]->sync(e, n);
+    return nghbrs[side]->data(e, n, idx);
   }
 
   public: bool choose_an(adv<real_t> **a, int *n, int t, 
@@ -43,7 +43,7 @@ class slv : root
   }
 
   public: virtual void integ_loop() = 0;
-  public: virtual void sync(int n) {};
+  public: virtual void sync(int e, int n) {};
 };
 
 #endif

@@ -76,26 +76,30 @@ class slv_parallel : public slv<real_t>
       {
         for (int sdi=0; sdi < nsd; ++sdi) slvs[sdi]->record(n, t / setup->nout); 
       }
-      for (int s = 1; s <= a->num_steps(); ++s)
-      {   
-        barrier();
-        slvs[sd]->fill_halos(n);
-        barrier();
-        slvs[sd]->advect(a, n, s, setup->dt); 
-        if (!fallback) slvs[sd]->cycle_arrays(n);
-      } // s
-    } // t
+      for (int e = 0; e < setup->equations->n_vars(); ++e)
+      {
+        // TODO: fill caches (and perhaps also psi[n+1]) with NaNs if not in NDEBUG
+        for (int s = 1; s <= a->num_steps(); ++s)
+        {   
+          barrier();
+          slvs[sd]->fill_halos(e, n);
+          barrier();
+          slvs[sd]->advect(e, n, s, a); 
+          if (!fallback) slvs[sd]->cycle_arrays(e, n);
+        } // s - step
+      } // e - equation
+    } // t - time
     barrier();
     if (sd == 0) for (int sd=0; sd < nsd; ++sd) slvs[sd]->record(n, setup->nt / setup->nout);
   }
 
   // the two below are for MPI/fork + threads/OpenMP nested parallelisations
-  public: typename mtx::arr<real_t>::type data(int n, const mtx::idx &idx)
+  public: typename mtx::arr<real_t>::type data(int e, int n, const mtx::idx &idx)
   { 
     int sd = (idx.lbound(0) - i_min) / nxs;
     assert(sd == 0 || sd == nsd - 1);
     assert((idx.ubound(0) - i_min) / nxs == sd);
-    return slvs[sd]->data(n, idx); 
+    return slvs[sd]->data(e, n, idx); 
   }
 
   public: void hook_neighbour(int s, slv<real_t> *n) 

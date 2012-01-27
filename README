@@ -16,7 +16,8 @@
     - ... 
   - Blitz++ library ............ http://blitz.sourceforge.net/
   - Boost C++ libraries, incl.: ........ http://www.boost.org/
-    - Boost headers (Units, Program_options, Conversion)
+    - Boost headers: units, program_options, conversion,
+        pointer_container
 
 * optional libraries:
   - Boost C++ libraries, incl.: ........ http://www.boost.org/
