@@ -15,20 +15,6 @@
 #    include "stp.hpp"
 #    include "grd_arakawa-c-lorenz.hpp"
 
-// fixes preprocessor macro redefinition conflict with MPI
-// cf. http://www.unidata.ucar.edu/mailing_lists/archives/netcdfgroup/2009/msg00350.html
-//#    ifdef USE_BOOST_MPI 
-//#      define MPI_INCLUDED
-//#    endif              
-
-// the Lynton Appel's netCDF-4 C++ API (since netCDF 4.1.1)
-#    include <netcdf>
-using netCDF::NcFile;
-using netCDF::NcVar;
-using netCDF::NcDim;
-using netCDF::ncFloat;
-using netCDF::exceptions::NcException;
-
 // TODO: ncFloat vs. ncDouble as a command-line option (but it float computations and double requeste -> error)
 // TODO: add X_sclr i X_vctr variables! (e.g. for axis labelling)
 // TODO: is the order of dimensions optimal?
@@ -48,6 +34,7 @@ class out_netcdf : public out<real_t>
   ) 
     : info(cmdline)
   { 
+    // TODO: that's about cartesian/spherical/etc, not about Arakawa-C
     grd_arakawa_c_lorenz<real_t> *grid = dynamic_cast<grd_arakawa_c_lorenz<real_t>*>(setup->grid);
     if (grid == NULL) error_macro("netCDF output supports only the Arakawa-C grid")
     try
@@ -55,7 +42,7 @@ class out_netcdf : public out<real_t>
       netCDF::NcFile::FileFormat fmt;
       switch (ver)
       {
-        case 3: fmt = NcFile::classic; break;
+        case 3: fmt = NcFile::classic; break; // TODO: check in Cmake if that's supported!
         case 4: fmt = NcFile::nc4; break;
         default: error_macro("unsupported netCDF format version: " << ver)
       }

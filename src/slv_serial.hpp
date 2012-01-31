@@ -81,9 +81,8 @@ class slv_serial : public slv<real_t>
     ));
 
     // initial condition
-    assert(setup->equations->n_vars() == 1);
-    int e = 0;
-    setup->grid->populate_scalar_field(*ijk, &psi[e][0], setup->intcond); // TODO!!! multiple eqs
+    for (int e = 0; e < setup->equations->n_vars(); ++e)
+      setup->intcond->populate_scalar_field(setup->equations->var_name(e), *ijk, psi[e][0]); 
 
     // periodic boundary in all directions
     for (int s=this->first; s <= this->last; ++s) 

@@ -12,7 +12,7 @@
 #  include "eqs.hpp"
 
 template <typename real_t>
-class eqs_shallow_water_2d : public eqs<real_t>
+class eqs_shallow_water_2d : public eqs<real_t> // TODO: perhaps 1d/2d could be chosen automatically based on nx/ny
 {
   private: vector<struct eqs<real_t>::gte> sys;
 

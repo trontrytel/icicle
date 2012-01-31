@@ -5,24 +5,25 @@
  *  @section LICENSE
  *    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef INI_CONE_HPP
-#  define INI_CONE_HPP
+#ifndef INI_FUNC_CONE_HPP
+#  define INI_FUNC_CONE_HPP
 
-#  include "ini.hpp" 
+#  include "ini_func.hpp" 
 
 template <typename real_t>
-class ini_cone : public ini<real_t>
+class ini_func_cone : public ini_func<real_t>
 {
   private: quantity<si::length, real_t> h, x0, z0, r, h0;
 
-  public: ini_cone(
+  public: ini_func_cone(
+    const grd<real_t> &grid,
     const quantity<si::length, real_t> &h,
     const quantity<si::length, real_t> &x0,
     const quantity<si::length, real_t> &z0,
     const quantity<si::length, real_t> &r,
     const quantity<si::length, real_t> &h0
   )
-    : h(h), x0(x0), z0(z0), r(r), h0(h0)
+    : ini_func<real_t>(grid), h(h), x0(x0), z0(z0), r(r), h0(h0)
   {}
 
   public: quantity<si::dimensionless, real_t> psi(

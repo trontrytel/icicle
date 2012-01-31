@@ -8,15 +8,16 @@
 #ifndef INI_HPP
 #  define INI_HPP
 
-#  include "cmn.hpp" // root class, error reporting
+#  include "grd.hpp"
+#  include "mtx.hpp"
 
 template <typename real_t>
 class ini : root
 {
-  public: virtual quantity<si::dimensionless, real_t> psi(
-    const quantity<si::length, real_t> &x,
-    const quantity<si::length, real_t> &y,
-    const quantity<si::length, real_t> &z
+  public: virtual void populate_scalar_field(
+    const string &varname,
+    const mtx::idx &ijk,
+    mtx::arr<real_t> &data
   ) = 0;
 };
 #endif

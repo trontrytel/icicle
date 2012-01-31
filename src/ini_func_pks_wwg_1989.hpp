@@ -9,19 +9,24 @@
  *    1D initial condition from Smolarkiewicz & Grabowski 1989
  *    (section 4, eq. 22)
  */
-#ifndef INI_PKS_WWG_1989_HPP
-#  define INI_PKS_WWG_1989_HPP
+#ifndef INI_FUNC_PKS_WWG_1989_HPP
+#  define INI_FUNC_PKS_WWG_1989_HPP
 
-#  include "ini.hpp" 
+#  include "ini_func.hpp" 
 
 template <typename real_t>
-class ini_pks_wwg_1989 : public ini<real_t>
+class ini_func_pks_wwg_1989 : public ini_func<real_t>
 {
   private: quantity<si::length, real_t> dx;
 
-  public: ini_pks_wwg_1989(const quantity<si::length, real_t> &dx)
-    : dx(dx)
-  {}
+  public: ini_func_pks_wwg_1989(const grd<real_t> &grid)
+    : ini_func<real_t>(grid)
+  {
+    // TODO: that's about cartesian/spherical/etc, not about Arakawa-C
+    const grd_arakawa_c_lorenz<real_t> *grid_cartesian = dynamic_cast<const grd_arakawa_c_lorenz<real_t>*>(&grid);
+    if (grid_cartesian == NULL) error_macro("netCDF output supports only the Arakawa-C grid")
+    dx = grid_cartesian->dx();
+  }
 
   private: real_t psi_0(real_t x)
   {
