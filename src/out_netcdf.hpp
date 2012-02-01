@@ -101,8 +101,8 @@ class out_netcdf : public out<real_t>
 
         // timesteps
         NcVar 
-          v_dtadv = f->addVar("dt_adv", ncFloat, vector<NcDim>()),
-          v_dtout = f->addVar("dt_out", ncFloat, vector<NcDim>());
+          v_dtadv = f->addVar("dt_adv", ncFloat, /* TODO: remove after upstream release */ vector<NcDim>()),
+          v_dtout = f->addVar("dt_out", ncFloat, /* TODO: remove after upstream release */ vector<NcDim>());
         v_dtadv.putAtt("unit", "seconds");
         v_dtout.putAtt("unit", "seconds");
         {
