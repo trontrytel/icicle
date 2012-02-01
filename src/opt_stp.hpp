@@ -12,15 +12,13 @@
 #  include "opt.hpp"
 #  include "stp.hpp"
 
-#  ifdef ICICLE_OPT_DESCS 
-void opt_stp_desc(po::options_description &desc)
+inline void opt_stp_desc(po::options_description &desc)
 {
   desc.add_options()
     ("dt_out", po::value<string>(), "output interval [s]")
     ("t_max", po::value<string>(), "time of simulation [s]")
     ("dt", po::value<string>()->default_value("auto"), "time step [s]");
 }
-#  endif
 
 template <typename real_t>
 stp<real_t> *opt_stp(const po::variables_map& vm, 

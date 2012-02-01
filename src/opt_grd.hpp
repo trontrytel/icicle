@@ -11,8 +11,7 @@
 #  include "opt.hpp"
 #  include "grd_arakawa-c-lorenz.hpp"
 
-#  ifdef ICICLE_OPT_DESCS 
-void opt_grd_desc(po::options_description &desc)
+inline void opt_grd_desc(po::options_description &desc)
 {
   desc.add_options()
     ("grd", po::value<string>()->default_value("arakawa-c-lorenz"), "grid: arakawa-c-lorenz")
@@ -23,7 +22,6 @@ void opt_grd_desc(po::options_description &desc)
     ("grd.ny", po::value<int>()->default_value(1), "number of grid points (Y)")
     ("grd.nz", po::value<int>()->default_value(1), "number of grid points (Z)");
 }
-#  endif
 
 template <typename real_t>
 grd<real_t> *opt_grd(const po::variables_map& vm)

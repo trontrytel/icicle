@@ -15,8 +15,7 @@
 #  include "out_gnuplot.hpp"
 #  include "out_netcdf.hpp"
 
-#  ifdef ICICLE_OPT_DESCS 
-void opt_out_desc(po::options_description &desc)
+inline void opt_out_desc(po::options_description &desc)
 {
   desc.add_options()
     ("out", po::value<string>(), "output: debug, gnuplot, netcdf")
@@ -24,7 +23,6 @@ void opt_out_desc(po::options_description &desc)
     ("out.netcdf.file", po::value<string>()->default_value(""), "output filename")
     ("out.netcdf.ver", po::value<int>()->default_value(4), "netCDF format version (3 or 4)");
 }
-#  endif
 
 template <typename real_t>
 out<real_t> *opt_out(const po::variables_map &vm, 

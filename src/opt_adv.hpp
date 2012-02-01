@@ -14,8 +14,7 @@
 #  include "adv_mpdata_fct.hpp"
 #  include "adv_leapfrog.hpp"
 
-#  ifdef ICICLE_OPT_DESCS 
-void opt_adv_desc(po::options_description &desc)
+inline void opt_adv_desc(po::options_description &desc)
 {
   desc.add_options()
     ("adv", po::value<string>(), "advection scheme: leapfrog, upstream, mpdata")
@@ -24,7 +23,6 @@ void opt_adv_desc(po::options_description &desc)
     ("adv.mpdata.third_order", po::value<bool>()->default_value(false), "MPDATA 3rd order terms: 0 (off) or 1 (on)")
     ("adv.mpdata.fct", po::value<bool>()->default_value(0), "MPDATA FCT option: 0 (off) or 1 (on)");
 }
-#  endif
 
 template <typename real_t>
 void opt_adv(const po::variables_map& vm,

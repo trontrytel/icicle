@@ -15,8 +15,7 @@
 #  include "ini_func_cone.hpp"
 #  include "ini_netcdf.hpp"
 
-#  ifdef ICICLE_OPT_DESCS 
-void opt_ini_desc(po::options_description &desc)
+inline void opt_ini_desc(po::options_description &desc)
 {
   desc.add_options()
     ("ini", po::value<string>(), "initical condition: boxcar, cone, pks_wwg_1989")
@@ -39,7 +38,6 @@ void opt_ini_desc(po::options_description &desc)
     ("ini.netcdf.file", po::value<string>()->default_value(""), "input filename")
   ;
 }
-#  endif
 
 template <typename real_t>
 ini<real_t> *opt_ini(const po::variables_map& vm, const grd<real_t> &grid)

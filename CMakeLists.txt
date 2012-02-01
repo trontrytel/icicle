@@ -258,7 +258,7 @@ else()
 endif()                                                                #
 #### </Boost.Timer> ####################################################
 
-add_executable(icicle src/icicle.cpp src/mdl_flt.cpp) # src/mdl_dbl.cpp src/mdl_ldb.cpp)
+add_executable(icicle src/icicle.cpp src/mdl_flt.cpp src/mdl_dbl.cpp src/mdl_ldb.cpp)
 set_target_properties(icicle PROPERTIES LINK_FLAGS ${LINK_FLAGS})
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug") 
