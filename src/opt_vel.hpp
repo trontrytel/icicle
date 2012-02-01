@@ -34,12 +34,10 @@ vel<real_t> *opt_vel(const po::variables_map& vm, grd<real_t> *grid)
   string veltype= vm.count("vel") ? vm["vel"].as<string>() : "<unspecified>";
   if (veltype == "uniform")
   {
-    if (!vm.count("vel.uniform.u") || !vm.count("vel.uniform.v") || !vm.count("vel.uniform.w"))
-      error_macro("vel.uniform.[u,v,w] must be specified")
     quantity<si::velocity, real_t> 
-      u = boost::lexical_cast<real_t>(vm["vel.uniform.u"].as<string>()) * si::metres / si::seconds,
-      v = boost::lexical_cast<real_t>(vm["vel.uniform.v"].as<string>()) * si::metres / si::seconds,
-      w = boost::lexical_cast<real_t>(vm["vel.uniform.w"].as<string>()) * si::metres / si::seconds;
+      u = real_cast<real_t>(vm, "vel.uniform.u") * si::metres / si::seconds,
+      v = real_cast<real_t>(vm, "vel.uniform.v") * si::metres / si::seconds,
+      w = real_cast<real_t>(vm, "vel.uniform.w") * si::metres / si::seconds;
     return new vel_uniform<real_t>(u, v, w);
   }
   else if (veltype == "rasinski")
@@ -47,18 +45,18 @@ vel<real_t> *opt_vel(const po::variables_map& vm, grd<real_t> *grid)
     if (!vm.count("vel.rasinski.Z_clb") || !vm.count("vel.rasinski.Z_top") || !vm.count("vel.rasinski.A"))
       error_macro("vel.rasinski.[Z_clb,Z_top,A] must be specified")
     quantity<si::length, real_t> 
-      Z_clb = boost::lexical_cast<real_t>(vm["vel.rasinski.Z_clb"].as<string>()) * si::metres,
-      Z_top = boost::lexical_cast<real_t>(vm["vel.rasinski.Z_top"].as<string>()) * si::metres,
+      Z_clb = real_cast<real_t>(vm, "vel.rasinski.Z_clb") * si::metres,
+      Z_top = real_cast<real_t>(vm, "vel.rasinski.Z_top") * si::metres,
       X = real_t(grid->nx()) * grid->dx(); // TODO nx+1 dla Arakawa-C ...
     quantity<velocity_times_length, real_t>
-      A = boost::lexical_cast<real_t>(vm["vel.rasinski.A"].as<string>()) * si::metres * si::metres / si::seconds;
+      A = real_cast<real_t>(vm, "vel.rasinski.A") * si::metres * si::metres / si::seconds;
     return new vel_rasinski<real_t>(X, Z_clb, Z_top, A);
   }
   else if (veltype == "test")
   {
     if (!vm.count("vel.test.omega")) error_macro("vel.test.omega must be specified")
-    quantity<si::frequency, real_t> omega = boost::lexical_cast<real_t>(vm["vel.test.omega"].as<string>()) / si::seconds;
-    quantity<si::velocity, real_t> v = boost::lexical_cast<real_t>(vm["vel.test.v"].as<string>()) * si::metres / si::seconds;
+    quantity<si::frequency, real_t> omega = real_cast<real_t>(vm, "vel.test.omega") / si::seconds;
+    quantity<si::velocity, real_t> v = real_cast<real_t>(vm, "vel.test.v") * si::metres / si::seconds;
     return new vel_test<real_t>(omega, real_t(.5 * grid->nx()) * grid->dx(), real_t(.5 * grid->nz()) * grid->dz(), v);
   }
   else error_macro("unsupported velocity field type: " << veltype)

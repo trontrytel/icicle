@@ -62,6 +62,7 @@ class root { public: virtual ~root() {} };
 #  include <boost/units/io.hpp>
 using boost::units::quantity; 
 namespace si = boost::units::si;
+using boost::units::pow;
 
 typedef boost::units::multiply_typeof_helper<
     si::velocity,
