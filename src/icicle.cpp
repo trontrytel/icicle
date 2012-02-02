@@ -23,9 +23,15 @@
 #include "opt_eqs.hpp"
 #include "opt_stp.hpp"
 
+#ifdef USE_FLOAT
 extern void mdl_flt(const po::variables_map&, const string&);
+#endif
+#ifdef USE_DOUBLE
 extern void mdl_dbl(const po::variables_map&, const string&);
+#endif
+#ifdef USE_LDOUBLE
 extern void mdl_ldb(const po::variables_map&, const string&);
+#endif
 
 int main(int ac, char* av[])
 {
@@ -62,21 +68,21 @@ int main(int ac, char* av[])
     if (vm.count("slv") && vm["slv"].as<string>() == "list")
     {
       cout << "serial fork";
-#  ifdef _OPENMP
+#ifdef _OPENMP
       cout << " openmp fork+openmp";
-#  endif
-#  ifdef USE_BOOST_THREAD
+#endif
+#ifdef USE_BOOST_THREAD
       cout << " threads fork+threads";
-#  endif
-#  ifdef USE_BOOST_MPI
+#endif
+#ifdef USE_BOOST_MPI
       cout << " mpi";
-#    ifdef USE_BOOST_THREAD
+#  ifdef USE_BOOST_THREAD
       cout << " mpi+threads";
-#    endif
-#    ifdef _OPENMP
-      cout << " mpi+openmp";
-#    endif
 #  endif
+#  ifdef _OPENMP
+      cout << " mpi+openmp";
+#  endif
+#endif
       cout << endl;
       exit(EXIT_FAILURE);
     }
@@ -88,10 +94,22 @@ int main(int ac, char* av[])
 
     // --bits (floating point precision choice)
     int bits = vm["bits"].as<int>();
-    if (sizeof(float) * 8 == bits) mdl_flt(vm, options.str());
-    else if (sizeof(double) * 8 == bits) mdl_dbl(vm, options.str());
-    else if (sizeof(long double) * 8 == bits) mdl_ldb(vm, options.str());
-    else error_macro("unsupported number of bits (" << bits << ")")
+#ifdef USE_FLOAT
+    if (sizeof(float) * 8 == bits) 
+      mdl_flt(vm, options.str());
+    else 
+#endif
+#ifdef USE_DOUBLE
+    if (sizeof(double) * 8 == bits) 
+      mdl_dbl(vm, options.str());
+    else 
+#endif
+#ifdef USE_LDOUBLE
+    if (sizeof(long double) * 8 == bits) 
+      mdl_ldb(vm, options.str());
+    else 
+#endif
+    error_macro("unsupported number of bits (" << bits << ")")
   }
   catch (exception &e)
   {

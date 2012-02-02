@@ -1,12 +1,12 @@
 /** @file
  *  @author Sylwester Arabas <slayoo@igf.fuw.edu.pl>
  *  @copyright University of Warsaw
- *  @date November 2011
+ *  @date November 2011 - February 2012
  *  @section LICENSE
  *    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef DOM_SERIAL_HPP
-#  define DOM_SERIAL_HPP
+#ifndef SLV_SERIAL_HPP
+#  define SLV_SERIAL_HPP
 
 #  include "slv.hpp"
 #  include "stp.hpp"

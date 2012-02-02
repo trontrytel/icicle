@@ -45,6 +45,9 @@
     [-DOPENMP=NO]
     [-DMPI=NO]
     [-DTIMER=NO]
+    [-DFLOAT=NO]
+    [-DDOUBLE=NO]
+    [-DLDOUBLE=NO]
   $ [VERBOSE=1] make            
   $ make test
   $ make clean 
