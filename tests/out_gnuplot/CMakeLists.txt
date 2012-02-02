@@ -1,0 +1,2 @@
+add_executable(test_out_gnuplot test_out_gnuplot.cpp)
+add_test(test_out_gnuplot test_out_gnuplot)

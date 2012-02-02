@@ -1,0 +1,2 @@
+add_executable(test_out_netcdf test_out_netcdf.cpp)
+add_test(test_out_netcdf test_out_netcdf)
