@@ -1,5 +1,4 @@
 coding conventions in icicle:
-  - ...
   - KISS
   - no file should be longer than 100 lines :)
   - double space indentation - no tabs (Google 'Spaces vs. Tabs')
@@ -9,6 +8,9 @@ coding conventions in icicle:
   - "two or more, use a for" (E.W. Dijkstra)
   - declare local variables as near to their use as possible
   - avoid overly long lines...
+  - use references instead of pointers if possible
+  - all variable, class and method named are lowercase
+    optionally with underscores
 
 - code organisation:
   - one class per one header file (CERN C05)
@@ -19,10 +21,6 @@ coding conventions in icicle:
   - filenames reflecting class structure with underscore 
     indicating inheritance, e.g. adv_lax-wendroff.hpp
   - filenames should be all-lowercase
-
-- identifier names:
-  - all variable, class and method named are lowercase
-    optionally with underscores
 
 References:
 [CERN] - CERN C++ Coding Standard Specification

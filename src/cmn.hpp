@@ -1,7 +1,7 @@
 /** @file
  *  @author Sylwester Arabas <slayoo@igf.fuw.edu.pl>
  *  @copyright University of Warsaw
- *  @date November 2011
+ *  @date November 2011 - February 2012
  *  @section LICENSE
  *    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
  */
@@ -28,6 +28,20 @@ using std::exception;
 using std::cos;
 using std::sin;
 
+// the Lynton Appel's netCDF-4 C++ API (since netCDF 4.1.1)
+#    ifdef USE_BOOST_MPI 
+// fixes preprocessor macro redefinition conflict with MPI
+// cf. http://www.unidata.ucar.edu/mailing_lists/archives/netcdfgroup/2009/msg00350.html
+#      include "mpi/mpi.h"
+#      define MPI_INCLUDED
+#    endif    
+#    include <netcdf>
+using netCDF::NcFile;
+using netCDF::NcVar;
+using netCDF::NcDim;
+using netCDF::ncFloat;
+using netCDF::exceptions::NcException;
+
 // overloading the default d-tor with a virtual one (enforces execution of child d-tors)
 class root { public: virtual ~root() {} };
 
@@ -48,6 +62,7 @@ class root { public: virtual ~root() {} };
 #  include <boost/units/io.hpp>
 using boost::units::quantity; 
 namespace si = boost::units::si;
+using boost::units::pow;
 
 typedef boost::units::multiply_typeof_helper<
     si::velocity,

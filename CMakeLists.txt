@@ -2,7 +2,7 @@
 #  @author Sylwester Arabas <slayoo@igf.fuw.edu.pl>
 #  @author Anna Jaruga <ajaruga@igf.fuw.edu.pl>
 #  @copyright University of Warsaw
-#  @date November 2011
+#  @date November 2011 - February 2012
 #  @section LICENSE
 #    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
 
@@ -258,7 +258,36 @@ else()
 endif()                                                                #
 #### </Boost.Timer> ####################################################
 
-add_executable(icicle src/icicle.cpp src/mdl_flt.cpp) # src/mdl_dbl.cpp src/mdl_ldb.cpp)
+#### <-DFLOAT=NO, -DDOUBLE=NO, -DLDOUBLE=NO> ###########################
+if(NOT "${FLOAT}" STREQUAL "NO")                                       #
+  set(USE_FLOAT TRUE)
+  if(NOT "${DOUBLE}" STREQUAL "NO")
+    set(USE_DOUBLE TRUE)
+    if(NOT "${LDOUBLE}" STREQUAL "NO")
+      set(USE_LDOUBLE TRUE)
+      add_executable(icicle src/icicle.cpp src/mdl_flt.cpp src/mdl_dbl.cpp src/mdl_ldb.cpp)
+    else()
+      add_executable(icicle src/icicle.cpp src/mdl_flt.cpp src/mdl_dbl.cpp)
+    endif()
+  else()
+    add_executable(icicle src/icicle.cpp src/mdl_flt.cpp)
+  endif()
+elseif(NOT "${DOUBLE}" STREQUAL "NO")
+  set(USE_DOUBLE TRUE)
+  if(NOT "${LDOUBLE}" STREQUAL "NO")
+    set(USE_LDOUBLE TRUE)
+    add_executable(icicle src/icicle.cpp src/mdl_dbl.cpp src/mdl_ldb.cpp)
+  else()
+    add_executable(icicle src/icicle.cpp src/mdl_dbl.cpp)
+  endif()
+elseif(NOT "${LDOUBLE}" STREQUAL "NO")
+  set(USE_LDOUBLE TRUE)
+  add_executable(icicle src/mdl_ldb.cpp)
+else()
+  message(FATAL_ERROR "-DFLOAD=NO -DDOUBLE=NO and -DLDBOULBE=NO may not be specified all at once!")
+endif()                                                               #
+#######################################################################
+
 set_target_properties(icicle PROPERTIES LINK_FLAGS ${LINK_FLAGS})
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug") 

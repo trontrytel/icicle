@@ -12,7 +12,7 @@
 #  include "opt_adv.hpp"
 #  include "opt_vel.hpp"
 #  include "opt_slv.hpp"
-#  include "opt_out.hpp" // has to be included after slv/MPI
+#  include "opt_out.hpp"
 #  include "opt_ini.hpp"
 #  include "opt_eqs.hpp"
 #  include "opt_stp.hpp"
@@ -36,7 +36,7 @@ void mdl(const po::variables_map &vm, const string &cmdline)
   auto_ptr<vel<real_t> > velocity(opt_vel<real_t>(vm, grid.get()));
 
   // initial condition
-  auto_ptr<ini<real_t> > intcond(opt_ini<real_t>(vm, grid.get()));
+  auto_ptr<ini<real_t> > intcond(opt_ini<real_t>(vm, *grid));
 
   // equations
   auto_ptr<eqs<real_t> > equations(opt_eqs<real_t>(vm));

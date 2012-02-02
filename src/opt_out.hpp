@@ -15,16 +15,14 @@
 #  include "out_gnuplot.hpp"
 #  include "out_netcdf.hpp"
 
-#  ifdef ICICLE_OPT_DESCS 
-void opt_out_desc(po::options_description &desc)
+inline void opt_out_desc(po::options_description &desc)
 {
   desc.add_options()
     ("out", po::value<string>(), "output: debug, gnuplot, netcdf")
     ("out.gnuplot.using", po::value<string>()->default_value("0:-2:1"), "using column specification: 0:-2:1 or 1:-2:2")
-    ("out.netcdf.file", po::value<string>(), "output filename (e.g. for netcdf)")
+    ("out.netcdf.file", po::value<string>()->default_value(""), "output filename")
     ("out.netcdf.ver", po::value<int>()->default_value(4), "netCDF format version (3 or 4)");
 }
-#  endif
 
 template <typename real_t>
 out<real_t> *opt_out(const po::variables_map &vm, 
@@ -41,7 +39,6 @@ out<real_t> *opt_out(const po::variables_map &vm,
 #  ifdef USE_NETCDF
   if (outtype == "netcdf")
   {
-    if (!vm.count("out.netcdf.file")) error_macro("output filename not specified (--out.netcdf.file option)")
     return new out_netcdf<real_t>(vm["out.netcdf.file"].as<string>(), setup, 
       vm["out.netcdf.ver"].as<int>(), cmdline);
   }

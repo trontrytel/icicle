@@ -15,14 +15,12 @@
 #  include "slv_parallel_distmem_mpi.hpp"
 #  include "slv_parallel_distmem_fork.hpp"
 
-#  ifdef ICICLE_OPT_DESCS 
-void opt_slv_desc(po::options_description &desc)
+inline void opt_slv_desc(po::options_description &desc)
 {
   desc.add_options()
     ("slv", po::value<string>(), "solver: serial, openmp, threads, mpi, fork, mpi+threads, mpi+openmp")
-    ("nsd", po::value<int>(), "subdomain number [1]");
+    ("nsd", po::value<int>(), "subdomain number [1]"); // TODO: rename it to slv.nsd
 }
-#  endif
 
 template <typename real_t>
 slv<real_t> *opt_slv(const po::variables_map& vm, stp<real_t> *setup, out<real_t> *output)
@@ -34,7 +32,7 @@ slv<real_t> *opt_slv(const po::variables_map& vm, stp<real_t> *setup, out<real_t
       0, setup->grid->ny() - 1, 
       0, setup->grid->nz() - 1
     );
-  else
+  else if (slvtype != "<unspecified>")
   {
     if (!vm.count("nsd")) error_macro("subdomain count not specified (--nsd option)")
     int nsd = vm["nsd"].as<int>();
@@ -83,6 +81,7 @@ slv<real_t> *opt_slv(const po::variables_map& vm, stp<real_t> *setup, out<real_t
 #  endif
     error_macro("unsupported solver type: " << slvtype)
   }
+  else error_macro("unsupported solver type: " << slvtype)
 }
 
 #endif

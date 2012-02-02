@@ -22,5 +22,8 @@
 #cmakedefine USE_BOOST_THREAD 1
 #cmakedefine USE_BOOST_MPI 1
 #cmakedefine USE_BOOST_TIMER 1
+#cmakedefine USE_FLOAT 1
+#cmakedefine USE_DOUBLE 1
+#cmakedefine USE_LDOUBLE 1
 
 #endif

@@ -2,22 +2,23 @@
  *  @author Sylwester Arabas <slayoo@igf.fuw.edu.pl>
  *  @author Anna Jaruga <ajaruga@igf.fuw.edu.pl>
  *  @copyright University of Warsaw
- *  @date November 2011
+ *  @date November 2011 - January 2012
  *  @section LICENSE
  *    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef INI_BOXCAR_HPP
-#  define INI_BOXCAR_HPP
+#ifndef INI_FUNC_BOXCAR_HPP
+#  define INI_FUNC_BOXCAR_HPP
 
-#  include "ini.hpp" 
+#  include "ini_func.hpp" 
 
 template <typename real_t>
-class ini_boxcar : public ini<real_t>
+class ini_func_boxcar : public ini_func<real_t>
 {
   private: quantity<si::length, real_t> ax, bx, ay, by, az, bz;
   private: quantity<si::dimensionless, real_t> A, A0;
 
-  public: ini_boxcar(
+  public: ini_func_boxcar(
+    const grd<real_t> &grid,
     const quantity<si::length, real_t> &ax,
     const quantity<si::length, real_t> &bx,
     const quantity<si::length, real_t> &ay,
@@ -27,7 +28,7 @@ class ini_boxcar : public ini<real_t>
     const quantity<si::dimensionless, real_t> &A,
     const quantity<si::dimensionless, real_t> &A0
   )
-    : ax(ax), bx(bx), ay(ay), by(by), az(az), bz(bz), A(A), A0(A0)
+    : ini_func<real_t>(grid), ax(ax), bx(bx), ay(ay), by(by), az(az), bz(bz), A(A), A0(A0)
   {}
 
   public: quantity<si::dimensionless, real_t> psi(

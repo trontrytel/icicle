@@ -11,8 +11,7 @@
 #  include "opt.hpp"
 #  include "grd_arakawa-c-lorenz.hpp"
 
-#  ifdef ICICLE_OPT_DESCS 
-void opt_grd_desc(po::options_description &desc)
+inline void opt_grd_desc(po::options_description &desc)
 {
   desc.add_options()
     ("grd", po::value<string>()->default_value("arakawa-c-lorenz"), "grid: arakawa-c-lorenz")
@@ -23,7 +22,6 @@ void opt_grd_desc(po::options_description &desc)
     ("grd.ny", po::value<int>()->default_value(1), "number of grid points (Y)")
     ("grd.nz", po::value<int>()->default_value(1), "number of grid points (Z)");
 }
-#  endif
 
 template <typename real_t>
 grd<real_t> *opt_grd(const po::variables_map& vm)
@@ -32,16 +30,16 @@ grd<real_t> *opt_grd(const po::variables_map& vm)
 
   if (grdtype == "arakawa-c-lorenz")
   {
-    if (!vm.count("grd.dx")) error_macro("grd.dx, grd.dy, grd.dz options are mandatory")
+    if (!vm.count("grd.dx")) error_macro("specifying grd.dx is mandatory")
     int 
       nx = vm["grd.nx"].as<int>(),
       ny = vm["grd.ny"].as<int>(),
       nz = vm["grd.nz"].as<int>();
 
     quantity<si::length, real_t> 
-      dx = boost::lexical_cast<real_t>(vm["grd.dx"].as<string>()) * si::metres,
-      dy = boost::lexical_cast<real_t>(vm["grd.dy"].as<string>()) * si::metres,
-      dz = boost::lexical_cast<real_t>(vm["grd.dz"].as<string>()) * si::metres;
+      dx = real_cast<real_t>(vm, "grd.dx") * si::metres,
+      dy = real_cast<real_t>(vm, "grd.dy") * si::metres,
+      dz = real_cast<real_t>(vm, "grd.dz") * si::metres;
 
     // some sanity checks
     if (dx / si::metres <= 0 || dy / si::metres <= 0 || dz / si::metres <= 0)

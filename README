@@ -26,11 +26,15 @@
     (configured with netCDF4 support)
   - NetCDF C++4 bindings . http://www.unidata.ucar.edu/netcdf/
     (ver >= 4.2 beta) . ftp://ftp.unidata.ucar.edu/pub/netcdf/
+
+* MPI requirements:
   - MPI libraries with C++ bindings (optional), e.g.:
     - Open MPI ...................... http://www.open-mpi.org/
       (with --enable-mpi-threads if MPI+threads is to be used)
     - MPICH ............... http://www.mcs.anl.gov/mpi/mpich2/
     - LAM/MPI (obsolete -> Open MPI) . http://www.lam-mpi.org/
+  - MPI-enabled HDF5 library ...... TODO
+  - HDF5-enabled netCDF4 library .. TODO
 
 --------------------------------------------------------------
 * in-tree compilation / tests / clean-up:
@@ -41,6 +45,9 @@
     [-DOPENMP=NO]
     [-DMPI=NO]
     [-DTIMER=NO]
+    [-DFLOAT=NO]
+    [-DDOUBLE=NO]
+    [-DLDOUBLE=NO]
   $ [VERBOSE=1] make            
   $ make test
   $ make clean 

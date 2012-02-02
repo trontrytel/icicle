@@ -12,15 +12,13 @@
 #  include "opt.hpp"
 #  include "stp.hpp"
 
-#  ifdef ICICLE_OPT_DESCS 
-void opt_stp_desc(po::options_description &desc)
+inline void opt_stp_desc(po::options_description &desc)
 {
   desc.add_options()
     ("dt_out", po::value<string>(), "output interval [s]")
     ("t_max", po::value<string>(), "time of simulation [s]")
     ("dt", po::value<string>()->default_value("auto"), "time step [s]");
 }
-#  endif
 
 template <typename real_t>
 stp<real_t> *opt_stp(const po::variables_map& vm, 
@@ -33,17 +31,15 @@ stp<real_t> *opt_stp(const po::variables_map& vm,
   )
 { 
   quantity<si::time, real_t> dt=0*si::seconds;
-  if (vm["dt"].as<string>() != "auto" ) dt = boost::lexical_cast<real_t>(vm["dt"].as<string>()) * si::seconds; 
-  if (!vm.count("t_max")) error_macro("t_max not specified")
-  if (!vm.count("dt_out")) error_macro("dt_out not specified")
+  if (vm["dt"].as<string>() != "auto" ) dt = real_cast<real_t>(vm, "dt") * si::seconds; 
   return new stp<real_t>(
     fllbck, advsch,
     velocity,
     intcond,
     grid,
     equations,
-    boost::lexical_cast<real_t>(vm["dt_out"].as<string>())*si::seconds,
-    boost::lexical_cast<real_t>(vm["t_max"].as<string>())*si::seconds,
+    real_cast<real_t>(vm, "dt_out")*si::seconds,
+    real_cast<real_t>(vm, "t_max")*si::seconds,
     dt
   );
 }

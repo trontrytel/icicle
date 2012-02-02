@@ -1,12 +1,12 @@
 /** @file
  *  @author Sylwester Arabas <slayoo@igf.fuw.edu.pl>
  *  @copyright University of Warsaw
- *  @date November 2011
+ *  @date November 2011 - February 2012
  *  @section LICENSE
  *    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef DOM_SERIAL_HPP
-#  define DOM_SERIAL_HPP
+#ifndef SLV_SERIAL_HPP
+#  define SLV_SERIAL_HPP
 
 #  include "slv.hpp"
 #  include "stp.hpp"
@@ -81,9 +81,8 @@ class slv_serial : public slv<real_t>
     ));
 
     // initial condition
-    assert(setup->equations->n_vars() == 1);
-    int e = 0;
-    setup->grid->populate_scalar_field(*ijk, &psi[e][0], setup->intcond); // TODO!!! multiple eqs
+    for (int e = 0; e < setup->equations->n_vars(); ++e)
+      setup->intcond->populate_scalar_field(setup->equations->var_name(e), *ijk, psi[e][0]); 
 
     // periodic boundary in all directions
     for (int s=this->first; s <= this->last; ++s) 

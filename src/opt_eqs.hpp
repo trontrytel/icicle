@@ -12,13 +12,11 @@
 #  include "eqs_scalar_advection.hpp"
 #  include "eqs_shallow_water_2d.hpp"
 
-#  ifdef ICICLE_OPT_DESCS 
-void opt_eqs_desc(po::options_description &desc)
+inline void opt_eqs_desc(po::options_description &desc)
 {
   desc.add_options()
     ("eqs", po::value<string>()->default_value("scalar_advection"), "equation system: shallow_water_2d");
 }
-#  endif
 
 template <typename real_t>
 eqs<real_t> *opt_eqs(const po::variables_map& vm)

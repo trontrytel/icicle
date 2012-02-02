@@ -15,20 +15,6 @@
 #    include "stp.hpp"
 #    include "grd_arakawa-c-lorenz.hpp"
 
-// fixes preprocessor macro redefinition conflict with MPI
-// cf. http://www.unidata.ucar.edu/mailing_lists/archives/netcdfgroup/2009/msg00350.html
-//#    ifdef USE_BOOST_MPI 
-//#      define MPI_INCLUDED
-//#    endif              
-
-// the Lynton Appel's netCDF-4 C++ API (since netCDF 4.1.1)
-#    include <netcdf>
-using netCDF::NcFile;
-using netCDF::NcVar;
-using netCDF::NcDim;
-using netCDF::ncFloat;
-using netCDF::exceptions::NcException;
-
 // TODO: ncFloat vs. ncDouble as a command-line option (but it float computations and double requeste -> error)
 // TODO: add X_sclr i X_vctr variables! (e.g. for axis labelling)
 // TODO: is the order of dimensions optimal?
@@ -48,6 +34,7 @@ class out_netcdf : public out<real_t>
   ) 
     : info(cmdline)
   { 
+    // TODO: that's about cartesian/spherical/etc, not about Arakawa-C
     grd_arakawa_c_lorenz<real_t> *grid = dynamic_cast<grd_arakawa_c_lorenz<real_t>*>(setup->grid);
     if (grid == NULL) error_macro("netCDF output supports only the Arakawa-C grid")
     try
@@ -55,7 +42,7 @@ class out_netcdf : public out<real_t>
       netCDF::NcFile::FileFormat fmt;
       switch (ver)
       {
-        case 3: fmt = NcFile::classic; break;
+        case 3: fmt = NcFile::classic; break; // TODO: check in Cmake if that's supported!
         case 4: fmt = NcFile::nc4; break;
         default: error_macro("unsupported netCDF format version: " << ver)
       }
@@ -114,8 +101,8 @@ class out_netcdf : public out<real_t>
 
         // timesteps
         NcVar 
-          v_dtadv = f->addVar("dt_adv", ncFloat, vector<NcDim>()),
-          v_dtout = f->addVar("dt_out", ncFloat, vector<NcDim>());
+          v_dtadv = f->addVar("dt_adv", ncFloat, /* TODO: remove after upstream release */ vector<NcDim>()),
+          v_dtout = f->addVar("dt_out", ncFloat, /* TODO: remove after upstream release */ vector<NcDim>());
         v_dtadv.putAtt("unit", "seconds");
         v_dtout.putAtt("unit", "seconds");
         {
@@ -152,27 +139,27 @@ class out_netcdf : public out<real_t>
     const unsigned long t // t is the number of the record!
   ) 
   {
-    vector<size_t> startp(4), countp(4, 1);
-    startp[0] = t;
-    countp[3] = ijk.ubound(mtx::k) - ijk.lbound(mtx::k) + 1;
-    // due to presence of halos the data to be stored is not contiguous, 
-    // hence looping over the two major ranks
-    for (int i_int = ijk.lbound(mtx::i); i_int <= ijk.ubound(mtx::i); ++i_int) // loop over "outer" dimension
+    try 
     {
-      startp[1] = i_int;
-      for (int j_int = ijk.lbound(mtx::j); j_int <= ijk.ubound(mtx::j); ++j_int)
+      vector<size_t> startp(4), countp(4, 1);
+      startp[0] = t;
+      countp[3] = ijk.ubound(mtx::k) - ijk.lbound(mtx::k) + 1;
+      // due to presence of halos the data to be stored is not contiguous, 
+      // hence looping over the two major ranks
+      for (int i_int = ijk.lbound(mtx::i); i_int <= ijk.ubound(mtx::i); ++i_int) // loop over "outer" dimension
       {
-        assert((psi)(i_int, j_int, ijk.k).isStorageContiguous());
-        startp[2] = j_int;
-        startp[3] = ijk.lbound(mtx::k);
-        try 
+        startp[1] = i_int;
+        for (int j_int = ijk.lbound(mtx::j); j_int <= ijk.ubound(mtx::j); ++j_int)
         {
+          assert((psi)(i_int, j_int, ijk.k).isStorageContiguous());
+          startp[2] = j_int;
+          startp[3] = ijk.lbound(mtx::k);
           vars.at(e).putVar(startp, countp, (psi)(i_int, j_int, ijk.k).dataFirst());
         }
-        catch (NcException& e) error_macro(e.what());
       }
+      //if (!f->sync()) warning_macro("failed to synchronise netCDF file")
     }
-    //if (!f->sync()) warning_macro("failed to synchronise netCDF file")
+    catch (NcException& e) error_macro(e.what());
   }
 };
 #  endif
