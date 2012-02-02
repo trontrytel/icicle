@@ -82,8 +82,8 @@ struct stp : root
     else
     {
       nout = dt_out / dt;
-      if (real_t(nout) * dt != dt_out) 
-        error_macro("dt_out is not an integer multiple of dt");
+      if (real_t(real_t(nout) * dt / si::seconds) != real_t(dt_out / si::seconds)) 
+        warning_macro("dt_out is not an integer multiple of dt"); //TODO-AJ error macro is not working
       if (cmax > advsch->courant_max())
         warning_macro("chosen dt results in too big Courant number: max(C) = " << cmax << " > " << advsch->courant_max());
       if (cmax < advsch->courant_min())

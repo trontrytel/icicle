@@ -253,7 +253,6 @@ else()
   else()
     set(USE_BOOST_TIMER ${Find_Boost_Timer})
     set(LINK_FLAGS "${LINK_FLAGS} ${CMAKE_REQUIRED_LIBRARIES}") 
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
   endif()
 endif()                                                                #
 #### </Boost.Timer> ####################################################
