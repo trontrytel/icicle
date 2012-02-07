@@ -1,39 +1,58 @@
--------------------------- ICICLE ----------------------------
+-------------------------- ICICLE -----------------------------
 
 - outline: TODO
 - authors: Sylwester Arabas et al. 
 - copyright: University of Warsaw
 - funding: Polish National Science Center (http://ncn.gov.pl/)
            (grant no. 2011/01/N/ST10/01483)
-- license: GPLv3 (cf. COPYING or http://www.gnu.org/licenses/)
+- license: GPLv3+ (cf. COPYING or http://www.gnu.org/licenses/)
 
---------------------------------------------------------------
+---------------------------------------------------------------
 * requirements:
-  - cmake .............................. http://www.cmake.org/
+  - cmake ................................... http://cmake.org/
+
   - C++ compiler, e.g.
-    - clang++ (no OpenMP as of '11) ... http://clang.llvm.org/
-    - g++ (GCC >= 4.2 for OpenMP) ........ http://gcc.gnu.org/
+    - clang++ (no OpenMP as of '11) .... http://clang.llvm.org/
+    - g++ (GCC >= 4.2 for OpenMP) ......... http://gcc.gnu.org/
     - ... 
-  - Blitz++ library ............ http://blitz.sourceforge.net/
-  - Boost C++ libraries, incl.: ........ http://www.boost.org/
-    - Boost headers: units, program_options, conversion,
-        pointer_container
+
+  - Blitz++ library ............. http://blitz.sourceforge.net/
+    (preferable the development version from the hg repository)
+
+  - Boost C++ libraries, incl.: ............. http://boost.org/
+    - Boost.Units (header only)
+    - Boost.program_options (headers and shared library)
+    - Boost.conversion (headers only)
+    - Boost.pointer_container (headers only)
 
 * optional libraries:
-  - Boost C++ libraries, incl.: ........ http://www.boost.org/
-    - Boost headers & shared libs (Thread, MPI, Timer)
-  - NetCDF C++ library ... http://www.unidata.ucar.edu/netcdf/
+  - Boost C++ libraries, incl.: ............. http://boost.org/
+    - Boost.Thread (headers & shared library)
+    - Boost.MPI (headers & shared library + MPI - see below)
+    - Boost.Timer & Boost.System (header & shared library)
+
+  - NetCDF C++ library .... http://www.unidata.ucar.edu/netcdf/
     (configured with netCDF4 support)
-  - NetCDF C++4 bindings . http://www.unidata.ucar.edu/netcdf/
-    (ver >= 4.2 beta) . ftp://ftp.unidata.ucar.edu/pub/netcdf/
+
+  - NetCDF C++4 bindings .. http://www.unidata.ucar.edu/netcdf/
+    (ver >= 4.2 beta) .. ftp://ftp.unidata.ucar.edu/pub/netcdf/
+
+  - Boost Sandbox libs: http://boost.org/community/sandbox.html
+    - Boost.odeint (headers only) 
+
+  - Thrust and CUDA .......... http://code.google.com/p/thrust/
+
+  - GNU Scientific Library (GSL) .... http://www.gnu.org/s/gsl/
 
 * MPI requirements:
   - MPI libraries with C++ bindings (optional), e.g.:
-    - Open MPI ...................... http://www.open-mpi.org/
+    - Open MPI ....................... http://www.open-mpi.org/
       (with --enable-mpi-threads if MPI+threads is to be used)
-    - MPICH ............... http://www.mcs.anl.gov/mpi/mpich2/
-    - LAM/MPI (obsolete -> Open MPI) . http://www.lam-mpi.org/
+    - MPICH ................ http://www.mcs.anl.gov/mpi/mpich2/
+    - LAM/MPI (obsolete -> Open MPI) .. http://www.lam-mpi.org/
+
   - MPI-enabled HDF5 library ...... TODO
+
   - HDF5-enabled netCDF4 library .. TODO
 
 --------------------------------------------------------------

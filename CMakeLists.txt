@@ -79,11 +79,11 @@ elseif(NOT "${LDOUBLE}" STREQUAL "NO")
   add_executable(icicle src/mdl_ldb.cpp)
 else()
   message(FATAL_ERROR "-DFLOAD=NO -DDOUBLE=NO and -DLDBOULBE=NO may not be specified all at once!")
-endif()                                                                #
+endif() 
 ########################################################################
 
 #### <Boost.units> (mandatory) #########################################
-check_cxx_source_compiles(                                             #
+check_cxx_source_compiles(
   "#include <boost/units/systems/si.hpp>\n int main() {}" 
   Find_Boost_Units
 )
@@ -91,11 +91,11 @@ if(NOT Find_Boost_Units)
   message(FATAL_ERROR "Boost.Units not found! 
     (cf. CMakeFiles/CMakeError.log, fix, rm CMakeCache.txt and rerun)"
   )
-endif()                                                                #
+endif() 
 #### </Boost.units> ####################################################
 
 #### <Boost.lexical_cast> (mandatory) ##################################
-check_cxx_source_compiles(                                             #
+check_cxx_source_compiles(
   "#include <boost/lexical_cast.hpp>\n int main() {}" 
   Find_Boost_Lexical_Cast
 )
@@ -103,11 +103,11 @@ if(NOT Find_Boost_Lexical_Cast)
   message(FATAL_ERROR "Boost.lexical_cast not found! 
     (cf. CMakeFiles/CMakeError.log, fix, rm CMakeCache.txt and rerun)"
   )
-endif()                                                                #
+endif() 
 #### </Boost.lexical_cast> #############################################
 
 #### <Blitz> (mandatory) ###############################################
-check_cxx_source_compiles(                                             #
+check_cxx_source_compiles( 
   "#include <blitz/array.h>\n int main() {}"
   Find_Blitz
 )
@@ -128,7 +128,7 @@ if (NOT Blitz_Configured_With_The_Same_Compiler)
     Consider reconfiguring Blitz++ with CXX=${CMAKE_CXX_COMPILER} 
     (cf. CMakeFiles/CMakeError.log, fix, rm CMakeCache.txt and rerun)"
   )
-endif()                                                                #
+endif() 
 #### </Blitz> ##########################################################
 
 #### <Boost.program_options> (mandatory) ###############################
@@ -171,12 +171,12 @@ else()
       OpenMP parallelisation will not be available.")
     set(CMAKE_CXX_FLAGS ${TMP}) 
   endif()   
-endif()                                                                #
+endif()
 icicle_option(OPENMP "OpenMP paralellisation" "${Find_OpenMP}")
 #### </OpenMP> #########################################################
 
 #### <NetCDF> (optional) ###############################################
-if("${NETCDF}" STREQUAL "NO") # handles -DNETCDF=NO                    #
+if("${NETCDF}" STREQUAL "NO") 
   message(STATUS "Building without netCDF (-DNETCDF=NO specified)")
 else()
   set(CMAKE_REQUIRED_LIBRARIES "-lnetcdf_c++4")
@@ -196,12 +196,12 @@ else()
     set(USE_NETCDF ${Find_NetCDF})
     target_link_libraries(icicle ${CMAKE_REQUIRED_LIBRARIES})
   endif()
-endif()                                                                #
+endif() 
 icicle_option(NETCDF "netCDF output" "${Find_NetCDF}")
 #### </NetCDF> #########################################################
 
 #### <Boost.Thread> (optional) #########################################
-if ("${THREADS}" STREQUAL "NO") # handles -DTHREADS=NO                 #
+if ("${THREADS}" STREQUAL "NO") 
   message(STATUS "Building without Boost.Thread (-DTHREADS=NO specified)")
 else()
   foreach(sfx "-mt" "") # tagged installation layout issue  
@@ -235,7 +235,7 @@ icicle_option(THREADS "threads paralellisation using Boost.Thread" "${Find_Boost
 #### </Boost.Thread> ###################################################
 
 #### <Boost.MPI> (optional) ############################################
-if ("${MPI}" STREQUAL "NO") # handles -DMPI=NO
+if ("${MPI}" STREQUAL "NO")
   message(STATUS "Building without Boost.MPI (-DMPI=NO specified)")
 else()
   foreach(sfx "-mt" "") # tagged installation layout issue 
@@ -272,7 +272,7 @@ icicle_option(MPI "MPI paralellisation using Boost.MPI" "${Find_Boost_MPI}")
 #### </Boost.MPI> ######################################################
 
 #### <Boost.Timer> (optional) ##########################################
-if ("${TIMER}" STREQUAL "NO") # handles -DTIMER=NO                     #
+if ("${TIMER}" STREQUAL "NO")
   message(STATUS "Building without Boost.Timer (-DTIMER=NO specified)")
 else()
   foreach(sfx "-mt" "") # tagged installation layout issue     
@@ -291,7 +291,7 @@ else()
   endforeach()
   if(NOT Find_Boost_Timer) 
     message(WARNING "
-      Boost.Timer not found! (cf. CMakeFiles/CMakeError.log) 
+      Boost.Timer (or Boost.System) not found! (cf. CMakeFiles/CMakeError.log) 
       Simulation timing will not be available.
         suitable Debian/Ubuntu package: libboost-dev (ver >= 1.48)
         suitable Macports port: boost / boost+openmpi (ver >= 1.48)
@@ -305,6 +305,25 @@ else()
 endif()                                                                
 icicle_option(TIMER "Simulation timing using Boost.Timer" "${Find_Boost_Timer}")
 #### </Boost.Timer> ####################################################
+
+#### <Boost.odeint> ####################################################
+if ("${ODEINT}" STREQUAL "NO") 
+  message(STATUS "Building without Boost.odeint (-DODEINT=NO specified)")
+else()
+  check_cxx_source_compiles(
+    "#include <boost/numeric/odeint.hpp>\n int main() {}" 
+    Find_Boost_odeint
+  )
+  if(NOT Find_Boost_odeint) 
+    message(WARNING "
+      Boost.odeint not found! (cf. CMakeFiles/CMakeError.log) 
+      ODE integration will not be available.
+      (after installation delete CMakeCache.txt before running cmake)
+    ")
+  endif() 
+endif()
+icicle_option(ODEINT "ODE integration with Boost.odeint" "${Find_Boost_odeint}")
+#### </Boost.odeint> ###################################################
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug") 
   set(INFO_CXX_FLAGS "${CMAKE_CXX_FLAGS_DEBUG} ${CMAKE_CXX_FLAGS}")
