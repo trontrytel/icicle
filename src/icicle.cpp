@@ -109,6 +109,13 @@ int main(int ac, char* av[])
       mdl_ldb(vm, options.str());
     else 
 #endif
+// TODO: __float128 quoting Wikipedia: "
+// With the GNU C Compiler, long double is 80-bit extended precision on x86 processors 
+// regardless of the physical storage used for the type (which can be either 96 or 128 bits)
+// ...
+// As of gcc 4.3, a quadruple precision is also supported on x86, but as the nonstandard 
+// type __float128 rather than long double.
+// "
     error_macro("unsupported number of bits (" << bits << ")")
   }
   catch (exception &e)

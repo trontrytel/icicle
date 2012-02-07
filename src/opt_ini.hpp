@@ -78,10 +78,12 @@ ini<real_t> *opt_ini(const po::variables_map& vm, const grd<real_t> &grid)
       h0 = real_cast<real_t>(vm, "ini.cone.h0") * si::metres;
     return new ini_func_cone<real_t>(grid, h, x0, z0, r, h0);
   }
+#  ifdef USE_NETCDF
   else if (initype == "netcdf")
   {
     return new ini_netcdf<real_t>(grid, vm["ini.netcdf.file" ].as<string>());
   }
+#  endif
   else if (initype == "gauss")
   {
     quantity<si::dimensionless, real_t>

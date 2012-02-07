@@ -22,6 +22,8 @@ coding conventions in icicle:
     indicating inheritance, e.g. adv_lax-wendroff.hpp
   - filenames should be all-lowercase
 
+- loop index naming conventions... ? (TODO)
+
 References:
 [CERN] - CERN C++ Coding Standard Specification
   http://pst.web.cern.ch/PST/HandBookWorkBook/Handbook/Programming/CodingStandard/c++standard.pdf
