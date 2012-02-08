@@ -7,8 +7,9 @@
  */
 #ifndef INI_NETCDF_HPP
 #  define INI_NETCDF_HPP
+#  ifdef USE_NETCDF
 
-#  include "ini.hpp"
+#    include "ini.hpp"
 
 template <typename real_t>
 class ini_netcdf : public ini<real_t>
@@ -73,4 +74,5 @@ class ini_netcdf : public ini<real_t>
     catch (NcException& e) error_macro(e.what())
   }
 };
+#  endif
 #endif

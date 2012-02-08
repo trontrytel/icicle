@@ -7,6 +7,7 @@
 #    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
 
 cmake_minimum_required(VERSION 2.6) # for simplified if-constructs
+#TODO: check which version is needed for FeatureSummary
 
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffast-math -DNDEBUG")
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -DBZ_DEBUG" CACHE STRING "Debug options." FORCE)
@@ -40,8 +41,19 @@ set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${TMP}")
 include(CheckCXXSourceCompiles) 
 include(CheckCXXSourceRuns)
 
+# describing available options
+include(FeatureSummary)
+macro(icicle_option var desc onoff)
+  option(${var} ${desc} ${onoff})
+  add_feature_info(${var} ${var} ${desc})
+endmacro()
+
 #### <-DFLOAT=NO, -DDOUBLE=NO, -DLDOUBLE=NO> ###########################
-if(NOT "${FLOAT}" STREQUAL "NO")                                       #
+icicle_option(FLOAT "'float' type support (i.e. single precision, 32 bits)" ON)
+icicle_option(DOUBLE "'double' type support (i.e. double precision, 64 bits)" ON)
+icicle_option(LDOUBLE "'long double' type support (compiler-dependent, 80 bits for GCC on x86_64)" ON)
+# TODO: __float128
+if(NOT "${FLOAT}" STREQUAL "NO")                                       
   set(USE_FLOAT TRUE)
   if(NOT "${DOUBLE}" STREQUAL "NO")
     set(USE_DOUBLE TRUE)
@@ -67,11 +79,11 @@ elseif(NOT "${LDOUBLE}" STREQUAL "NO")
   add_executable(icicle src/mdl_ldb.cpp)
 else()
   message(FATAL_ERROR "-DFLOAD=NO -DDOUBLE=NO and -DLDBOULBE=NO may not be specified all at once!")
-endif()                                                                #
+endif() 
 ########################################################################
 
 #### <Boost.units> (mandatory) #########################################
-check_cxx_source_compiles(                                             #
+check_cxx_source_compiles(
   "#include <boost/units/systems/si.hpp>\n int main() {}" 
   Find_Boost_Units
 )
@@ -79,11 +91,11 @@ if(NOT Find_Boost_Units)
   message(FATAL_ERROR "Boost.Units not found! 
     (cf. CMakeFiles/CMakeError.log, fix, rm CMakeCache.txt and rerun)"
   )
-endif()                                                                #
+endif() 
 #### </Boost.units> ####################################################
 
 #### <Boost.lexical_cast> (mandatory) ##################################
-check_cxx_source_compiles(                                             #
+check_cxx_source_compiles(
   "#include <boost/lexical_cast.hpp>\n int main() {}" 
   Find_Boost_Lexical_Cast
 )
@@ -91,11 +103,11 @@ if(NOT Find_Boost_Lexical_Cast)
   message(FATAL_ERROR "Boost.lexical_cast not found! 
     (cf. CMakeFiles/CMakeError.log, fix, rm CMakeCache.txt and rerun)"
   )
-endif()                                                                #
+endif() 
 #### </Boost.lexical_cast> #############################################
 
 #### <Blitz> (mandatory) ###############################################
-check_cxx_source_compiles(                                             #
+check_cxx_source_compiles( 
   "#include <blitz/array.h>\n int main() {}"
   Find_Blitz
 )
@@ -116,12 +128,12 @@ if (NOT Blitz_Configured_With_The_Same_Compiler)
     Consider reconfiguring Blitz++ with CXX=${CMAKE_CXX_COMPILER} 
     (cf. CMakeFiles/CMakeError.log, fix, rm CMakeCache.txt and rerun)"
   )
-endif()                                                                #
+endif() 
 #### </Blitz> ##########################################################
 
 #### <Boost.program_options> (mandatory) ###############################
-foreach(sfx "-mt" "") # tagged installation layout issue               #
-  set(CMAKE_REQUIRED_LIBRARIES "-lboost_program_options${sfx}") 
+foreach(sfx "-mt" "") # tagged installation layout issue               
+  set(CMAKE_REQUIRED_LIBRARIES "-lboost_program_options${sfx}")  # TODO? should we use CMAKE_PUSH_CHECK_STATE() and CMAKE_POP_CHECK_STATE() ??
   check_cxx_source_compiles(
     "#include <boost/program_options.hpp>\n int main() { 
       boost::program_options::options_description d; 
@@ -131,7 +143,7 @@ foreach(sfx "-mt" "") # tagged installation layout issue               #
   if (Find_Boost_Program_Options) 
     break()
   else()
-    message("-- Retrying without the -mt suffix...")
+    message(STATUS "Retrying without the -mt suffix...")
     unset(Find_Boost_Program_Options CACHE)
   endif()
 endforeach()
@@ -144,8 +156,9 @@ target_link_libraries(icicle ${CMAKE_REQUIRED_LIBRARIES})
 #### </Boost.program_options> ##########################################
 
 #### <OpenMP> (optional) ###############################################
-if ("${OPENMP}" STREQUAL "NO")                                         #   
-  message("-- Building without OpenMP (-DOPENMP=NO specified)")
+# Not using FIND_PACKAGE(OpenMP) as it relies on C compiler rather than C++ one (TODO: support other options for other compilers?)
+if ("${OPENMP}" STREQUAL "NO")   
+  message(STATUS "Building without OpenMP (-DOPENMP=NO specified)")
 else()
   set(TMP ${CMAKE_CXX_FLAGS}) 
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
@@ -156,14 +169,15 @@ else()
   if(NOT Find_OpenMP)
     message(WARNING "OpenMP not found (cf. CMakeFiles/CMakeError.log) 
       OpenMP parallelisation will not be available.")
-    set(CMAKE_CXX_FLAGS ${TMP})
+    set(CMAKE_CXX_FLAGS ${TMP}) 
   endif()   
-endif()                                                                #
+endif()
+icicle_option(OPENMP "OpenMP paralellisation" "${Find_OpenMP}")
 #### </OpenMP> #########################################################
 
 #### <NetCDF> (optional) ###############################################
-if("${NETCDF}" STREQUAL "NO") # handles -DNETCDF=NO                    #
-  message("-- Building without netCDF (-DNETCDF=NO specified)")
+if("${NETCDF}" STREQUAL "NO") 
+  message(STATUS "Building without netCDF (-DNETCDF=NO specified)")
 else()
   set(CMAKE_REQUIRED_LIBRARIES "-lnetcdf_c++4")
   check_cxx_source_compiles(
@@ -182,12 +196,13 @@ else()
     set(USE_NETCDF ${Find_NetCDF})
     target_link_libraries(icicle ${CMAKE_REQUIRED_LIBRARIES})
   endif()
-endif()                                                                #
+endif() 
+icicle_option(NETCDF "netCDF output" "${Find_NetCDF}")
 #### </NetCDF> #########################################################
 
 #### <Boost.Thread> (optional) #########################################
-if ("${THREADS}" STREQUAL "NO") # handles -DTHREADS=NO                 #
-  message("-- Building without Boost.Thread (-DTHREADS=NO specified)")
+if ("${THREADS}" STREQUAL "NO") 
+  message(STATUS "Building without Boost.Thread (-DTHREADS=NO specified)")
 else()
   foreach(sfx "-mt" "") # tagged installation layout issue  
     set(CMAKE_REQUIRED_LIBRARIES "-lboost_thread${sfx}")
@@ -198,7 +213,7 @@ else()
     if (Find_Boost_Thread) 
       break()
     else()
-      message("-- Retrying without the -mt suffix...")
+      message(STATUS "Retrying without the -mt suffix...")
       unset(Find_Boost_Thread CACHE)
     endif()
   endforeach()
@@ -215,12 +230,13 @@ else()
     target_link_libraries(icicle ${CMAKE_REQUIRED_LIBRARIES})
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
   endif()
-endif()                                                                #
+endif()                                                                
+icicle_option(THREADS "threads paralellisation using Boost.Thread" "${Find_Boost_Thread}")
 #### </Boost.Thread> ###################################################
 
 #### <Boost.MPI> (optional) ############################################
-if ("${MPI}" STREQUAL "NO") # handles -DMPI=NO
-  message("-- Building without Boost.MPI (-DMPI=NO specified)")
+if ("${MPI}" STREQUAL "NO")
+  message(STATUS "Building without Boost.MPI (-DMPI=NO specified)")
 else()
   foreach(sfx "-mt" "") # tagged installation layout issue 
     set(CMAKE_REQUIRED_LIBRARIES "-lboost_mpi${sfx}")
@@ -232,7 +248,7 @@ else()
     if (Find_Boost_MPI) 
       break()
     else()
-      message("-- Retrying without the -mt suffix...")
+      message(STATUS "Retrying without the -mt suffix...")
       unset(Find_Boost_MPI CACHE)
     endif()
   endforeach()
@@ -241,7 +257,7 @@ else()
       Boost.MPI not found! (cf. CMakeFiles/CMakeError.log)
       MPI parallelisation will not be available.
       Possible reasons:
-      - a wrapper like mpic++ need to be used (e.d. export CXX=mpic++)
+      - a wrapper like mpic++ need to be used (e.g. export CXX=mpic++)
       - Boost.MPI needs to be installed:
         suitable Debian/Ubuntu package: ... TODO ...
         suitable Macports port: ... TODO ...
@@ -252,11 +268,12 @@ else()
     target_link_libraries(icicle ${CMAKE_REQUIRED_LIBRARIES})
   endif()
 endif()
+icicle_option(MPI "MPI paralellisation using Boost.MPI" "${Find_Boost_MPI}")
 #### </Boost.MPI> ######################################################
 
 #### <Boost.Timer> (optional) ##########################################
-if ("${TIMER}" STREQUAL "NO") # handles -DTIMER=NO                     #
-  message("-- Building without Boost.Timer (-DTIMER=NO specified)")
+if ("${TIMER}" STREQUAL "NO")
+  message(STATUS "Building without Boost.Timer (-DTIMER=NO specified)")
 else()
   foreach(sfx "-mt" "") # tagged installation layout issue     
     set(CMAKE_REQUIRED_LIBRARIES "-lboost_timer${sfx} -lboost_system${sfx}")
@@ -268,13 +285,13 @@ else()
     if (Find_Boost_Timer) 
       break()
     else()
-      message("-- Retrying without the -mt suffix...")
+      message(STATUS "Retrying without the -mt suffix...")
       unset(Find_Boost_Timer CACHE)
     endif()
   endforeach()
   if(NOT Find_Boost_Timer) 
     message(WARNING "
-      Boost.Timer not found! (cf. CMakeFiles/CMakeError.log) 
+      Boost.Timer (or Boost.System) not found! (cf. CMakeFiles/CMakeError.log) 
       Simulation timing will not be available.
         suitable Debian/Ubuntu package: libboost-dev (ver >= 1.48)
         suitable Macports port: boost / boost+openmpi (ver >= 1.48)
@@ -284,8 +301,28 @@ else()
     set(USE_BOOST_TIMER ${Find_Boost_Timer})
     target_link_libraries(icicle ${CMAKE_REQUIRED_LIBRARIES})
   endif()
-endif()                                                                #
+endif()                                                                
+icicle_option(TIMER "Simulation timing using Boost.Timer" "${Find_Boost_Timer}")
 #### </Boost.Timer> ####################################################
+
+#### <Boost.odeint> ####################################################
+if ("${ODEINT}" STREQUAL "NO") 
+  message(STATUS "Building without Boost.odeint (-DODEINT=NO specified)")
+else()
+  check_cxx_source_compiles(
+    "#include <boost/numeric/odeint.hpp>\n int main() {}" 
+    Find_Boost_odeint
+  )
+  if(NOT Find_Boost_odeint) 
+    message(WARNING "
+      Boost.odeint not found! (cf. CMakeFiles/CMakeError.log) 
+      ODE integration will not be available.
+      (after installation delete CMakeCache.txt before running cmake)
+    ")
+  endif() 
+endif()
+icicle_option(ODEINT "ODE integration with Boost.odeint" "${Find_Boost_odeint}")
+#### </Boost.odeint> ###################################################
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug") 
   set(INFO_CXX_FLAGS "${CMAKE_CXX_FLAGS_DEBUG} ${CMAKE_CXX_FLAGS}")
@@ -299,14 +336,23 @@ execute_process(COMMAND "hostname" OUTPUT_VARIABLE INFO_HOSTNAME OUTPUT_STRIP_TR
 execute_process(COMMAND "${CMAKE_CXX_COMPILER}" "--version" COMMAND "head" "-1" OUTPUT_VARIABLE INFO_CXX_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cfg.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/src/cfg.hpp)
 
-find_package(Doxygen)
-if (DOXYGEN_FOUND)
-  #add_subdirectory(doc) (FIXME - cmake-controlled doc build)
-else()
-  message(WARNING "Doxygent not found - 'make doc' will not be available.")
-endif()
+#find_package(Doxygen)
+#if (DOXYGEN_FOUND)
+#  #add_subdirectory(doc) (FIXME - cmake-controlled doc build)
+#else()
+#  message(WARNING "Doxygent not found - 'make doc' will not be available.")
+#endif()
 
 enable_testing()
 
 add_subdirectory(tests)
 add_subdirectory(src) 
+
+message(STATUS "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --")
+feature_summary(WHAT ENABLED_FEATURES DESCRIPTION "Enabled Features (to disable use -DFEATURE=NO):")
+feature_summary(WHAT DISABLED_FEATURES DESCRIPTION "Disabled Features (to enable use -DFEATURE=ON):")
+message(STATUS "Compilation set-up:
+compiler: ${CMAKE_CXX_COMPILER}
+version: ${INFO_CXX_VERSION}
+flags: ${INFO_CXX_FLAGS}")
+message(STATUS "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --")
