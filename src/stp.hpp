@@ -39,8 +39,7 @@ struct stp : root
     grd<real_t> *grid,
     eqs<real_t> *equations,
     quantity<si::time, real_t> dt_out, 
-    quantity<si::time, real_t> t_max,
-    quantity<si::time, real_t> dt_arg // if zero then calculate it automagically
+    quantity<si::time, real_t> t_max
   ) 
     : fllbck(fllbck), advsch(advsch), 
       velocity(velocity), 
@@ -48,9 +47,6 @@ struct stp : root
       grid(grid),
       equations(equations)
   { 
-    bool auto_dt = (dt_arg/si::seconds == 0);
-    dt = auto_dt ? real_t(1) * si::seconds : dt_arg;
-
     int halo = (advsch->stencil_extent() -1) / 2;
     mtx::idx_ijk ijk(
       mtx::rng(0, grid->nx() - 1),
@@ -65,33 +61,46 @@ struct stp : root
     
     real_t cmax = max(sqrt(pow2(Cx) + pow2(Cy) + pow2(Cz))); // TODO: check if that's a correct way to calculate it?
 
-    if (auto_dt)
-    {
-      dt = dt_out;
-      nout = 1;
-      while (cmax * dt / si::seconds > advsch->courant_max()) //TODO ? some limit to this loop
-      {  
-        dt = dt_out / real_t(++nout);
-      }
-      if (cmax*dt/si::seconds < advsch->courant_min()) 
-        error_macro("failed to calculate a reasonable time step") 
-      //TODO print some suggestions for t_out
-      if (!velocity->is_constant())  
-        warning_macro ("velocity field is not const -> calculated time step may change") 
+    dt = dt_out;
+    nout = 1;
+    while (cmax * dt / si::seconds > advsch->courant_max()) //TODO ? some limit to this loop
+    {  
+      dt = dt_out / real_t(++nout);
     }
-    else
-    {
-      nout = dt_out / dt;
-      if (real_t(real_t(nout) * dt / si::seconds) != real_t(dt_out / si::seconds)) 
-        warning_macro("dt_out is not an integer multiple of dt"); //TODO-AJ error macro is not working
-      if (cmax > advsch->courant_max())
+    if (cmax*dt/si::seconds < advsch->courant_min()) 
+      error_macro("failed to calculate a reasonable time step") 
+      //TODO print some suggestions for t_out
+    if (!velocity->is_constant())  
+      warning_macro ("velocity field is not const -> calculated time step may change") 
+    nt = t_max / dt;
+  }
+
+  stp(
+    adv<real_t> *fllbck, 
+    adv<real_t> *advsch, 
+    vel<real_t> *velocity,
+    ini<real_t> *intcond,
+    grd<real_t> *grid,
+    eqs<real_t> *equations,
+    int nout, 
+    quantity<si::time, real_t> dt, 
+    unsigned long nt
+  ) 
+    : fllbck(fllbck), advsch(advsch), 
+      velocity(velocity), 
+      intcond(intcond), 
+      grid(grid),
+      equations(equations),
+      nt(nt), dt(dt), nout(nout)
+  {
+  /*       if (cmax > advsch->courant_max())  TODO 
         warning_macro("chosen dt results in too big Courant number: max(C) = " << cmax << " > " << advsch->courant_max());
       if (cmax < advsch->courant_min())
         //donor cell schemes work better for big courant numbers
         warning_macro("chosen dt results in too small Courant number: min(C) = " << cmax << " < " << advsch->courant_min());
-    }
-    nt = t_max / dt;
-  }
+  */
+  }  
+
 };
 
 #endif

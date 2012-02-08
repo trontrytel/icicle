@@ -25,7 +25,7 @@ if(NOT (
 endif()
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug") 
-  set(LINK_FLAGS "${LINK_FLAGS} -lblitz")
+  target_link_libraries(icicle "-lblitz")
   # TODO: check if debugging actually works, if not suggest recompiling blitz with --enable-shared
 endif()
 project(icicle CXX)
@@ -39,6 +39,36 @@ set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${TMP}")
 # we use CheckCXXSource* macros only not to require a C compiler
 include(CheckCXXSourceCompiles) 
 include(CheckCXXSourceRuns)
+
+#### <-DFLOAT=NO, -DDOUBLE=NO, -DLDOUBLE=NO> ###########################
+if(NOT "${FLOAT}" STREQUAL "NO")                                       #
+  set(USE_FLOAT TRUE)
+  if(NOT "${DOUBLE}" STREQUAL "NO")
+    set(USE_DOUBLE TRUE)
+    if(NOT "${LDOUBLE}" STREQUAL "NO")
+      set(USE_LDOUBLE TRUE)
+      add_executable(icicle src/icicle.cpp src/mdl_flt.cpp src/mdl_dbl.cpp src/mdl_ldb.cpp)
+    else()
+      add_executable(icicle src/icicle.cpp src/mdl_flt.cpp src/mdl_dbl.cpp)
+    endif()
+  else()
+    add_executable(icicle src/icicle.cpp src/mdl_flt.cpp)
+  endif()
+elseif(NOT "${DOUBLE}" STREQUAL "NO")
+  set(USE_DOUBLE TRUE)
+  if(NOT "${LDOUBLE}" STREQUAL "NO")
+    set(USE_LDOUBLE TRUE)
+    add_executable(icicle src/icicle.cpp src/mdl_dbl.cpp src/mdl_ldb.cpp)
+  else()
+    add_executable(icicle src/icicle.cpp src/mdl_dbl.cpp)
+  endif()
+elseif(NOT "${LDOUBLE}" STREQUAL "NO")
+  set(USE_LDOUBLE TRUE)
+  add_executable(icicle src/mdl_ldb.cpp)
+else()
+  message(FATAL_ERROR "-DFLOAD=NO -DDOUBLE=NO and -DLDBOULBE=NO may not be specified all at once!")
+endif()                                                                #
+########################################################################
 
 #### <Boost.units> (mandatory) #########################################
 check_cxx_source_compiles(                                             #
@@ -110,7 +140,7 @@ if(NOT Find_Boost_Program_Options)
     (cf. CMakeFiles/CMakeError.log, fix, rm CMakeCache.txt and rerun)"
   )
 endif()
-set(LINK_FLAGS "${LINK_FLAGS} ${CMAKE_REQUIRED_LIBRARIES}")            #
+target_link_libraries(icicle ${CMAKE_REQUIRED_LIBRARIES})
 #### </Boost.program_options> ##########################################
 
 #### <OpenMP> (optional) ###############################################
@@ -150,7 +180,7 @@ else()
     ")
   else()
     set(USE_NETCDF ${Find_NetCDF})
-    set(LINK_FLAGS "${LINK_FLAGS} ${CMAKE_REQUIRED_LIBRARIES}") 
+    target_link_libraries(icicle ${CMAKE_REQUIRED_LIBRARIES})
   endif()
 endif()                                                                #
 #### </NetCDF> #########################################################
@@ -182,7 +212,7 @@ else()
     ")
   else()
     set(USE_BOOST_THREAD ${Find_Boost_Thread})
-    set(LINK_FLAGS "${LINK_FLAGS} ${CMAKE_REQUIRED_LIBRARIES}") 
+    target_link_libraries(icicle ${CMAKE_REQUIRED_LIBRARIES})
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
   endif()
 endif()                                                                #
@@ -219,7 +249,7 @@ else()
     ")
   else()
     set(USE_BOOST_MPI ${Find_Boost_MPI})
-    set(LINK_FLAGS "${LINK_FLAGS} ${CMAKE_REQUIRED_LIBRARIES}")
+    target_link_libraries(icicle ${CMAKE_REQUIRED_LIBRARIES})
   endif()
 endif()
 #### </Boost.MPI> ######################################################
@@ -252,42 +282,10 @@ else()
     ")
   else()
     set(USE_BOOST_TIMER ${Find_Boost_Timer})
-    set(LINK_FLAGS "${LINK_FLAGS} ${CMAKE_REQUIRED_LIBRARIES}") 
+    target_link_libraries(icicle ${CMAKE_REQUIRED_LIBRARIES})
   endif()
 endif()                                                                #
 #### </Boost.Timer> ####################################################
-
-#### <-DFLOAT=NO, -DDOUBLE=NO, -DLDOUBLE=NO> ###########################
-if(NOT "${FLOAT}" STREQUAL "NO")                                       #
-  set(USE_FLOAT TRUE)
-  if(NOT "${DOUBLE}" STREQUAL "NO")
-    set(USE_DOUBLE TRUE)
-    if(NOT "${LDOUBLE}" STREQUAL "NO")
-      set(USE_LDOUBLE TRUE)
-      add_executable(icicle src/icicle.cpp src/mdl_flt.cpp src/mdl_dbl.cpp src/mdl_ldb.cpp)
-    else()
-      add_executable(icicle src/icicle.cpp src/mdl_flt.cpp src/mdl_dbl.cpp)
-    endif()
-  else()
-    add_executable(icicle src/icicle.cpp src/mdl_flt.cpp)
-  endif()
-elseif(NOT "${DOUBLE}" STREQUAL "NO")
-  set(USE_DOUBLE TRUE)
-  if(NOT "${LDOUBLE}" STREQUAL "NO")
-    set(USE_LDOUBLE TRUE)
-    add_executable(icicle src/icicle.cpp src/mdl_dbl.cpp src/mdl_ldb.cpp)
-  else()
-    add_executable(icicle src/icicle.cpp src/mdl_dbl.cpp)
-  endif()
-elseif(NOT "${LDOUBLE}" STREQUAL "NO")
-  set(USE_LDOUBLE TRUE)
-  add_executable(icicle src/mdl_ldb.cpp)
-else()
-  message(FATAL_ERROR "-DFLOAD=NO -DDOUBLE=NO and -DLDBOULBE=NO may not be specified all at once!")
-endif()                                                               #
-#######################################################################
-
-set_target_properties(icicle PROPERTIES LINK_FLAGS ${LINK_FLAGS})
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug") 
   set(INFO_CXX_FLAGS "${CMAKE_CXX_FLAGS_DEBUG} ${CMAKE_CXX_FLAGS}")
