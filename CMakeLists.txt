@@ -188,9 +188,7 @@ else()
     message(WARNING "
       NetCDF >=4.1.1 not found! (cf. CMakeFiles/CMakeError.log)
       Without it the NetCDF output will not be available.
-        suitable Debian/Ubuntu package: libnetcdf-dev
-        suitable Macports port: netcdf
-        erase the CMakeCache.txt before re-running cmake
+      After installing it erase the CMakeCache.txt before re-running cmake
     ")
   else()
     set(USE_NETCDF ${Find_NetCDF})
@@ -221,9 +219,7 @@ else()
     message(WARNING "
       Boost.Thread not found! (cf. CMakeFiles/CMakeError.log) 
       Threads parallelisation will not be available.
-        suitable Debian/Ubuntu package: libboost-dev
-        suitable Macports port: boost / boost+openmpi
-        (after installation delete CMakeCache.txt before running cmake)
+      After installing it erase the CMakeCache.txt before re-running cmake
     ")
   else()
     set(USE_BOOST_THREAD ${Find_Boost_Thread})
@@ -259,8 +255,6 @@ else()
       Possible reasons:
       - a wrapper like mpic++ need to be used (e.g. export CXX=mpic++)
       - Boost.MPI needs to be installed:
-        suitable Debian/Ubuntu package: ... TODO ...
-        suitable Macports port: ... TODO ...
         (after installation delete CMakeCache.txt before running cmake)
     ")
   else()
@@ -293,9 +287,7 @@ else()
     message(WARNING "
       Boost.Timer (or Boost.System) not found! (cf. CMakeFiles/CMakeError.log) 
       Simulation timing will not be available.
-        suitable Debian/Ubuntu package: libboost-dev (ver >= 1.48)
-        suitable Macports port: boost / boost+openmpi (ver >= 1.48)
-        (after installation delete CMakeCache.txt before running cmake)
+      (after installation delete CMakeCache.txt before running cmake)
     ")
   else()
     set(USE_BOOST_TIMER ${Find_Boost_Timer})

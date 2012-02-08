@@ -1,14 +1,20 @@
 -------------------------- ICICLE -----------------------------
-
-- outline: TODO
-- authors: Sylwester Arabas et al. 
-- copyright: University of Warsaw
-- funding: Polish National Science Center (http://ncn.gov.pl/)
-           (grant no. 2011/01/N/ST10/01483)
-- license: GPLv3+ (cf. COPYING or http://www.gnu.org/licenses/)
+* outline: a modern C++ implementation of a nonoscillatory
+    forward in time solver for systems of generalised transport 
+    equations with emphasis on cloud modelling applications
+* keywords: MPDATA, cloud microphysics
+* authors: Sylwester Arabas, Anna Jaruga & Hanna Pawlowska
+* copyright: University of Warsaw ....... http://www.uw.edu.pl/
+    Faculty of Physics ................. http://www.fuw.edu.pl/
+    Institute of Geophysics ........ http://www.igf.fuw.edu.pl/
+* status: pre-alpha (beta version planned for 2013 Q1)
+* license: GPLv3+ (cf. COPYING) .. http://www.gnu.org/licenses/
+* funding: Polish National Science Center .. http://ncn.gov.pl/
+    grant no. 2011/01/N/ST10/01483
 
 ---------------------------------------------------------------
-* requirements:
+* requirements (see below for Debian/Fedora/Macports hints):
+
   - cmake ................................... http://cmake.org/
 
   - C++ compiler, e.g.
@@ -17,7 +23,7 @@
     - ... 
 
   - Blitz++ library ............. http://blitz.sourceforge.net/
-    (preferable the development version from the hg repository)
+    (preferably the development version from the hg repository)
 
   - Boost C++ libraries, incl.: ............. http://boost.org/
     - Boost.Units (header only)
@@ -26,6 +32,7 @@
     - Boost.pointer_container (headers only)
 
 * optional libraries:
+
   - Boost C++ libraries, incl.: ............. http://boost.org/
     - Boost.Thread (headers & shared library)
     - Boost.MPI (headers & shared library + MPI - see below)
@@ -45,6 +52,7 @@
   - GNU Scientific Library (GSL) .... http://www.gnu.org/s/gsl/
 
 * MPI requirements:
+
   - MPI libraries with C++ bindings (optional), e.g.:
     - Open MPI ....................... http://www.open-mpi.org/
       (with --enable-mpi-threads if MPI+threads is to be used)
@@ -55,8 +63,33 @@
 
   - HDF5-enabled netCDF4 library .. TODO
 
+* Hints concerning use of packages:
+
+  - All library packages have to be installed with the header
+    files. For Debian/Ubuntu this means one needs to install
+    the -dev suffixed packages (e.g. libboost-dev). For Fedora
+    such packages have a -devel suffix (e.g. boost-devel)
+
+  - Use of any Blitz++ package is discouraged. As of 2012 Q1 
+    they are all largely outdated (better use the repository 
+    version). Additionally, Blitz++ in principle should be 
+    built with the same compiler as the software which is 
+    using it.
+
+  - MPI support is usually not enabled by default in packages.
+    Furthermore, the user has to chose an MPI implementation.
+    On Macports, Boost.MPI is enabled e.g. via the "openmpi" 
+    variant of the boost port (port install boost+openmpi).
+    On Fedora, one needs to install e.g. boost-mpich2-devel or
+    boost-openmpi-devel (MPICH and OpenMPI variants,
+    respectively). The Debian/Ubuntu counterparts of the above 
+    are libboost-mpi-dev. As of 2012 Q1 MPI-enabled netCDF 
+    packages are not available for Debian, Fedora nor Macports 
+    and hence one has to build them from source.
+
 --------------------------------------------------------------
 * in-tree compilation / tests / clean-up:
+
   $ cmake .             
     [-DCMAKE_BUILD_TYPE=Debug|Release|None]
     [-DNETCDF=NO]
@@ -77,6 +110,7 @@
 
 --------------------------------------------------------------
 * usage:
+
   $ ./icicle --help
   $ ./icicle ... --slv serial
   $ ./icicle ... --slv threads --nsd N
@@ -84,5 +118,5 @@
   $ [open]mpirun -np N ./icicle ... --slv mpi --nsd N
 
 --------------------------------------------------------------
-* developers' documentation draft:
+* users' & developers' documentation draft:
   - see doc/doxygen/html/index.html (cd doc; doxygen # if 404)
