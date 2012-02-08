@@ -90,8 +90,7 @@
 --------------------------------------------------------------
 * in-tree compilation / tests / clean-up:
 
-  $ cmake .             
-    [-DCMAKE_BUILD_TYPE=Debug|Release|None]
+  $ cmake . -DCMAKE_BUILD_TYPE=Debug|Release|None
     [-DNETCDF=NO]
     [-DTHREADS=NO]
     [-DOPENMP=NO]
