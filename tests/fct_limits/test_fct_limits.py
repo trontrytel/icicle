@@ -12,17 +12,17 @@ import os                                # unlink()
 import sys                               # exit
 
 file = 'tmp.nc'
-for iord in (3,4): # temp
+for iord in (2,3,4): 
   print 'running 3D MPDATA-FCT simulation with iord=',str(iord),' ...'
   min = 1.
   max = 3.
   digits = 5
 
   freq = 1
-  nx = 24#12
-  ny = 16#8
-  nz = 12#6
-  nt = 30 # 5 TEMP!
+  nx = 12
+  ny = 8
+  nz = 6
+  nt = 5
   Cx = -.2
   Cy = -.3
   Cz = -.1
@@ -64,7 +64,6 @@ for iord in (3,4): # temp
   if os.path.exists(file) : os.unlink(file)
   subprocess.check_call(cmd)
 
-  print 'opening the output file...' # TODO: move it into the loop!
   nc = netcdf_file(file)
   psi = nc.variables['psi']
 
@@ -73,7 +72,7 @@ for iord in (3,4): # temp
     print "data.min()-min:", data.min()-min, "data.max()-max", data.max()- max
     if (round(data.min(),digits) < min) or (round(data.max(),digits) > max) :
       print data.min(), " < ", min, " or ", data.max(), " > ", max
-      sys.exit(1) #TEMP!
+      sys.exit(1) 
 
   print 'closing and deleting the file...'
   nc.close()

@@ -17,6 +17,6 @@
 
 int main() 
 { 
-  if (0 != system("gnuplot test_gnuplot.gpi")) 
+  if (0 != system("gnuplot test_out_gnuplot.gpi")) 
     exit(EXIT_FAILURE);
 }

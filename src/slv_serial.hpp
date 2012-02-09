@@ -92,7 +92,7 @@ class slv_serial : public slv<real_t>
     Cx.reset(new mtx::arr<real_t>(setup->grid->rng_vctr_x(*ijk, halo)));
     Cy.reset(new mtx::arr<real_t>(setup->grid->rng_vctr_y(*ijk, halo)));
     Cz.reset(new mtx::arr<real_t>(setup->grid->rng_vctr_z(*ijk, halo)));
-    setup->grid->populate_courant_fields(Cx.get(), Cy.get(), Cz.get(), setup->velocity, setup->dt);
+    setup->velocity->populate_courant_fields(Cx.get(), Cy.get(), Cz.get(), setup->grid, setup->dt);
   }
 
   public: void record(const int n, const unsigned long t)
@@ -137,7 +137,9 @@ class slv_serial : public slv<real_t>
 
   public: void advect(int e, int n, int s, adv<real_t> *a)
   {
-    a->op3D(psi[e].c_array(), cache->sclr, cache->vctr, *ijk, n, s, Cx.get(), Cy.get(), Cz.get());
+    a->op3D(psi[e].c_array(), cache->sclr, cache->vctr, *ijk, n, s, 
+      Cx.get(), Cy.get(), Cz.get() 
+    );
   }
 
   public: void cycle_arrays(const int e, const int n)

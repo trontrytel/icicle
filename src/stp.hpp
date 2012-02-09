@@ -61,7 +61,7 @@ struct stp : root
       Cx(grid->rng_vctr_x(ijk, halo)),
       Cy(grid->rng_vctr_y(ijk, halo)),
       Cz(grid->rng_vctr_z(ijk, halo));
-    grid->populate_courant_fields(&Cx, &Cy, &Cz, velocity, dt);
+    velocity->populate_courant_fields(&Cx, &Cy, &Cz, grid, dt);
     
     real_t cmax = max(sqrt(pow2(Cx) + pow2(Cy) + pow2(Cz))); // TODO: check if that's a correct way to calculate it?
 

@@ -1,36 +1,28 @@
 /** @file
  *  @author Sylwester Arabas <slayoo@igf.fuw.edu.pl>
  *  @copyright University of Warsaw
- *  @date November 2011
+ *  @date November 2011 - February 2012
  *  @section LICENSE
- *    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
- *  @section DESCRIPTION
- *    base class for velocity fields
+ *    GPL v3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
 #ifndef VEL_HPP
 #  define VEL_HPP
 
-#  include "cmn.hpp" // root class, error reporting
+#  include "cmn.hpp" 
+#  include "mtx.hpp" 
+#  include "grd.hpp" 
 
 template <typename real_t>
 class vel : root
 {
   public: virtual bool is_constant() = 0;
 
-  public: virtual quantity<si::velocity, real_t> u(
-    const quantity<si::length, real_t> &x,
-    const quantity<si::length, real_t> &y,
-    const quantity<si::length, real_t> &z
-  ) = 0;
-  public: virtual quantity<si::velocity, real_t> v(
-    const quantity<si::length, real_t> &x,
-    const quantity<si::length, real_t> &y,
-    const quantity<si::length, real_t> &z
-  ) = 0;
-  public: virtual quantity<si::velocity, real_t> w(
-    const quantity<si::length, real_t> &x,
-    const quantity<si::length, real_t> &y,
-    const quantity<si::length, real_t> &z
+  public: virtual void populate_courant_fields(
+    mtx::arr<real_t> *Cx, 
+    mtx::arr<real_t> *Cy, 
+    mtx::arr<real_t> *Cz, 
+    grd<real_t> *grid,
+    quantity<si::time, real_t> dt
   ) = 0;
 };
 #endif

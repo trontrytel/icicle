@@ -22,22 +22,19 @@
  *
  *    (eq. 2 in Rasinski et al. 2011, Atmos. Res. 102)
  */
-#ifndef VEL_RASINSKI_HPP
-#  define VEL_RASINSKI_HPP
+#ifndef VEL_FUNC_RASINSKI_HPP
+#  define VEL_FUNC_RASINSKI_HPP
 
-#  include "cmn.hpp" // root class, error reporting
-#  include "vel.hpp"
+#  include "vel_func.hpp"
 
 template <typename real_t>
-class vel_rasinski : public vel<real_t>
+class vel_func_rasinski : public vel_func<real_t>
 {
-  public: bool is_constant() { return true; }
-
   private: quantity<si::dimensionless, real_t> pi;
   private: quantity<si::length, real_t> X, Z_clb, Z_top;
   private: quantity<velocity_times_length, real_t> A;
 
-  public: vel_rasinski(
+  public: vel_func_rasinski(
     quantity<si::length, real_t> X, quantity<si::length, real_t> Z_clb,
     quantity<si::length, real_t> Z_top, quantity<velocity_times_length, real_t> A
   )

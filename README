@@ -83,9 +83,15 @@
     On Fedora, one needs to install e.g. boost-mpich2-devel or
     boost-openmpi-devel (MPICH and OpenMPI variants,
     respectively). The Debian/Ubuntu counterparts of the above 
-    are libboost-mpi-dev. As of 2012 Q1 MPI-enabled netCDF 
-    packages are not available for Debian, Fedora nor Macports 
-    and hence one has to build them from source.
+    are libboost-mpi-dev. 
+
+    The MPI-enabled installation of netcdf with the new netCDF4 
+    C++ API may be obtained on Macports by combining the 
+    openmpi and netcdf4 variants of the netcdf port 
+    (port install netcdf +netcdf4+openmpi).
+
+    On Fedora the MPI-enabled netcdf packages are called 
+    netcdf-openmpi and netcdf-mpich2.
 
 --------------------------------------------------------------
 * in-tree compilation / tests / clean-up:

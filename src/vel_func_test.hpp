@@ -5,22 +5,19 @@
  *  @section LICENSE
  *    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef VEL_TEST_HPP
-#  define VEL_TEST_HPP
+#ifndef VEL_FUNC_TEST_HPP
+#  define VEL_FUNC_TEST_HPP
 
-#  include "cmn.hpp" // root class, error reporting
-#  include "vel.hpp"
+#  include "vel_func.hpp"
 
 template <typename real_t>
-class vel_test : public vel<real_t>
+class vel_func_test : public vel_func<real_t>
 {
-  public: bool is_constant() { return true; }
-
   private: quantity<si::frequency, real_t> omega;
   private: quantity<si::length, real_t> x0,z0;
   private: quantity<si::velocity, real_t> vv;
 
-  public: vel_test(
+  public: vel_func_test(
     quantity<si::frequency, real_t> omega,
     quantity<si::length, real_t> x0,
     quantity<si::length, real_t> z0,
