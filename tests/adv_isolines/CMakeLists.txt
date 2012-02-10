@@ -1,0 +1,2 @@
+add_executable(test_adv_isolines test_adv_isolines.cpp)
+add_test(test_adv_isolines test_adv_isolines)
