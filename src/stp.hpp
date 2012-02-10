@@ -57,12 +57,13 @@ struct stp : root
       Cx(grid->rng_vctr_x(ijk, halo)),
       Cy(grid->rng_vctr_y(ijk, halo)),
       Cz(grid->rng_vctr_z(ijk, halo));
-    velocity->populate_courant_fields(&Cx, &Cy, &Cz, grid, dt);
-    
-    real_t cmax = max(sqrt(pow2(Cx) + pow2(Cy) + pow2(Cz))); // TODO: check if that's a correct way to calculate it?
 
     dt = dt_out;
     nout = 1;
+
+    velocity->populate_courant_fields(&Cx, &Cy, &Cz, grid, dt);
+    real_t cmax = max(sqrt(pow2(Cx) + pow2(Cy) + pow2(Cz))); // TODO: check if that's a correct way to calculate it?
+
     while (cmax * dt / si::seconds > advsch->courant_max()) //TODO ? some limit to this loop
     {  
       dt = dt_out / real_t(++nout);
@@ -71,7 +72,7 @@ struct stp : root
       error_macro("failed to calculate a reasonable time step for t_max=" << t_max << " and dt_out=" << dt_out) 
       //TODO print some suggestions for t_out
     if (!velocity->is_constant())  
-      warning_macro ("velocity field is not const -> calculated time step may change") 
+      warning_macro("velocity field is not const -> calculated time step may change") 
     nt = t_max / dt;
   }
 
