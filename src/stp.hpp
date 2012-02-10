@@ -68,7 +68,7 @@ struct stp : root
       dt = dt_out / real_t(++nout);
     }
     if (cmax*dt/si::seconds < advsch->courant_min()) 
-      error_macro("failed to calculate a reasonable time step") 
+      error_macro("failed to calculate a reasonable time step for t_max=" << t_max << " and dt_out=" << dt_out) 
       //TODO print some suggestions for t_out
     if (!velocity->is_constant())  
       warning_macro ("velocity field is not const -> calculated time step may change") 
