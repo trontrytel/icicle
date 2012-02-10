@@ -4,7 +4,7 @@
  *  @copyright University of Warsaw
  *  @date December 2011
  *  @section LICENSE
- *    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
+ *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  *  @section DESCRIPTION
  *    The out_gnuplot module (chosen with the --out=gnuplot option) 
  *      is designed to ease visualisation of 1D simulations in gnuplot.

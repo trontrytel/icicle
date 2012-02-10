@@ -4,7 +4,7 @@
  *  @copyright University of Warsaw
  *  @date November 2011 - January 2012
  *  @section LICENSE
- *    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
+ *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  *  @section DESCRIPTION
  *    Flux Corrected Transport (aka non-oscillatory, monotonic, sign-preserving)
  *    option for MPDATA (for the transport of positive scalars only)

@@ -3,7 +3,7 @@
  *  @copyright University of Warsaw
  *  @date January 2012
  *  @section LICENSE
- *    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
+ *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
 #ifndef OPT_EQS_HPP
 #  define OPT_EQS_HPP
