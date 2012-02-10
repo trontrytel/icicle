@@ -3,7 +3,7 @@
  *  @copyright University of Warsaw
  *  @date November 2011
  *  @section LICENSE
- *    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
+ *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
 /** @mainpage notitle
  *  @section README README file (incl. installation instructions)
@@ -31,6 +31,9 @@ extern void mdl_dbl(const po::variables_map&, const string&);
 #endif
 #ifdef USE_LDOUBLE
 extern void mdl_ldb(const po::variables_map&, const string&);
+#endif
+#ifdef USE_FLOAT128
+extern void mdl_128(const po::variables_map&, const string&);
 #endif
 
 int main(int ac, char* av[])
@@ -109,13 +112,11 @@ int main(int ac, char* av[])
       mdl_ldb(vm, options.str());
     else 
 #endif
-// TODO: __float128 quoting Wikipedia: "
-// With the GNU C Compiler, long double is 80-bit extended precision on x86 processors 
-// regardless of the physical storage used for the type (which can be either 96 or 128 bits)
-// ...
-// As of gcc 4.3, a quadruple precision is also supported on x86, but as the nonstandard 
-// type __float128 rather than long double.
-// "
+#ifdef USE_FLOAT128 // TODO: only if GNU compiler?
+    if (sizeof(__float128) * 8 == bits) 
+      mdl_128(vm, options.str());
+    else 
+#endif
     error_macro("unsupported number of bits (" << bits << ")")
   }
   catch (exception &e)

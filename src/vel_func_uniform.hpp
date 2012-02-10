@@ -3,24 +3,21 @@
  *  @copyright University of Warsaw
  *  @date November 2011
  *  @section LICENSE
- *    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
+ *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  *  @section DESCRIPTION
  *    uniform velocity field
  */
-#ifndef VEL_UNIFORM_HPP
-#  define VEL_UNIFORM_HPP
+#ifndef VEL_FUNC_UNIFORM_HPP
+#  define VEL_FUNC_UNIFORM_HPP
 
-#  include "cmn.hpp" // root class, error reporting
-#  include "vel.hpp"
+#  include "vel_func.hpp"
 
 template <typename real_t>
-class vel_uniform : public vel<real_t>
+class vel_func_uniform : public vel_func<real_t>
 {
-  public: bool is_constant() { return true; }
-
   private: quantity<si::velocity, real_t> uu, vv, ww;
 
-  public: vel_uniform(
+  public: vel_func_uniform(
     quantity<si::velocity, real_t> uu,
     quantity<si::velocity, real_t> vv,
     quantity<si::velocity, real_t> ww

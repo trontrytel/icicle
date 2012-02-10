@@ -1,18 +1,18 @@
 /** @file
  *  @author Sylwester Arabas <slayoo@igf.fuw.edu.pl>
  *  @copyright University of Warsaw
- *  @date November 2011
+ *  @date November 2011 - February 2012
  *  @section LICENSE
- *    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
+ *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
 #ifndef OPT_VEL_HPP
 #  define OPT_VEL_HPP
 
 #  include "opt.hpp"
 #  include "grd.hpp"
-#  include "vel_uniform.hpp"
-#  include "vel_rasinski.hpp"
-#  include "vel_test.hpp"
+#  include "vel_func_uniform.hpp"
+#  include "vel_func_rasinski.hpp"
+#  include "vel_func_test.hpp"
 
 inline void opt_vel_desc(po::options_description &desc)
 {
@@ -38,7 +38,7 @@ vel<real_t> *opt_vel(const po::variables_map& vm, grd<real_t> *grid)
       u = real_cast<real_t>(vm, "vel.uniform.u") * si::metres / si::seconds,
       v = real_cast<real_t>(vm, "vel.uniform.v") * si::metres / si::seconds,
       w = real_cast<real_t>(vm, "vel.uniform.w") * si::metres / si::seconds;
-    return new vel_uniform<real_t>(u, v, w);
+    return new vel_func_uniform<real_t>(u, v, w);
   }
   else if (veltype == "rasinski")
   {
@@ -50,14 +50,14 @@ vel<real_t> *opt_vel(const po::variables_map& vm, grd<real_t> *grid)
       X = real_t(grid->nx()) * grid->dx(); // TODO nx+1 dla Arakawa-C ...
     quantity<velocity_times_length, real_t>
       A = real_cast<real_t>(vm, "vel.rasinski.A") * si::metres * si::metres / si::seconds;
-    return new vel_rasinski<real_t>(X, Z_clb, Z_top, A);
+    return new vel_func_rasinski<real_t>(X, Z_clb, Z_top, A);
   }
   else if (veltype == "test")
   {
     if (!vm.count("vel.test.omega")) error_macro("vel.test.omega must be specified")
     quantity<si::frequency, real_t> omega = real_cast<real_t>(vm, "vel.test.omega") / si::seconds;
     quantity<si::velocity, real_t> v = real_cast<real_t>(vm, "vel.test.v") * si::metres / si::seconds;
-    return new vel_test<real_t>(omega, real_t(.5 * grid->nx()) * grid->dx(), real_t(.5 * grid->nz()) * grid->dz(), v);
+    return new vel_func_test<real_t>(omega, real_t(.5 * grid->nx()) * grid->dx(), real_t(.5 * grid->nz()) * grid->dz(), v);
   }
   else error_macro("unsupported velocity field type: " << veltype)
 }

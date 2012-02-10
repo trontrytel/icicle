@@ -4,7 +4,7 @@
  *  @copyright University of Warsaw
  *  @date November 2011 - January 2012
  *  @section LICENSE
- *    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
+ *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  *  @section DESCRIPTION
  *    C++ implementation of the second- and third-order MPDATA scheme 
  *    for solenoidal flows of scalar fields on a uniformly spaced 

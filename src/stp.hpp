@@ -3,7 +3,7 @@
  *  @copyright University of Warsaw
  *  @date December 2011
  *  @section LICENSE
- *    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
+ *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  *  @section DESCRIPTION
  *    A simple container for storing simulation set-up elements, i.e.
  *    the advection scheme, the velocity field etc
@@ -57,7 +57,7 @@ struct stp : root
       Cx(grid->rng_vctr_x(ijk, halo)),
       Cy(grid->rng_vctr_y(ijk, halo)),
       Cz(grid->rng_vctr_z(ijk, halo));
-    grid->populate_courant_fields(&Cx, &Cy, &Cz, velocity, dt);
+    velocity->populate_courant_fields(&Cx, &Cy, &Cz, grid, dt);
     
     real_t cmax = max(sqrt(pow2(Cx) + pow2(Cy) + pow2(Cz))); // TODO: check if that's a correct way to calculate it?
 

@@ -3,7 +3,7 @@
  *  @copyright University of Warsaw
  *  @date November 2011
  *  @section LICENSE
- *    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
+ *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  *  @section DESCRIPTION
  *    a fork()/IPC implementation of slv_parallel_distmem built for several reasons:
  *    - as a facility for testing the distmem logic when compiling without MPI

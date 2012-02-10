@@ -4,7 +4,7 @@
  *  @copyright University of Warsaw
  *  @date November 2011
  *  @section LICENSE
- *    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
+ *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  *  @section DESCRIPTION
  *    1D initial condition from Smolarkiewicz & Grabowski 1989
  *    (section 4, eq. 22)

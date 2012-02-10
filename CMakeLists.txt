@@ -4,7 +4,7 @@
 #  @copyright University of Warsaw
 #  @date November 2011 - February 2012
 #  @section LICENSE
-#    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
+#    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
 
 cmake_minimum_required(VERSION 2.6) # for simplified if-constructs
 #TODO: check which version is needed for FeatureSummary
@@ -49,17 +49,23 @@ macro(icicle_option var desc onoff)
 endmacro()
 
 #### <-DFLOAT=NO, -DDOUBLE=NO, -DLDOUBLE=NO> ###########################
+#TODO: check if __float128 is actually supported by the compiler...
 icicle_option(FLOAT "'float' type support (i.e. single precision, 32 bits)" ON)
 icicle_option(DOUBLE "'double' type support (i.e. double precision, 64 bits)" ON)
 icicle_option(LDOUBLE "'long double' type support (compiler-dependent, 80 bits for GCC on x86_64)" ON)
-# TODO: __float128
+#icicle_option(FLOAT128 "'__float128' type support (GNU extension, 128 bits)" ON)
 if(NOT "${FLOAT}" STREQUAL "NO")                                       
   set(USE_FLOAT TRUE)
   if(NOT "${DOUBLE}" STREQUAL "NO")
     set(USE_DOUBLE TRUE)
     if(NOT "${LDOUBLE}" STREQUAL "NO")
       set(USE_LDOUBLE TRUE)
-      add_executable(icicle src/icicle.cpp src/mdl_flt.cpp src/mdl_dbl.cpp src/mdl_ldb.cpp)
+#      if(NOT "${FLOAT128}" STREQUAL "NO")
+#        set(USE_FLOAT128 TRUE)
+#        add_executable(icicle src/icicle.cpp src/mdl_flt.cpp src/mdl_dbl.cpp src/mdl_ldb.cpp src/mdl_128.cpp)
+#      else()
+        add_executable(icicle src/icicle.cpp src/mdl_flt.cpp src/mdl_dbl.cpp src/mdl_ldb.cpp)
+#      endif()
     else()
       add_executable(icicle src/icicle.cpp src/mdl_flt.cpp src/mdl_dbl.cpp)
     endif()
@@ -70,15 +76,25 @@ elseif(NOT "${DOUBLE}" STREQUAL "NO")
   set(USE_DOUBLE TRUE)
   if(NOT "${LDOUBLE}" STREQUAL "NO")
     set(USE_LDOUBLE TRUE)
-    add_executable(icicle src/icicle.cpp src/mdl_dbl.cpp src/mdl_ldb.cpp)
+#    if(NOT "${FLOAT128}" STREQUAL "NO")
+#      add_executable(icicle src/icicle.cpp src/mdl_dbl.cpp src/mdl_ldb.cpp src/mdl_128.cpp)
+#    else()
+      add_executable(icicle src/icicle.cpp src/mdl_dbl.cpp src/mdl_ldb.cpp)
+#    endif()
   else()
     add_executable(icicle src/icicle.cpp src/mdl_dbl.cpp)
   endif()
 elseif(NOT "${LDOUBLE}" STREQUAL "NO")
   set(USE_LDOUBLE TRUE)
-  add_executable(icicle src/mdl_ldb.cpp)
+#  if(NOT "${FLOAT128}" STREQUAL "NO")
+#    add_executable(icicle src/mdl_ldb.cpp src/mdl_128.cpp)
+#  else()
+    add_executable(icicle src/mdl_ldb.cpp)
+#  endif()
+#elseif(NOT "${FLOAT128}" STREQUAL "NO")
+#  add_executable(icicle src/mdl_128.cpp)
 else()
-  message(FATAL_ERROR "-DFLOAD=NO -DDOUBLE=NO and -DLDBOULBE=NO may not be specified all at once!")
+  message(FATAL_ERROR "-DFLOAD=NO -DDOUBLE=NO -DLDBOULBE=NO and -DFLOAT128=NO may not be specified all at once!")
 endif() 
 ########################################################################
 
@@ -188,9 +204,7 @@ else()
     message(WARNING "
       NetCDF >=4.1.1 not found! (cf. CMakeFiles/CMakeError.log)
       Without it the NetCDF output will not be available.
-        suitable Debian/Ubuntu package: libnetcdf-dev
-        suitable Macports port: netcdf
-        erase the CMakeCache.txt before re-running cmake
+      After installing it erase the CMakeCache.txt before re-running cmake
     ")
   else()
     set(USE_NETCDF ${Find_NetCDF})
@@ -221,9 +235,7 @@ else()
     message(WARNING "
       Boost.Thread not found! (cf. CMakeFiles/CMakeError.log) 
       Threads parallelisation will not be available.
-        suitable Debian/Ubuntu package: libboost-dev
-        suitable Macports port: boost / boost+openmpi
-        (after installation delete CMakeCache.txt before running cmake)
+      After installing it erase the CMakeCache.txt before re-running cmake
     ")
   else()
     set(USE_BOOST_THREAD ${Find_Boost_Thread})
@@ -259,8 +271,6 @@ else()
       Possible reasons:
       - a wrapper like mpic++ need to be used (e.g. export CXX=mpic++)
       - Boost.MPI needs to be installed:
-        suitable Debian/Ubuntu package: ... TODO ...
-        suitable Macports port: ... TODO ...
         (after installation delete CMakeCache.txt before running cmake)
     ")
   else()
@@ -293,9 +303,7 @@ else()
     message(WARNING "
       Boost.Timer (or Boost.System) not found! (cf. CMakeFiles/CMakeError.log) 
       Simulation timing will not be available.
-        suitable Debian/Ubuntu package: libboost-dev (ver >= 1.48)
-        suitable Macports port: boost / boost+openmpi (ver >= 1.48)
-        (after installation delete CMakeCache.txt before running cmake)
+      (after installation delete CMakeCache.txt before running cmake)
     ")
   else()
     set(USE_BOOST_TIMER ${Find_Boost_Timer})

@@ -3,7 +3,7 @@
  *  @copyright University of Warsaw
  *  @date November 2011
  *  @section LICENSE
- *    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
+ *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
 
 #include "cfg.hpp"
