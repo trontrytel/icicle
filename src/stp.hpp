@@ -47,6 +47,7 @@ struct stp : root
       grid(grid),
       equations(equations)
   { 
+    // TODO: it does not work for non-constant velocities as of now!
     int halo = (advsch->stencil_extent() -1) / 2;
     mtx::idx_ijk ijk(
       mtx::rng(0, grid->nx() - 1),
@@ -61,8 +62,10 @@ struct stp : root
     dt = dt_out;
     nout = 1;
 
-    velocity->populate_courant_fields(&Cx, &Cy, &Cz, grid, dt);
-    real_t cmax = max(sqrt(pow2(Cx) + pow2(Cy) + pow2(Cz))); // TODO: check if that's a correct way to calculate it?
+    velocity->populate_courant_fields(-1, &Cx, &Cy, &Cz, dt, NULL, NULL, NULL); // TODO: only if vel->is_constant() !!!
+    // Cx, Cy and Cz dimensions are not the same with Arakawa-C grid!
+    //real_t cmax = max(sqrt(pow2(Cx) + pow2(Cy) + pow2(Cz))); // TODO: check if that's a correct way to calculate it?
+    real_t cmax = max(abs(Cx)) + max(abs(Cy)) + max(abs(Cz));
 
     while (cmax * dt / si::seconds > advsch->courant_max()) //TODO ? some limit to this loop
     {  

@@ -3,7 +3,7 @@
 #  @copyright University of Warsaw
 #  @date Januar 2012
 #  @section LICENSE
-#    GPL v3 (see the COPYING file or http://www.gnu.org/licenses/)
+#    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
 
 #  1d isolines test from pks & wwg 1990 
 

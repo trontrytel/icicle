@@ -8,6 +8,7 @@
 #ifndef GRD_HPP
 #  define GRD_HPP
 
+#  include "cmn.hpp"
 #  include "mtx.hpp"
 
 template<typename real_t>

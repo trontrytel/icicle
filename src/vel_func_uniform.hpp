@@ -18,11 +18,12 @@ class vel_func_uniform : public vel_func<real_t>
   private: quantity<si::velocity, real_t> uu, vv, ww;
 
   public: vel_func_uniform(
+    grd<real_t> *grid,
     quantity<si::velocity, real_t> uu,
     quantity<si::velocity, real_t> vv,
     quantity<si::velocity, real_t> ww
   )
-    : uu(uu), vv(vv), ww(ww)
+    : vel_func<real_t>(grid), uu(uu), vv(vv), ww(ww)
   {}
 
   public: virtual quantity<si::velocity, real_t> u(

@@ -13,6 +13,7 @@
 #  define INI_FUNC_PKS_WWG_1989_HPP
 
 #  include "ini_func.hpp" 
+#  include "grd_arakawa-c-lorenz.hpp"
 
 template <typename real_t>
 class ini_func_pks_wwg_1989 : public ini_func<real_t>

@@ -9,6 +9,7 @@
 #  define INI_FUNC_HPP
 
 #  include "ini.hpp"
+#  include "grd.hpp"
 
 template <typename real_t>
 class ini_func : public ini<real_t>
