@@ -21,16 +21,16 @@ set output "fig1.svg"
 nx=20
 dx=1
 dt=1
-t_max=25
-dt_out=dt
+nt=25
+nout=1
 cmd = "../../icicle" \
   ." --dt ".dt \
   ." --grd.dx ".dx \
   ." --grd.dy 1 " \
   ." --grd.dz 1" \
   ." --vel uniform --vel.uniform.u .4" \
-  ." --t_max ".t_max \
-  ." --dt_out ".dt_out \
+  ." --nt ".nt \
+  ." --nout ".nout \
   ." --grd.nx ".nx \
   ." --slv serial" \
   ." --out gnuplot --out.gnuplot.using 1:-2:2" \

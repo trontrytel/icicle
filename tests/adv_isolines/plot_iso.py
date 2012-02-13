@@ -16,7 +16,9 @@ import math                              # sqrt
 import matplotlib.pyplot as plt          # plots
 from matplotlib.mlab import griddata     # griddata
 
+#dx, cour, err = np.loadtxt('new_iord2_fct0_toa1_b64.txt', unpack=True)
 dx, cour, err = np.loadtxt('isolines.txt', unpack=True)
+
 theta=np.zeros(dx.shape[0])
 r=np.zeros(dx.shape[0])
 x=np.zeros(dx.shape[0])
@@ -50,5 +52,5 @@ plt.xlabel('r; C=0')
 plt.ylabel('r; C=1')
 
 #plt.show()
-fig.savefig('fig-mpdata-iord2.svg')
+fig.savefig('new_iord2_fct1_toa0_b64.pdf')
 fig.clf

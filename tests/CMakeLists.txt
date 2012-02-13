@@ -1,6 +1,7 @@
 add_subdirectory(out_netcdf)
 add_subdirectory(out_gnuplot)
+add_subdirectory(adv_smolar_1983)
 add_subdirectory(ini_func_gauss)
 add_subdirectory(fct_limits)
+add_subdirectory(adv_isolines)
 add_subdirectory(courant_one)
-#add_subdirectory(smolar_1983)
