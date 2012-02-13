@@ -39,7 +39,7 @@ void mdl(const po::variables_map &vm, const string &cmdline)
   auto_ptr<ini<real_t> > intcond(opt_ini<real_t>(vm, *grid));
 
   // equations
-  auto_ptr<eqs<real_t> > equations(opt_eqs<real_t>(vm));
+  auto_ptr<eqs<real_t> > equations(opt_eqs<real_t>(vm, *grid));
 
   // grouping all above into a single set-up object
   auto_ptr<stp<real_t> > setup(opt_stp<real_t>(vm, 

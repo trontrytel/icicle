@@ -95,17 +95,27 @@ namespace mtx
   {
     typedef blitz::Array<real_t, 3> type;
 
-    arr(const idx &ijk)
-      : blitz::Array<real_t, 3>(
-        blitz::Range(ijk.lbound(0), ijk.ubound(0)), 
-        blitz::Range(ijk.lbound(1), ijk.ubound(1)), 
+    idx ijk;
+    rng i, j, k;
+
+    void fill_with_nans() { (*this)(ijk) = nan<real_t>(); }
+
+    arr(const idx &ijk) :
+      blitz::Array<real_t, 3>(
+        blitz::Range(ijk.lbound(0), ijk.ubound(0)),
+        blitz::Range(ijk.lbound(1), ijk.ubound(1)),
         blitz::Range(ijk.lbound(2), ijk.ubound(2))
-      )
+      ),
+      i(blitz::Range(ijk.lbound(0), ijk.ubound(0))),
+      j(blitz::Range(ijk.lbound(1), ijk.ubound(1))),
+      k(blitz::Range(ijk.lbound(2), ijk.ubound(2))),
+      ijk(ijk)
     {
 #  ifndef NDEBUG
-      (*this)(ijk) = nan<real_t>();
+      fill_with_nans();
 #  endif
     }
+  
   };
 };
 

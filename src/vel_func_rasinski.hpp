@@ -35,10 +35,12 @@ class vel_func_rasinski : public vel_func<real_t>
   private: quantity<velocity_times_length, real_t> A;
 
   public: vel_func_rasinski(
+    grd<real_t> *grid,
     quantity<si::length, real_t> X, quantity<si::length, real_t> Z_clb,
     quantity<si::length, real_t> Z_top, quantity<velocity_times_length, real_t> A
-  )
-    : pi(real_t(4)*atan(real_t(1))), X(X), Z_clb(Z_clb), Z_top(Z_top), A(A)
+  ) :
+    vel_func<real_t>(grid),
+    pi(real_t(4)*atan(real_t(1))), X(X), Z_clb(Z_clb), Z_top(Z_top), A(A)
   {}
  
   public: virtual quantity<si::velocity, real_t> u(

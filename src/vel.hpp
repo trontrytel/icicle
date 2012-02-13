@@ -17,12 +17,14 @@ class vel : root
 {
   public: virtual bool is_constant() = 0;
 
-  public: virtual void populate_courant_fields(
+  public: virtual void populate_courant_fields(int n,
     mtx::arr<real_t> *Cx, 
     mtx::arr<real_t> *Cy, 
     mtx::arr<real_t> *Cz, 
-    grd<real_t> *grid,
-    quantity<si::time, real_t> dt
+    quantity<si::time, real_t> dt,
+    mtx::arr<real_t> *Qx[],
+    mtx::arr<real_t> *Qy[],
+    mtx::arr<real_t> *Qz[]
   ) = 0;
 };
 #endif

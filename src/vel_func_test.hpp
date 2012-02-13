@@ -18,13 +18,14 @@ class vel_func_test : public vel_func<real_t>
   private: quantity<si::velocity, real_t> vv;
 
   public: vel_func_test(
+    grd<real_t> *grid,
     quantity<si::frequency, real_t> omega,
     quantity<si::length, real_t> x0,
     quantity<si::length, real_t> z0,
     quantity<si::velocity, real_t> vv
   )
-    : omega(omega), x0(x0), z0(z0), vv(vv)
-  {}
+    : vel_func<real_t>(grid), omega(omega), x0(x0), z0(z0), vv(vv)
+  { }
  
   public: virtual quantity<si::velocity, real_t> u(
     const quantity<si::length, real_t> &, 

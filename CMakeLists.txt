@@ -9,8 +9,9 @@
 cmake_minimum_required(VERSION 2.6) # for simplified if-constructs
 #TODO: check which version is needed for FeatureSummary
 
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffast-math -DNDEBUG")
-set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -DBZ_DEBUG" CACHE STRING "Debug options." FORCE)
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffast-math -DNDEBUG") # TODO : FORCE?
+#set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -DBZ_DEBUG" CACHE STRING "Debug options." FORCE)
+set(CMAKE_CXX_FLAGS_DEBUG "-DBZ_DEBUG" CACHE STRING "Debug options." FORCE)
 
 if(NOT (
   "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" OR 
@@ -25,10 +26,6 @@ if(NOT (
     \$ cmake . -DCMAKE_BUILD_TYPE=None    \# (CXX_FLAGS=\$CXXFLAGS)")
 endif()
 
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug") 
-  target_link_libraries(icicle "-lblitz")
-  # TODO: check if debugging actually works, if not suggest recompiling blitz with --enable-shared
-endif()
 project(icicle CXX)
 
 set(TMP "src/cfg.hpp")
@@ -96,6 +93,10 @@ elseif(NOT "${LDOUBLE}" STREQUAL "NO")
 else()
   message(FATAL_ERROR "-DFLOAD=NO -DDOUBLE=NO -DLDBOULBE=NO and -DFLOAT128=NO may not be specified all at once!")
 endif() 
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug") 
+  target_link_libraries(icicle "-lblitz")
+  # TODO: check if debugging actually works, if not suggest recompiling blitz with --enable-shared
+endif()
 ########################################################################
 
 #### <Boost.units> (mandatory) #########################################
@@ -269,7 +270,7 @@ else()
       Boost.MPI not found! (cf. CMakeFiles/CMakeError.log)
       MPI parallelisation will not be available.
       Possible reasons:
-      - a wrapper like mpic++ need to be used (e.g. export CXX=mpic++)
+      - a wrapper like mpic++ needs to be used (e.g. export CXX=mpic++)
       - Boost.MPI needs to be installed:
         (after installation delete CMakeCache.txt before running cmake)
     ")
