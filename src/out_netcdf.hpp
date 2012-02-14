@@ -22,7 +22,7 @@
 template <typename real_t>
 class out_netcdf : public out<real_t>
 {
-  private: auto_ptr<NcFile> f;
+  private: unique_ptr<NcFile> f;
   private: vector<NcVar> vars;
   private: inf info;
 

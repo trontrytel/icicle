@@ -15,7 +15,7 @@
 template <typename real_t>
 class slv_parallel_threads : public slv_parallel<real_t>
 {
-  private: auto_ptr<boost::barrier> b; 
+  private: unique_ptr<boost::barrier> b; 
   private: int nsd;
 
   public: slv_parallel_threads(stp<real_t> *setup, out<real_t> *output,

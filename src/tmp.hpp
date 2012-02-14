@@ -15,10 +15,10 @@
 template <typename real_t>
 class tmp : root
 {
-  private: auto_ptr<mtx::arr<real_t> > *sclr_guard;
+  private: unique_ptr<mtx::arr<real_t> > *sclr_guard;
   public: mtx::arr<real_t> **sclr;
 
-  private: auto_ptr<mtx::arr<real_t> > *vctr_guard;
+  private: unique_ptr<mtx::arr<real_t> > *vctr_guard;
   public: mtx::arr<real_t> **vctr;
  
   public: tmp(int n_vctr, int n_sclr, grd<real_t> *grid, int halo,
@@ -27,7 +27,7 @@ class tmp : root
     int k_min, int k_max  // TODO: ...
   )
   {
-    vctr_guard = new auto_ptr<mtx::arr<real_t> >[n_vctr];
+    vctr_guard = new unique_ptr<mtx::arr<real_t> >[n_vctr];
     vctr = new mtx::arr<real_t>*[n_vctr];
     for (int n=0; n < n_vctr; ++n)
     {
@@ -40,7 +40,7 @@ class tmp : root
       vctr[n] = vctr_guard[n].get();
     }
 
-    sclr_guard = new auto_ptr<mtx::arr<real_t> >[n_sclr];
+    sclr_guard = new unique_ptr<mtx::arr<real_t> >[n_sclr];
     sclr = new mtx::arr<real_t>*[n_sclr];
     for (int n=0; n < n_sclr; ++n)
     {

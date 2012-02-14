@@ -45,13 +45,23 @@ class adv_mpdata : public adv_upstream<real_t>
     if (iord <= 0) error_macro("iord (the number of iterations) must be > 0")
   }
 
-  // TODO: enclose all arguments in parenthesis, i.e. U -> (U)
+/*
+  protected: 
+  template <class num_expr, class den_expr>
+  auto mpdata_frac(const num_expr& num, const den_expr& den) -> decltype(num / (den + mtx::eps<real_t>()))
+  {
+    return num / (den + mtx::eps<real_t>());
+  }
+*/
+
   // using preprocessor macros as it's tricky make methods return parts of Blitz expressions 
 #    ifdef MPDATA_FRAC_EPSILON
 #      define mpdata_frac(num, den) ((num) / (den + mtx::eps<real_t>()))
 #    else
 #      define mpdata_frac(num, den) (where(den > real_t(0), (num) / (den), real_t(0)))
 #    endif
+
+  // TODO: eliminate all macros by transforming to C++11 autodecled-expressions!
 
   // macros for 2nd order terms:
 #    define mpdata_A(pr, pl) mpdata_frac(pr - pl, pr + pl) 
@@ -151,9 +161,9 @@ class adv_mpdata : public adv_upstream<real_t>
         km
     );
 
-    assert(finite(sum((*psi[n])(idx(ir, jm, km)))));
-    assert(finite(sum((*psi[n])(idx(il, jm, km)))));
-    assert(finite(sum(Cx(idx(ic, jm, km)))));
+    assert(isfinite(sum((*psi[n])(idx(ir, jm, km)))));
+    assert(isfinite(sum((*psi[n])(idx(il, jm, km)))));
+    assert(isfinite(sum(Cx(idx(ic, jm, km)))));
 
     (*C_adf)(adfidx) = (
       mpdata_CA( 
@@ -165,14 +175,14 @@ class adv_mpdata : public adv_upstream<real_t>
     {
       if (j.first() != j.last()) 
       {
-        assert(finite(sum((*psi[n])(idx(ir, jm+1, km)))));
-        assert(finite(sum((*psi[n])(idx(il, jm+1, km)))));
-        assert(finite(sum((*psi[n])(idx(ir, jm-1, km)))));
-        assert(finite(sum((*psi[n])(idx(il, jm-1, km)))));
-        assert(finite(sum(Cy(idx(ir, jm + grid->p_half, km)))));
-        assert(finite(sum(Cy(idx(il, jm + grid->p_half, km)))));
-        assert(finite(sum(Cy(idx(ir, jm - grid->m_half, km)))));
-        assert(finite(sum(Cy(idx(il, jm - grid->m_half, km)))));
+        assert(isfinite(sum((*psi[n])(idx(ir, jm+1, km)))));
+        assert(isfinite(sum((*psi[n])(idx(il, jm+1, km)))));
+        assert(isfinite(sum((*psi[n])(idx(ir, jm-1, km)))));
+        assert(isfinite(sum((*psi[n])(idx(il, jm-1, km)))));
+        assert(isfinite(sum(Cy(idx(ir, jm + grid->p_half, km)))));
+        assert(isfinite(sum(Cy(idx(il, jm + grid->p_half, km)))));
+        assert(isfinite(sum(Cy(idx(ir, jm - grid->m_half, km)))));
+        assert(isfinite(sum(Cy(idx(il, jm - grid->m_half, km)))));
 
         (*C_adf)(adfidx) -= (
           mpdata_CB( 
@@ -187,14 +197,14 @@ class adv_mpdata : public adv_upstream<real_t>
       }
       if (k.first() != k.last()) 
       {
-        assert(finite(sum((*psi[n])(idx(ir, jm, km+1)))));
-        assert(finite(sum((*psi[n])(idx(il, jm, km+1)))));
-        assert(finite(sum((*psi[n])(idx(ir, jm, km-1)))));
-        assert(finite(sum((*psi[n])(idx(il, jm, km-1)))));
-        assert(finite(sum(Cz(idx(ir, jm, km + grid->p_half)))));
-        assert(finite(sum(Cz(idx(il, jm, km + grid->p_half)))));
-        assert(finite(sum(Cz(idx(ir, jm, km - grid->m_half)))));
-        assert(finite(sum(Cz(idx(il, jm, km - grid->m_half)))));
+        assert(isfinite(sum((*psi[n])(idx(ir, jm, km+1)))));
+        assert(isfinite(sum((*psi[n])(idx(il, jm, km+1)))));
+        assert(isfinite(sum((*psi[n])(idx(ir, jm, km-1)))));
+        assert(isfinite(sum((*psi[n])(idx(il, jm, km-1)))));
+        assert(isfinite(sum(Cz(idx(ir, jm, km + grid->p_half)))));
+        assert(isfinite(sum(Cz(idx(il, jm, km + grid->p_half)))));
+        assert(isfinite(sum(Cz(idx(ir, jm, km - grid->m_half)))));
+        assert(isfinite(sum(Cz(idx(il, jm, km - grid->m_half)))));
 
         (*C_adf)(adfidx) -= ( // otherwise Cz is uninitialised!
           mpdata_CB( 
@@ -243,14 +253,14 @@ class adv_mpdata : public adv_upstream<real_t>
         }
         if ((j.first() != j.last()) && (k.first() != k.last())) 
         {
-          assert(finite(sum((*psi[n])(idx(im  , jm+1, km+1)))));
-          assert(finite(sum((*psi[n])(idx(im  , jm-1, km+1)))));
-          assert(finite(sum((*psi[n])(idx(im+1, jm+1, km+1)))));
-          assert(finite(sum((*psi[n])(idx(im+1, jm-1, km+1)))));
-          assert(finite(sum((*psi[n])(idx(im  , jm+1, km-1)))));
-          assert(finite(sum((*psi[n])(idx(im  , jm-1, km-1)))));
-          assert(finite(sum((*psi[n])(idx(im+1, jm+1, km-1)))));
-          assert(finite(sum((*psi[n])(idx(im+1, jm-1, km-1)))));
+          assert(isfinite(sum((*psi[n])(idx(im  , jm+1, km+1)))));
+          assert(isfinite(sum((*psi[n])(idx(im  , jm-1, km+1)))));
+          assert(isfinite(sum((*psi[n])(idx(im+1, jm+1, km+1)))));
+          assert(isfinite(sum((*psi[n])(idx(im+1, jm-1, km+1)))));
+          assert(isfinite(sum((*psi[n])(idx(im  , jm+1, km-1)))));
+          assert(isfinite(sum((*psi[n])(idx(im  , jm-1, km-1)))));
+          assert(isfinite(sum((*psi[n])(idx(im+1, jm+1, km-1)))));
+          assert(isfinite(sum((*psi[n])(idx(im+1, jm-1, km-1)))));
 
           (*C_adf)(adfidx) -= ( // otherwise Cx & Cz are uninitialised
             mpdata_3rd_yz(
@@ -278,8 +288,8 @@ class adv_mpdata : public adv_upstream<real_t>
     }
     if (third_order)
     { 
-      assert(finite(sum((*psi[n])(idx(im+2, jm, km)))));
-      assert(finite(sum((*psi[n])(idx(im-1, jm, km)))));
+      assert(isfinite(sum((*psi[n])(idx(im+2, jm, km)))));
+      assert(isfinite(sum((*psi[n])(idx(im-1, jm, km)))));
 
       (*C_adf)(adfidx) +=(
         mpdata_3rd_xx(

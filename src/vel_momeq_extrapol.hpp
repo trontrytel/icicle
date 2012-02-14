@@ -40,10 +40,10 @@ class vel_momeq_extrapol : public vel_momeq<real_t>
       {
         if (Q[xyz] != NULL) 
         {
-          assert(finite(sum((*Q[xyz][ n ])(C[xyz]->i - grid->p_half /* sic! */, C[xyz]->j, C[xyz]->k))));
-          assert(finite(sum((*Q[xyz][ n ])(C[xyz]->i + grid->m_half /* sic! */, C[xyz]->j, C[xyz]->k))));
-          assert(finite(sum((*Q[xyz][n-1])(C[xyz]->i - grid->p_half /* sic! */, C[xyz]->j, C[xyz]->k))));
-          assert(finite(sum((*Q[xyz][n-1])(C[xyz]->i + grid->m_half /* sic! */, C[xyz]->j, C[xyz]->k))));
+          assert(isfinite(sum((*Q[xyz][ n ])(C[xyz]->i - grid->p_half /* sic! */, C[xyz]->j, C[xyz]->k))));
+          assert(isfinite(sum((*Q[xyz][ n ])(C[xyz]->i + grid->m_half /* sic! */, C[xyz]->j, C[xyz]->k))));
+          assert(isfinite(sum((*Q[xyz][n-1])(C[xyz]->i - grid->p_half /* sic! */, C[xyz]->j, C[xyz]->k))));
+          assert(isfinite(sum((*Q[xyz][n-1])(C[xyz]->i + grid->m_half /* sic! */, C[xyz]->j, C[xyz]->k))));
 
           (*C[xyz])(C[xyz]->ijk) = real_t(.25) * ( // .5 * .5 -> second one from i +/- 1/2 averaging 
             (

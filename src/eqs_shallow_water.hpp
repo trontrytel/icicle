@@ -29,7 +29,7 @@ class eqs_shallow_water : public eqs<real_t>
   public: eqs_shallow_water(const grd<real_t> &grid)
     : i_qx(-1), i_qy(-1)
   {
-    if (grid.nz() != 1) error_macro("only 1D (X) and 2D (XY) simullations supported")
+    if (grid.nz() != 1) error_macro("only 1D (X or Y) and 2D (XY) simullations supported")
 
     h_unit = 1 * si::metres; 
     q_unit = 1 * si::metres * si::metres / si::seconds; 
