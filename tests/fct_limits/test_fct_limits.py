@@ -18,7 +18,6 @@ for iord in (2,3,4):
   max = 3.
   digits = 5
 
-  freq = 1
   nx = 12
   ny = 8
   nz = 6
@@ -33,7 +32,7 @@ for iord in (2,3,4):
     '--grd.dx','1',
     '--grd.dy','1',
     '--grd.dz','1',
-    '--t_max',str(nt * dt),
+    '--nt',str(nt),
     '--grd.nx',str(nx),
     '--grd.ny',str(ny),
     '--grd.nz',str(nz),
@@ -58,7 +57,7 @@ for iord in (2,3,4):
     '--slv','threads','--nsd','2', 
     '--out','netcdf', 
     '--out.netcdf.ver','3', 
-    '--dt_out',str(freq*dt),
+    '--nout',str(nt),
     '--out.netcdf.file',file
   )
   if os.path.exists(file) : os.unlink(file)

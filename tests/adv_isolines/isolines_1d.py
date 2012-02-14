@@ -20,9 +20,9 @@ from matplotlib.ticker import AutoMinorLocator
 file = 'tmp.nc'
 
 iord = 2 
-fct = 0
+fct = 1
 toa = 0
-bits = 32
+bits = 64
 print "running 1D MPDATA simultation with iord=", str(iord), " fct=", str(fct), " toa=", str(toa)
 
 f = open('isolines.txt','w')

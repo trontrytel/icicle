@@ -9,8 +9,8 @@
  *    The out_gnuplot module (chosen with the --out=gnuplot option) 
  *      is designed to ease visualisation of 1D simulations in gnuplot.
  *    An example gnuplot script and the resultant SVG file are shown below:
- *    \include "gnuplot/test_gnuplot.gpi"
- *    \image html "../../tests/gnuplot/fig1.svg"
+ *    \include "out_gnuplot/test_out_gnuplot.gpi"
+ *    \image html "../../tests/out_gnuplot/fig1.svg"
  */
 
 #include <cstdlib>

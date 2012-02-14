@@ -64,13 +64,13 @@ class adv_mpdata : public adv_upstream<real_t>
 
   /// first term from eq. (36) from Smolarkiewicz & Margolin 1998 (with G=1)
   /// \f$ 
-  ///   \frac{(\delta x)^2}{6} \left( 3U|U| - 3U^3 - U \right) 
+  ///   \frac{(\delta x)^2}{6} \left( 3U|U| - 2U^3 - U \right) 
   ///   \frac{1}{\psi} \frac{\partial^2 \psi}{\partial x^2} \approx
   ///   (\ldots) \cdot \frac{1}{3} \cdot 
-  ///   \frac{\psi_{i+1} - \psi_{i+1} - \psi{i} + \psi{i-1}}{\psi_{i+1} + \psi_{i+1} + \psi{i} + \psi{i-1}}
+  ///   \frac{\psi_{i+2} - \psi_{i+1} - \psi{i} + \psi{i-1}}{\psi_{i+2} + \psi_{i+1} + \psi{i} + \psi{i-1}}
   /// \f$ \n 
 #    define mpdata_3rd_xx(pp2, pp1, pp0, pm1, U) (\
-       (real_t(3) * U * abs(U) - real_t(2) * U * pow(U,3) - U) / real_t(3) \
+       (real_t(3) * U * abs(U) - real_t(2) * pow(U,3) - U) / real_t(3) \
        * mpdata_frac(pp2 - pp1 - pp0 + pm1, pp2 + pp1 + pp0 + pm1) \
      )
   /// second term from eq. (36) from Smolarkiewicz & Margolin 1998 (with G=1)
