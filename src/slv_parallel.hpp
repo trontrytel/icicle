@@ -73,6 +73,7 @@ class slv_parallel : public slv<real_t>
 
   public: void integ_loop_sd(int sd) 
   {
+    assert(fllbck == NULL || fllbck->num_steps() == 1);
     bool 
       has_qx = setup->equations->has_qx(), 
       has_qy = setup->equations->has_qy(), 
@@ -87,7 +88,6 @@ class slv_parallel : public slv<real_t>
     {   
       adv<real_t> *a;
       bool fallback = this->choose_an(&a, &n, t, advsch, fllbck);
-      assert(!(fallback && a->num_steps() > 1));
 
       if (t % setup->nout == 0) record(sd, n, t / setup->nout);
       for (int e = 0; e < setup->equations->n_vars(); ++e)
@@ -118,7 +118,8 @@ class slv_parallel : public slv<real_t>
         if (has_qx) slvs[sd]->fill_halos(idx_qx, n + 1); 
         if (has_qy) slvs[sd]->fill_halos(idx_qy, n + 1); 
         if (has_qz) slvs[sd]->fill_halos(idx_qz, n + 1); 
-        barrier(); slvs[sd]->update_velocities(n + 1);
+        barrier(); 
+        slvs[sd]->update_velocities(n + 1);
         // TODO: check if not exceeding Courant safety limits
       }
 

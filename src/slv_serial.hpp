@@ -226,6 +226,7 @@ class slv_serial : public slv<real_t>
   public: void stash_cycle(int e, int n)
   {
     static mtx::arr<real_t> stash(psi[e][n]);
+    // TODO: static size + assert() if the same size
     mtx::cycle(stash, psi[e][n]);
   }
 
