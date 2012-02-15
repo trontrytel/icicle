@@ -37,6 +37,7 @@ inline void opt_ini_desc(po::options_description &desc)
     ("ini.cone.h0", po::value<string>()->default_value("0"), "h0 [m]")
 
     ("ini.gauss.A", po::value<string>(), "A [1]")
+    ("ini.gauss.A0", po::value<string>()->default_value("0"), "A0 [1]")
     ("ini.gauss.x0", po::value<string>(), "x0 [m]")
     ("ini.gauss.y0", po::value<string>()->default_value(".5"), "y0 [m]")
     ("ini.gauss.z0", po::value<string>()->default_value(".5"), "z0 [m]")
@@ -87,7 +88,8 @@ ini<real_t> *opt_ini(const po::variables_map& vm, const grd<real_t> &grid)
   else if (initype == "gauss")
   {
     quantity<si::dimensionless, real_t>
-      A = real_cast<real_t>(vm, "ini.gauss.A");
+      A = real_cast<real_t>(vm, "ini.gauss.A"),
+      A0 = real_cast<real_t>(vm, "ini.gauss.A0");
     quantity<si::length, real_t>
       x0 = real_cast<real_t>(vm, "ini.gauss.x0") * si::metres,
       y0 = real_cast<real_t>(vm, "ini.gauss.y0") * si::metres,
@@ -95,7 +97,7 @@ ini<real_t> *opt_ini(const po::variables_map& vm, const grd<real_t> &grid)
       sx = real_cast<real_t>(vm, "ini.gauss.sx") * si::metres,
       sy = real_cast<real_t>(vm, "ini.gauss.sy") * si::metres,
       sz = real_cast<real_t>(vm, "ini.gauss.sz") * si::metres;
-    return new ini_func_gauss<real_t>(grid, A, x0, y0, z0, sx, sy, sz);
+    return new ini_func_gauss<real_t>(grid, A, A0, x0, y0, z0, sx, sy, sz);
   }
   else error_macro("unsupported initial condition: " << initype)
 }

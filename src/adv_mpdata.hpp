@@ -56,13 +56,15 @@ class adv_mpdata : public adv_upstream<real_t>
   )
 #    endif
 
+#  define aon(x) abs(x)
+
   // macros for 2nd order terms:
   private: mtx_expr_2arg_macro(mpdata_A, pr, pl,
-    this->mpdata_frac(pr - pl, pr + pl)
+    this->mpdata_frac(aon(pr) - aon(pl), aon(pr) + aon(pl))
   )
 
   private: mtx_expr_4arg_macro(mpdata_B, pru, plu, prd, pld,
-    real_t(.5) * this->mpdata_frac(pru + plu - prd - pld, pru + plu + prd + pld)
+    real_t(.5) * this->mpdata_frac(aon(pru) + aon(plu) - aon(prd) - aon(pld), aon(pru) + aon(plu) + aon(prd) + aon(pld))
   )
 
   private: mtx_expr_4arg_macro(mpdata_V, Vru, Vlu, Vrd, Vld, 
@@ -92,7 +94,7 @@ class adv_mpdata : public adv_upstream<real_t>
   private: mtx_expr_5arg_macro(mpdata_3rd_xx, pp2, pp1, pp0, pm1, U, 
     (real_t(3) * U * abs(U) - real_t(2) * pow(U,3) - U) 
     / real_t(3) 
-    * this->mpdata_frac(pp2 - pp1 - pp0 + pm1, pp2 + pp1 + pp0 + pm1) 
+    * this->mpdata_frac(aon(pp2) - aon(pp1) - aon(pp0) + aon(pm1), aon(pp2) + aon(pp1) + aon(pp0) + aon(pm1)) 
   )
 
   /// second term from eq. (36) from Smolarkiewicz & Margolin 1998 (with G=1)
@@ -108,8 +110,8 @@ class adv_mpdata : public adv_upstream<real_t>
   private: mtx_expr_6arg_macro(mpdata_3rd_xy, pip0jp1, pip0jm1, pip1jp1, pip1jm1, U, V,
     V * (abs(U) - real_t(2) * pow(U,2)) 
     * this->mpdata_frac( 
-      pip1jp1 - pip0jp1 - pip1jm1 + pip0jm1, 
-      pip1jp1 + pip0jp1 + pip1jm1 + pip0jm1 
+      aon(pip1jp1) - aon(pip0jp1) - aon(pip1jm1) + aon(pip0jm1), 
+      aon(pip1jp1) + aon(pip0jp1) + aon(pip1jm1) + aon(pip0jm1) 
     ) 
   )
 
@@ -134,10 +136,10 @@ class adv_mpdata : public adv_upstream<real_t>
     pip0jp1km1, pip0jm1km1, pip1jp1km1, pip1jm1km1, 
     U, V, W, 
     real_t(2./3.) * U * V * W * this->mpdata_frac( 
-      pip0jp1kp1 - pip0jm1kp1 + pip1jp1kp1 - pip1jm1kp1 - 
-      pip0jp1km1 + pip0jm1km1 - pip1jp1km1 + pip1jm1km1, 
-      pip0jp1kp1 + pip0jm1kp1 + pip1jp1kp1 + pip1jm1kp1 + 
-      pip0jp1km1 + pip0jm1km1 + pip1jp1km1 + pip1jm1km1 
+      aon(pip0jp1kp1) - aon(pip0jm1kp1) + aon(pip1jp1kp1) - aon(pip1jm1kp1) - 
+      aon(pip0jp1km1) + aon(pip0jm1km1) - aon(pip1jp1km1) + aon(pip1jm1km1), 
+      aon(pip0jp1kp1) + aon(pip0jm1kp1) + aon(pip1jp1kp1) + aon(pip1jm1kp1) + 
+      aon(pip0jp1km1) + aon(pip0jm1km1) + aon(pip1jp1km1) + aon(pip1jm1km1) 
     ) 
   )
 

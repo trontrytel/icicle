@@ -13,12 +13,13 @@
 template <typename real_t>
 class ini_func_gauss : public ini_func<real_t>
 {
-  private: quantity<si::dimensionless, real_t> A;
+  private: quantity<si::dimensionless, real_t> A, A0;
   private: quantity<si::length, real_t> x0, y0, z0, sx, sy, sz;
 
   public: ini_func_gauss(
     const grd<real_t> &grid,
     const quantity<si::dimensionless, real_t> &A,
+    const quantity<si::dimensionless, real_t> &A0,
     const quantity<si::length, real_t> &x0,
     const quantity<si::length, real_t> &y0,
     const quantity<si::length, real_t> &z0,
@@ -26,7 +27,7 @@ class ini_func_gauss : public ini_func<real_t>
     const quantity<si::length, real_t> &sy,
     const quantity<si::length, real_t> &sz
   )
-    : ini_func<real_t>(grid), A(A), x0(x0), y0(y0), z0(z0), sx(sx), sy(sy), sz(sz)
+    : ini_func<real_t>(grid), A(A), A0(A0), x0(x0), y0(y0), z0(z0), sx(sx), sy(sy), sz(sz)
   {}
 
   public: quantity<si::dimensionless, real_t> psi(
@@ -35,7 +36,7 @@ class ini_func_gauss : public ini_func<real_t>
     const quantity<si::length, real_t> &z
   ) 
   {
-    return A * exp(
+    return A0 + A * exp(
       real_t(-.5) * (
         pow<2>(x-x0) * pow<-2>(sx) +
         pow<2>(y-y0) * pow<-2>(sy) +
