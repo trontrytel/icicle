@@ -156,7 +156,7 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
 /// [u^{I}_{i-1/2}]^{-} \psi^{*}_{i} \right)  } \f$ \n
 /// eq.(19a, 19b) in Smolarkiewicz & Grabowski 1990 (J.Comp.Phys.,86,355-375)
 
-#  define mpdata_fct_beta_up(_i, _j, _k) mpdata_frac( \
+#  define mpdata_fct_beta_up(_i, _j, _k) this->mpdata_frac( \
      psi_max(idx(_i,_j,_k)) - (*psi[n])(idx(_i,_j,_k)), \
      mpdata_pospart(C_adf_x(idx(_i - grid->m_half,_j,_k))) * (*psi[n])(idx(_i-1,_j,_k)) - \
      mpdata_negpart(C_adf_x(idx(_i + grid->p_half,_j,_k))) * (*psi[n])(idx(_i+1,_j,_k)) + \
@@ -165,7 +165,7 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
      mpdata_pospart(C_adf_z(idx(_i,_j,_k - grid->m_half))) * (*psi[n])(idx(_i,_j,_k-1)) - \
      mpdata_negpart(C_adf_z(idx(_i,_j,_k + grid->p_half))) * (*psi[n])(idx(_i,_j,_k+1))   \
    )
-#  define mpdata_fct_beta_dn(_i, _j, _k) mpdata_frac(\
+#  define mpdata_fct_beta_dn(_i, _j, _k) this->mpdata_frac(\
      (*psi[n])(idx(_i,_j,_k)) - psi_min(idx(_i,_j,_k)), \
      mpdata_pospart(C_adf_x(idx(_i + grid->p_half,_j,_k))) * (*psi[n])(idx(_i,_j,_k)) - \
      mpdata_negpart(C_adf_x(idx(_i - grid->m_half,_j,_k))) * (*psi[n])(idx(_i,_j,_k)) + \

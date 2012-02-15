@@ -62,15 +62,31 @@ class adv_mpdata : public adv_upstream<real_t>
   // TODO: move the assert(isfinite()) expressions into the autodecled-expressions
 
   // macros for 2nd order terms:
+#    define mpdata_A(pr, pl) mpdata_frac(pr - pl, pr + pl) 
 //  protected:
 //  template <class expr1, class expr2>
 //  auto mpdata_A(const expr1 &pr, const expr2 &pl) -> declret_macro(mpdata_frac(pr - pl, pr + pl))
 
-#    define mpdata_A(pr, pl) mpdata_frac(pr - pl, pr + pl) 
 
 #    define mpdata_B(pru, plu, prd, pld) (real_t(.5) * mpdata_frac(pru + plu - prd - pld, pru + plu + prd + pld))
-#    define mpdata_V(Vru, Vlu, Vrd, Vld) (real_t(.25) * (Vru + Vlu + Vrd + Vld))
-#    define mpdata_W(Wru, Wlu, Wrd, Wld) mpdata_V(Wru, Wlu, Wrd, Wld)
+
+
+//#    define mpdata_V(Vru, Vlu, Vrd, Vld) (real_t(.25) * (Vru + Vlu + Vrd + Vld))
+  private:
+  template <class x>
+  auto mpdata_V(const x &Vru, const x &Vlu, const x &Vrd, const x &Vld) -> declret_macro(
+    real_t(.25) * (Vru + Vlu + Vrd + Vld)
+  )
+
+
+//#    define mpdata_W(Wru, Wlu, Wrd, Wld) mpdata_V(Wru, Wlu, Wrd, Wld)
+  private:
+  template <class x>
+  auto mpdata_W(const x &Wru, const x &Wlu, const x &Wrd, const x &Wld) -> declret_macro( 
+    this->mpdata_V(Wru, Wlu, Wrd, Wld)
+  )
+
+
 #    define mpdata_CA(pr, pl, U) ((abs(U) - pow(U,2)) * mpdata_A(pr, pl))
 #    define mpdata_CB(pru, plu, prd, pld, U, V) (U * V * mpdata_B(pru, plu, prd, pld)) 
 
