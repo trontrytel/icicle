@@ -47,33 +47,40 @@ class adv_mpdata : public adv_upstream<real_t>
   }
 
 // TODO: make it an option for the constructor (and recode with functors)
-  protected: 
-  template <class num_expr, class den_expr>
 #    ifdef MPDATA_FRAC_EPSILON
-  auto mpdata_frac(const num_expr &num, const den_expr &den) -> declret_macro(
+  protected: mtx_expr_2arg_macro(mpdata_frac, num, den, 
     num / (den + mtx::eps<real_t>())
   )
 #    else
-  auto mpdata_frac(const num_expr &num, const den_expr &den) -> declret_macro(
+  protected: mtx_expr_2arg_macro(mpdata_frac, num, den, 
     where(den > real_t(0), num / den, real_t(0))
   )
 #    endif
 
-  // TODO: eliminate all macros by transforming to C++11 autodecled-expressions!!!
-  // TODO: move the assert(isfinite()) expressions into the autodecled-expressions
-
   // macros for 2nd order terms:
-//  protected:
-//  template <class expr1, class expr2>
-//  auto mpdata_A(const expr1 &pr, const expr2 &pl) -> declret_macro(mpdata_frac(pr - pl, pr + pl))
+  private: mtx_expr_2arg_macro(mpdata_A, pr, pl,
+    this->mpdata_frac(pr - pl, pr + pl)
+  )
 
-#    define mpdata_A(pr, pl) mpdata_frac(pr - pl, pr + pl) 
+  private: mtx_expr_4arg_macro(mpdata_B, pru, plu, prd, pld,
+    real_t(.5) * this->mpdata_frac(pru + plu - prd - pld, pru + plu + prd + pld)
+  )
 
-#    define mpdata_B(pru, plu, prd, pld) (real_t(.5) * mpdata_frac(pru + plu - prd - pld, pru + plu + prd + pld))
-#    define mpdata_V(Vru, Vlu, Vrd, Vld) (real_t(.25) * (Vru + Vlu + Vrd + Vld))
-#    define mpdata_W(Wru, Wlu, Wrd, Wld) mpdata_V(Wru, Wlu, Wrd, Wld)
-#    define mpdata_CA(pr, pl, U) ((abs(U) - pow(U,2)) * mpdata_A(pr, pl))
-#    define mpdata_CB(pru, plu, prd, pld, U, V) (U * V * mpdata_B(pru, plu, prd, pld)) 
+  private: mtx_expr_4arg_macro(mpdata_V, Vru, Vlu, Vrd, Vld, 
+    real_t(.25) * (Vru + Vlu + Vrd + Vld)
+  )
+
+  private: mtx_expr_4arg_macro(mpdata_W, Wru, Wlu, Wrd, Wld,
+    this->mpdata_V(Wru, Wlu, Wrd, Wld)
+  )
+
+  private: mtx_expr_3arg_macro(mpdata_CA, pr, pl, U,
+    (abs(U) - pow(U,2)) * this->mpdata_A(pr, pl)
+  )
+
+  private: mtx_expr_6arg_macro(mpdata_CB, pru, plu, prd, pld, U, V,
+    U * V * this->mpdata_B(pru, plu, prd, pld)
+  )
 
   // macros for 3rd order terms:
   /// first term from eq. (36) from Smolarkiewicz & Margolin 1998 (with G=1)
@@ -83,10 +90,12 @@ class adv_mpdata : public adv_upstream<real_t>
   ///   (\ldots) \cdot \frac{1}{3} \cdot 
   ///   \frac{\psi_{i+2} - \psi_{i+1} - \psi{i} + \psi{i-1}}{\psi_{i+2} + \psi_{i+1} + \psi{i} + \psi{i-1}}
   /// \f$ \n 
-#    define mpdata_3rd_xx(pp2, pp1, pp0, pm1, U) (\
-       (real_t(3) * U * abs(U) - real_t(2) * pow(U,3) - U) / real_t(3) \
-       * mpdata_frac(pp2 - pp1 - pp0 + pm1, pp2 + pp1 + pp0 + pm1) \
-     )
+  private: mtx_expr_5arg_macro(mpdata_3rd_xx, pp2, pp1, pp0, pm1, U, 
+    (real_t(3) * U * abs(U) - real_t(2) * pow(U,3) - U) 
+    / real_t(3) 
+    * this->mpdata_frac(pp2 - pp1 - pp0 + pm1, pp2 + pp1 + pp0 + pm1) 
+  )
+
   /// second term from eq. (36) from Smolarkiewicz & Margolin 1998 (with G=1)
   /// \f$
   ///   \frac{\delta x \delta y}{2} V \left( |U| - 2U^2 \right)
@@ -97,16 +106,19 @@ class adv_mpdata : public adv_upstream<real_t>
   ///     \psi_{i+1,j+1} + \psi_{i,j+1} + \psi_{i+1,j-1} + \psi_{i,j-1}
   ///   }
   /// \f$
-#    define mpdata_3rd_xy(pip0jp1, pip0jm1, pip1jp1, pip1jm1, U, V) (\
-       V * (abs(U) - real_t(2) * pow(U,2)) \
-       * mpdata_frac( \
-         pip1jp1 - pip0jp1 - pip1jm1 + pip0jm1, \
-         pip1jp1 + pip0jp1 + pip1jm1 + pip0jm1 \
-       ) \
-     )
+  private: mtx_expr_6arg_macro(mpdata_3rd_xy, pip0jp1, pip0jm1, pip1jp1, pip1jm1, U, V,
+    V * (abs(U) - real_t(2) * pow(U,2)) 
+    * this->mpdata_frac( 
+      pip1jp1 - pip0jp1 - pip1jm1 + pip0jm1, 
+      pip1jp1 + pip0jp1 + pip1jm1 + pip0jm1 
+    ) 
+  )
+
   /// third term from eq. (36) from Smolarkiewicz & Margolin 1998 (with G=1)
-#    define mpdata_3rd_xz(pip0kp1, pip0km1, pip1kp1, pip1km1, U, W) \
-       mpdata_3rd_xy(pip0kp1, pip0km1, pip1kp1, pip1km1, U, W)
+  private: mtx_expr_6arg_macro(mpdata_3rd_xz, pip0kp1, pip0km1, pip1kp1, pip1km1, U, W,
+    this->mpdata_3rd_xy(pip0kp1, pip0km1, pip1kp1, pip1km1, U, W)
+  )
+
   /// fourth term from eq. (36) from Smolarkiewicz & Margolin 1998 (with G=1)
   /// \f$
   ///   \frac{2}{3} \delta x \delta z UVW \frac{1}{\psi} \frac{\partial^2 \psi}{\partial y \partial z} \approx
@@ -118,18 +130,17 @@ class adv_mpdata : public adv_upstream<real_t>
   ///     + \psi_{i,j+1,k-1} + \psi_{i,j-1,k-1} + \psi_{i+1,j+1,k-1} + \psi_{i+1,j-1,k-1}
   ///   }
   /// \f$
-#    define mpdata_3rd_yz( \
-       pip0jp1kp1, pip0jm1kp1, pip1jp1kp1, pip1jm1kp1, \
-       pip0jp1km1, pip0jm1km1, pip1jp1km1, pip1jm1km1, \
-       U, V, W \
-     ) ( \
-       real_t(2./3.) * U * V * W * mpdata_frac( \
-         pip0jp1kp1 - pip0jm1kp1 + pip1jp1kp1 - pip1jm1kp1 - \
-         pip0jp1km1 + pip0jm1km1 - pip1jp1km1 + pip1jm1km1, \
-         pip0jp1kp1 + pip0jm1kp1 + pip1jp1kp1 + pip1jm1kp1 + \
-         pip0jp1km1 + pip0jm1km1 + pip1jp1km1 + pip1jm1km1 \
-       ) \
-     )
+  private: mtx_expr_11arg_macro(mpdata_3rd_yz,
+    pip0jp1kp1, pip0jm1kp1, pip1jp1kp1, pip1jm1kp1, 
+    pip0jp1km1, pip0jm1km1, pip1jp1km1, pip1jm1km1, 
+    U, V, W, 
+    real_t(2./3.) * U * V * W * this->mpdata_frac( 
+      pip0jp1kp1 - pip0jm1kp1 + pip1jp1kp1 - pip1jm1kp1 - 
+      pip0jp1km1 + pip0jm1km1 - pip1jp1km1 + pip1jm1km1, 
+      pip0jp1kp1 + pip0jm1kp1 + pip1jp1kp1 + pip1jm1kp1 + 
+      pip0jp1km1 + pip0jm1km1 + pip1jp1km1 + pip1jm1km1 
+    ) 
+  )
 
   protected:
   template <class idx>
@@ -165,10 +176,6 @@ class adv_mpdata : public adv_upstream<real_t>
         km
     );
 
-    assert(isfinite(sum((*psi[n])(idx(ir, jm, km)))));
-    assert(isfinite(sum((*psi[n])(idx(il, jm, km)))));
-    assert(isfinite(sum(Cx(idx(ic, jm, km)))));
-
     (*C_adf)(adfidx) = (
       mpdata_CA( 
         (*psi[n])(idx(ir, jm, km)), (*psi[n])(idx(il, jm, km)), /* pl, pr */ 
@@ -179,15 +186,6 @@ class adv_mpdata : public adv_upstream<real_t>
     {
       if (j.first() != j.last()) 
       {
-        assert(isfinite(sum((*psi[n])(idx(ir, jm+1, km)))));
-        assert(isfinite(sum((*psi[n])(idx(il, jm+1, km)))));
-        assert(isfinite(sum((*psi[n])(idx(ir, jm-1, km)))));
-        assert(isfinite(sum((*psi[n])(idx(il, jm-1, km)))));
-        assert(isfinite(sum(Cy(idx(ir, jm + grid->p_half, km)))));
-        assert(isfinite(sum(Cy(idx(il, jm + grid->p_half, km)))));
-        assert(isfinite(sum(Cy(idx(ir, jm - grid->m_half, km)))));
-        assert(isfinite(sum(Cy(idx(il, jm - grid->m_half, km)))));
-
         (*C_adf)(adfidx) -= (
           mpdata_CB( 
             (*psi[n])(idx(ir, jm+1, km)), (*psi[n])(idx(il, jm+1, km)), /* pru, plu */ 
@@ -201,15 +199,6 @@ class adv_mpdata : public adv_upstream<real_t>
       }
       if (k.first() != k.last()) 
       {
-        assert(isfinite(sum((*psi[n])(idx(ir, jm, km+1)))));
-        assert(isfinite(sum((*psi[n])(idx(il, jm, km+1)))));
-        assert(isfinite(sum((*psi[n])(idx(ir, jm, km-1)))));
-        assert(isfinite(sum((*psi[n])(idx(il, jm, km-1)))));
-        assert(isfinite(sum(Cz(idx(ir, jm, km + grid->p_half)))));
-        assert(isfinite(sum(Cz(idx(il, jm, km + grid->p_half)))));
-        assert(isfinite(sum(Cz(idx(ir, jm, km - grid->m_half)))));
-        assert(isfinite(sum(Cz(idx(il, jm, km - grid->m_half)))));
-
         (*C_adf)(adfidx) -= ( // otherwise Cz is uninitialised!
           mpdata_CB( 
             (*psi[n])(idx(ir, jm, km+1)), (*psi[n])(idx(il, jm, km+1)), /* pru, plu */ 
@@ -257,15 +246,6 @@ class adv_mpdata : public adv_upstream<real_t>
         }
         if ((j.first() != j.last()) && (k.first() != k.last())) 
         {
-          assert(isfinite(sum((*psi[n])(idx(im  , jm+1, km+1)))));
-          assert(isfinite(sum((*psi[n])(idx(im  , jm-1, km+1)))));
-          assert(isfinite(sum((*psi[n])(idx(im+1, jm+1, km+1)))));
-          assert(isfinite(sum((*psi[n])(idx(im+1, jm-1, km+1)))));
-          assert(isfinite(sum((*psi[n])(idx(im  , jm+1, km-1)))));
-          assert(isfinite(sum((*psi[n])(idx(im  , jm-1, km-1)))));
-          assert(isfinite(sum((*psi[n])(idx(im+1, jm+1, km-1)))));
-          assert(isfinite(sum((*psi[n])(idx(im+1, jm-1, km-1)))));
-
           (*C_adf)(adfidx) -= ( // otherwise Cx & Cz are uninitialised
             mpdata_3rd_yz(
               (*psi[n])(idx(im  , jm+1, km+1)), // pip0jp1kp1, 
@@ -292,9 +272,6 @@ class adv_mpdata : public adv_upstream<real_t>
     }
     if (third_order)
     { 
-      assert(isfinite(sum((*psi[n])(idx(im+2, jm, km)))));
-      assert(isfinite(sum((*psi[n])(idx(im-1, jm, km)))));
-
       (*C_adf)(adfidx) +=(
         mpdata_3rd_xx(
           (*psi[n])(idx(im+2, jm, km)), 

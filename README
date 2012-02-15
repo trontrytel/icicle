@@ -17,9 +17,9 @@
 
   - cmake ................................... http://cmake.org/
 
-  - C++ compiler, e.g.
+  - C++11 and optionally OpenMP compliant C++ compiler, e.g.
+    - g++ (GCC >= 4.6) .................... http://gcc.gnu.org/
     - clang++ (no OpenMP as of '11) .... http://clang.llvm.org/
-    - g++ (GCC >= 4.2 for OpenMP) ......... http://gcc.gnu.org/
     - ... 
 
   - Blitz++ library ............. http://blitz.sourceforge.net/
