@@ -51,13 +51,13 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
       jj = mtx::rng(ijk.lbound(mtx::j) - 1, ijk.ubound(mtx::j) + 1),
       kk = mtx::rng(ijk.lbound(mtx::k) - 1, ijk.ubound(mtx::k) + 1);
 
-    assert(finite(sum((*psi[n])(ii  , jj  , kk  ))));
-    assert(finite(sum((*psi[n])(ii-1, jj  , kk  ))));
-    assert(finite(sum((*psi[n])(ii+1, jj  , kk  ))));
-    assert(finite(sum((*psi[n])(ii  , jj-1, kk  ))));
-    assert(finite(sum((*psi[n])(ii  , jj+1, kk  ))));
-    assert(finite(sum((*psi[n])(ii  , jj  , kk-1))));
-    assert(finite(sum((*psi[n])(ii  , jj  , kk+1))));
+    assert(isfinite(sum((*psi[n])(ii  , jj  , kk  ))));
+    assert(isfinite(sum((*psi[n])(ii-1, jj  , kk  ))));
+    assert(isfinite(sum((*psi[n])(ii+1, jj  , kk  ))));
+    assert(isfinite(sum((*psi[n])(ii  , jj-1, kk  ))));
+    assert(isfinite(sum((*psi[n])(ii  , jj+1, kk  ))));
+    assert(isfinite(sum((*psi[n])(ii  , jj  , kk-1))));
+    assert(isfinite(sum((*psi[n])(ii  , jj  , kk+1))));
 
 #  define mpdata_fct_minmax(fun, psi_, n_, i_, j_, k_) fun( \
      (*psi_[n_])(i_  ,j_  ,k_  ), fun( \
@@ -183,29 +183,29 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
     // as in mpdata_U, we compute u_{i+1/2} for iv=(i-1, ... i) instead of u_{i+1/2} and u_{i-1/2} for all i
     mtx::rng iv(i.first()-1, i.last());
 
-    assert(finite(sum((*psi[n])(idx(iv    ,j ,  k  )))));
-    assert(finite(sum((*psi[n])(idx(iv+1  ,j ,  k  )))));
-    assert(finite(sum((*psi[n])(idx(iv  -1,j ,  k  )))));
-    assert(finite(sum((*psi[n])(idx(iv+1+1,j ,  k  )))));
-    assert(finite(sum((*psi[n])(idx(iv,    j-1, k  )))));
-    assert(finite(sum((*psi[n])(idx(iv+1,  j+1, k  )))));
-    assert(finite(sum((*psi[n])(idx(iv,    j  , k-1)))));
-    assert(finite(sum((*psi[n])(idx(iv+1,  j  , k+1)))));
+    assert(isfinite(sum((*psi[n])(idx(iv    ,j ,  k  )))));
+    assert(isfinite(sum((*psi[n])(idx(iv+1  ,j ,  k  )))));
+    assert(isfinite(sum((*psi[n])(idx(iv  -1,j ,  k  )))));
+    assert(isfinite(sum((*psi[n])(idx(iv+1+1,j ,  k  )))));
+    assert(isfinite(sum((*psi[n])(idx(iv,    j-1, k  )))));
+    assert(isfinite(sum((*psi[n])(idx(iv+1,  j+1, k  )))));
+    assert(isfinite(sum((*psi[n])(idx(iv,    j  , k-1)))));
+    assert(isfinite(sum((*psi[n])(idx(iv+1,  j  , k+1)))));
 
-    assert(finite(sum(C_adf_x(idx(iv     + grid->p_half,j,k)))));
-    assert(finite(sum(C_adf_x(idx(iv     - grid->m_half,j,k)))));
-    assert(finite(sum(C_adf_x(idx(iv + 1 + grid->p_half,j,k)))));
-    assert(finite(sum(C_adf_x(idx(iv + 1 - grid->m_half,j,k)))));
+    assert(isfinite(sum(C_adf_x(idx(iv     + grid->p_half,j,k)))));
+    assert(isfinite(sum(C_adf_x(idx(iv     - grid->m_half,j,k)))));
+    assert(isfinite(sum(C_adf_x(idx(iv + 1 + grid->p_half,j,k)))));
+    assert(isfinite(sum(C_adf_x(idx(iv + 1 - grid->m_half,j,k)))));
 
-    assert(finite(sum(C_adf_y(idx(iv,     j + grid->p_half,k)))));
-    assert(finite(sum(C_adf_y(idx(iv,     j - grid->m_half,k)))));
-    assert(finite(sum(C_adf_y(idx(iv + 1, j + grid->p_half,k)))));
-    assert(finite(sum(C_adf_y(idx(iv + 1, j - grid->m_half,k)))));
+    assert(isfinite(sum(C_adf_y(idx(iv,     j + grid->p_half,k)))));
+    assert(isfinite(sum(C_adf_y(idx(iv,     j - grid->m_half,k)))));
+    assert(isfinite(sum(C_adf_y(idx(iv + 1, j + grid->p_half,k)))));
+    assert(isfinite(sum(C_adf_y(idx(iv + 1, j - grid->m_half,k)))));
 
-    assert(finite(sum(C_adf_z(idx(iv,     j, k + grid->p_half)))));
-    assert(finite(sum(C_adf_z(idx(iv,     j, k - grid->m_half)))));
-    assert(finite(sum(C_adf_z(idx(iv + 1, j, k + grid->p_half)))));
-    assert(finite(sum(C_adf_z(idx(iv + 1, j, k - grid->m_half)))));
+    assert(isfinite(sum(C_adf_z(idx(iv,     j, k + grid->p_half)))));
+    assert(isfinite(sum(C_adf_z(idx(iv,     j, k - grid->m_half)))));
+    assert(isfinite(sum(C_adf_z(idx(iv + 1, j, k + grid->p_half)))));
+    assert(isfinite(sum(C_adf_z(idx(iv + 1, j, k - grid->m_half)))));
 
     C_mon_x(idx(iv + grid->p_half,j,k)) = C_adf_x(idx(iv + grid->p_half,j,k)) * where(
       C_adf_x(idx(iv + grid->p_half,j,k)) > 0,

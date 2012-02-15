@@ -16,16 +16,16 @@ template <typename real_t>
 class slv_serial : public slv<real_t>
 {
   private: adv<real_t> *fllbck, *advsch;
-  private: auto_ptr<mtx::idx> ijk;
+  private: unique_ptr<mtx::idx> ijk;
   private: out<real_t> *output;
   private: stp<real_t> *setup;
   private: vector<int> halo_sclr;
   private: int halo_vctr;
 
-  private: auto_ptr<mtx::arr<real_t> > Cx, Cy, Cz;
+  private: unique_ptr<mtx::arr<real_t> > Cx, Cy, Cz;
   private: mtx::arr<real_t> **Qx, **Qy, **Qz;
   private: vector<ptr_vector<mtx::arr<real_t> > > psi;
-  private: auto_ptr<tmp<real_t> > cache; 
+  private: unique_ptr<tmp<real_t> > cache; 
 
   public: slv_serial(stp<real_t> *setup, out<real_t> *output,
     int i_min, int i_max,
@@ -226,6 +226,7 @@ class slv_serial : public slv<real_t>
   public: void stash_cycle(int e, int n)
   {
     static mtx::arr<real_t> stash(psi[e][n]);
+    // TODO: static size + assert() if the same size
     mtx::cycle(stash, psi[e][n]);
   }
 

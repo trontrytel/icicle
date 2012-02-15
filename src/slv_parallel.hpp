@@ -17,7 +17,7 @@ class slv_parallel : public slv<real_t>
   private: int nsd; // number of subdomains within this solver
   private: int nxs; // number of points per subdomain
   private: int i_min; // i_min for this set of subdomains
-  private: auto_ptr<slv_serial<real_t> > *slvs; // TODO: vector_ptr!
+  private: unique_ptr<slv_serial<real_t> > *slvs; // TODO: vector_ptr!
   private: adv<real_t> *fllbck, *advsch;
   private: stp<real_t> *setup; 
  
@@ -39,7 +39,7 @@ class slv_parallel : public slv<real_t>
       error_macro("subdomains of 1-element length not supported")
 
     // serial solver allocation
-    slvs = new auto_ptr<slv_serial<real_t> >[nsd];
+    slvs = new unique_ptr<slv_serial<real_t> >[nsd];
     for (int sd=0; sd < nsd; ++sd) 
       slvs[sd].reset(new slv_serial<real_t>(setup, output,
         i_min + sd * nxs, i_min + (sd + 1) * nxs - 1,
@@ -59,7 +59,7 @@ class slv_parallel : public slv<real_t>
 
   public: ~slv_parallel()
   {
-    delete[] slvs; // vector is not used as it might not work with auto_ptr
+    delete[] slvs; // TODO: change to vector_ptr
   }
 
   private: virtual void barrier() = 0;
@@ -73,6 +73,7 @@ class slv_parallel : public slv<real_t>
 
   public: void integ_loop_sd(int sd) 
   {
+    assert(fllbck == NULL || fllbck->num_steps() == 1);
     bool 
       has_qx = setup->equations->has_qx(), 
       has_qy = setup->equations->has_qy(), 
@@ -87,7 +88,6 @@ class slv_parallel : public slv<real_t>
     {   
       adv<real_t> *a;
       bool fallback = this->choose_an(&a, &n, t, advsch, fllbck);
-      assert(!(fallback && a->num_steps() > 1));
 
       if (t % setup->nout == 0) record(sd, n, t / setup->nout);
       for (int e = 0; e < setup->equations->n_vars(); ++e)
@@ -118,7 +118,8 @@ class slv_parallel : public slv<real_t>
         if (has_qx) slvs[sd]->fill_halos(idx_qx, n + 1); 
         if (has_qy) slvs[sd]->fill_halos(idx_qy, n + 1); 
         if (has_qz) slvs[sd]->fill_halos(idx_qz, n + 1); 
-        barrier(); slvs[sd]->update_velocities(n + 1);
+        barrier(); 
+        slvs[sd]->update_velocities(n + 1);
         // TODO: check if not exceeding Courant safety limits
       }
 

@@ -22,7 +22,7 @@
 template <typename real_t>
 class out_netcdf : public out<real_t>
 {
-  private: auto_ptr<NcFile> f;
+  private: unique_ptr<NcFile> f;
   private: vector<NcVar> vars;
   private: inf info;
 
@@ -95,6 +95,7 @@ class out_netcdf : public out<real_t>
         {
           vars.push_back(f->addVar(setup->equations->var_name(v), ncFloat, sdims)); 
           vars.at(v).putAtt("unit", setup->equations->var_unit(v));
+          vars.at(v).putAtt("description", setup->equations->var_desc(v));
         }
 
         // Courant field TODO

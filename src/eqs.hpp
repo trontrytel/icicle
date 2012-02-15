@@ -18,6 +18,7 @@ class eqs : root
   // A generalised transport equation (e.g. eq. 19 in Smolarkiewicz & Margolin 1998)
   protected: struct gte {
     string name;
+    string desc;
     string unit; 
     //vector<rhs> // source terms - TODO
   };
@@ -39,6 +40,12 @@ class eqs : root
   {
     // TODO try/catch if i within range
     return system().at(i).name;
+  }
+
+  public: string var_desc(int i)
+  {
+    // TODO try/catch if i within range
+    return system().at(i).desc;
   }
 
   public: string var_unit(int i)

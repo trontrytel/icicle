@@ -20,13 +20,14 @@ using std::string;
 using std::vector;
 using std::ostringstream;
 using std::map;
-using std::auto_ptr;
+using std::unique_ptr;
 using std::cout;
 using std::cerr;
 using std::endl;
 using std::exception;
 using std::cos;
 using std::sin;
+using std::isfinite;
 
 // the Lynton Appel's netCDF-4 C++ API (since netCDF 4.1.1)
 #    ifdef USE_BOOST_MPI 
@@ -55,6 +56,9 @@ class root { public: virtual ~root() {} };
 { \
   cerr << "-- warning: " << msg << endl; \
 }
+
+// C++11 decltype/return helper macro
+#  define declret_macro(expr) decltype(expr) { return expr; }
 
 // Boost.Units
 #  include <boost/units/systems/si.hpp>

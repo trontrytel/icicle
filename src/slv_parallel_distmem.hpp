@@ -18,7 +18,7 @@ class slv_parallel_distmem : public shrdmem_class
   {
     private: slv_parallel_distmem<real_t, shrdmem_class> *nghbr;
     private: int peer, cnt;
-    private: auto_ptr<mtx::arr<real_t> > ibuf, obuf;
+    private: unique_ptr<mtx::arr<real_t> > ibuf, obuf;
     private: mtx::rng ixr, oxr, yr, zr;
 
     public: slv_halo(slv_parallel_distmem<real_t, shrdmem_class> *nghbr, int peer,
@@ -50,8 +50,8 @@ class slv_parallel_distmem : public shrdmem_class
   // </nested class>
 
   private: int size, rank;
-  private: auto_ptr<slv_halo> lhalo, rhalo;
-  private: auto_ptr<mtx::arr<real_t> > libuf, ribuf, lobuf, robuf;
+  private: unique_ptr<slv_halo> lhalo, rhalo;
+  private: unique_ptr<mtx::arr<real_t> > libuf, ribuf, lobuf, robuf;
 
   private: int i_min(int nx, int rank, int size) { return (rank + 0) * nx / size; }
   private: int i_max(int nx, int rank, int size) { return i_min(nx, rank + 1, size) - 1; }

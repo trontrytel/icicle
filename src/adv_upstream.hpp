@@ -64,11 +64,11 @@ class adv_upstream : public adv<real_t>
     /// \f$ \psi^{n+1}_i = \psi^{n}_i - \left[ F( \psi^{n}_{i}, \psi^{n}_{i+1}, U_{i+1/2} ) - F( \psi^{n}_{i-1}, \psi^{n}_{i}, U_{i-1/2} ) \right] \f$ \n
     /// eq. (2) in Smolarkiewicz & Margolin 1998 (J. Comp. Phys., 140, 459-480) \n
 
-    assert(finite(sum((*psi[n])(idx(i-1,j,k)))));
-    assert(finite(sum((*psi[n])(idx(i  ,j,k)))));
-    assert(finite(sum((*psi[n])(idx(i+1,j,k)))));
-    assert(finite(sum((*Cx)(idx(i + grid->p_half,j,k)))));
-    assert(finite(sum((*Cx)(idx(i - grid->m_half,j,k)))));
+    assert(isfinite(sum((*psi[n])(idx(i-1,j,k)))));
+    assert(isfinite(sum((*psi[n])(idx(i  ,j,k)))));
+    assert(isfinite(sum((*psi[n])(idx(i+1,j,k)))));
+    assert(isfinite(sum((*Cx)(idx(i + grid->p_half,j,k)))));
+    assert(isfinite(sum((*Cx)(idx(i - grid->m_half,j,k)))));
 
     (*psi[n+1])(idx(i,j,k)) -= (
       mpdata_F((*psi[n])(idx(i  ,j,k)), (*psi[n])(idx(i+1,j,k)), (*Cx)(idx(i + grid->p_half,j,k))) - 

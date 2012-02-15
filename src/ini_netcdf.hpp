@@ -14,7 +14,7 @@
 template <typename real_t>
 class ini_netcdf : public ini<real_t>
 {
-  private: auto_ptr<NcFile> f;
+  private: unique_ptr<NcFile> f;
   private: string filename;
   private: const grd<real_t> *grid;
   public: ini_netcdf(const grd<real_t> &grid, const string filename)

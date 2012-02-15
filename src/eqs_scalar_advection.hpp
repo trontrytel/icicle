@@ -20,7 +20,7 @@ class eqs_scalar_advection : public eqs<real_t>
   public: eqs_scalar_advection()
   {
     {
-      struct eqs<real_t>::gte e = {"psi", this->quan2str(quantity<si::dimensionless, real_t>(1.))};
+      struct eqs<real_t>::gte e = {"psi", "the transported scalar field", this->quan2str(quantity<si::dimensionless, real_t>(1.))};
       sys.push_back(e);
     }
   }

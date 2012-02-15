@@ -53,8 +53,8 @@ class slv_parallel_distmem_fork : public slv_parallel_distmem<real_t, shrdmem_cl
   }
 
   private: int size, rank;
-  private: auto_ptr<ipc::message_queue> *queues_real;
-  private: auto_ptr<ipc::message_queue> *queues_bool;
+  private: unique_ptr<ipc::message_queue> *queues_real;
+  private: unique_ptr<ipc::message_queue> *queues_bool;
 
   private: string queue_name(string pfx, int k)
   {
@@ -67,8 +67,8 @@ class slv_parallel_distmem_fork : public slv_parallel_distmem<real_t, shrdmem_cl
   ) 
     : slv_parallel_distmem<real_t, shrdmem_class>(setup, output, size=nsd, rank=fork_init(nsd))
   { 
-    queues_real = new auto_ptr<ipc::message_queue>[2 * nsd];
-    queues_bool = new auto_ptr<ipc::message_queue>[nsd];
+    queues_real = new unique_ptr<ipc::message_queue>[2 * nsd];
+    queues_bool = new unique_ptr<ipc::message_queue>[nsd];
     for (int kk = 0; kk < 2 * size; ++kk) 
     {   
       queues_real[kk].reset(new ipc::message_queue(ipc::open_or_create, queue_name("real", kk).c_str(), 

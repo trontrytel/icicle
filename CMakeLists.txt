@@ -9,21 +9,18 @@
 cmake_minimum_required(VERSION 2.6) # for simplified if-constructs
 #TODO: check which version is needed for FeatureSummary
 
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffast-math -DNDEBUG") # TODO : FORCE?
+set(CMAKE_CXX_FLAGS_RELEASE "-std=c++0x -O3 -ffast-math -DNDEBUG") # TODO : FORCE?
 #set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -DBZ_DEBUG" CACHE STRING "Debug options." FORCE)
-set(CMAKE_CXX_FLAGS_DEBUG "-DBZ_DEBUG" CACHE STRING "Debug options." FORCE)
+set(CMAKE_CXX_FLAGS_DEBUG "-std=c++0x -DBZ_DEBUG" CACHE STRING "Debug options." FORCE)
 
 if(NOT (
   "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" OR 
-  "${CMAKE_BUILD_TYPE}" STREQUAL "Release" OR
-  "${CMAKE_BUILD_TYPE}" STREQUAL "None"
+  "${CMAKE_BUILD_TYPE}" STREQUAL "Release" 
 ))
   message(FATAL_ERROR "Please specify the build type, i.e.:
     \$ cmake . -DCMAKE_BUILD_TYPE=Debug   \# (CXX_FLAGS=\"\$CXXFLAGS ${CMAKE_CXX_FLAGS_DEBUG}\")
     or
-    \$ cmake . -DCMAKE_BUILD_TYPE=Release \# (CXX_FLAGS=\"\$CXXFLAGS ${CMAKE_CXX_FLAGS_RELEASE}\")
-    or
-    \$ cmake . -DCMAKE_BUILD_TYPE=None    \# (CXX_FLAGS=\$CXXFLAGS)")
+    \$ cmake . -DCMAKE_BUILD_TYPE=Release \# (CXX_FLAGS=\"\$CXXFLAGS ${CMAKE_CXX_FLAGS_RELEASE}\")")
 endif()
 
 project(icicle CXX)
@@ -355,7 +352,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cfg.hpp.in ${CMAKE_CURRENT_BINARY_DIR
 enable_testing()
 
 add_subdirectory(tests)
-add_subdirectory(src) 
+#add_subdirectory(src) 
 
 message(STATUS "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --")
 feature_summary(WHAT ENABLED_FEATURES DESCRIPTION "Enabled Features (to disable use -DFEATURE=NO):")
