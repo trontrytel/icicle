@@ -57,6 +57,9 @@ class root { public: virtual ~root() {} };
   cerr << "-- warning: " << msg << endl; \
 }
 
+// C++11 decltype/return helper macro
+#  define declret_macro(expr) decltype(expr) { return expr; }
+
 // Boost.Units
 #  include <boost/units/systems/si.hpp>
 #  include <boost/units/cmath.hpp> 

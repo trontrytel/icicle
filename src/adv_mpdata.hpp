@@ -45,23 +45,19 @@ class adv_mpdata : public adv_upstream<real_t>
     if (iord <= 0) error_macro("iord (the number of iterations) must be > 0")
   }
 
-/*
+// TODO: make it an option for the constructor (and recode with functors)
   protected: 
   template <class num_expr, class den_expr>
-  auto mpdata_frac(const num_expr& num, const den_expr& den) -> decltype(num / (den + mtx::eps<real_t>()))
-  {
-    return num / (den + mtx::eps<real_t>());
-  }
-*/
-
-  // using preprocessor macros as it's tricky make methods return parts of Blitz expressions 
 #    ifdef MPDATA_FRAC_EPSILON
-#      define mpdata_frac(num, den) ((num) / (den + mtx::eps<real_t>()))
+  auto mpdata_frac(const num_expr& num, const den_expr& den) -> decltype(num / (den + real_t(0)))
+  { return num / (den + mtx::eps<real_t>()); }
 #    else
-#      define mpdata_frac(num, den) (where(den > real_t(0), (num) / (den), real_t(0)))
+  auto mpdata_frac(const num_expr& num, const den_expr& den) -> declret_macro(
+    where(den > real_t(0), num / den, real_t(0))
+  )
 #    endif
 
-  // TODO: eliminate all macros by transforming to C++11 autodecled-expressions!
+  // TODO: eliminate all macros by transforming to C++11 autodecled-expressions!!!
 
   // macros for 2nd order terms:
 #    define mpdata_A(pr, pl) mpdata_frac(pr - pl, pr + pl) 

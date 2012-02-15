@@ -13,6 +13,7 @@
 #  endif
 #  include <blitz/array.h>
 #  include <blitz/numinquire.h>
+using blitz::where;
 
 namespace mtx
 {
