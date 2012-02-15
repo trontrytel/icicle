@@ -49,22 +49,25 @@ class adv_mpdata : public adv_upstream<real_t>
   protected: 
   template <class num_expr, class den_expr>
 #    ifdef MPDATA_FRAC_EPSILON
-  auto mpdata_frac(const num_expr& num, const den_expr& den) -> decltype(num / (den + real_t(0)))
-  { return num / (den + mtx::eps<real_t>()); }
+  auto mpdata_frac(const num_expr &num, const den_expr &den) -> declret_macro(
+    num / (den + mtx::eps<real_t>())
+  )
 #    else
-  auto mpdata_frac(const num_expr& num, const den_expr& den) -> declret_macro(
+  auto mpdata_frac(const num_expr &num, const den_expr &den) -> declret_macro(
     where(den > real_t(0), num / den, real_t(0))
   )
 #    endif
 
   // TODO: eliminate all macros by transforming to C++11 autodecled-expressions!!!
+  // TODO: move the assert(isfinite()) expressions into the autodecled-expressions
 
   // macros for 2nd order terms:
-  private:
-  template <class expr1, class expr2>
-  auto mpdata_A(expr1 pr, expr2 pl) -> declret_macro(mpdata_frac(pr - pl, pr + pl))
+//  protected:
+//  template <class expr1, class expr2>
+//  auto mpdata_A(const expr1 &pr, const expr2 &pl) -> declret_macro(mpdata_frac(pr - pl, pr + pl))
 
-//#    define mpdata_A(pr, pl) mpdata_frac(pr - pl, pr + pl) 
+#    define mpdata_A(pr, pl) mpdata_frac(pr - pl, pr + pl) 
+
 #    define mpdata_B(pru, plu, prd, pld) (real_t(.5) * mpdata_frac(pru + plu - prd - pld, pru + plu + prd + pld))
 #    define mpdata_V(Vru, Vlu, Vrd, Vld) (real_t(.25) * (Vru + Vlu + Vrd + Vld))
 #    define mpdata_W(Wru, Wlu, Wrd, Wld) mpdata_V(Wru, Wlu, Wrd, Wld)
