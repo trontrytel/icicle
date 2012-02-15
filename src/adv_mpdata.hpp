@@ -43,6 +43,7 @@ class adv_mpdata : public adv_upstream<real_t>
     : iord(iord), cross_terms(cross_terms), third_order(third_order), grid(grid), adv_upstream<real_t>(grid)
   {
     if (iord <= 0) error_macro("iord (the number of iterations) must be > 0")
+    if (iord < 3 && third_order) warning_macro("third-order accuracy needs iord >= 3")
   }
 
 // TODO: make it an option for the constructor (and recode with functors)

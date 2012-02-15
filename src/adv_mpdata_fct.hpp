@@ -35,7 +35,9 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
   private: grd_arakawa_c_lorenz<real_t> *grid;
   public: adv_mpdata_fct(grd_arakawa_c_lorenz<real_t> *grid, int iord, bool cross_terms, bool third_order) 
     : adv_mpdata<real_t>(grid, iord, cross_terms, third_order), iord(iord), grid(grid)
-  {}
+  {
+    warning_macro("enabling FCT corrections reduces the order of the scheme")
+  }
 
   public: void op3D(
     mtx::arr<real_t> *psi[], mtx::arr<real_t> *tmp_s[], mtx::arr<real_t> *tmp_v[],
