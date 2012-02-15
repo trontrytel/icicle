@@ -14,6 +14,9 @@
 
 #include <cstdlib>
 #include <string>
+extern "C" {
+#include <unistd.h>
+}
 
 int main() 
 { 
