@@ -60,14 +60,18 @@ class adv_mpdata : public adv_upstream<real_t>
   // TODO: eliminate all macros by transforming to C++11 autodecled-expressions!!!
 
   // macros for 2nd order terms:
-#    define mpdata_A(pr, pl) mpdata_frac(pr - pl, pr + pl) 
+  private:
+  template <class expr1, class expr2>
+  auto mpdata_A(expr1 pr, expr2 pl) -> declret_macro(mpdata_frac(pr - pl, pr + pl))
+
+//#    define mpdata_A(pr, pl) mpdata_frac(pr - pl, pr + pl) 
 #    define mpdata_B(pru, plu, prd, pld) (real_t(.5) * mpdata_frac(pru + plu - prd - pld, pru + plu + prd + pld))
 #    define mpdata_V(Vru, Vlu, Vrd, Vld) (real_t(.25) * (Vru + Vlu + Vrd + Vld))
 #    define mpdata_W(Wru, Wlu, Wrd, Wld) mpdata_V(Wru, Wlu, Wrd, Wld)
 #    define mpdata_CA(pr, pl, U) ((abs(U) - pow(U,2)) * mpdata_A(pr, pl))
 #    define mpdata_CB(pru, plu, prd, pld, U, V) (U * V * mpdata_B(pru, plu, prd, pld)) 
-  // macros for 3rd order terms:
 
+  // macros for 3rd order terms:
   /// first term from eq. (36) from Smolarkiewicz & Margolin 1998 (with G=1)
   /// \f$ 
   ///   \frac{(\delta x)^2}{6} \left( 3U|U| - 2U^3 - U \right) 
