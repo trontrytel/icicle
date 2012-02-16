@@ -23,7 +23,6 @@ class slv_serial : public slv<real_t>
   private: int halo_vctr;
 
   private: unique_ptr<mtx::arr<real_t> > Cx, Cy, Cz;
-  private: mtx::arr<real_t> **Qx, **Qy, **Qz;
   private: vector<ptr_vector<mtx::arr<real_t> > > psi;
   private: unique_ptr<tmp<real_t> > cache; 
 
@@ -42,9 +41,8 @@ class slv_serial : public slv<real_t>
     {
       // enlarged halo needed for t=n+1/2 velocity extrapolation
       // TODO: stencil_extent()-like method in velocity?
-      if (setup->equations->has_qx()) halo_sclr[setup->equations->idx_qx()] += 1; 
-      if (setup->equations->has_qy()) halo_sclr[setup->equations->idx_qy()] += 1; 
-      if (setup->equations->has_qz()) halo_sclr[setup->equations->idx_qz()] += 1; 
+      for (int e = 0; e < setup->equations->n_vars(); ++e)
+        if (setup->equations->var_dynamic(e)) halo_sclr[e] += 1;
     }
 
     // memory allocation
@@ -70,15 +68,6 @@ class slv_serial : public slv<real_t>
           setup->grid->rng_sclr(i_min, i_max, j_min, j_max, k_min, k_max, halo_sclr[e])
         ));
       }
-    }
-
-    // momentum pointers
-    if (setup->velocity->is_constant()) Qx = Qy = Qz = NULL; // TODO: czy to potrzebne?
-    else 
-    {
-      if (setup->equations->has_qx()) Qx = psi[setup->equations->idx_qx()].c_array(); 
-      if (setup->equations->has_qy()) Qy = psi[setup->equations->idx_qy()].c_array(); 
-      if (setup->equations->has_qz()) Qz = psi[setup->equations->idx_qz()].c_array(); 
     }
 
     // caches
@@ -114,36 +103,22 @@ class slv_serial : public slv<real_t>
     {
       // filling Cx, Cy, Cz with constant velocity field
       setup->velocity->populate_courant_fields(-1, // TODO: some nicer calling sequence?
-        Cx.get(), Cy.get(), Cz.get(), setup->dt, NULL, NULL, NULL // ... Qx, Qy, Qx should anyhow contain NULLs
+        Cx.get(), Cy.get(), Cz.get(), setup->dt, NULL, NULL, NULL 
       );
     }
     else
     {
       // first guess for velocity fields assuming constant momenta
-      // TODO two or more, use a for!
       int n = 0;
-      if (setup->equations->has_qx()) 
+      for (int e = 0; e < setup->equations->n_vars(); ++e)
       {
-        fill_halos(setup->equations->idx_qx(), n); 
-        *Qx[n+1] = *Qx[n];
+        fill_halos(e, n); 
+        psi[e][n+1] = psi[e][n];
       }
-      if (setup->equations->has_qy()) 
-      {
-        fill_halos(setup->equations->idx_qy(), n); 
-        *Qy[n+1] = *Qy[n];
-      }
-      if (setup->equations->has_qz()) 
-      {
-        fill_halos(setup->equations->idx_qz(), n); 
-        *Qz[n+1] = *Qz[n]; 
-      }
-      setup->velocity->populate_courant_fields(n + 1,
-        Cx.get(), Cy.get(), Cz.get(), setup->dt, Qx, Qy, Qz
-      );
+      update_courants(n + 1);
 #  ifndef NDEBUG
-      if (setup->equations->has_qx()) Qx[n+1]->fill_with_nans();
-      if (setup->equations->has_qy()) Qy[n+1]->fill_with_nans();
-      if (setup->equations->has_qz()) Qz[n+1]->fill_with_nans();
+      for (int e = 0; e < setup->equations->n_vars(); ++e)
+        psi[e][n+1].fill_with_nans();
 #  endif
     }
   }
@@ -198,15 +173,53 @@ class slv_serial : public slv<real_t>
     );
   }
 
-  public: void update_velocities(const int n) // TODO: rename to update courants?
+  public: void update_courants(const int n) 
   {
     assert(!setup->velocity->is_constant());
-    assert(!setup->equations->has_qx() || Qx != NULL);
-    assert(!setup->equations->has_qy() || Qy != NULL); 
-    assert(!setup->equations->has_qz() || Qz != NULL); 
+    static bool init = true;
+    static mtx::arr<real_t> **Qx = NULL, **Qy = NULL, **Qz = NULL;
+    static map<int,int> 
+      mx = setup->equations->velmap_x(), 
+      my = setup->equations->velmap_y(), 
+      mz = setup->equations->velmap_z();
+    if (init)
+    {
+      if (mx.size() > 0) { Qx = psi[mx.begin()->first].c_array(); assert(mx.begin()->second == 1); }
+      if (my.size() > 0) { Qy = psi[my.begin()->first].c_array(); assert(my.begin()->second == 1); }
+      if (mz.size() > 0) { Qz = psi[mz.begin()->first].c_array(); assert(mz.begin()->second == 1); }
+      init = false;
+    }
+
+    // 
+    if (mx.size() > 1) for (map<int,int>::iterator it = ++(mx.begin()); it != mx.end(); ++it) 
+    {
+      int var = it->first, pow = it->second;
+      if (pow == -1) for (int m = n; m >= n-1; --m)
+      {
+        cerr << "dividing Qx[" << m << "] by " << var << endl;
+        // *(Qx[m]) /= psi[var][m];
+      }
+      else assert(false);
+    }
+    assert(my.size() < 2); // TODO!
+    assert(mz.size() < 2); // TODO!
+ 
+    // compute the velocities
     setup->velocity->populate_courant_fields(n,
       Cx.get(), Cy.get(), Cz.get(), setup->dt, Qx, Qy, Qz
     );
+
+    // 
+    if (mx.size() > 1) for (map<int,int>::iterator it = mx.begin()++; it != mx.end(); ++it) 
+    {
+      int var = it->first, pow = it->second;
+      if (pow == -1) for (int m = n; m >= n-1; --m)
+      {
+        cerr << "multiplying Qx by " << var << endl;
+        // *(Qx[m]) *= psi[var][m];
+      }
+      else assert(false);
+    }
   }
 
   public: void cycle_arrays(const int e, const int n)
