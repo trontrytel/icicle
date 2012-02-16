@@ -35,14 +35,15 @@ for i in range(theta.shape[0]) :
   y[i]=r[i]*math.sin(theta[i])
 
 ngrid = 800*2
+levels=[-23,-22,-21,-20,-19,-18,-17,-16,-15,-14,-13,-12,-11,-10,-9,-8,-7]
 
 xi = np.linspace(0, 8, ngrid)
 yi = np.linspace(0, 8, ngrid)
 zi = griddata(x,y,err,xi,yi,interp='linear')
 
 fig = plt.figure()
-plt.contour(xi,yi,zi,15,linewidths=0.5,colors='k')
-plt.contourf(xi,yi,zi,15,cmap=plt.cm.jet)
+plt.contour(xi,yi,zi,levels,linewidths=0.5,colors='k')
+plt.contourf(xi,yi,zi,levels,cmap=plt.cm.jet)
 plt.colorbar() # draw colorbar
 
 plt.xlim(0,8)
@@ -52,5 +53,5 @@ plt.xlabel('r; C=0')
 plt.ylabel('r; C=1')
 
 #plt.show()
-fig.savefig('new_iord2_fct1_toa0_b64.pdf')
+fig.savefig('iord3_toa1_b32_variable_sign.pdf')
 fig.clf
