@@ -20,12 +20,12 @@ f.createDimension('Z', 1)
 
 v_h  = f.createVariable('h', 'd', ('X','Y','Z'))
 v_qx = f.createVariable('qx', 'd', ('X','Y','Z'))
-#v_qy = f.createVariable('qy', 'd', ('X','Y','Z'))
+v_qy = f.createVariable('qy', 'd', ('X','Y','Z'))
 
 v_h[:,0,0] = 23.
 v_h[0,0,0] = 24.
 v_qx[:,0,0] = 1
-#v_qy[:,0,0] = 13.
+v_qy[:,0,0] = 0.
 
 f.close()
 

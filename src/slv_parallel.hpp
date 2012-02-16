@@ -74,14 +74,6 @@ class slv_parallel : public slv<real_t>
   public: void integ_loop_sd(int sd) 
   {
     assert(fllbck == NULL || fllbck->num_steps() == 1);
-    bool 
-      has_qx = setup->equations->has_qx(), 
-      has_qy = setup->equations->has_qy(), 
-      has_qz = setup->equations->has_qz();
-    int 
-      idx_qx = has_qx ? setup->equations->idx_qx() : -1, 
-      idx_qy = has_qy ? setup->equations->idx_qy() : -1, 
-      idx_qz = has_qz ? setup->equations->idx_qz() : -1;
 
     int n = 0;
     for (unsigned long t = 0; t < setup->nt; ++t) 
@@ -95,7 +87,7 @@ class slv_parallel : public slv<real_t>
         bool stash = // TODO: dependance on adv->time_leves... (does it work for leapfrog???)
           !setup->velocity->is_constant() && 
           a->num_steps() > 1 &&
-          ((has_qx && e == idx_qx) || (has_qy && e == idx_qy) || (has_qz && e == idx_qz)); 
+          setup->equations->var_dynamic(e);
 #  ifndef NDEBUG
         // TODO: fill caches (and perhaps also psi[n+1]) with NaNs
 #  endif
@@ -115,11 +107,11 @@ class slv_parallel : public slv<real_t>
       {
         barrier(); 
         // TODO: these fill haloes are repeadet in the next loop pass :(
-        if (has_qx) slvs[sd]->fill_halos(idx_qx, n + 1); 
-        if (has_qy) slvs[sd]->fill_halos(idx_qy, n + 1); 
-        if (has_qz) slvs[sd]->fill_halos(idx_qz, n + 1); 
+        for (int e = 0; e < setup->equations->n_vars(); ++e)
+          if (setup->equations->var_dynamic(e))
+            slvs[sd]->fill_halos(e, n + 1); 
         barrier(); 
-        slvs[sd]->update_velocities(n + 1);
+        slvs[sd]->update_courants(n + 1);
         // TODO: check if not exceeding Courant safety limits
       }
 
