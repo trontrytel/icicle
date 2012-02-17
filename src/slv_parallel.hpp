@@ -85,7 +85,6 @@ class slv_parallel : public slv<real_t>
       for (int e = 0; e < setup->equations->n_vars(); ++e)
       {
         bool stash = // TODO: dependance on adv->time_leves... (does it work for leapfrog???)
-          !setup->velocity->is_constant() && 
           a->num_steps() > 1 &&
           setup->equations->var_dynamic(e);
 #  ifndef NDEBUG
@@ -112,7 +111,6 @@ class slv_parallel : public slv<real_t>
             slvs[sd]->fill_halos(e, n + 1); 
         barrier(); 
         slvs[sd]->update_courants(n + 1);
-        // TODO: check if not exceeding Courant safety limits
       }
 
       for (int e = 0; e < setup->equations->n_vars(); ++e)

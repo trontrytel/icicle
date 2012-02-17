@@ -120,6 +120,7 @@ class slv_serial : public slv<real_t>
       for (int e = 0; e < setup->equations->n_vars(); ++e)
         psi[e][n+1].fill_with_nans();
 #  endif
+      // TODO: fill uninitialised C? with zeros? (e.g. Cz with shallow_water) 
     }
   }
 
@@ -173,53 +174,73 @@ class slv_serial : public slv<real_t>
     );
   }
 
-  public: void update_courants(const int n) 
+  public: void update_courants(const int n) // TODO: this ethod deserves a major rewrite!
   {
     assert(!setup->velocity->is_constant());
     static bool init = true;
-    static mtx::arr<real_t> **Qx = NULL, **Qy = NULL, **Qz = NULL;
-    static map<int,int> 
-      mx = setup->equations->velmap_x(), 
-      my = setup->equations->velmap_y(), 
-      mz = setup->equations->velmap_z();
-    if (init)
+    static mtx::arr<real_t> **Q[] = {NULL, NULL, NULL};
+    static vector<map<int,int> > vm(3);
+    if (init) 
     {
-      if (mx.size() > 0) { Qx = psi[mx.begin()->first].c_array(); assert(mx.begin()->second == 1); }
-      if (my.size() > 0) { Qy = psi[my.begin()->first].c_array(); assert(my.begin()->second == 1); }
-      if (mz.size() > 0) { Qz = psi[mz.begin()->first].c_array(); assert(mz.begin()->second == 1); }
+      vm[0] = map<int,int>(setup->equations->velmap_x());
+      vm[1] = map<int,int>(setup->equations->velmap_y()); 
+      vm[2] = map<int,int>(setup->equations->velmap_z());
+      for (int xyz = 0; xyz < 3; ++xyz)
+      {
+        if (vm[xyz].size() > 0) 
+        { 
+          Q[xyz] = psi[vm[xyz].begin()->first].c_array(); 
+          assert(vm[xyz].begin()->second == 1); // TODO: something more universal would be better
+        }
+      }
       init = false;
     }
 
     // 
-    if (mx.size() > 1) for (map<int,int>::iterator it = ++(mx.begin()); it != mx.end(); ++it) 
+    for (int xyz = 0; xyz < 3; ++xyz) 
     {
-      int var = it->first, pow = it->second;
-      if (pow == -1) for (int m = n; m >= n-1; --m)
+      if (vm[xyz].size() > 1) 
       {
-        cerr << "dividing Qx[" << m << "] by " << var << endl;
-        // *(Qx[m]) /= psi[var][m];
+        for (map<int,int>::iterator it = ++(vm[xyz].begin()); it != vm[xyz].end(); ++it) 
+        {
+          int var = it->first, pow = it->second;
+          if (pow == -1) 
+          {
+            for (int m = n; m >= n-1; --m)
+              (*(Q[xyz][m]))(Q[xyz][m]->ijk) /= (psi[var][m])(psi[var][m].ijk);
+          }
+          else assert(false);
+        }
       }
-      else assert(false);
     }
-    assert(my.size() < 2); // TODO!
-    assert(mz.size() < 2); // TODO!
  
     // compute the velocities
     setup->velocity->populate_courant_fields(n,
-      Cx.get(), Cy.get(), Cz.get(), setup->dt, Qx, Qy, Qz
+      Cx.get(), Cy.get(), Cz.get(), setup->dt, Q[0], Q[1], Q[2]
     );
 
     // 
-    if (mx.size() > 1) for (map<int,int>::iterator it = mx.begin()++; it != mx.end(); ++it) 
+    for (int xyz = 0; xyz < 3; ++xyz) 
     {
-      int var = it->first, pow = it->second;
-      if (pow == -1) for (int m = n; m >= n-1; --m)
+      if (vm[xyz].size() > 1) 
       {
-        cerr << "multiplying Qx by " << var << endl;
-        // *(Qx[m]) *= psi[var][m];
+        for (map<int,int>::iterator it = ++(vm[xyz].begin()); it != vm[xyz].end(); ++it) 
+        {
+          int var = it->first, pow = it->second;
+          if (pow == -1) 
+          {
+            for (int m = n; m >= n-1; --m)
+              (*(Q[xyz][m]))(Q[xyz][m]->ijk) *= (psi[var][m])(psi[var][m].ijk);
+          }
+          else assert(false);
+        }
       }
-      else assert(false);
     }
+
+    // TODO: sanity checks for Courant limits
+    cerr << "Courant x: " << min(*Cx) << " ... " << max(*Cx) << endl;
+    cerr << "Courant y: " << min(*Cy) << " ... " << max(*Cy) << endl;
+    cerr << "Courant z: " << min(*Cz) << " ... " << max(*Cz) << endl;
   }
 
   public: void cycle_arrays(const int e, const int n)
@@ -238,9 +259,12 @@ class slv_serial : public slv<real_t>
 
   public: void stash_cycle(int e, int n)
   {
+    assert(setup->equations->var_dynamic(e));
     static mtx::arr<real_t> stash(psi[e][n]);
-    // TODO: static size + assert() if the same size
-    mtx::cycle(stash, psi[e][n]);
+    static bool empty = true;
+    if (empty) stash = psi[e][n];
+    else psi[e][n] = stash;
+    empty = !empty;
   }
 
   public: void integ_loop() 

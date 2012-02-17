@@ -22,9 +22,9 @@ v_h  = f.createVariable('h', 'd', ('X','Y','Z'))
 v_qx = f.createVariable('qx', 'd', ('X','Y','Z'))
 v_qy = f.createVariable('qy', 'd', ('X','Y','Z'))
 
-v_h[:,0,0] = 23.
-v_h[0,0,0] = 24.
-v_qx[:,0,0] = 1
+v_h[:,0,0] = 20.
+v_h[0,0,0] = 30.
+v_qx[:,0,0] = 10.
 v_qy[:,0,0] = 0.
 
 f.close()
@@ -41,7 +41,7 @@ cmd = (
     '--adv.mpdata.fct','0',
     '--adv.mpdata.iord','3',
   '--vel','momeq_extrapol',
-  '--nt','20','--dt','1','--nout','1',
+  '--nt','15','--dt','1','--nout','1',
   '--out','netcdf','--out.netcdf.file','out.nc',
   '--slv','serial'
 )
