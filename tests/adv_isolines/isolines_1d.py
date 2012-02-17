@@ -19,10 +19,10 @@ from matplotlib.ticker import AutoMinorLocator
 
 file = 'tmp.nc'
 
-iord = 2 
-fct = 1
-toa = 0
-bits = 64
+iord = 3 
+fct = 0
+toa = 1
+bits = 32
 print "running 1D MPDATA simultation with iord=", str(iord), " fct=", str(fct), " toa=", str(toa)
 
 f = open('isolines.txt','w')
@@ -59,6 +59,7 @@ for dx in (dx_max, dx_max/2, dx_max/4, dx_max/8, dx_max/16, dx_max/32, dx_max/64
         '--adv.mpdata.third_order',str(toa),
         '--adv.mpdata.iord',str(iord),
       '--ini','gauss',
+        '--ini.gauss.A0',str(-.5),
         '--ini.gauss.A',str(1./sgma/math.sqrt(2*np.pi)),
         '--ini.gauss.x0',str(x0),
         '--ini.gauss.sx',str(sgma),
@@ -76,7 +77,7 @@ for dx in (dx_max, dx_max/2, dx_max/4, dx_max/8, dx_max/16, dx_max/32, dx_max/64
     x_k=x0+velocity*dt*nt
     exact=np.zeros(location.shape[0])
     for i in range(location.shape[0]) :
-      exact[i]=1./sgma/math.sqrt(2*np.pi)*math.exp(-.5*math.pow(location[i]-x_k,2)*math.pow(sgma,-2))
+      exact[i]=-.5+1./sgma/math.sqrt(2*np.pi)*math.exp(-.5*math.pow(location[i]-x_k,2)*math.pow(sgma,-2))
     psint = (nc.variables['psi'])[1,:,0,0]
     time = float(nc.user_time_seconds)
     err=math.sqrt(((psint - exact)*(psint - exact)).sum()/nx)/(nt * dt)

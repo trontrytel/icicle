@@ -11,11 +11,13 @@ set noxtics
 set ztics .5
 set ylabel "        t"
 set noytics
-set cbrange [.5:2]
+#set cbrange [.5:2]
+set cbrange [-1:.5]
 set cbtics .5
-set zrange [.5:2]
-set xyplane at 1.
-set palette maxcolors 18 defined ( .5 "red", 1 "red", 1 "blue", 1.33 "green", 1.66 "brown", 2 "black")
+set zrange [-1:1]
+set xyplane at -.5
+#set palette maxcolors 18 defined ( .5 "red", 1 "red", 1 "blue", 1.33 "green", 1.66 "brown", 2 "black")
+set palette maxcolors 18 defined ( -1. "red", -.5 "red", -.5 "blue", -.17 "green", .16 "brown", .5 "black")
 set term svg size 1000,900 dynamic
 set output "fig1.svg"
 nx=20
@@ -34,7 +36,7 @@ cmd = "../../icicle" \
   ." --grd.nx ".nx \
   ." --slv serial" \
   ." --out gnuplot --out.gnuplot.using 1:-2:2" \
-  ." --ini cone --ini.cone.h 1 --ini.cone.x0 3 --ini.cone.z0 0 --ini.cone.r 2.5 --ini.cone.h0 1" 
+  ." --ini gauss --ini.gauss.A0 -.5 --ini.gauss.A 1 --ini.gauss.sx 2 --ini.gauss.x0 5" 
 set multiplot layout 3,3
   unset colorbox
   set title "upstream"
@@ -43,16 +45,16 @@ set multiplot layout 3,3
   splot "<".cmd." --adv leapfrog" using 1:-2:2 notitle with lines palette
   set title "MPDATA (iord=2)"
   splot "<".cmd." --adv mpdata  " using 1:-2:2 notitle with lines palette
-  set title "MPDATA (iord=2,fct=1)"
-  splot "<".cmd." --adv mpdata --adv.mpdata.fct 1" using 1:-2:2 notitle with lines palette
-  set title "MPDATA (iord=2,toa=1)"
-  splot "<".cmd." --adv mpdata --adv.mpdata.third_order 1" using 1:-2:2 notitle with lines palette
-  set title "MPDATA (iord=2,toa=1,fct=1)"
-  splot "<".cmd." --adv mpdata --adv.mpdata.third_order 1 --adv.mpdata.fct 1" using 1:-2:2 notitle with lines palette
-  set title "MPDATA (iord=3,fct=1)"
-  splot "<".cmd." --adv mpdata --adv.mpdata.iord 3 --adv.mpdata.fct 1" using 1:-2:2 notitle with lines palette
+#  set title "MPDATA (iord=2,fct=1)"
+#  splot "<".cmd." --adv mpdata --adv.mpdata.fct 1" using 1:-2:2 notitle with lines palette
+  set title "MPDATA (iord=3,toa=0)"
+  splot "<".cmd." --adv mpdata --adv.mpdata.iord 3" using 1:-2:2 notitle with lines palette
+  set title "MPDATA (iord=3,toa=1)"
+  splot "<".cmd." --adv mpdata --adv.mpdata.iord 3 --adv.mpdata.third_order 1" using 1:-2:2 notitle with lines palette
+#  set title "MPDATA (iord=3,fct=1)"
+#  splot "<".cmd." --adv mpdata --adv.mpdata.iord 3 --adv.mpdata.fct 1" using 1:-2:2 notitle with lines palette
   set colorbox horiz user origin .7,.2 size .25, .04
-  set title "MPDATA (iord=3,fct=1,toa=1)"
-  splot "<".cmd." --adv mpdata --adv.mpdata.iord 3 --adv.mpdata.third_order 1 --adv.mpdata.fct 1" using 1:-2:2 notitle with lines palette
+#  set title "MPDATA (iord=3,fct=1,toa=1)"
+#  splot "<".cmd." --adv mpdata --adv.mpdata.iord 3 --adv.mpdata.third_order 1 --adv.mpdata.fct 1" using 1:-2:2 notitle with lines palette
   unset colorbox
-unset multiplot
+#unset multiplot
