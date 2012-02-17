@@ -9,6 +9,7 @@
 #  define EQS_HPP
 
 #  include "cmn.hpp"
+#  include "rhs.hpp"
 
 template <typename real_t>
 class eqs : root
@@ -19,7 +20,7 @@ class eqs : root
   protected: struct gte {
     string name, desc, unit;
     int pow_u, pow_v, pow_w;
-    //vector<rhs> // source terms - TODO
+    //ptr_vector<rhs<real_t>> source_terms;
   };
 
   public: virtual vector<gte> &system() = 0;
