@@ -91,11 +91,11 @@ class out_netcdf : public out<real_t>
         }
 
         // scalar fields
-        for (int v = 0; v < setup->equations->n_vars(); ++v)
+        for (int v = 0; v < setup->eqsys->n_vars(); ++v)
         {
-          vars.push_back(f->addVar(setup->equations->var_name(v), ncFloat, sdims)); 
-          vars.at(v).putAtt("unit", setup->equations->var_unit(v));
-          vars.at(v).putAtt("description", setup->equations->var_desc(v));
+          vars.push_back(f->addVar(setup->eqsys->var_name(v), ncFloat, sdims)); 
+          vars.at(v).putAtt("unit", setup->eqsys->var_unit(v));
+          vars.at(v).putAtt("description", setup->eqsys->var_desc(v));
         }
 
         // Courant field TODO

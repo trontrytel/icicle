@@ -31,7 +31,7 @@ stp<real_t> *opt_stp(const po::variables_map& vm,
   vel<real_t> *velocity,
   ini<real_t> *intcond,
   grd<real_t> *grid,
-  eqs<real_t> *equations
+  eqs<real_t> *eqsys
   )
 { 
   quantity<si::time, real_t> dt=0*si::seconds;
@@ -44,7 +44,7 @@ stp<real_t> *opt_stp(const po::variables_map& vm,
       velocity,
       intcond,
       grid,
-      equations,
+      eqsys,
       real_cast<real_t>(vm, "dt_out")*si::seconds,
       real_cast<real_t>(vm, "t_max")*si::seconds
     );
@@ -59,7 +59,7 @@ stp<real_t> *opt_stp(const po::variables_map& vm,
       velocity,
       intcond,
       grid,
-      equations,
+      eqsys,
       vm["nout"].as<int>(),
       real_cast<real_t>(vm, "dt")*si::seconds,
       vm["nt"].as<unsigned long>()

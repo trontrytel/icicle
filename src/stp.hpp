@@ -25,7 +25,7 @@ struct stp : root
   vel<real_t> *velocity;
   ini<real_t> *intcond;
   grd<real_t> *grid;
-  eqs<real_t> *equations;
+  eqs<real_t> *eqsys;
 
   int nout;
   unsigned long nt;
@@ -37,7 +37,7 @@ struct stp : root
     vel<real_t> *velocity,
     ini<real_t> *intcond,
     grd<real_t> *grid,
-    eqs<real_t> *equations,
+    eqs<real_t> *eqsys,
     quantity<si::time, real_t> dt_out, 
     quantity<si::time, real_t> t_max
   ) 
@@ -45,7 +45,7 @@ struct stp : root
       velocity(velocity), 
       intcond(intcond), 
       grid(grid),
-      equations(equations)
+      eqsys(eqsys)
   { 
     // TODO: it does not work for non-constant velocities as of now!
     int halo = (advsch->stencil_extent() -1) / 2;
@@ -85,7 +85,7 @@ struct stp : root
     vel<real_t> *velocity,
     ini<real_t> *intcond,
     grd<real_t> *grid,
-    eqs<real_t> *equations,
+    eqs<real_t> *eqsys,
     int nout, 
     quantity<si::time, real_t> dt, 
     unsigned long nt
@@ -94,7 +94,7 @@ struct stp : root
       velocity(velocity), 
       intcond(intcond), 
       grid(grid),
-      equations(equations),
+      eqsys(eqsys),
       nt(nt), dt(dt), nout(nout)
   {
   /*       if (cmax > advsch->courant_max())  TODO 

@@ -18,7 +18,7 @@ class rhs
     mtx::arr<real_t> &R, 
     mtx::arr<real_t> **psi, 
     mtx::idx &ijk
-  ) = 0;
+  ) { assert(false); };
 };  
 
 #endif

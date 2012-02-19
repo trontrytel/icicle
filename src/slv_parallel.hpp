@@ -74,6 +74,7 @@ class slv_parallel : public slv<real_t>
   public: void integ_loop_sd(int sd) 
   {
     assert(fllbck == NULL || fllbck->num_steps() == 1);
+    bool homo = setup->eqsys->is_homogeneous();
 
     int n = 0;
     for (unsigned long t = 0; t < setup->nt; ++t) 
@@ -82,15 +83,17 @@ class slv_parallel : public slv<real_t>
       bool fallback = this->choose_an(&a, &n, t, advsch, fllbck);
 
       if (t % setup->nout == 0) record(sd, n, t / setup->nout);
-      for (int e = 0; e < setup->equations->n_vars(); ++e)
+
+      for (int e = 0; e < setup->eqsys->n_vars(); ++e)
       {
         bool stash = // TODO: dependance on adv->time_leves... (does it work for leapfrog???)
           a->num_steps() > 1 &&
-          setup->equations->var_dynamic(e);
+          setup->eqsys->var_dynamic(e);
 #  ifndef NDEBUG
         // TODO: fill caches (and perhaps also psi[n+1]) with NaNs
 #  endif
         if (stash) slvs[sd]->stash_cycle(e, n); 
+        if (!homo) slvs[sd]->apply_forcings(e, n, real_t(.5) * setup->dt);
         for (int s = 1; s <= a->num_steps(); ++s)
         {   
           barrier(); 
@@ -102,18 +105,27 @@ class slv_parallel : public slv<real_t>
         if (stash) slvs[sd]->stash_cycle(e, n); 
       } // e - equations
 
+      if (!homo)
+      {
+        for (int e = 0; e < setup->eqsys->n_vars(); ++e)
+          slvs[sd]->fill_halos(e, n + 1); 
+        slvs[sd]->update_forcings(n + 1);
+        for (int e = 0; e < setup->eqsys->n_vars(); ++e)
+          slvs[sd]->apply_forcings(e, n + 1, real_t(.5) * setup->dt);
+      } 
+
       if (!setup->velocity->is_constant() && t != (setup->nt - 1)) 
       {
         barrier(); 
         // TODO: these fill haloes are repeadet in the next loop pass :(
-        for (int e = 0; e < setup->equations->n_vars(); ++e)
-          if (setup->equations->var_dynamic(e))
+        for (int e = 0; e < setup->eqsys->n_vars(); ++e)
+          if (setup->eqsys->var_dynamic(e))
             slvs[sd]->fill_halos(e, n + 1); 
         barrier(); 
         slvs[sd]->update_courants(n + 1);
       }
 
-      for (int e = 0; e < setup->equations->n_vars(); ++e)
+      for (int e = 0; e < setup->eqsys->n_vars(); ++e)
         if (!fallback) slvs[sd]->cycle_arrays(e, n);
 
     } // t - time

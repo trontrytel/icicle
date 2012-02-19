@@ -23,6 +23,7 @@ coding conventions in icicle:
   - filenames should be all-lowercase
 
 - loop index naming conventions... ? (TODO)
+- assert(condition && "message");   
 
 References:
 [CERN] - CERN C++ Coding Standard Specification

@@ -22,9 +22,10 @@ class slv_serial : public slv<real_t>
   private: vector<int> halo_sclr;
   private: int halo_vctr;
 
-  private: unique_ptr<mtx::arr<real_t> > Cx, Cy, Cz;
-  private: vector<ptr_vector<mtx::arr<real_t> > > psi;
-  private: unique_ptr<tmp<real_t> > cache; 
+  private: unique_ptr<mtx::arr<real_t>> Cx, Cy, Cz;
+  private: vector<ptr_vector<mtx::arr<real_t>>> psi;
+  private: unique_ptr<tmp<real_t>> cache; 
+  private: ptr_vector<mtx::arr<real_t>> R;
 
   public: slv_serial(stp<real_t> *setup, out<real_t> *output,
     int i_min, int i_max,
@@ -36,18 +37,18 @@ class slv_serial : public slv<real_t>
     // computing required halo lengths
     if (fllbck != NULL) assert(advsch->stencil_extent() >= fllbck->stencil_extent());
     halo_vctr = (advsch->stencil_extent() - 1) / 2;
-    halo_sclr.assign(setup->equations->n_vars(), halo_vctr);
+    halo_sclr.assign(setup->eqsys->n_vars(), halo_vctr);
     if (!setup->velocity->is_constant())
     {
       // enlarged halo needed for t=n+1/2 velocity extrapolation
       // TODO: stencil_extent()-like method in velocity?
-      for (int e = 0; e < setup->equations->n_vars(); ++e)
-        if (setup->equations->var_dynamic(e)) halo_sclr[e] += 1;
+      for (int e = 0; e < setup->eqsys->n_vars(); ++e)
+        if (setup->eqsys->var_dynamic(e)) halo_sclr[e] += 1;
     }
 
     // memory allocation
-    psi.resize(setup->equations->n_vars());
-    for (int e = 0; e < setup->equations->n_vars(); ++e)
+    psi.resize(setup->eqsys->n_vars());
+    for (int e = 0; e < setup->eqsys->n_vars(); ++e)
     {
       // sanity checks
       {
@@ -66,6 +67,13 @@ class slv_serial : public slv<real_t>
       {
         psi[e].push_back(new mtx::arr<real_t>(
           setup->grid->rng_sclr(i_min, i_max, j_min, j_max, k_min, k_max, halo_sclr[e])
+        ));
+      }
+
+      if (!setup->eqsys->is_homogeneous())
+      {
+        R.push_back(new mtx::arr<real_t>(setup->grid->rng_sclr(
+          i_min, i_max, j_min, j_max, k_min, k_max, halo_sclr[e])
         ));
       }
     }
@@ -88,8 +96,19 @@ class slv_serial : public slv<real_t>
     ));
 
     // initial condition
-    for (int e = 0; e < setup->equations->n_vars(); ++e)
-      setup->intcond->populate_scalar_field(setup->equations->var_name(e), *ijk, psi[e][0]); 
+    {
+      int n = 0;
+      for (int e = 0; e < setup->eqsys->n_vars(); ++e)
+        setup->intcond->populate_scalar_field(setup->eqsys->var_name(e), *ijk, psi[e][n]); 
+      
+      if (!setup->eqsys->is_homogeneous())
+      {
+        for (int e = 0; e < setup->eqsys->n_vars(); ++e)
+          (R[e])(R[e].ijk) = real_t(0.);
+        // TODO: ? (fill_halos!)
+        //update_forcings(n);
+      }
+    }
 
     // periodic boundary in all directions
     for (int s=this->first; s <= this->last; ++s) 
@@ -110,14 +129,14 @@ class slv_serial : public slv<real_t>
     {
       // first guess for velocity fields assuming constant momenta
       int n = 0;
-      for (int e = 0; e < setup->equations->n_vars(); ++e)
+      for (int e = 0; e < setup->eqsys->n_vars(); ++e)
       {
-        fill_halos(e, n); 
+        fill_halos(e, n); // TODO TODO TODO TODO TODO - with parallel set-up this needs a barrier?
         psi[e][n+1] = psi[e][n];
       }
       update_courants(n + 1);
 #  ifndef NDEBUG
-      for (int e = 0; e < setup->equations->n_vars(); ++e)
+      for (int e = 0; e < setup->eqsys->n_vars(); ++e)
         psi[e][n+1].fill_with_nans();
 #  endif
       // TODO: fill uninitialised C? with zeros? (e.g. Cz with shallow_water) 
@@ -126,7 +145,7 @@ class slv_serial : public slv<real_t>
 
   public: void record(const int n, const unsigned long t)
   {
-    for (int e = 0; e < setup->equations->n_vars(); ++e)
+    for (int e = 0; e < setup->eqsys->n_vars(); ++e)
       output->record(e, psi[e][n], *ijk, t);
   }
 
@@ -182,9 +201,9 @@ class slv_serial : public slv<real_t>
     static vector<map<int,int> > vm(3);
     if (init) 
     {
-      vm[0] = map<int,int>(setup->equations->velmap_x());
-      vm[1] = map<int,int>(setup->equations->velmap_y()); 
-      vm[2] = map<int,int>(setup->equations->velmap_z());
+      vm[0] = map<int,int>(setup->eqsys->velmap(0));
+      vm[1] = map<int,int>(setup->eqsys->velmap(1)); 
+      vm[2] = map<int,int>(setup->eqsys->velmap(2));
       for (int xyz = 0; xyz < 3; ++xyz)
       {
         if (vm[xyz].size() > 0) 
@@ -243,6 +262,24 @@ class slv_serial : public slv<real_t>
     cerr << "Courant z: " << min(*Cz) << " ... " << max(*Cz) << endl;
   }
 
+  /// \param n the time level to use for updating the forcings
+  public: void update_forcings(int n)
+  {
+    assert(!setup->eqsys->is_homogeneous());
+    for (int e = 0; e < setup->eqsys->n_vars(); ++e)
+    {
+      (R[e])(R[e].ijk) = real_t(0);
+      for (int i = 0; i < setup->eqsys->var_n_rhs(e); ++i)
+         setup->eqsys->var_rhs(e, i)(R[e], psi[e].c_array(), *ijk);
+    }
+  }
+
+  public: void apply_forcings(int e, int n, quantity<si::time, real_t> dt)
+  {
+    assert(!setup->eqsys->is_homogeneous());
+    (psi[e][n])(psi[e][n].ijk) += dt / si::seconds * (R[e])(R[e].ijk);
+  }
+
   public: void cycle_arrays(const int e, const int n)
   {
     switch (advsch->time_levels())
@@ -259,7 +296,7 @@ class slv_serial : public slv<real_t>
 
   public: void stash_cycle(int e, int n)
   {
-    assert(setup->equations->var_dynamic(e));
+    assert(setup->eqsys->var_dynamic(e));
     static mtx::arr<real_t> stash(psi[e][n]);
     static bool empty = true;
     if (empty) stash = psi[e][n];

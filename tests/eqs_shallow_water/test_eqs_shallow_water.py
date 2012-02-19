@@ -23,8 +23,8 @@ v_qx = f.createVariable('qx', 'd', ('X','Y','Z'))
 v_qy = f.createVariable('qy', 'd', ('X','Y','Z'))
 
 v_h[:,0,0] = 20.
-v_h[0,0,0] = 30.
-v_qx[:,0,0] = 10.
+v_h[0,0,0] = 20.1
+v_qx[:,0,0] = 18.
 v_qy[:,0,0] = 0.
 
 f.close()

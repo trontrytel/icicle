@@ -19,23 +19,41 @@ class eqs : root
   // A generalised transport equation (e.g. eq. 19 in Smolarkiewicz & Margolin 1998)
   protected: struct gte {
     string name, desc, unit;
-    int pow_u, pow_v, pow_w;
-    //ptr_vector<rhs<real_t>> source_terms;
+    vector<int> pow_uvw;
+    ptr_vector<rhs<real_t>> source_terms;
   };
 
-  public: virtual vector<gte> &system() = 0;
+  public: bool is_homogeneous() {
+    for (int e = 0; e < system().size(); ++e) 
+      if (system().at(e).source_terms.size() > 0) return false;
+    return true;
+  }
+
+  public: virtual ptr_vector<gte> &system() = 0;
 
   public: int n_vars()
   {
     return system().size();
   }
 
-  public: bool var_dynamic(int i) // i.e. involved in calculation of velocities
+  public: int var_n_rhs(int e)
   {
+    return system().at(e).source_terms.size();
+  }
+
+  public: rhs<real_t> &var_rhs(int e, int i)
+  {
+    return system().at(e).source_terms[i];
+  }
+
+  public: bool var_dynamic(int e) // i.e. involved in calculation of velocities
+  {
+    if (system().at(e).pow_uvw.size() == 0) return false;
+    assert(system().at(e).pow_uvw.size() == system().size());
     return 
-      system().at(i).pow_u != 0 ||
-      system().at(i).pow_v != 0 ||
-      system().at(i).pow_w != 0;
+      system().at(e).pow_uvw[0] != 0 ||
+      system().at(e).pow_uvw[1] != 0 ||
+      system().at(e).pow_uvw[2] != 0;
   }
  
   public: string var_name(int i)
@@ -44,36 +62,15 @@ class eqs : root
     return system().at(i).name;
   }
  
-  // TODO shirten it!
-  public: map<int,int> velmap_x() // equeation -> power
+  public: map<int,int> velmap(int xyz) // equation -> power
   {
     map<int, int> m;
     for (int e = 0; e < system().size(); ++e)
     {
-      if (system().at(e).pow_u != 0)
-      {
-        m[e] = system().at(e).pow_u;
-        cerr << "mx[" << e << "]=" << m[e] << endl;
-      }
+      assert(system().at(e).pow_uvw.size() == system().size());
+      if (system().at(e).pow_uvw[xyz] != 0) 
+        m[e] = system().at(e).pow_uvw[xyz];
     }
-    return m;
-  }
-  public: map<int,int> velmap_y() // equeation -> power
-  {
-    map<int, int> m;
-    for (int e = 0; e < system().size(); ++e)
-      if (system().at(e).pow_v != 0)
-      {
-        m[e] = system().at(e).pow_v;
-        cerr << "my[" << e << "]=" << m[e] << endl;
-      }
-    return m;
-  }
-  public: map<int,int> velmap_z() // equeation -> power
-  {
-    map<int, int> m;
-    for (int e = 0; e < system().size(); ++e)
-      if (system().at(e).pow_w != 0) m[e] = system().at(e).pow_w;
     return m;
   }
  
