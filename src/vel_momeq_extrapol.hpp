@@ -40,10 +40,11 @@ class vel_momeq_extrapol : public vel_momeq<real_t>
       {
         if (Q[xyz] != NULL) 
         {
-          assert(isfinite(sum((*Q[xyz][ n ])(C[xyz]->i - grid->p_half /* sic! */, C[xyz]->j, C[xyz]->k))));
-          assert(isfinite(sum((*Q[xyz][ n ])(C[xyz]->i + grid->m_half /* sic! */, C[xyz]->j, C[xyz]->k))));
-          assert(isfinite(sum((*Q[xyz][n-1])(C[xyz]->i - grid->p_half /* sic! */, C[xyz]->j, C[xyz]->k))));
-          assert(isfinite(sum((*Q[xyz][n-1])(C[xyz]->i + grid->m_half /* sic! */, C[xyz]->j, C[xyz]->k))));
+cerr << "xyz:" << xyz << " " << (*Q[xyz][ n ])(C[xyz]->i - grid->p_half /* sic! */, C[xyz]->j, C[xyz]->k) << endl;
+          assert(isfinite(sum((*Q[xyz][ n ])(C[xyz]->i - grid->p_half /* sic! */, C[xyz]->j, C[xyz]->k)))); // TODO: use a macro below
+          assert(isfinite(sum((*Q[xyz][ n ])(C[xyz]->i + grid->m_half /* sic! */, C[xyz]->j, C[xyz]->k)))); // TODO: use a macro below
+          assert(isfinite(sum((*Q[xyz][n-1])(C[xyz]->i - grid->p_half /* sic! */, C[xyz]->j, C[xyz]->k)))); // TODO: use a macro below
+          assert(isfinite(sum((*Q[xyz][n-1])(C[xyz]->i + grid->m_half /* sic! */, C[xyz]->j, C[xyz]->k)))); // TODO: use a macro below
 
           (*C[xyz])(C[xyz]->ijk) = real_t(.25) * ( // .5 * .5 -> second one from i +/- 1/2 averaging 
             (

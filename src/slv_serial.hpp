@@ -73,7 +73,7 @@ class slv_serial : public slv<real_t>
       if (!setup->eqsys->is_homogeneous())
       {
         R.push_back(new mtx::arr<real_t>(setup->grid->rng_sclr(
-          i_min, i_max, j_min, j_max, k_min, k_max, halo_sclr[e])
+          i_min, i_max, j_min, j_max, k_min, k_max, 0)
         ));
       }
     }
@@ -100,14 +100,6 @@ class slv_serial : public slv<real_t>
       int n = 0;
       for (int e = 0; e < setup->eqsys->n_vars(); ++e)
         setup->intcond->populate_scalar_field(setup->eqsys->var_name(e), *ijk, psi[e][n]); 
-      
-      if (!setup->eqsys->is_homogeneous())
-      {
-        for (int e = 0; e < setup->eqsys->n_vars(); ++e)
-          (R[e])(R[e].ijk) = real_t(0.);
-        // TODO: ? (fill_halos!)
-        //update_forcings(n);
-      }
     }
 
     // periodic boundary in all directions
@@ -124,23 +116,22 @@ class slv_serial : public slv<real_t>
       setup->velocity->populate_courant_fields(-1, // TODO: some nicer calling sequence?
         Cx.get(), Cy.get(), Cz.get(), setup->dt, NULL, NULL, NULL 
       );
-    }
-    else
-    {
-      // first guess for velocity fields assuming constant momenta
-      int n = 0;
-      for (int e = 0; e < setup->eqsys->n_vars(); ++e)
-      {
-        fill_halos(e, n); // TODO TODO TODO TODO TODO - with parallel set-up this needs a barrier?
-        psi[e][n+1] = psi[e][n];
-      }
-      update_courants(n + 1);
-#  ifndef NDEBUG
-      for (int e = 0; e < setup->eqsys->n_vars(); ++e)
-        psi[e][n+1].fill_with_nans();
-#  endif
       // TODO: fill uninitialised C? with zeros? (e.g. Cz with shallow_water) 
     }
+  }
+
+  public: void copy(int from, int to)
+  {
+    for (int e = 0; e < setup->eqsys->n_vars(); ++e)
+      psi[e][to] = psi[e][from];
+  }
+
+  public: void fill_with_nans(int n)
+  { 
+#  ifndef NDEBUG
+    for (int e = 0; e < setup->eqsys->n_vars(); ++e)
+      psi[e][n].fill_with_nans();
+#  endif
   }
 
   public: void record(const int n, const unsigned long t)
@@ -226,7 +217,10 @@ class slv_serial : public slv<real_t>
           if (pow == -1) 
           {
             for (int m = n; m >= n-1; --m)
+            {
+              assert(isfinite(sum((psi[var][m])(psi[var][m].ijk))));
               (*(Q[xyz][m]))(Q[xyz][m]->ijk) /= (psi[var][m])(psi[var][m].ijk);
+            }
           }
           else assert(false);
         }
@@ -249,7 +243,10 @@ class slv_serial : public slv<real_t>
           if (pow == -1) 
           {
             for (int m = n; m >= n-1; --m)
+            {
+              assert(isfinite(sum((psi[var][m])(psi[var][m].ijk))));
               (*(Q[xyz][m]))(Q[xyz][m]->ijk) *= (psi[var][m])(psi[var][m].ijk);
+            }
           }
           else assert(false);
         }
@@ -266,18 +263,28 @@ class slv_serial : public slv<real_t>
   public: void update_forcings(int n)
   {
     assert(!setup->eqsys->is_homogeneous());
+
+    static mtx::arr<real_t> **tmp = NULL;
+    if (tmp == NULL) tmp = new mtx::arr<real_t>*[setup->eqsys->n_vars()];
+    for (int e = 0; e < setup->eqsys->n_vars(); ++e) tmp[e] = psi[e].c_array()[n];
+
     for (int e = 0; e < setup->eqsys->n_vars(); ++e)
     {
       (R[e])(R[e].ijk) = real_t(0);
       for (int i = 0; i < setup->eqsys->var_n_rhs(e); ++i)
-         setup->eqsys->var_rhs(e, i)(R[e], psi[e].c_array(), *ijk);
+      {
+         setup->eqsys->var_rhs(e, i)(R[e], tmp, *ijk);
+         assert(isfinite(sum((R[e])(R[e].ijk))));
+      }
     }
   }
 
   public: void apply_forcings(int e, int n, quantity<si::time, real_t> dt)
   {
     assert(!setup->eqsys->is_homogeneous());
-    (psi[e][n])(psi[e][n].ijk) += dt / si::seconds * (R[e])(R[e].ijk);
+    assert(isfinite(sum((psi[e][n])(*ijk))));
+    assert(isfinite(sum((R[e])(*ijk))));
+    (psi[e][n])(*ijk) += dt / si::seconds * (R[e])(*ijk);
   }
 
   public: void cycle_arrays(const int e, const int n)
