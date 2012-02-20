@@ -91,7 +91,6 @@ class slv_parallel : public slv<real_t>
     {
       // first guess for velocity fields assuming constant momenta
       slvs[sd]->copy(n, n + 1);
-cerr << "init" << endl;
       slvs[sd]->update_courants(n + 1);
       slvs[sd]->fill_with_nans(n + 1);
     }
@@ -109,6 +108,7 @@ cerr << "init" << endl;
 
       if (t % setup->nout == 0) record(sd, n, t / setup->nout);
 
+      slvs[sd]->fill_with_nans(n + 1); // TODO: fill caches with NaNs?
       for (int e = 0; e < setup->eqsys->n_vars(); ++e)
       {
         bool stash = // TODO: dependance on adv->time_leves... (does it work for leapfrog???)
@@ -116,11 +116,10 @@ cerr << "init" << endl;
           setup->eqsys->var_dynamic(e);
         if (stash) slvs[sd]->stash_cycle(e, n); 
         if (!homo) slvs[sd]->apply_forcings(e, n, real_t(.5) * setup->dt);
-        slvs[sd]->fill_with_nans(n + 1); // TODO: fill caches with NaNs?
         for (int s = 1; s <= a->num_steps(); ++s)
         {   
           fill_halos(sd, e, n);
-          barrier(); 
+          barrier(); // TODO: shouldn't it be included in fill_halos?
           slvs[sd]->advect(e, n, s, a); 
           if (s != a->num_steps()) slvs[sd]->cycle_arrays(e, n); 
         } // s - steps
@@ -142,7 +141,6 @@ cerr << "init" << endl;
         for (int e = 0; e < setup->eqsys->n_vars(); ++e)
           if (setup->eqsys->var_dynamic(e))
             fill_halos(sd, e, n + 1); 
-cerr << "every timestep" << endl;
         slvs[sd]->update_courants(n + 1);
       }
 

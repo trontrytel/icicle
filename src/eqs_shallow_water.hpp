@@ -47,7 +47,6 @@ class eqs_shallow_water : public eqs<real_t>
           - 
           ((*psi[2])(ijk.i - 1, ijk.j, ijk.k) /* TODO: + H0 */)
         );
-cerr << R(ijk) << endl;
     };
   };
 

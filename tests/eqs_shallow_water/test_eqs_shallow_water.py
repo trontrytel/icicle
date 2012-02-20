@@ -7,9 +7,14 @@
 
 import numpy as np                       # arrays
 import subprocess                        # shell calls
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import axes3d
 from Scientific.IO.NetCDF import NetCDFFile
 
-nx = 5
+nx = 20
+dt = .075
+nt = 100
+nout = 5
 
 # first: creating a netCDF file with the initial condition
 f = NetCDFFile('ini.nc', 'w')
@@ -23,8 +28,8 @@ v_qx = f.createVariable('qx', 'd', ('X','Y','Z'))
 v_qy = f.createVariable('qy', 'd', ('X','Y','Z'))
 
 v_h[:,0,0] = 20.
-v_h[0,0,0] = 20.0001
-v_qx[:,0,0] = 18.
+v_h[nx/3:nx/2,0,0] = 20.1
+v_qx[:,0,0] = 0.
 v_qy[:,0,0] = 0.
 
 f.close()
@@ -39,10 +44,22 @@ cmd = (
   '--grd.nx',str(nx),
   '--adv','mpdata',
     '--adv.mpdata.fct','0',
-    '--adv.mpdata.iord','1',
+    '--adv.mpdata.iord','2',
   '--vel','momeq_extrapol',
-  '--nt','15','--dt','1','--nout','1',
+  '--nt',str(nt),'--dt',str(dt),'--nout',str(nout),
   '--out','netcdf','--out.netcdf.file','out.nc',
   '--slv','serial'
 )
 subprocess.check_call(cmd)
+
+# third: generating a plot
+f = NetCDFFile('out.nc', 'r')
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+X = f.variables['X']
+Y = np.arange(0, f.variables['h'].shape[0]) #* getattr(f, dt_out)
+Z = (f.variables['h'])[:,:,0,0]
+print X.shape, Y.shape, Z.shape
+X, Y = np.meshgrid(X, Y)
+ax.plot_wireframe(X, Y, Z)
+plt.show()
