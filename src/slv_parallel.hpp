@@ -113,7 +113,7 @@ class slv_parallel : public slv<real_t>
       {
         bool stash = // TODO: dependance on adv->time_leves... (does it work for leapfrog???)
           a->num_steps() > 1 &&
-          setup->eqsys->var_dynamic(e);
+          setup->eqsys->var_dynamic(e); // TODO also when !homo?
         if (stash) slvs[sd]->stash_cycle(e, n); 
         if (!homo) slvs[sd]->apply_forcings(e, n, real_t(.5) * setup->dt);
         for (int s = 1; s <= a->num_steps(); ++s)
