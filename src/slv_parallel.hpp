@@ -77,28 +77,37 @@ class slv_parallel : public slv<real_t>
     slvs[sd]->fill_halos(e, n); 
   }
 
+  private: void advect(int sd, int e, int n, adv<real_t> *a)
+  {
+    for (int s = 1; s <= a->num_steps(); ++s)
+    {   
+      if (s != 1) fill_halos(sd, e, n);
+      barrier(); // TODO: not needed with distmem?
+      slvs[sd]->advect(e, n, s, a); 
+      if (s != a->num_steps()) slvs[sd]->cycle_arrays(e, n); 
+    }
+  }
+
   public: void integ_loop_sd(int sd) 
   {
     assert(fllbck == NULL || fllbck->num_steps() == 1);
     bool homo = setup->eqsys->is_homogeneous();
     int n = 0;
 
-    // init
-    if (!setup->velocity->is_constant() || !setup->eqsys->is_homogeneous())
-      for (int e = 0; e < setup->eqsys->n_vars(); ++e) 
-        fill_halos(sd, e, n); 
+    for (int e = 0; e < setup->eqsys->n_vars(); ++e) 
+      fill_halos(sd, e, n); 
+
+    // first guess for velocity fields assuming constant momenta
     if (!setup->velocity->is_constant())
     {
-      // first guess for velocity fields assuming constant momenta
       slvs[sd]->copy(n, n + 1);
       slvs[sd]->update_courants(n + 1);
       slvs[sd]->fill_with_nans(n + 1);
     }
-    if (!setup->eqsys->is_homogeneous())
-    {
-      // forcing terms for t=0
+
+    // forcing terms for t=0
+    if (!setup->eqsys->is_homogeneous()) 
       slvs[sd]->update_forcings(n);
-    }
 
     // time stepping
     for (unsigned long t = 0; t < setup->nt; ++t) 
@@ -111,42 +120,34 @@ class slv_parallel : public slv<real_t>
       slvs[sd]->fill_with_nans(n + 1); // TODO: fill caches with NaNs?
       for (int e = 0; e < setup->eqsys->n_vars(); ++e)
       {
-        bool stash = // TODO: dependance on adv->time_leves... (does it work for leapfrog???)
-          a->num_steps() > 1 &&
-          setup->eqsys->var_dynamic(e); // TODO also when !homo?
+        // TODO: dependance on adv->time_leves... (does it work for leapfrog???)
+        bool stash = (a->num_steps() > 1 && setup->eqsys->var_dynamic(e))
+          || (!setup->velocity->is_constant() && !homo);
+
         if (stash) slvs[sd]->stash_cycle(e, n); 
         if (!homo) slvs[sd]->apply_forcings(e, n, real_t(.5) * setup->dt);
-        for (int s = 1; s <= a->num_steps(); ++s)
-        {   
-          fill_halos(sd, e, n);
-          barrier(); // TODO: shouldn't it be included in fill_halos?
-          slvs[sd]->advect(e, n, s, a); 
-          if (s != a->num_steps()) slvs[sd]->cycle_arrays(e, n); 
-        } // s - steps
+        advect(sd, e, n, a);
         if (stash) slvs[sd]->stash_cycle(e, n); 
       } // e - equations
 
       if (!homo)
       {
-        for (int e = 0; e < setup->eqsys->n_vars(); ++e)
+        for (int e = 0; e < setup->eqsys->n_vars(); ++e) 
           fill_halos(sd, e, n + 1); 
         slvs[sd]->update_forcings(n + 1);
         for (int e = 0; e < setup->eqsys->n_vars(); ++e)
           slvs[sd]->apply_forcings(e, n + 1, real_t(.5) * setup->dt);
       } 
 
+      for (int e = 0; e < setup->eqsys->n_vars(); ++e) 
+        fill_halos(sd, e, n + 1); 
+
       if (!setup->velocity->is_constant() && t != (setup->nt - 1)) 
-      {
-        // TODO: these fill haloes are repeadet in the next loop pass :(
-        for (int e = 0; e < setup->eqsys->n_vars(); ++e)
-          if (setup->eqsys->var_dynamic(e))
-            fill_halos(sd, e, n + 1); 
         slvs[sd]->update_courants(n + 1);
-      }
 
-      for (int e = 0; e < setup->eqsys->n_vars(); ++e)
-        if (!fallback) slvs[sd]->cycle_arrays(e, n);
-
+      if (!fallback) 
+        for (int e = 0; e < setup->eqsys->n_vars(); ++e)
+          slvs[sd]->cycle_arrays(e, n);
     } // t - time
     record(sd, n, setup->nt / setup->nout);
   }
