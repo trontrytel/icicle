@@ -14,6 +14,7 @@
 template <typename real_t>
 class rhs 
 {
+  // TODO: stencil-extent-like method?
   public: virtual void operator()(
     mtx::arr<real_t> &R, 
     mtx::arr<real_t> **psi, 

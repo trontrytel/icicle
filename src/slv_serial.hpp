@@ -187,10 +187,11 @@ class slv_serial : public slv<real_t>
   public: void update_courants(const int n) // TODO: this ethod deserves a major rewrite!
   {
     assert(!setup->velocity->is_constant());
-    static bool init = true;
-    static mtx::arr<real_t> **Q[] = {NULL, NULL, NULL};
-    static vector<map<int,int> > vm(3);
-    if (init) 
+
+    // TODO: this is done every time step and should be done only once!!!
+    //       (but the previous static-var-based code was not thread-safe)
+    mtx::arr<real_t> **Q[] = {NULL, NULL, NULL};
+    vector<map<int,int> > vm(3);
     {
       vm[0] = map<int,int>(setup->eqsys->velmap(0));
       vm[1] = map<int,int>(setup->eqsys->velmap(1)); 
@@ -203,7 +204,6 @@ class slv_serial : public slv<real_t>
           assert(vm[xyz].begin()->second == 1); // TODO: something more universal would be better
         }
       }
-      init = false;
     }
 
     // 
@@ -260,20 +260,21 @@ class slv_serial : public slv<real_t>
   }
 
   /// \param n the time level to use for updating the forcings
+  private: mtx::arr<real_t> **tmpvec = NULL;
   public: void update_forcings(int n)
   {
     assert(!setup->eqsys->is_homogeneous());
 
-    static mtx::arr<real_t> **tmp = NULL;
-    if (tmp == NULL) tmp = new mtx::arr<real_t>*[setup->eqsys->n_vars()];
-    for (int e = 0; e < setup->eqsys->n_vars(); ++e) tmp[e] = psi[e].c_array()[n];
+    if (tmpvec == NULL) tmpvec = new mtx::arr<real_t>*[setup->eqsys->n_vars()]; // TODO: unique_ptr
+
+    for (int e = 0; e < setup->eqsys->n_vars(); ++e) tmpvec[e] = psi[e].c_array()[n];
 
     for (int e = 0; e < setup->eqsys->n_vars(); ++e)
     {
       (R[e])(R[e].ijk) = real_t(0);
       for (int i = 0; i < setup->eqsys->var_n_rhs(e); ++i)
       {
-         setup->eqsys->var_rhs(e, i)(R[e], tmp, *ijk);
+         setup->eqsys->var_rhs(e, i)(R[e], tmpvec, *ijk);
          assert(isfinite(sum((R[e])(R[e].ijk))));
       }
     }
@@ -301,14 +302,15 @@ class slv_serial : public slv<real_t>
     }
   }
 
+  private: mtx::arr<real_t> *stash = NULL;
+  private: bool stash_empty = true;
   public: void stash_cycle(int e, int n)
   {
     assert(setup->eqsys->var_dynamic(e));
-    static mtx::arr<real_t> stash(psi[e][n]);
-    static bool empty = true;
-    if (empty) stash = psi[e][n];
-    else psi[e][n] = stash;
-    empty = !empty;
+    if (stash == NULL) stash = new mtx::arr<real_t>(psi[e][n]); // TODO: unique_ptr
+    if (stash_empty) *stash = psi[e][n];
+    else psi[e][n] = *stash;
+    stash_empty = !stash_empty;
   }
 
   public: void integ_loop() 

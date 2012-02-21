@@ -75,6 +75,7 @@ class slv_parallel : public slv<real_t>
   {
     barrier();
     slvs[sd]->fill_halos(e, n); 
+    barrier(); // TODO: not needed with distmem?
   }
 
   private: void advect(int sd, int e, int n, adv<real_t> *a)
@@ -82,7 +83,6 @@ class slv_parallel : public slv<real_t>
     for (int s = 1; s <= a->num_steps(); ++s)
     {   
       if (s != 1) fill_halos(sd, e, n);
-      barrier(); // TODO: not needed with distmem?
       slvs[sd]->advect(e, n, s, a); 
       if (s != a->num_steps()) slvs[sd]->cycle_arrays(e, n); 
     }

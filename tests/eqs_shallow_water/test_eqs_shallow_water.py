@@ -11,10 +11,10 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import axes3d
 from Scientific.IO.NetCDF import NetCDFFile
 
-nx = 20
-dt = .075
-nt = 100
-nout = 5
+nx = 1000
+dt = .01
+nt = 10000
+nout = 1000
 
 # first: creating a netCDF file with the initial condition
 f = NetCDFFile('ini.nc', 'w')
@@ -27,9 +27,8 @@ v_h  = f.createVariable('h', 'd', ('X','Y','Z'))
 v_qx = f.createVariable('qx', 'd', ('X','Y','Z'))
 v_qy = f.createVariable('qy', 'd', ('X','Y','Z'))
 
-v_h[:,0,0] = 20.
-v_h[nx/3:nx/2,0,0] = 20.1
-v_qx[:,0,0] = 0.
+v_h[:,0,0] = 100. + 10*pow(np.sin(np.arange(nx) * np.pi / nx),40)
+v_qx[:,0,0] = 500.
 v_qy[:,0,0] = 0.
 
 f.close()
@@ -48,7 +47,7 @@ cmd = (
   '--vel','momeq_extrapol',
   '--nt',str(nt),'--dt',str(dt),'--nout',str(nout),
   '--out','netcdf','--out.netcdf.file','out.nc',
-  '--slv','serial'
+  '--slv','threads','--nsd','4'
 )
 subprocess.check_call(cmd)
 
@@ -56,10 +55,12 @@ subprocess.check_call(cmd)
 f = NetCDFFile('out.nc', 'r')
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
+ax.set_xlabel('X [m]')
+ax.set_ylabel('time [s]')
+ax.set_zlabel('h [m]')
 X = f.variables['X']
-Y = np.arange(0, f.variables['h'].shape[0]) #* getattr(f, dt_out)
+Y = np.arange(0, f.variables['h'].shape[0]) * nout * dt
 Z = (f.variables['h'])[:,:,0,0]
-print X.shape, Y.shape, Z.shape
 X, Y = np.meshgrid(X, Y)
 ax.plot_wireframe(X, Y, Z)
 plt.show()

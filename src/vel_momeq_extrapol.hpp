@@ -32,7 +32,6 @@ class vel_momeq_extrapol : public vel_momeq<real_t>
     mtx::arr<real_t> *Qz[]
   )   
   {
-    // eq. 34b in Smolarkiewicz & Margolin 1998
     {
       mtx::arr<real_t> *C[] = { Cx, Cy, Cz };
       mtx::arr<real_t> **Q[] = { Qx, Qy, Qz };
@@ -45,6 +44,7 @@ class vel_momeq_extrapol : public vel_momeq<real_t>
           assert(isfinite(sum((*Q[xyz][n-1])(C[xyz]->i - grid->p_half /* sic! */, C[xyz]->j, C[xyz]->k)))); // TODO: use a macro below
           assert(isfinite(sum((*Q[xyz][n-1])(C[xyz]->i + grid->m_half /* sic! */, C[xyz]->j, C[xyz]->k)))); // TODO: use a macro below
 
+          // eq. 34b in Smolarkiewicz & Margolin 1998
           (*C[xyz])(C[xyz]->ijk) = real_t(.25) * ( // .5 * .5 -> second one from i +/- 1/2 averaging 
             (
               (*Q[xyz][ n ])(C[xyz]->i - grid->p_half /* sic! */, C[xyz]->j, C[xyz]->k) + 

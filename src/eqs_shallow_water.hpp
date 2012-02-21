@@ -18,72 +18,81 @@ class eqs_shallow_water : public eqs<real_t>
   private: ptr_vector<struct eqs<real_t>::gte> sys;
   public: ptr_vector<struct eqs<real_t>::gte> &system() { return sys; }
 
-  private: class forcings : public rhs<real_t>
+  private: struct params
   {
-    private: quantity<si::acceleration, real_t> g;
-    private: quantity<si::length, real_t> dx;
-    private: quantity<si::length, real_t> h_unit;
-    private: quantity<velocity_times_length, real_t> q_unit;
-    public: forcings(
-      quantity<si::acceleration, real_t> g, 
-      quantity<si::length, real_t> dx
-    ) 
-      : g(g), dx(dx)
-    {
-      h_unit = 1 * si::metres;  // TODO: repeated below
-      q_unit = 1 * si::metres * si::metres / si::seconds;  // TODO: repeated below
-    }
+    quantity<si::acceleration, real_t> g;
+    quantity<si::length, real_t> dx, dy, h_unit;
+    quantity<velocity_times_length, real_t> q_unit;
+    int idx_h;
+  };
 
-    // TODO: Coriolis
-    // TODO: separate x and y forcings
-    // TODO: 2 -> idx_h ?
-    // TODO: stencil-extent-like method?
+  // TODO: Coriolis
+  private: class forcings_qx : public rhs<real_t>
+  { 
+    private: struct params *par;
+    public: forcings_qx(params &par) : par(&par) {} 
     public: void operator()(mtx::arr<real_t> &R, mtx::arr<real_t> **psi, mtx::idx &ijk) 
     { 
-      R(ijk) -= real_t(g / (real_t(2) * dx) * h_unit * h_unit * si::seconds / q_unit) 
-        * ((*psi[2])(ijk)) * 
+      R(ijk) -= 
+        real_t(par->g / (real_t(2) * par->dx) * par->h_unit * par->h_unit * si::seconds / par->q_unit) 
+        * ((*psi[par->idx_h])(ijk)) * 
         (
-          ((*psi[2])(ijk.i + 1, ijk.j, ijk.k) /* TODO: + H0 */)
+          ((*psi[par->idx_h])(ijk.i + 1, ijk.j, ijk.k) /* TODO: + H0 */)
           - 
-          ((*psi[2])(ijk.i - 1, ijk.j, ijk.k) /* TODO: + H0 */)
+          ((*psi[par->idx_h])(ijk.i - 1, ijk.j, ijk.k) /* TODO: + H0 */)
+        );
+    };
+  };
+
+  private: class forcings_qy : public rhs<real_t>
+  { 
+    private: struct params *par;
+    public: forcings_qy(params &par) : par(&par) {} 
+    public: void operator()(mtx::arr<real_t> &R, mtx::arr<real_t> **psi, mtx::idx &ijk) 
+    { 
+      R(ijk) -= real_t(par->g / (real_t(2) * par->dy) * par->h_unit * par->h_unit * si::seconds / par->q_unit) 
+        * ((*psi[par->idx_h])(ijk)) * 
+        (
+          ((*psi[par->idx_h])(ijk.i, ijk.j + 1, ijk.k) /* TODO: + H0 */)
+          - 
+          ((*psi[par->idx_h])(ijk.i, ijk.j - 1, ijk.k) /* TODO: + H0 */)
         );
     };
   };
 
   private: quantity<si::length, real_t> h_unit;
   private: quantity<velocity_times_length, real_t> q_unit;
+  private: params par;
   public: eqs_shallow_water(const grd<real_t> &grid)
   {
     if (grid.nz() != 1) error_macro("only 1D (X or Y) and 2D (XY) simullations supported")
 
-    h_unit = 1 * si::metres; 
-    q_unit = 1 * si::metres * si::metres / si::seconds; 
+    par.g = real_t(10.) * si::metres_per_second_squared, grid.dx(); // TODO: option
+    par.dx = grid.dx();
+    par.dy = grid.dy();
+    par.h_unit = 1 * si::metres;
+    par.q_unit = 1 * si::metres * si::metres / si::seconds;
 
-    //if (grid.nx() != 1) // TODO?
-    {
-      sys.push_back(new struct eqs<real_t>::gte({
-        "qx", "heigh-integrated specific momentum (x)", 
-        this->quan2str(q_unit), 
-	vector<int>({1, 0, 0})
-      }));
-      sys.back().source_terms.push_back(new forcings(real_t(10.) * si::metres_per_second_squared, grid.dx())); // TODO ! 10
-    }
-    //if (grid.ny() != 1) // TODO?
-    {
-      sys.push_back(new struct eqs<real_t>::gte({
-        "qy", "heigh-integrated specific momentum (y)", 
-        this->quan2str(q_unit), 
-        vector<int>({0, 1, 0})
-      }));
-      //sys.back().source_terms.push_back(new ...); // TODO!
-    }
-    {
-      sys.push_back(new struct eqs<real_t>::gte({
-        "h", "thickness of the fluid layer", 
-        this->quan2str(h_unit), 
-        vector<int>({-1, -1, 0})
-      }));
-    }
+    sys.push_back(new struct eqs<real_t>::gte({
+      "qx", "heigh-integrated specific momentum (x)", 
+      this->quan2str(q_unit), 
+      vector<int>({1, 0, 0})
+    }));
+    sys.back().source_terms.push_back(new forcings_qx(par)); 
+
+    sys.push_back(new struct eqs<real_t>::gte({
+      "qy", "heigh-integrated specific momentum (y)", 
+      this->quan2str(q_unit), 
+      vector<int>({0, 1, 0})
+    }));
+    sys.back().source_terms.push_back(new forcings_qy(par)); 
+
+    sys.push_back(new struct eqs<real_t>::gte({
+      "h", "thickness of the fluid layer", 
+      this->quan2str(h_unit), 
+      vector<int>({-1, -1, 0})
+    }));
+    par.idx_h = sys.size() - 1;
   }
 };
 #endif
