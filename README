@@ -110,8 +110,8 @@
     [-DFLOAT=NO]
     [-DDOUBLE=NO]
     [-DLDOUBLE=NO]
-  $ [VERBOSE=1] make            
-  $ make test
+  $ [VERBOSE=1] make [-j N]
+  $ make [-j N] test 
   $ make clean 
 
   To chose a non-defalt compiler or library path:
