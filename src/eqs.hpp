@@ -20,7 +20,7 @@ class eqs : root
 
   /// @brief representation of a generalised transport equation 
   /// (e.g. eq. 19 in Smolarkiewicz & Margolin 1998)
-  protected: struct gte : root {
+  protected: struct gte {
     string name, desc, unit;
     vector<int> pow_uvw;
     ptr_vector<rhs<real_t>> source_terms;
