@@ -4,6 +4,7 @@
  *  @date November 2011
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
+ *  @brief contains definition of the @ref grd class - a base class for all grids
  */
 #ifndef GRD_HPP
 #  define GRD_HPP
@@ -11,6 +12,7 @@
 #  include "cmn.hpp"
 #  include "mtx.hpp"
 
+/// @brief base class for grids
 template<typename real_t>
 class grd : root
 {

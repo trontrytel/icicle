@@ -4,6 +4,7 @@
  *  @date November 2011 - February 2012
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
+ *  @brief common includes, using statements, macro definitions etc
  */
 
 #ifndef CMN_HPP

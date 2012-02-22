@@ -5,15 +5,17 @@
  *  @date November 2011 - January 2012
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
- *  @section DESCRIPTION
- *    Flux Corrected Transport (aka non-oscillatory, monotonic, sign-preserving)
- *    option for MPDATA (for the transport of positive scalars only)
+ *  @brief definition of the adv_mpdata_fct class with an implementation of the flux-corrected MPDATA scheme
  */
 #ifndef ADV_MPDATA_FCT_HPP
 #  define ADV_MPDATA_FCT_HPP
 
 #  include "adv_mpdata.hpp"
 
+/** @brief
+ *  Flux Corrected Transport (aka non-oscillatory, monotonic, sign-preserving)
+ *  option for MPDATA (for the transport of positive scalars only)
+ */
 template <typename real_t> 
 class adv_mpdata_fct : public adv_mpdata<real_t> 
 {

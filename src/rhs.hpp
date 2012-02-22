@@ -12,7 +12,7 @@
 #  include "mtx.hpp"
 
 template <typename real_t>
-class rhs 
+class rhs : root
 {
   // TODO: stencil-extent-like method?
   public: virtual void operator()(

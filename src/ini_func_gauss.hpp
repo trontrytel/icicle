@@ -10,6 +10,7 @@
 
 #  include "ini_func.hpp" 
 
+/// @brief a multi-dimensional gaussian shape definition
 template <typename real_t>
 class ini_func_gauss : public ini_func<real_t>
 {

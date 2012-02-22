@@ -4,6 +4,7 @@
  *  @date November 2011
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
+ *  @brief definition of the adv_leapfrog class with an implementation of the leapfrog advection scheme
  */
 #ifndef ADV_LEAPFROG_HPP
 #  define ADV_LEAPFROG_HPP
@@ -11,6 +12,7 @@
 #  include "adv.hpp"
 #  include "grd_arakawa-c-lorenz.hpp"
 
+/// @brief an implementation of the leapfrog advection scheme
 template <typename real_t> 
 class adv_leapfrog : public adv<real_t> 
 {

@@ -4,6 +4,7 @@
  *  @date November 2011
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
+ *  @brief compile-time configuration (CMake-generated)
  */
 #ifndef CONFIG_H
 #  define CONFIG_H

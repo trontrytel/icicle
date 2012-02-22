@@ -4,14 +4,14 @@
  *  @date November 2011
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
- *  @section DESCRIPTION
- *    the Arakawa-C/Lorenz staggered grid
+ *  @brief contains definition of the grd_arakawa_c_lorenz class representing the Arakawa-C/Lorenz staggered grid
  */
 #ifndef GRD_ARAKAWA_C_LORENZ_HPP
 #  define GRD_ARAKAWA_C_LORENZ_HPP
 
 #  include "grd.hpp"
 
+/// @brief the Arakawa-C/Lorenz staggered grid
 template<typename real_t>
 class grd_arakawa_c_lorenz : public grd<real_t>
 {

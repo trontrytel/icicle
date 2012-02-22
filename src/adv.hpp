@@ -4,6 +4,7 @@
  *  @date November 2011
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
+ *  @brief definition of and helper macros for \ref adv - the base class for advection operators
  */
 #ifndef ADV_HPP
 #  define ADV_HPP
@@ -11,7 +12,7 @@
 #  include "cmn.hpp" // root class, error reporting, ...
 #  include "grd.hpp" // m_half, p_half, ...
 
-// C++ forbins virtual template methods so we do a preprocessor workaround:
+// C++ forbids virtual template methods so we do a preprocessor workaround:
 // the macro below has to be included in every class inheriting from adv
 #  define adv_hack_macro \
   public: void op_ijk( \
@@ -39,6 +40,7 @@
     const mtx::arr<real_t> * const Cx, const mtx::arr<real_t> * const Cy, const mtx::arr<real_t> * const Cz \
   ) { op<mtx::idx_kij>(psi, tmp_s, tmp_v, k, i, j, n, step, Cz, Cx, Cy); }
 
+/// @brief a base class for advection operators
 template <typename real_t>
 class adv : root
 {

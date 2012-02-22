@@ -4,6 +4,7 @@
  *  @date January 2012 - February 2012
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
+ *  @brief definition of the @ref eqs class - a base class for all transport equation systems
  */
 #ifndef EQS_HPP
 #  define EQS_HPP
@@ -11,13 +12,15 @@
 #  include "cmn.hpp"
 #  include "rhs.hpp"
 
+/// @brief a container for systems of generalised transport equations
 template <typename real_t>
 class eqs : root
 {
   // TODO: ctor with sanity checks for name uniqueness?
 
-  // A generalised transport equation (e.g. eq. 19 in Smolarkiewicz & Margolin 1998)
-  protected: struct gte {
+  /// @brief representation of a generalised transport equation 
+  /// (e.g. eq. 19 in Smolarkiewicz & Margolin 1998)
+  protected: struct gte : root {
     string name, desc, unit;
     vector<int> pow_uvw;
     ptr_vector<rhs<real_t>> source_terms;

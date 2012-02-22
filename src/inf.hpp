@@ -4,6 +4,7 @@
  *  @date December 2011
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
+ *  @brief contains definition of the @ref inf class - a facility for gathering simulation info
  */
 #ifndef INF_HPP
 #  define INF_HPP
@@ -19,6 +20,7 @@
 #  include <unistd.h> // getlogin
 #  include <map>
 
+/// @brief a facility for gathering simulation info - timing, compiler configurration, etc
 class inf : root
 {
 #  ifdef USE_BOOST_TIMER

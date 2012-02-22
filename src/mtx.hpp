@@ -15,59 +15,62 @@
 #  include <blitz/numinquire.h>
 using blitz::where;
 
-#  define mtx_expr_2arg_macro(name, arg1, arg2, expr) \
+/// fooling Doxygen - as of v1.7.5.1 it chokes on such C++11 syntax (cf. PREDEFINED in Doxyfile)
+#  define _decltype(expr) -> decltype(expr)
+
+#  define mtx_expr_2arg_macro(name,a1,a2,expr) \
   template<class t1, class t2> \
-  auto name(const t1 &arg1, const t2 &arg2) -> decltype(expr) \
+  auto name(const t1 &a1, const t2 &a2) _decltype(expr) \
   { \
-    assert(isfinite(sum(arg1))); \
-    assert(isfinite(sum(arg2))); \
+    assert(isfinite(sum(a1))); \
+    assert(isfinite(sum(a2))); \
     return expr; \
-  }
-#  define mtx_expr_3arg_macro(name, arg1, arg2, arg3, expr) \
+  } 
+#  define mtx_expr_3arg_macro(name, a1, a2, a3, expr) \
   template<class t1, class t2, class t3> \
-  auto name(const t1 &arg1, const t2 &arg2, const t3 &arg3) -> decltype(expr) \
+  auto name(const t1 &a1, const t2 &a2, const t3 &a3) _decltype(expr) \
   { \
-    assert(isfinite(sum(arg1))); \
-    assert(isfinite(sum(arg2))); \
-    assert(isfinite(sum(arg3))); \
+    assert(isfinite(sum(a1))); \
+    assert(isfinite(sum(a2))); \
+    assert(isfinite(sum(a3))); \
     return expr; \
   }
-#  define mtx_expr_4arg_macro(name, arg1, arg2, arg3, arg4, expr) \
+#  define mtx_expr_4arg_macro(name, a1, a2, a3, a4, expr) \
   template<class t1, class t2, class t3, class t4> \
-  auto name(const t1 &arg1, const t2 &arg2, const t3 &arg3, const t4 &arg4) -> decltype(expr) \
+  auto name(const t1 &a1, const t2 &a2, const t3 &a3, const t4 &a4) _decltype(expr) \
   { \
-    assert(isfinite(sum(arg1))); \
-    assert(isfinite(sum(arg2))); \
-    assert(isfinite(sum(arg3))); \
-    assert(isfinite(sum(arg4))); \
+    assert(isfinite(sum(a1))); \
+    assert(isfinite(sum(a2))); \
+    assert(isfinite(sum(a3))); \
+    assert(isfinite(sum(a4))); \
     return expr; \
   }
-#  define mtx_expr_5arg_macro(name, arg1, arg2, arg3, arg4, arg5, expr) \
+#  define mtx_expr_5arg_macro(name, a1, a2, a3, a4, a5, expr) \
   template<class t1, class t2, class t3, class t4, class t5> \
-  auto name(const t1 &arg1, const t2 &arg2, const t3 &arg3, const t4 &arg4, const t5 &arg5) -> decltype(expr) \
+  auto name(const t1 &a1, const t2 &a2, const t3 &a3, const t4 &a4, const t5 &a5) _decltype(expr) \
   { \
-    assert(isfinite(sum(arg1))); \
-    assert(isfinite(sum(arg2))); \
-    assert(isfinite(sum(arg3))); \
-    assert(isfinite(sum(arg4))); \
-    assert(isfinite(sum(arg5))); \
+    assert(isfinite(sum(a1))); \
+    assert(isfinite(sum(a2))); \
+    assert(isfinite(sum(a3))); \
+    assert(isfinite(sum(a4))); \
+    assert(isfinite(sum(a5))); \
     return expr; \
   }
-#  define mtx_expr_6arg_macro(name, arg1, arg2, arg3, arg4, arg5, arg6, expr) \
+#  define mtx_expr_6arg_macro(name, a1, a2, a3, a4, a5, a6, expr) \
   template<class t1, class t2, class t3, class t4, class t5, class t6> \
-  auto name(const t1 &arg1, const t2 &arg2, const t3 &arg3, const t4 &arg4, const t5 &arg5, const t6 &arg6) -> decltype(expr) \
+  auto name(const t1 &a1, const t2 &a2, const t3 &a3, const t4 &a4, const t5 &a5, const t6 &a6) _decltype(expr) \
   { \
-    assert(isfinite(sum(arg1))); \
-    assert(isfinite(sum(arg2))); \
-    assert(isfinite(sum(arg3))); \
-    assert(isfinite(sum(arg4))); \
-    assert(isfinite(sum(arg5))); \
-    assert(isfinite(sum(arg6))); \
+    assert(isfinite(sum(a1))); \
+    assert(isfinite(sum(a2))); \
+    assert(isfinite(sum(a3))); \
+    assert(isfinite(sum(a4))); \
+    assert(isfinite(sum(a5))); \
+    assert(isfinite(sum(a6))); \
     return expr; \
   }
 #  define mtx_expr_11arg_macro(name, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11, expr) \
   template<class t1, class t2, class t3, class t4, class t5, class t6, class t7, class t8, class t9, class t10, class t11> \
-  auto name(const t1 &a1, const t2 &a2, const t3 &a3, const t4 &a4, const t5 &a5, const t6 &a6, const t7 &a7, const t8 &a8, const t9 &a9, const t10 &a10, const t11 &a11) -> decltype(expr) \
+  auto name(const t1 &a1, const t2 &a2, const t3 &a3, const t4 &a4, const t5 &a5, const t6 &a6, const t7 &a7, const t8 &a8, const t9 &a9, const t10 &a10, const t11 &a11) _decltype(expr) \
   { \
     assert(isfinite(sum(a1))); \
     assert(isfinite(sum(a2))); \
@@ -115,8 +118,8 @@ namespace mtx
     blitz::cycleArrays(a, b, c); 
   }
 
-/**   @class idx
- *    A facility for indexing Blitz 3D blitz::Arrays in a generic way.
+///   @brief A facility for indexing Blitz 3D blitz::Arrays in a generic way.
+/**
  *    If a method has a template "idx" and then uses arr(idx(i,j,k))
  *    indexing, it can be called with idx=idx_ijk, idx=idx_jki
  *    or idx=idx_kij. Consequently if some calculations are done
@@ -138,6 +141,7 @@ namespace mtx
     { }
   };
 
+  /// @brief non-permuted version of idx
   struct idx_ijk : idx
   {
     idx_ijk(const blitz::Range &i, const blitz::Range &j, const blitz::Range &k) 
@@ -145,6 +149,7 @@ namespace mtx
     { } 
   };
 
+  /// @brief ijk->jki permuted version of idx
   struct idx_jki : idx
   {
     idx_jki(const blitz::Range &j, const blitz::Range &k, const blitz::Range &i) 
@@ -152,6 +157,7 @@ namespace mtx
     { } 
   };
 
+  /// @brief ijk->kij permuted version of idx
   struct idx_kij : idx
   {
     idx_kij(const blitz::Range &k, const blitz::Range &i, const blitz::Range &j) 
@@ -159,6 +165,7 @@ namespace mtx
     { } 
   };
 
+  /// @brief 3D array representation - a thin wrapper over the Array class from the Blitz++ library
   template <typename real_t>
   struct arr : blitz::Array<real_t, 3>
   {
@@ -184,8 +191,6 @@ namespace mtx
       fill_with_nans();
 #  endif
     }
-  
   };
 };
-
 #endif

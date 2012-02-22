@@ -4,9 +4,7 @@
  *  @date December 2011
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
- *  @section DESCRIPTION
- *    A simple container for storing simulation set-up elements, i.e.
- *    the advection scheme, the velocity field etc
+ *  @brief contains definition of the @ref stp class - a container for simulation set-up elements
  */
 #ifndef STP_HPP
 #  define STP_HPP
@@ -18,6 +16,8 @@
 #  include "grd.hpp"
 #  include "eqs.hpp"
 
+/// @brief A simple container for storing simulation set-up elements, i.e.
+///        advection scheme, velocity field, initial condition, grid, equation system, etc
 template <typename real_t>
 struct stp : root
 {

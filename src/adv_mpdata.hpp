@@ -5,10 +5,7 @@
  *  @date November 2011 - January 2012
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
- *  @section DESCRIPTION
- *    C++ implementation of the second- and third-order MPDATA scheme 
- *    for solenoidal flows of scalar fields on a uniformly spaced 
- *    1D, 2D and 3D Arakawa-C grid 
+ *  @brief definition of the adv_mpdata class with an implementation of the MPDATA advection scheme
  */
 #ifndef ADV_MPDATA_HPP
 #  define ADV_MPDATA_HPP
@@ -16,6 +13,11 @@
 #  include "adv_upstream.hpp"
 #  include "grd_arakawa-c-lorenz.hpp"
 
+/** @brief
+ *  C++ implementation of the second- and third-order accurate
+ *  MPDATA scheme for solenoidal flows of scalar fields on a carthesian
+ *  1D, 2D and 3D Arakawa-C grid 
+ */
 template <typename real_t> 
 class adv_mpdata : public adv_upstream<real_t> 
 {
@@ -54,7 +56,7 @@ class adv_mpdata : public adv_upstream<real_t>
 #    else
   protected: mtx_expr_2arg_macro(mpdata_frac, num, den, 
     where(den > real_t(0), num / den, real_t(0))
-  )
+  ) 
 #    endif
 
 // section 3.2 subsection (4) PKS & LGM 1998 
@@ -63,7 +65,7 @@ class adv_mpdata : public adv_upstream<real_t>
   // macros for 2nd order terms:
   private: mtx_expr_2arg_macro(mpdata_A, pr, pl,
     this->mpdata_frac(aon(pr) - aon(pl), aon(pr + pl))
-  )
+  ) 
 
   private: mtx_expr_4arg_macro(mpdata_B, pru, plu, prd, pld,
     real_t(.5) * this->mpdata_frac(aon(pru) + aon(plu) - aon(prd) - aon(pld), aon(pru + plu + prd + pld))

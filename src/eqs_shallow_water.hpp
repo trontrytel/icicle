@@ -4,6 +4,7 @@
  *  @date January 2012 - February 2012
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
+ @  @brief contains definition of the eqs_shallow_water class - a system of 2D shallow-water equations
  */
 #ifndef EQS_SHALLOW_WATER_HPP
 #  define EQS_SHALLOW_WATER_HPP
@@ -12,6 +13,7 @@
 #  include "eqs.hpp"
 #  include "grd.hpp"
 
+/// @brief the 2D shallow-water equations system
 template <typename real_t>
 class eqs_shallow_water : public eqs<real_t> 
 {
@@ -27,6 +29,8 @@ class eqs_shallow_water : public eqs<real_t>
   };
 
   // TODO: Coriolis
+  // TODO: the numerics should be placed somewhere else...
+  /// @brief Shallow Water Equations: Momentum forcings for the X coordinate
   private: class forcings_qx : public rhs<real_t>
   { 
     private: struct params *par;
@@ -44,6 +48,7 @@ class eqs_shallow_water : public eqs<real_t>
     };
   };
 
+  /// @brief Shallow Water Equations: Momentum forcings for the Y coordinate
   private: class forcings_qy : public rhs<real_t>
   { 
     private: struct params *par;

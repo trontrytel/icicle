@@ -4,12 +4,14 @@
  *  @date November 2011
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
+ *  @brief contains definition of the ini_func_cone class
  */
 #ifndef INI_FUNC_CONE_HPP
 #  define INI_FUNC_CONE_HPP
 
 #  include "ini_func.hpp" 
 
+/// @brief a cone-shaped 2D scalar field from the rotating cone test (Smolarkiewicz et al. 1983)
 template <typename real_t>
 class ini_func_cone : public ini_func<real_t>
 {

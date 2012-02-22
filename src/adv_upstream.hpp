@@ -5,9 +5,7 @@
  *  @date November 2011
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
- *  @section DESCRIPTION
- *    C++ implementation of the upstream/upwind/donor-cell scheme 
- *    for the Arakawa-C grid
+ *  @brief definition of the adv_upstream class with an implementation of the upstream advection scheme
  */
 #ifndef ADV_UPSTREAM_HPP
 #  define ADV_UPSTREAM_HPP
@@ -23,6 +21,10 @@
 #    define mpdata_negpart(x) min(real_t(0), x)
 #  endif
 
+/** @brief
+ *  C++ implementation of the upstream/upwind/donor-cell scheme 
+ *  for the Arakawa-C grid
+ */
 template <typename real_t> 
 class adv_upstream : public adv<real_t> 
 {
