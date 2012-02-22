@@ -25,8 +25,16 @@
  *           Icicle's source code is publicly available under the terms of the @ref sec_COPYING
  *           from a git repository at Github: http://github.com/slayoo/icicle/
  * 
- *           Icicle bases a lot of its functionality on other free-libre-open-source software -
- *           for a list of required and optional packages and installation instructions 
+ *           Icicle bases a lot of its functionality on other free-libre-open-source software:
+ *           - Blitz++ library is used to achieve better-than-FORTRAN performance with array-oriented number crunching
+ *           - Boost.units library is used to enable dimensional analysis of the program code at compile-time
+ *           - Boost.Thread and Boost.MPI are used for parallelisation
+ *           - Boost.program_options, Boost.conversion, Boost.timer and others are used for what their names suggest
+ *           - NetCDF library is used for both input and output
+ *           - CMake and Doxygen are used for pre-compilation configuration and documentation-generation, respectively
+ *           - last but not list, the GNU OpenMP-enabled C++11 compiler and other GNU developement tools used
+ *
+ *           For a full list of required and optional packages and installation instructions 
  *           consult the @ref sec_README
  *
  *  @section sec_CREDITS Credits
