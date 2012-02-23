@@ -11,9 +11,8 @@
  *
  *           Icicle is a modern C++ implementation of a nonoscillatory forward in time (NFT)
  *           solver for systems of generalised transport equations with emphasis on cloud 
- *           modelling applications. It is being designed as a tool for integrating
- *           equations in one, two or three dimensions making it suitable for modelling various 
- *           physical phenomena and for testing and developing numerical algorithms.
+ *           and precipitation modelling applications. 
+ *           It is being designed as a tool for integrating equations in one, two or three dimensions.
  *
  *           In most numerical aspects icicle follows the design of the MPDATA-based NFT
  *           solvers of Smolarkiewicz et al., for a review and list of references consult:
@@ -22,10 +21,17 @@
  *           MPDATA: A Finite-Difference Solver for Geophysical Flows.<br />
  *           Journal of Computational Physics, 140, 459-480 
  *
- *           Icicle's source code is publicly available under the terms of the @ref sec_COPYING
- *           from a git repository at Github: http://github.com/slayoo/icicle/
+ *           Icicle code is developed with the aim of providing a tool that:
+ *           - is reliable, mainainable and auditable<br />
+ *             (generation of reproducible results for research purposes),
+ *           - has well documented, modular and human-readible code<br />
+ *             (easy to study and extend for [PhD] students and researchers alike)
+ *           - provides high performace and scalability in diverse parallel enviroments 
+ *             without sacrificing code readibility or ease of use<br />
+ *             (full separation of physics, numerics and technical aspects of the code),
  * 
- *           Icicle bases a lot of its functionality on other free-libre-open-source software:
+ *           To achieve it icicle uses modern coding techniques and bases a lot of its functionality 
+ *           on other free-libre-open-source software:
  *           - Blitz++ library is used to achieve better-than-FORTRAN performance with array-oriented number crunching
  *           - Boost.units library is used to enable dimensional analysis of the program code at compile-time
  *           - Boost.Thread and Boost.MPI are used for parallelisation
@@ -36,6 +42,9 @@
  *
  *           For a full list of required and optional packages and installation instructions 
  *           consult the @ref sec_README
+ *
+ *           Icicle's source code is publicly available under the terms of the @ref sec_COPYING
+ *           from a git repository at Github: http://github.com/slayoo/icicle/
  *
  *  @section sec_CREDITS Credits
  *         
