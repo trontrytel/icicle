@@ -23,44 +23,32 @@ class eqs_shallow_water : public eqs<real_t>
   private: struct params
   {
     quantity<si::acceleration, real_t> g;
-    quantity<si::length, real_t> dx, dy, h_unit;
+    quantity<si::length, real_t> h_unit;
     quantity<velocity_times_length, real_t> q_unit;
     int idx_h;
   };
 
-  // TODO: Coriolis
-  // TODO: the numerics should be placed somewhere else...
+  // TODO: Coriolis (implicit!)
+  // TODO: could the numerics be placed somewhere else...
+  // TODO: stencil-extent like method?
   /// @brief Shallow Water Equations: Momentum forcings for the X coordinate
-  private: class forcings_qx : public rhs<real_t>
+  private: 
+  template <int di, int dj>
+  class forcings : public rhs<real_t>
   { 
     private: struct params *par;
-    public: forcings_qx(params &par) : par(&par) {} 
+    private: quantity<si::length, real_t> dxy;
+    public: forcings(params &par, quantity<si::length, real_t> dxy) : par(&par), dxy(dxy) {} 
     public: void operator()(mtx::arr<real_t> &R, mtx::arr<real_t> **psi, mtx::idx &ijk) 
     { 
+      assert((di == 0 && dj > 0) || (di > 0 && dj == 0));
       R(ijk) -= 
-        real_t(par->g / (real_t(2) * par->dx) * par->h_unit * par->h_unit * si::seconds / par->q_unit) 
-        * ((*psi[par->idx_h])(ijk)) * 
-        (
-          ((*psi[par->idx_h])(ijk.i + 1, ijk.j, ijk.k) /* TODO: + H0 */)
+        par->g * par->h_unit * par->h_unit * si::seconds / par->q_unit / (real_t(2 * (di + dj)) * dxy)
+        * ((*psi[par->idx_h])(ijk)) 
+        * (
+          ((*psi[par->idx_h])(ijk.i + di, ijk.j + dj, ijk.k) /* TODO: + H0(i+di,j+dj,k) */)
           - 
-          ((*psi[par->idx_h])(ijk.i - 1, ijk.j, ijk.k) /* TODO: + H0 */)
-        );
-    };
-  };
-
-  /// @brief Shallow Water Equations: Momentum forcings for the Y coordinate
-  private: class forcings_qy : public rhs<real_t>
-  { 
-    private: struct params *par;
-    public: forcings_qy(params &par) : par(&par) {} 
-    public: void operator()(mtx::arr<real_t> &R, mtx::arr<real_t> **psi, mtx::idx &ijk) 
-    { 
-      R(ijk) -= real_t(par->g / (real_t(2) * par->dy) * par->h_unit * par->h_unit * si::seconds / par->q_unit) 
-        * ((*psi[par->idx_h])(ijk)) * 
-        (
-          ((*psi[par->idx_h])(ijk.i, ijk.j + 1, ijk.k) /* TODO: + H0 */)
-          - 
-          ((*psi[par->idx_h])(ijk.i, ijk.j - 1, ijk.k) /* TODO: + H0 */)
+          ((*psi[par->idx_h])(ijk.i - di, ijk.j - dj, ijk.k) /* TODO: + H0(i-di,j-dj,k) */)
         );
     };
   };
@@ -73,8 +61,6 @@ class eqs_shallow_water : public eqs<real_t>
     if (grid.nz() != 1) error_macro("only 1D (X or Y) and 2D (XY) simullations supported")
 
     par.g = real_t(10.) * si::metres_per_second_squared, grid.dx(); // TODO: option
-    par.dx = grid.dx();
-    par.dy = grid.dy();
     par.h_unit = 1 * si::metres;
     par.q_unit = 1 * si::metres * si::metres / si::seconds;
     par.idx_h = 0;
@@ -91,14 +77,14 @@ class eqs_shallow_water : public eqs<real_t>
       this->quan2str(q_unit), 
       vector<int>({1, 0, 0})
     }));
-    sys.back().source_terms.push_back(new forcings_qx(par)); 
+    sys.back().source_terms.push_back(new forcings<1,0>(par, grid.dx())); 
 
     sys.push_back(new struct eqs<real_t>::gte({
       "qy", "heigh-integrated specific momentum (y)", 
       this->quan2str(q_unit), 
       vector<int>({0, 1, 0})
     }));
-    sys.back().source_terms.push_back(new forcings_qy(par)); 
+    sys.back().source_terms.push_back(new forcings<1,0>(par, grid.dy())); 
   }
 };
 #endif

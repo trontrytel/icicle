@@ -5,8 +5,7 @@
 #  @date Januar 2012
 #  @section LICENSE
 #    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
-
-#  1d isolines test from pks & wwg 1990 
+#  @brief 1d isolines test from pks & wwg 1990 
 
 import numpy as np                       # arrays
 from scipy.io.netcdf import netcdf_file  # netcdf IO
@@ -14,8 +13,6 @@ import subprocess                        # shell calls
 import os                                # unlink()
 import sys                               # exit
 import math                              # sqrt
-import matplotlib.pyplot as plt          # plots
-from matplotlib.ticker import AutoMinorLocator
 
 file = 'tmp.nc'
 
@@ -39,11 +36,7 @@ for dx in (dx_max, dx_max/2, dx_max/4, dx_max/8, dx_max/16, dx_max/32, dx_max/64
     dt = cour*dx/velocity
     nx = int(round(x_max/dx))
     nt = int(round(t_max/dt))
-    print "dt", dt
-    print "dx", dx
-    print "courant", cour
-    print "nt", nt
-    print "nt*dt", nt*dt
+    print "dt", dt, "dx", dx, "courant", cour, "nt", nt, "nt*dt", nt*dt
     cmd = (
       '../../icicle',
       '--bits',str(bits),
@@ -83,7 +76,6 @@ for dx in (dx_max, dx_max/2, dx_max/4, dx_max/8, dx_max/16, dx_max/32, dx_max/64
     err=math.sqrt(((psint - exact)*(psint - exact)).sum()/nx)/(nt * dt)
 
     #cleanup
-    print 'closing and deleting the file...'
     nc.close()
     if os.path.exists(file) : os.unlink(file)
 

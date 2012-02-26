@@ -38,7 +38,7 @@
  *           - Boost.program_options, Boost.conversion, Boost.timer and others are used for what their names suggest
  *           - NetCDF library is used for both input and output
  *           - CMake and Doxygen are used for pre-compilation configuration and documentation-generation, respectively
- *           - last but not list, the GNU OpenMP-enabled C++11 compiler and other GNU developement tools used
+ *           - last but not list, the GNU OpenMP-enabled C++11 compiler and other toold from the GNU developement chain are used
  *
  *           For a full list of required and optional packages and installation instructions 
  *           consult the @ref sec_README
