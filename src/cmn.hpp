@@ -29,6 +29,7 @@ using std::exception;
 using std::cos;
 using std::sin;
 using std::isfinite;
+using std::pair;
 
 // the Lynton Appel's netCDF-4 C++ API (since netCDF 4.1.1)
 #    ifdef USE_BOOST_MPI 
@@ -74,5 +75,6 @@ typedef boost::units::multiply_typeof_helper<
 // Boost.ptr_vector // TODO: should it be checked at 'configure' step?
 #  include <boost/ptr_container/ptr_vector.hpp>
 using boost::ptr_vector;
+using boost::nullable;
 
 #endif

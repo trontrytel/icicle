@@ -26,9 +26,9 @@ class eqs : root
     ptr_vector<rhs<real_t>> source_terms;
   };
 
-  public: bool is_homogeneous() {
-    for (int e = 0; e < system().size(); ++e) 
-      if (system().at(e).source_terms.size() > 0) return false;
+  public: bool is_homogeneous(int e) {
+    //for (int e = 0; e < system().size(); ++e) 
+    if (system().at(e).source_terms.size() > 0) return false;
     return true;
   }
 
@@ -65,14 +65,25 @@ class eqs : root
     return system().at(i).name;
   }
  
-  public: map<int,int> velmap(int xyz) // equation -> power
+  public: vector<pair<int,int>> velmap(int xyz) // equation -> power
   {
-    map<int, int> m;
+    vector<pair<int, int>> m;
+    // the first element is the one which will be multiplied/divided by others
     for (int e = 0; e < system().size(); ++e)
     {
-      assert(system().at(e).pow_uvw.size() == system().size());
-      if (system().at(e).pow_uvw[xyz] != 0) 
-        m[e] = system().at(e).pow_uvw[xyz];
+      assert(system().at(e).pow_uvw.size() == 3);
+      if (system().at(e).pow_uvw[xyz] == 1)
+      {
+        assert(m.size() == 0); // TODO: document this limitation...
+        m.push_back(pair<int,int>(e, 1));
+      }
+    }
+
+    // and then goes the rest
+    for (int e = 0; e < system().size(); ++e) 
+    {
+      if (system().at(e).pow_uvw[xyz] != 0 && e != m.begin()->first) 
+        m.push_back(pair<int,int>(e, system().at(e).pow_uvw[xyz]));
     }
     return m;
   }

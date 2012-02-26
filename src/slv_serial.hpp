@@ -25,7 +25,7 @@ class slv_serial : public slv<real_t>
   private: unique_ptr<mtx::arr<real_t>> Cx, Cy, Cz;
   private: vector<ptr_vector<mtx::arr<real_t>>> psi;
   private: unique_ptr<tmp<real_t>> cache; 
-  private: ptr_vector<mtx::arr<real_t>> R;
+  private: ptr_vector<nullable<mtx::arr<real_t>>> R;
 
   public: slv_serial(stp<real_t> *setup, out<real_t> *output,
     int i_min, int i_max,
@@ -70,12 +70,12 @@ class slv_serial : public slv<real_t>
         ));
       }
 
-      if (!setup->eqsys->is_homogeneous())
+      if (!setup->eqsys->is_homogeneous(e))
       {
         R.push_back(new mtx::arr<real_t>(setup->grid->rng_sclr(
           i_min, i_max, j_min, j_max, k_min, k_max, 0)
         ));
-      }
+      } else R.push_back(NULL);
     }
 
     // caches
@@ -189,16 +189,15 @@ class slv_serial : public slv<real_t>
     assert(!setup->velocity->is_constant());
 
     // TODO: this is done every time step and should be done only once!!!
-    //       (but the previous static-var-based code was not thread-safe)
     mtx::arr<real_t> **Q[] = {NULL, NULL, NULL};
-    vector<map<int,int> > vm(3);
+    vector<vector<pair<int,int>>> vm(3);
     {
-      vm[0] = map<int,int>(setup->eqsys->velmap(0));
-      vm[1] = map<int,int>(setup->eqsys->velmap(1)); 
-      vm[2] = map<int,int>(setup->eqsys->velmap(2));
+      vm[0] = vector<pair<int,int>>(setup->eqsys->velmap(0));
+      vm[1] = vector<pair<int,int>>(setup->eqsys->velmap(1)); 
+      vm[2] = vector<pair<int,int>>(setup->eqsys->velmap(2));
       for (int xyz = 0; xyz < 3; ++xyz)
       {
-        if (vm[xyz].size() > 0) 
+        if (vm[xyz].size() > 0) // if we have any source terms
         { 
           Q[xyz] = psi[vm[xyz].begin()->first].c_array(); 
           assert(vm[xyz].begin()->second == 1); // TODO: something more universal would be better
@@ -211,9 +210,9 @@ class slv_serial : public slv<real_t>
     {
       if (vm[xyz].size() > 1) 
       {
-        for (map<int,int>::iterator it = ++(vm[xyz].begin()); it != vm[xyz].end(); ++it) 
+        for (int i = 1; i < vm[xyz].size(); ++i) 
         {
-          int var = it->first, pow = it->second;
+          int var = vm[xyz][i].first, pow = vm[xyz][i].second;
           if (pow == -1) 
           {
             for (int m = n; m >= n-1; --m)
@@ -237,9 +236,9 @@ class slv_serial : public slv<real_t>
     {
       if (vm[xyz].size() > 1) 
       {
-        for (map<int,int>::iterator it = ++(vm[xyz].begin()); it != vm[xyz].end(); ++it) 
+        for (int i = 1; i < vm[xyz].size(); ++i) 
         {
-          int var = it->first, pow = it->second;
+          int var = vm[xyz][i].first, pow = vm[xyz][i].second;
           if (pow == -1) 
           {
             for (int m = n; m >= n-1; --m)
@@ -263,26 +262,27 @@ class slv_serial : public slv<real_t>
   private: mtx::arr<real_t> **tmpvec = NULL;
   public: void update_forcings(int n)
   {
-    assert(!setup->eqsys->is_homogeneous());
-
     if (tmpvec == NULL) tmpvec = new mtx::arr<real_t>*[setup->eqsys->n_vars()]; // TODO: unique_ptr
 
     for (int e = 0; e < setup->eqsys->n_vars(); ++e) tmpvec[e] = psi[e].c_array()[n];
 
     for (int e = 0; e < setup->eqsys->n_vars(); ++e)
     {
-      (R[e])(R[e].ijk) = real_t(0);
-      for (int i = 0; i < setup->eqsys->var_n_rhs(e); ++i)
+      if (!setup->eqsys->is_homogeneous(e))
       {
-         setup->eqsys->var_rhs(e, i)(R[e], tmpvec, *ijk);
-         assert(isfinite(sum((R[e])(R[e].ijk))));
+        (R[e])(R[e].ijk) = real_t(0);
+        for (int i = 0; i < setup->eqsys->var_n_rhs(e); ++i)
+        {
+           setup->eqsys->var_rhs(e, i)(R[e], tmpvec, *ijk);
+           assert(isfinite(sum((R[e])(R[e].ijk))));
+        }
       }
     }
   }
 
   public: void apply_forcings(int e, int n, quantity<si::time, real_t> dt)
   {
-    assert(!setup->eqsys->is_homogeneous());
+    assert(!setup->eqsys->is_homogeneous(e));
     assert(isfinite(sum((psi[e][n])(*ijk))));
     assert(isfinite(sum((R[e])(*ijk))));
     (psi[e][n])(*ijk) += dt / si::seconds * (R[e])(*ijk);
@@ -307,9 +307,11 @@ class slv_serial : public slv<real_t>
   public: void stash_cycle(int e, int n)
   {
     assert(setup->eqsys->var_dynamic(e));
-    if (stash == NULL) stash = new mtx::arr<real_t>(psi[e][n]); // TODO: unique_ptr
-    if (stash_empty) *stash = psi[e][n];
-    else psi[e][n] = *stash;
+    if (stash == NULL) stash = new mtx::arr<real_t>(psi[e][n].ijk); // TODO: unique_ptr
+    if (stash_empty)
+      *stash = psi[e][n];
+    else 
+      psi[e][n] = *stash;
     stash_empty = !stash_empty;
   }
 

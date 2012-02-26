@@ -11,10 +11,10 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import axes3d
 from Scientific.IO.NetCDF import NetCDFFile
 
-nx = 1000
-dt = .01
-nt = 10000
-nout = 1000
+nx = 100
+dt = .05
+nt = 250
+nout = 10
 
 # first: creating a netCDF file with the initial condition
 f = NetCDFFile('ini.nc', 'w')
@@ -27,8 +27,8 @@ v_h  = f.createVariable('h', 'd', ('X','Y','Z'))
 v_qx = f.createVariable('qx', 'd', ('X','Y','Z'))
 v_qy = f.createVariable('qy', 'd', ('X','Y','Z'))
 
-v_h[:,0,0] = 100. + 10*pow(np.sin(np.arange(nx) * np.pi / nx),40)
-v_qx[:,0,0] = 500.
+v_h[:,0,0] = 1. - .1*pow(np.sin(np.arange(nx) * np.pi / nx),80)
+v_qx[:,0,0] = 0.
 v_qy[:,0,0] = 0.
 
 f.close()
@@ -47,7 +47,7 @@ cmd = (
   '--vel','momeq_extrapol',
   '--nt',str(nt),'--dt',str(dt),'--nout',str(nout),
   '--out','netcdf','--out.netcdf.file','out.nc',
-  '--slv','threads','--nsd','4'
+  '--slv','threads','--nsd','1'
 )
 subprocess.check_call(cmd)
 
