@@ -34,6 +34,7 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
 #  define psi_max (*tmp_s[1])
 
   private: int iord;
+  private: bool posonly = false; // TODO: as an option
   private: grd_arakawa_c_lorenz<real_t> *grid;
   public: adv_mpdata_fct(grd_arakawa_c_lorenz<real_t> *grid, int iord, bool cross_terms, bool third_order) 
     : adv_mpdata<real_t>(grid, iord, cross_terms, third_order), iord(iord), grid(grid)
@@ -48,12 +49,18 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
     const mtx::arr<real_t> * const Cx, const mtx::arr<real_t> * const Cy, const mtx::arr<real_t> * const Cz
   )
   {
-    assert(min((*psi[n])(ijk)) >= real_t(0)); // accepting positive scalars only
-
     mtx::rng 
       ii = mtx::rng(ijk.lbound(mtx::i) - 1, ijk.ubound(mtx::i) + 1),
       jj = mtx::rng(ijk.lbound(mtx::j) - 1, ijk.ubound(mtx::j) + 1),
       kk = mtx::rng(ijk.lbound(mtx::k) - 1, ijk.ubound(mtx::k) + 1);
+
+    assert(isfinite(sum((*psi[n])(ii , jj , kk ))));
+    assert(isfinite(sum((*psi[n])(ii-1, jj , kk ))));
+    assert(isfinite(sum((*psi[n])(ii+1, jj , kk ))));
+    assert(isfinite(sum((*psi[n])(ii , jj-1, kk ))));
+    assert(isfinite(sum((*psi[n])(ii , jj+1, kk ))));
+    assert(isfinite(sum((*psi[n])(ii , jj , kk-1))));
+    assert(isfinite(sum((*psi[n])(ii , jj , kk+1))));
 
 #  define mpdata_fct_minmax(fun, psi_, n_, i_, j_, k_) fun( \
      (*psi_[n_])(i_  ,j_  ,k_  ), fun( \
@@ -179,11 +186,52 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
     // as in mpdata_U, we compute u_{i+1/2} for iv=(i-1, ... i) instead of u_{i+1/2} and u_{i-1/2} for all i
     mtx::rng iv(i.first()-1, i.last());
 
-    C_mon_x(idx(iv + grid->p_half,j,k)) = C_adf_x(idx(iv + grid->p_half,j,k)) * where(
-      C_adf_x(idx(iv + grid->p_half,j,k)) > 0,
-      min(1, min(mpdata_fct_beta_dn(iv, j, k), mpdata_fct_beta_up(iv+1, j, k))),
-      min(1, min(mpdata_fct_beta_up(iv, j, k), mpdata_fct_beta_dn(iv+1, j, k)))
-    );
+    assert(isfinite(sum((*psi[n])(idx(iv ,j , k )))));
+    assert(isfinite(sum((*psi[n])(idx(iv+1 ,j , k )))));
+    assert(isfinite(sum((*psi[n])(idx(iv -1,j , k )))));
+    assert(isfinite(sum((*psi[n])(idx(iv+1+1,j , k )))));
+    assert(isfinite(sum((*psi[n])(idx(iv, j-1, k )))));
+    assert(isfinite(sum((*psi[n])(idx(iv+1, j+1, k )))));
+    assert(isfinite(sum((*psi[n])(idx(iv, j , k-1)))));
+    assert(isfinite(sum((*psi[n])(idx(iv+1, j , k+1)))));
+
+    assert(isfinite(sum(C_adf_x(idx(iv + grid->p_half,j,k)))));
+    assert(isfinite(sum(C_adf_x(idx(iv - grid->m_half,j,k)))));
+    assert(isfinite(sum(C_adf_x(idx(iv + 1 + grid->p_half,j,k)))));
+    assert(isfinite(sum(C_adf_x(idx(iv + 1 - grid->m_half,j,k)))));
+
+    assert(isfinite(sum(C_adf_y(idx(iv, j + grid->p_half,k)))));
+    assert(isfinite(sum(C_adf_y(idx(iv, j - grid->m_half,k)))));
+    assert(isfinite(sum(C_adf_y(idx(iv + 1, j + grid->p_half,k)))));
+    assert(isfinite(sum(C_adf_y(idx(iv + 1, j - grid->m_half,k)))));
+
+    assert(isfinite(sum(C_adf_z(idx(iv, j, k + grid->p_half)))));
+    assert(isfinite(sum(C_adf_z(idx(iv, j, k - grid->m_half)))));
+    assert(isfinite(sum(C_adf_z(idx(iv + 1, j, k + grid->p_half)))));
+    assert(isfinite(sum(C_adf_z(idx(iv + 1, j, k - grid->m_half)))));
+
+
+    if (posonly) // TODO: shorten it!
+      C_mon_x(idx(iv + grid->p_half,j,k)) = C_adf_x(idx(iv + grid->p_half,j,k)) * where(
+        C_adf_x(idx(iv + grid->p_half,j,k)) > 0,
+        min(1, min(mpdata_fct_beta_dn(iv, j, k), mpdata_fct_beta_up(iv+1, j, k))),
+        min(1, min(mpdata_fct_beta_up(iv, j, k), mpdata_fct_beta_dn(iv+1, j, k)))
+      );
+    else
+      C_mon_x(idx(iv + grid->p_half,j,k)) = C_adf_x(idx(iv + grid->p_half,j,k)) * 
+        where(
+          C_adf_x(idx(iv + grid->p_half,j,k)) > 0,
+          where(
+            (*psi[n])(idx(iv,j,k)) > 0,
+            min(1, min(mpdata_fct_beta_dn(iv, j, k), mpdata_fct_beta_up(iv+1, j, k))),
+            min(1, min(mpdata_fct_beta_up(iv, j, k), mpdata_fct_beta_dn(iv+1, j, k)))
+          ),
+          where(
+            (*psi[n])(idx(iv+1,j,k)) > 0,
+            min(1, min(mpdata_fct_beta_up(iv, j, k), mpdata_fct_beta_dn(iv+1, j, k))),
+            min(1, min(mpdata_fct_beta_dn(iv, j, k), mpdata_fct_beta_up(iv+1, j, k)))
+          )
+        );
   }
 };
 #endif
