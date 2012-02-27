@@ -59,7 +59,7 @@ int main(int ac, char* av[])
     if (vm.count("help") || ac == 1)
     {
       cerr << desc << endl;
-      exit(EXIT_FAILURE);
+      exit(EXIT_SUCCESS); // this is what GNU coding standards suggest
     }
 
     // --slv list
