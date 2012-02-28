@@ -78,11 +78,11 @@ class slv_serial : public slv<real_t>
       } else R.push_back(NULL);
     }
 
-    // caches
+    // caches (TODO: move to adv.hpp...)
     assert(fllbck == NULL || fllbck->num_sclr_caches() == 0);
     assert(fllbck == NULL || fllbck->num_vctr_caches() == 0);
     cache.reset(new tmp<real_t>(advsch->num_vctr_caches(), advsch->num_sclr_caches(), setup->grid, 
-      halo_vctr, // halo_sclr > halo_vctr only for non-const velocities, the cache is only ised in adv_*
+      halo_vctr + 1 /* TODO TODO TODO it should be max(halo_sclr, halo_vctr) */, // halo_sclr > halo_vctr only for non-const velocities, the cache is only used in adv_*
       i_min, i_max,
       j_min, j_max,
       k_min, k_max

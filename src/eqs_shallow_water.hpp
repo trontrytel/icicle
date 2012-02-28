@@ -76,7 +76,7 @@ class eqs_shallow_water : public eqs<real_t>
       this->quan2str(q_unit), 
       vector<int>({0, 1, 0})
     }));
-    sys.back().source_terms.push_back(new forcings<1,0>(par, grid.dy())); 
+    sys.back().source_terms.push_back(new forcings<0,1>(par, grid.dy())); 
 
     sys.push_back(new struct eqs<real_t>::gte({
       "h", "thickness of the fluid layer", 

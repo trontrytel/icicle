@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import axes3d
 from Scientific.IO.NetCDF import NetCDFFile
 
-nx = 5 #100
+nx = 100
 dt = .05
 nt = 250
 nout = 10
