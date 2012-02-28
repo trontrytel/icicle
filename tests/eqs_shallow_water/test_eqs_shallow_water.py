@@ -42,7 +42,7 @@ cmd = (
   '--grd.dx','1',
   '--grd.nx',str(nx),
   '--adv','mpdata',
-    '--adv.mpdata.fct','0',
+    '--adv.mpdata.fct','1',
     '--adv.mpdata.iord','2',
   '--vel','momeq_extrapol',
   '--nt',str(nt),'--dt',str(dt),'--nout',str(nout),
