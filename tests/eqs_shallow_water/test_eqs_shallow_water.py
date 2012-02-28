@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import axes3d
 from Scientific.IO.NetCDF import NetCDFFile
 
-nx = 100
+nx = 5 #100
 dt = .05
 nt = 250
 nout = 10
@@ -42,7 +42,7 @@ cmd = (
   '--grd.dx','1',
   '--grd.nx',str(nx),
   '--adv','mpdata',
-    '--adv.mpdata.fct','0',
+    '--adv.mpdata.fct','1',
     '--adv.mpdata.iord','2',
   '--vel','momeq_extrapol',
   '--nt',str(nt),'--dt',str(dt),'--nout',str(nout),

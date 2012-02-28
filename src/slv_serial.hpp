@@ -22,7 +22,7 @@ class slv_serial : public slv<real_t>
   private: vector<int> halo_sclr;
   private: int halo_vctr;
 
-  private: unique_ptr<mtx::arr<real_t>> Cx, Cy, Cz;
+  private: ptr_vector<mtx::arr<real_t>> C; // TODO: nullable? (uwaga na kod w FCT! ii = i+/-1
   private: vector<ptr_vector<mtx::arr<real_t>>> psi;
   private: unique_ptr<tmp<real_t>> cache; 
   private: ptr_vector<nullable<mtx::arr<real_t>>> R;
@@ -106,17 +106,16 @@ class slv_serial : public slv<real_t>
     for (int s=this->first; s <= this->last; ++s) 
       this->hook_neighbour(s, this);
  
-    // velocity fields
-    Cx.reset(new mtx::arr<real_t>(setup->grid->rng_vctr_x(*ijk, halo_vctr)));
-    Cy.reset(new mtx::arr<real_t>(setup->grid->rng_vctr_y(*ijk, halo_vctr)));
-    Cz.reset(new mtx::arr<real_t>(setup->grid->rng_vctr_z(*ijk, halo_vctr)));
+    // velocity fields 
+    C.push_back(new mtx::arr<real_t>(setup->grid->rng_vctr_x(*ijk, halo_vctr)));
+    C.push_back(new mtx::arr<real_t>(setup->grid->rng_vctr_y(*ijk, halo_vctr)));
+    C.push_back(new mtx::arr<real_t>(setup->grid->rng_vctr_z(*ijk, halo_vctr)));
     if (setup->velocity->is_constant()) 
     {
-      // filling Cx, Cy, Cz with constant velocity field
+      // filling C with constant velocity field
       setup->velocity->populate_courant_fields(-1, // TODO: some nicer calling sequence?
-        Cx.get(), Cy.get(), Cz.get(), setup->dt, NULL, NULL, NULL 
+        &C[0], &C[1], &C[2], setup->dt, NULL, NULL, NULL 
       );
-      // TODO: fill uninitialised C? with zeros? (e.g. Cz with shallow_water) 
     }
   }
 
@@ -180,7 +179,7 @@ class slv_serial : public slv<real_t>
   public: void advect(int e, int n, int s, adv<real_t> *a)
   {
     a->op3D(psi[e].c_array(), cache->sclr, cache->vctr, *ijk, n, s, 
-      Cx.get(), Cy.get(), Cz.get() 
+      &C[0], &C[1], &C[2] 
     );
   }
 
@@ -202,6 +201,7 @@ class slv_serial : public slv<real_t>
           Q[xyz] = psi[vm[xyz].begin()->first].c_array(); 
           assert(vm[xyz].begin()->second == 1); // TODO: something more universal would be better
         }
+        else C[xyz](C[xyz].ijk) = real_t(0);
       }
     }
 
@@ -228,7 +228,7 @@ class slv_serial : public slv<real_t>
  
     // compute the velocities
     setup->velocity->populate_courant_fields(n,
-      Cx.get(), Cy.get(), Cz.get(), setup->dt, Q[0], Q[1], Q[2]
+      &C[0], &C[1], &C[2], setup->dt, Q[0], Q[1], Q[2]
     );
 
     // 
@@ -253,9 +253,9 @@ class slv_serial : public slv<real_t>
     }
 
     // TODO: sanity checks for Courant limits
-    cerr << "Courant x: " << min(*Cx) << " ... " << max(*Cx) << endl;
-    cerr << "Courant y: " << min(*Cy) << " ... " << max(*Cy) << endl;
-    cerr << "Courant z: " << min(*Cz) << " ... " << max(*Cz) << endl;
+    cerr << "Courant x: " << min(C[0]) << " ... " << max(C[0]) << endl;
+    cerr << "Courant y: " << min(C[1]) << " ... " << max(C[1]) << endl;
+    cerr << "Courant z: " << min(C[2]) << " ... " << max(C[2]) << endl;
   }
 
   /// \param n the time level to use for updating the forcings
