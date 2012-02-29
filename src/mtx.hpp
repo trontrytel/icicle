@@ -147,6 +147,9 @@ namespace mtx
     idx_ijk(const blitz::Range &i, const blitz::Range &j, const blitz::Range &k) 
       : idx(blitz::TinyVector<blitz::Range, 3>(i,j,k)) 
     { } 
+    idx_ijk(const blitz::Range &i, const blitz::Range &j, const int k) 
+      : idx(blitz::TinyVector<blitz::Range, 3>(i,j,blitz::Range(k,k))) 
+    { } 
   };
 
   /// @brief ijk->jki permuted version of idx

@@ -17,7 +17,7 @@ class vel : root
 {
   public: virtual bool is_constant() = 0;
 
-  public: virtual void populate_courant_fields(int n,
+  public: virtual void populate_courant_fields(int nm0, int nm1, // TODO:
     mtx::arr<real_t> *Cx, 
     mtx::arr<real_t> *Cy, 
     mtx::arr<real_t> *Cz, 

@@ -82,7 +82,7 @@ class slv_serial : public slv<real_t>
     assert(fllbck == NULL || fllbck->num_sclr_caches() == 0);
     assert(fllbck == NULL || fllbck->num_vctr_caches() == 0);
     cache.reset(new tmp<real_t>(advsch->num_vctr_caches(), advsch->num_sclr_caches(), setup->grid, 
-      halo_vctr + 1 /* TODO TODO TODO it should be max(halo_sclr, halo_vctr) */, // halo_sclr > halo_vctr only for non-const velocities, the cache is only used in adv_*
+      halo_vctr + (setup->velocity->is_constant() ? 0 : 1), /* TODO TODO TODO it should be max(halo_sclr, halo_vctr) */ // halo_sclr > halo_vctr only for non-const velocities, the cache is only used in adv_*
       i_min, i_max,
       j_min, j_max,
       k_min, k_max
@@ -113,7 +113,7 @@ class slv_serial : public slv<real_t>
     if (setup->velocity->is_constant()) 
     {
       // filling C with constant velocity field
-      setup->velocity->populate_courant_fields(-1, // TODO: some nicer calling sequence?
+      setup->velocity->populate_courant_fields(-1,-1, // TODO: some nicer calling sequence?
         &C[0], &C[1], &C[2], setup->dt, NULL, NULL, NULL 
       );
     }
@@ -125,11 +125,10 @@ class slv_serial : public slv<real_t>
       psi[e][to] = psi[e][from];
   }
 
-  public: void fill_with_nans(int n)
+  public: void fill_with_nans(int e, int n)
   { 
 #  ifndef NDEBUG
-    for (int e = 0; e < setup->eqsys->n_vars(); ++e)
-      psi[e][n].fill_with_nans();
+    psi[e][n].fill_with_nans();
 #  endif
   }
 
@@ -183,7 +182,7 @@ class slv_serial : public slv<real_t>
     );
   }
 
-  public: void update_courants(const int n) // TODO: this ethod deserves a major rewrite!
+  public: void update_courants(const int g, const int nm1, const int nm0) // TODO: this method deserves a major rewrite!
   {
     assert(!setup->velocity->is_constant());
 
@@ -191,9 +190,10 @@ class slv_serial : public slv<real_t>
     mtx::arr<real_t> **Q[] = {NULL, NULL, NULL};
     vector<vector<pair<int,int>>> vm(3);
     {
-      vm[0] = vector<pair<int,int>>(setup->eqsys->velmap(0));
-      vm[1] = vector<pair<int,int>>(setup->eqsys->velmap(1)); 
-      vm[2] = vector<pair<int,int>>(setup->eqsys->velmap(2));
+      // TODO: loop
+      vm[0] = vector<pair<int,int>>(setup->eqsys->velmap(g, 0));
+      vm[1] = vector<pair<int,int>>(setup->eqsys->velmap(g, 1)); 
+      vm[2] = vector<pair<int,int>>(setup->eqsys->velmap(g, 2));
       for (int xyz = 0; xyz < 3; ++xyz)
       {
         if (vm[xyz].size() > 0) // if we have any source terms
@@ -215,10 +215,11 @@ class slv_serial : public slv<real_t>
           int var = vm[xyz][i].first, pow = vm[xyz][i].second;
           if (pow == -1) 
           {
-            for (int m = n; m >= n-1; --m)
             {
-              assert(isfinite(sum((psi[var][m])(psi[var][m].ijk))));
-              (*(Q[xyz][m]))(Q[xyz][m]->ijk) /= (psi[var][m])(psi[var][m].ijk);
+              assert(isfinite(sum((psi[var][nm0])(psi[var][nm0].ijk))));
+              (*(Q[xyz][nm0]))(Q[xyz][nm0]->ijk) /= (psi[var][nm0])(psi[var][nm0].ijk); // TODO
+              assert(isfinite(sum((psi[var][nm1])(psi[var][nm1].ijk))));
+              (*(Q[xyz][nm1]))(Q[xyz][nm1]->ijk) /= (psi[var][nm1])(psi[var][nm1].ijk); // TODO: two or more, use a for
             }
           }
           else assert(false);
@@ -227,7 +228,7 @@ class slv_serial : public slv<real_t>
     }
  
     // compute the velocities
-    setup->velocity->populate_courant_fields(n,
+    setup->velocity->populate_courant_fields(nm0, nm1,
       &C[0], &C[1], &C[2], setup->dt, Q[0], Q[1], Q[2]
     );
 
@@ -241,10 +242,11 @@ class slv_serial : public slv<real_t>
           int var = vm[xyz][i].first, pow = vm[xyz][i].second;
           if (pow == -1) 
           {
-            for (int m = n; m >= n-1; --m)
             {
-              assert(isfinite(sum((psi[var][m])(psi[var][m].ijk))));
-              (*(Q[xyz][m]))(Q[xyz][m]->ijk) *= (psi[var][m])(psi[var][m].ijk);
+              assert(isfinite(sum((psi[var][nm0])(psi[var][nm0].ijk))));
+              (*(Q[xyz][nm0]))(Q[xyz][nm0]->ijk) *= (psi[var][nm0])(psi[var][nm0].ijk); // TODO
+              assert(isfinite(sum((psi[var][nm1])(psi[var][nm1].ijk))));
+              (*(Q[xyz][nm1]))(Q[xyz][nm1]->ijk) *= (psi[var][nm1])(psi[var][nm1].ijk); // TODO: two or more, use a for
             }
           }
           else assert(false);
@@ -288,7 +290,7 @@ class slv_serial : public slv<real_t>
     (psi[e][n])(*ijk) += dt / si::seconds * (R[e])(*ijk);
   }
 
-  public: void cycle_arrays(const int e, const int n)
+  public: void cycle_arrays(const int e, const int n) // TODO: n unneeded?
   {
     switch (advsch->time_levels())
     {

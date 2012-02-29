@@ -34,7 +34,7 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
 #  define psi_max (*tmp_s[1])
 
   private: int iord;
-  private: bool posonly = false; // TODO: as an option
+  private: bool posonly = true; // TODO: as an option
   private: grd_arakawa_c_lorenz<real_t> *grid;
   public: adv_mpdata_fct(grd_arakawa_c_lorenz<real_t> *grid, int iord, bool cross_terms, bool third_order) 
     : adv_mpdata<real_t>(grid, iord, cross_terms, third_order), iord(iord), grid(grid)
@@ -209,7 +209,6 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
     assert(isfinite(sum(C_adf_z(idx(iv, j, k - grid->m_half)))));
     assert(isfinite(sum(C_adf_z(idx(iv + 1, j, k + grid->p_half)))));
     assert(isfinite(sum(C_adf_z(idx(iv + 1, j, k - grid->m_half)))));
-
 
     if (posonly) // TODO: shorten it!
       C_mon_x(idx(iv + grid->p_half,j,k)) = C_adf_x(idx(iv + grid->p_half,j,k)) * where(
