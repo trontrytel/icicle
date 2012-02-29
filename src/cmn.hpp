@@ -63,14 +63,30 @@ class root { public: virtual ~root() {} };
 #  include <boost/units/systems/si.hpp>
 #  include <boost/units/cmath.hpp> 
 #  include <boost/units/io.hpp>
-using boost::units::quantity; 
+#  include <boost/units/systems/si/codata/physico-chemical_constants.hpp>
 namespace si = boost::units::si;
+using boost::units::quantity; 
 using boost::units::pow;
 
 typedef boost::units::multiply_typeof_helper<
     si::velocity,
     si::length
   >::type velocity_times_length;
+
+typedef boost::units::multiply_typeof_helper<
+    si::velocity,
+    si::pressure
+  >::type velocity_times_pressure;
+
+typedef boost::units::multiply_typeof_helper<
+    si::acceleration,
+    si::length
+  >::type specific_energy;
+
+typedef boost::units::divide_typeof_helper<
+    si::constants::codata::energy_over_temperature_amount,
+    si::constants::codata::mass_over_amount
+  >::type specific_heat_capacity;
 
 // Boost.ptr_vector // TODO: should it be checked at 'configure' step?
 #  include <boost/ptr_container/ptr_vector.hpp>

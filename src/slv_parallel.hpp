@@ -106,11 +106,7 @@ class slv_parallel : public slv<real_t>
 
     // first guess for velocity fields assuming constant momenta
     if (!setup->velocity->is_constant())
-    {
-      slvs[sd]->copy(n, n + 1);
-      slvs[sd]->update_courants(n + 1);
-      slvs[sd]->fill_with_nans(n + 1);
-    }
+      slvs[sd]->copy(n, n + 1); 
 
     // forcing terms for t=0
     if (!allhomo) slvs[sd]->update_forcings(n);
@@ -123,19 +119,34 @@ class slv_parallel : public slv<real_t>
 
       if (t % setup->nout == 0) record(sd, n, t / setup->nout);
 
-      slvs[sd]->fill_with_nans(n + 1); // TODO: fill caches with NaNs?
+      int last_group = -1;
       for (int e = 0; e < setup->eqsys->n_vars(); ++e)
       {
+        // filling halos
+        for (int e = 0; e < setup->eqsys->n_vars(); ++e) 
+          fill_halos(sd, e, n); 
+
+        // updating velocity field
+        int group = setup->eqsys->group(e);
+        if (!setup->velocity->is_constant() && group != last_group)
+        {
+          slvs[sd]->update_courants(group, n + 1, n); // TODO: vector of n-s
+          last_group = group;
+        }
+
         // TODO: dependance on adv->time_leves... (does it work for leapfrog???)
         bool stash = (a->num_steps() > 1 && setup->eqsys->var_dynamic(e))
           || (!setup->velocity->is_constant() && !homo[e]);
 
+        slvs[sd]->fill_with_nans(e, n + 1); // TODO: fill caches with NaNs?
         if (stash) slvs[sd]->stash_cycle(e, n); 
         if (!homo[e]) slvs[sd]->apply_forcings(e, n, real_t(.5) * setup->dt);
         advect(sd, e, n, a);
         if (stash) slvs[sd]->stash_cycle(e, n); 
       } // e - equations
 
+      // for certain equation sets (e.g. isopycnic) computation of forcings
+      // relies on the outcome of advection of ALL variables
       if (!allhomo)
       {
         for (int e = 0; e < setup->eqsys->n_vars(); ++e) 
@@ -144,12 +155,6 @@ class slv_parallel : public slv<real_t>
         for (int e = 0; e < setup->eqsys->n_vars(); ++e)
           if (!homo[e]) slvs[sd]->apply_forcings(e, n + 1, real_t(.5) * setup->dt);
       } 
-
-      for (int e = 0; e < setup->eqsys->n_vars(); ++e) 
-        fill_halos(sd, e, n + 1); 
-
-      if (!setup->velocity->is_constant() && t != (setup->nt - 1)) 
-        slvs[sd]->update_courants(n + 1);
 
       if (!fallback) 
         for (int e = 0; e < setup->eqsys->n_vars(); ++e)

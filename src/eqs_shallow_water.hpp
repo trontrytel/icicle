@@ -53,34 +53,32 @@ class eqs_shallow_water : public eqs<real_t>
     };
   };
 
-  private: quantity<si::length, real_t> h_unit;
-  private: quantity<velocity_times_length, real_t> q_unit;
   private: params par;
   public: eqs_shallow_water(const grd<real_t> &grid)
   {
     if (grid.nz() != 1) error_macro("only 1D (X or Y) and 2D (XY) simullations supported")
 
-    par.g = real_t(10.) * si::metres_per_second_squared, grid.dx(); // TODO: option
+    par.g = real_t(10.) * si::metres_per_second_squared; // TODO: option
     par.h_unit = 1 * si::metres;
     par.q_unit = 1 * si::metres * si::metres / si::seconds;
 
     sys.push_back(new struct eqs<real_t>::gte({
       "qx", "heigh-integrated specific momentum (x)", 
-      this->quan2str(q_unit), 
+      this->quan2str(par.q_unit), 
       vector<int>({1, 0, 0})
     }));
     sys.back().source_terms.push_back(new forcings<1,0>(par, grid.dx())); 
 
     sys.push_back(new struct eqs<real_t>::gte({
       "qy", "heigh-integrated specific momentum (y)", 
-      this->quan2str(q_unit), 
+      this->quan2str(par.q_unit), 
       vector<int>({0, 1, 0})
     }));
     sys.back().source_terms.push_back(new forcings<0,1>(par, grid.dy())); 
 
     sys.push_back(new struct eqs<real_t>::gte({
       "h", "thickness of the fluid layer", 
-      this->quan2str(h_unit), 
+      this->quan2str(par.h_unit), 
       vector<int>({-1, -1, 0})
     }));
     par.idx_h = sys.size() - 1;

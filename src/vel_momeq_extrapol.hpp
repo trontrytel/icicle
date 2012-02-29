@@ -22,7 +22,13 @@ class vel_momeq_extrapol : public vel_momeq<real_t>
     if (grid == NULL) error_macro("vel_momeq_extrapol supports the Arakawa-C grid only")
   }
 
-  public: void populate_courant_fields(int n,
+  // eq. 34b in Smolarkiewicz & Margolin 1998
+  // .25 = .5 * .5 (stems from i +/- 1/2 averaging)
+  private: mtx_expr_4arg_macro(extrapol, nm0_il, nm0_ir, nm1_il, nm1_ir,
+    real_t(.25) * (real_t(3) * (nm0_il + nm0_ir) - (nm1_il + nm1_ir)) 
+  )
+
+  public: void populate_courant_fields(int nm0, int nm1,
     mtx::arr<real_t> *Cx, 
     mtx::arr<real_t> *Cy, 
     mtx::arr<real_t> *Cz, 
@@ -39,22 +45,11 @@ class vel_momeq_extrapol : public vel_momeq<real_t>
       {
         if (Q[xyz] != NULL) 
         {
-          assert(isfinite(sum((*Q[xyz][ n ])(C[xyz]->i - grid->p_half /* sic! */, C[xyz]->j, C[xyz]->k)))); // TODO: use a macro below
-          assert(isfinite(sum((*Q[xyz][ n ])(C[xyz]->i + grid->m_half /* sic! */, C[xyz]->j, C[xyz]->k)))); // TODO: use a macro below
-          assert(isfinite(sum((*Q[xyz][n-1])(C[xyz]->i - grid->p_half /* sic! */, C[xyz]->j, C[xyz]->k)))); // TODO: use a macro below
-          assert(isfinite(sum((*Q[xyz][n-1])(C[xyz]->i + grid->m_half /* sic! */, C[xyz]->j, C[xyz]->k)))); // TODO: use a macro below
-
-          // eq. 34b in Smolarkiewicz & Margolin 1998
-          (*C[xyz])(C[xyz]->ijk) = real_t(.25) * ( // .5 * .5 -> second one from i +/- 1/2 averaging 
-            (
-              (*Q[xyz][ n ])(C[xyz]->i - grid->p_half /* sic! */, C[xyz]->j, C[xyz]->k) + 
-              (*Q[xyz][ n ])(C[xyz]->i + grid->m_half /* sic! */, C[xyz]->j, C[xyz]->k)
-            ) * real_t(3) 
-            - 
-            ( 
-              (*Q[xyz][n-1])(C[xyz]->i - grid->p_half /* sic! */, C[xyz]->j, C[xyz]->k) + 
-              (*Q[xyz][n-1])(C[xyz]->i + grid->m_half /* sic! */, C[xyz]->j, C[xyz]->k)
-            )
+          (*C[xyz])(C[xyz]->ijk) = extrapol(
+            (*Q[xyz][nm0])(C[xyz]->i - grid->p_half /* sic! */, C[xyz]->j, C[xyz]->k),
+            (*Q[xyz][nm0])(C[xyz]->i + grid->m_half /* sic! */, C[xyz]->j, C[xyz]->k),
+            (*Q[xyz][nm1])(C[xyz]->i - grid->p_half /* sic! */, C[xyz]->j, C[xyz]->k),  
+            (*Q[xyz][nm1])(C[xyz]->i + grid->m_half /* sic! */, C[xyz]->j, C[xyz]->k)
           );
         }
       }

@@ -20,9 +20,11 @@ class eqs : root
 
   /// @brief representation of a generalised transport equation 
   /// (e.g. eq. 19 in Smolarkiewicz & Margolin 1998)
+  protected: class groupid {public:int id;public:groupid(int id=0):id(id){}}; // yeah!
   protected: struct gte {
     string name, desc, unit;
-    vector<int> pow_uvw;
+    vector<int> pow_uvw; // TODO: swap place with source_terms
+    groupid group;
     ptr_vector<rhs<real_t>> source_terms;
   };
 
@@ -33,6 +35,11 @@ class eqs : root
   }
 
   public: virtual ptr_vector<gte> &system() = 0;
+
+  public: int group(int e)
+  {
+    return system().at(e).group.id;
+  }
 
   public: int n_vars()
   {
@@ -52,7 +59,7 @@ class eqs : root
   public: bool var_dynamic(int e) // i.e. involved in calculation of velocities
   {
     if (system().at(e).pow_uvw.size() == 0) return false;
-    assert(system().at(e).pow_uvw.size() == system().size());
+    assert(system().at(e).pow_uvw.size() == 3);
     return 
       system().at(e).pow_uvw[0] != 0 ||
       system().at(e).pow_uvw[1] != 0 ||
@@ -65,12 +72,13 @@ class eqs : root
     return system().at(i).name;
   }
  
-  public: vector<pair<int,int>> velmap(int xyz) // equation -> power
+  public: vector<pair<int,int>> velmap(int g, int xyz) // equation -> power
   {
     vector<pair<int, int>> m;
     // the first element is the one which will be multiplied/divided by others
     for (int e = 0; e < system().size(); ++e)
     {
+      if (system().at(e).group.id != g) continue;
       assert(system().at(e).pow_uvw.size() == 3);
       if (system().at(e).pow_uvw[xyz] == 1)
       {
@@ -82,6 +90,7 @@ class eqs : root
     // and then goes the rest
     for (int e = 0; e < system().size(); ++e) 
     {
+      if (system().at(e).group.id != g) continue;
       if (system().at(e).pow_uvw[xyz] != 0 && e != m.begin()->first) 
         m.push_back(pair<int,int>(e, system().at(e).pow_uvw[xyz]));
     }

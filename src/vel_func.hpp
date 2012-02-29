@@ -36,7 +36,7 @@ class vel_func : public vel<real_t>
     : grid(grid)
   { }
 
-  public: void populate_courant_fields(int,
+  public: void populate_courant_fields(int,int,
     mtx::arr<real_t> *Cx, 
     mtx::arr<real_t> *Cy, 
     mtx::arr<real_t> *Cz, 
