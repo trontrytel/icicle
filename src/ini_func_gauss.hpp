@@ -35,7 +35,7 @@ class ini_func_gauss : public ini_func<real_t>
     const quantity<si::length, real_t> &x,
     const quantity<si::length, real_t> &y,
     const quantity<si::length, real_t> &z
-  ) 
+  ) const 
   {
     return A0 + A * exp(
       real_t(-.5) * (

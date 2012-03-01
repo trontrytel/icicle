@@ -23,13 +23,13 @@ inline void opt_eqs_desc(po::options_description &desc)
 }
 
 template <typename real_t>
-eqs<real_t> *opt_eqs(const po::variables_map& vm, const grd<real_t> &grid)
+eqs<real_t> *opt_eqs(const po::variables_map& vm, const grd<real_t> &grid, const ini<real_t> &intcond)
 {
   string initype= vm.count("eqs") ? vm["eqs"].as<string>() : "<unspecified>";
   if (initype == "scalar_advection")
     return new eqs_scalar_advection<real_t>();
   else if (initype == "shallow_water")
-    return new eqs_shallow_water<real_t>(grid);
+    return new eqs_shallow_water<real_t>(grid, intcond);
   else if (initype == "isentropic")
   {
     if (!vm.count("eqs.isentropic.nlev")) error_macro("TODO")

@@ -32,7 +32,7 @@ class ini_func_cone : public ini_func<real_t>
     const quantity<si::length, real_t> &x,
     const quantity<si::length, real_t> &,
     const quantity<si::length, real_t> &z
-  ) 
+  ) const
   {
     // TODO: units
     real_t tmp = pow((x-x0) / si::metres, 2) + pow((z-z0) / si::metres, 2);

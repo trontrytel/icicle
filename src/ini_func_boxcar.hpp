@@ -37,7 +37,7 @@ class ini_func_boxcar : public ini_func<real_t>
     const quantity<si::length, real_t> &x,
     const quantity<si::length, real_t> &y,
     const quantity<si::length, real_t> &z
-  ) 
+  ) const
   {
     if (
       x < ax || x > bx || 

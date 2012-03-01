@@ -29,7 +29,7 @@ class ini_func_pks_wwg_1989 : public ini_func<real_t>
     dx = grid_cartesian->dx();
   }
 
-  private: real_t psi_0(real_t x)
+  private: real_t psi_0(real_t x) const
   {
     if (x >= 8 && x <= 28) return -1.;
     if (x > 28 && x <= 39) return 1;
@@ -40,7 +40,7 @@ class ini_func_pks_wwg_1989 : public ini_func<real_t>
     const quantity<si::length, real_t> &x,
     const quantity<si::length, real_t> &,
     const quantity<si::length, real_t> &
-  ) 
+  ) const
   {
     return 2 + psi_0(x / si::metres) 
       * (1 + .3 * sin(2 * M_PI /  9. * (x/dx))) 

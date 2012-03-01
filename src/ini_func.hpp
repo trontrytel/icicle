@@ -25,13 +25,13 @@ class ini_func : public ini<real_t>
     const quantity<si::length, real_t> &x,
     const quantity<si::length, real_t> &y,
     const quantity<si::length, real_t> &z
-  ) = 0;
+  ) const = 0;
 
   public: virtual void populate_scalar_field(
     const string &varname,
     const mtx::idx &ijk,
     mtx::arr<real_t> &data
-  )
+  ) const
   {
     if (varname != "psi") 
       error_macro("specification of init. cond. with a function works for single-equation systems only")

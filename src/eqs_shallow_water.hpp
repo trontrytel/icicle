@@ -26,12 +26,13 @@ class eqs_shallow_water : public eqs<real_t>
     quantity<si::length, real_t> h_unit;
     quantity<velocity_times_length, real_t> q_unit;
     int idx_h;
+    unique_ptr<mtx::arr<real_t>> dHdx, dHdy;
   };
 
   // TODO: Coriolis (implicit!)
   // TODO: could the numerics be placed somewhere else...
   // TODO: stencil-extent like method?
-  /// @brief Shallow Water Equations: Momentum forcings for the X coordinate
+  /// @brief Shallow Water Equations: Momentum forcings for the X and Y coordinates
   private: 
   template <int di, int dj>
   class forcings : public rhs<real_t>
@@ -41,26 +42,36 @@ class eqs_shallow_water : public eqs<real_t>
     public: forcings(params &par, quantity<si::length, real_t> dxy) : par(&par), dxy(dxy) {} 
     public: void operator()(mtx::arr<real_t> &R, mtx::arr<real_t> **psi, mtx::idx &ijk) 
     { 
-      assert((di == 0 && dj > 0) || (di > 0 && dj == 0));
+      assert((di == 0 && dj == 1) || (di == 1 && dj == 0));
       R(ijk) -= 
-        par->g * par->h_unit * par->h_unit * si::seconds / par->q_unit / (real_t(2 * (di + dj)) * dxy)
-        * ((*psi[par->idx_h])(ijk)) 
-        * (
-          ((*psi[par->idx_h])(ijk.i + di, ijk.j + dj, ijk.k) /* TODO: + H0(i+di,j+dj,k) */)
-          - 
-          ((*psi[par->idx_h])(ijk.i - di, ijk.j - dj, ijk.k) /* TODO: + H0(i-di,j-dj,k) */)
+        par->g * par->h_unit * par->h_unit * si::seconds / par->q_unit / si::metres *
+        ((*psi[par->idx_h])(ijk)) *
+        (
+          (
+            ((*psi[par->idx_h])(ijk.i + di, ijk.j + dj, ijk.k)) - 
+            ((*psi[par->idx_h])(ijk.i - di, ijk.j - dj, ijk.k))
+          ) / (real_t(2) * dxy / si::metres)
+          + di * (*par->dHdx)(mtx::idx_ijk(ijk.i, ijk.j, 0)) 
+          + dj * (*par->dHdy)(mtx::idx_ijk(ijk.i, ijk.j, 0)) 
         );
     };
   };
 
   private: params par;
-  public: eqs_shallow_water(const grd<real_t> &grid)
+  public: eqs_shallow_water(const grd<real_t> &grid, const ini<real_t> &intcond)
   {
     if (grid.nz() != 1) error_macro("only 1D (X or Y) and 2D (XY) simullations supported")
 
     par.g = real_t(10.) * si::metres_per_second_squared; // TODO: option
     par.h_unit = 1 * si::metres;
     par.q_unit = 1 * si::metres * si::metres / si::seconds;
+
+    // reading topography derivatives from the input file
+    mtx::idx_ijk xy(mtx::rng(0, grid.nx()), mtx::rng(0, grid.ny()), 0);
+    par.dHdx.reset(new mtx::arr<real_t>(xy));
+    par.dHdy.reset(new mtx::arr<real_t>(xy));
+    intcond.populate_scalar_field("dHdx", par.dHdx->ijk, *(par.dHdx));
+    intcond.populate_scalar_field("dHdy", par.dHdy->ijk, *(par.dHdy));
 
     sys.push_back(new struct eqs<real_t>::gte({
       "qx", "heigh-integrated specific momentum (x)", 

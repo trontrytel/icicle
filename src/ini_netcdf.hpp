@@ -47,7 +47,7 @@ class ini_netcdf : public ini<real_t>
     const string &varname,
     const mtx::idx &ijk,
     mtx::arr<real_t> &data
-  ) 
+  ) const
   {
     try
     {

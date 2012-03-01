@@ -20,6 +20,6 @@ class ini : root
     const string &varname,
     const mtx::idx &ijk,
     mtx::arr<real_t> &data
-  ) = 0;
+  ) const = 0;
 };
 #endif
