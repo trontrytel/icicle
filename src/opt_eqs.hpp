@@ -33,7 +33,7 @@ eqs<real_t> *opt_eqs(const po::variables_map& vm, const grd<real_t> &grid, const
   else if (initype == "isentropic")
   {
     if (!vm.count("eqs.isentropic.nlev")) error_macro("TODO")
-    return new eqs_isentropic<real_t>(grid,
+    return new eqs_isentropic<real_t>(grid, intcond,
       vm["eqs.isentropic.nlev"].as<int>(),
       real_cast<real_t>(vm, "eqs.isentropic.g") * si::metres_per_second_squared
     );

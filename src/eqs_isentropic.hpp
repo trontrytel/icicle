@@ -86,7 +86,8 @@ class eqs_isentropic : public eqs<real_t>
   };
 
   private: params par;
-  public: eqs_isentropic(const grd<real_t> &grid, int nlev, quantity<si::acceleration, real_t> g)
+  public: eqs_isentropic(const grd<real_t> &grid, const ini<real_t> &intcond,
+    int nlev, quantity<si::acceleration, real_t> g)
   {
     if (grid.nz() != 1) error_macro("TODO") // TODO!
 

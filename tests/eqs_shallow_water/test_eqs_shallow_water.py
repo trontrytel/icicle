@@ -26,10 +26,14 @@ f.createDimension('Z', 1)
 v_h  = f.createVariable('h', 'd', ('X','Y','Z'))
 v_qx = f.createVariable('qx', 'd', ('X','Y','Z'))
 v_qy = f.createVariable('qy', 'd', ('X','Y','Z'))
+v_dHdx = f.createVariable('dHdx', 'd', ('X','Y','Z'))
+v_dHdy = f.createVariable('dHdy', 'd', ('X','Y','Z'))
 
 v_h[:,0,0] = 1. - .1*pow(np.sin(np.arange(nx) * np.pi / nx),80)
 v_qx[:,0,0] = 0.
 v_qy[:,0,0] = 0.
+v_dHdx[:,0,0] = 0.
+v_dHdy[:,0,0] = 0.
 
 f.close()
 
@@ -63,4 +67,4 @@ Y = np.arange(0, f.variables['h'].shape[0]) * nout * dt
 Z = (f.variables['h'])[:,:,0,0]
 X, Y = np.meshgrid(X, Y)
 ax.plot_wireframe(X, Y, Z)
-plt.show()
+plt.savefig('fig1.svg')
