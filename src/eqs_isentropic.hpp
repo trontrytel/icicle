@@ -26,11 +26,10 @@ class eqs_isentropic : public eqs<real_t>
     quantity<si::acceleration, real_t> g;
     quantity<specific_heat_capacity, real_t> cp;
     quantity<si::dimensionless, real_t> Rd_over_cp;
-    quantity<si::pressure, real_t> p_unit, p0;
+    quantity<si::pressure, real_t> p_unit, p0, p_max;
     quantity<velocity_times_pressure, real_t> q_unit;
-    int nlev;
     vector<int> idx_dp;
-    vector<quantity<si::temperature, real_t>> theta;
+    unique_ptr<mtx::arr<real_t>> theta, dHdx, dHdy, M, p;
   };
 
   private: 
@@ -44,67 +43,95 @@ class eqs_isentropic : public eqs<real_t>
       : par(&par), dxy(dxy), lev(lev) {} 
     public: void operator()(mtx::arr<real_t> &R, mtx::arr<real_t> **psi, mtx::idx &ijk) 
     { 
-      assert((di == 0 && dj > 0) || (di > 0 && dj == 0));
+      assert((di == 0 && dj == 1) || (di == 1 && dj == 0));
+      int nlev = par->idx_dp.size();
 
       // we need a local "halo" for the M spatial derivative
       mtx::rng 
         ii(ijk.lbound(mtx::i) - 1, ijk.ubound(mtx::i) + 1), 
         jj(ijk.lbound(mtx::j) - 1, ijk.ubound(mtx::j) + 1),
-        ll(0, par->nlev);
+        ll(0, nlev);
 
-      // allocating temporary arrays TODO: should be initialised only once per simulation
-      mtx::arr<real_t> M(mtx::idx_ijk(ii, jj, ijk.k)); // mid-layer Montgomery potentials 
-      mtx::arr<real_t> p(mtx::idx_ijk(ii, jj, ll)); // pressures at layer boundries
-
-      // calculating pressure (TODO: should be done once per timestep)
-      p(mtx::idx_ijk(ii, jj, ll)) = real_t(0); // TODO: parameter
-      for (int l = par->nlev - 1; l >= 0; --l)
-        p(mtx::idx_ijk(ii, jj, l)) = 
+      // calculating pressure (at the surfaces) TODO: should be done once per timestep)
+      (*par->p)(mtx::idx_ijk(ii, jj, ll)) = par->p_max / si::pascals;
+      for (int l = nlev - 1; l >= 0; --l)
+        (*par->p)(mtx::idx_ijk(ii, jj, l)) = 
           (*psi[par->idx_dp[l]])(mtx::idx_ijk(ii, jj, ijk.k)) 
-          + p(mtx::idx_ijk(ii, jj, l+1));
+          + (*par->p)(mtx::idx_ijk(ii, jj, l+1));
 
       // "specific" Montgomery potential
       quantity<specific_energy, real_t> M_unit = 1 * si::metres_per_second_squared * si::metres;
 
       // calculating Montgomery potential (TODO: should be done incrementaly)
-      M(mtx::idx_ijk(ii,jj,ijk.k)) = real_t(0); // TODO: topography
-      for (int l = 0; l < par->nlev; ++l)
-        M(mtx::idx_ijk(ii,jj,ijk.k)) += par->theta[lev] * par->cp * pow(par->p_unit / par->p0, par->Rd_over_cp) 
-           / M_unit // to make it dimensionless
-           * pow( real_t(.5) * (p(mtx::idx_ijk(ii, jj, l)) + p(mtx::idx_ijk(ii, jj, l+1))), par->Rd_over_cp );
+      (*par->M)(mtx::idx_ijk(ii,jj,ijk.k)) = real_t(0); 
+      for (int l = 0; l < nlev; ++l)
+        (*par->M)(mtx::idx_ijk(ii,jj,ijk.k)) += par->cp * pow(par->p_unit / par->p0, par->Rd_over_cp) 
+           / M_unit * si::kelvins * // to make it dimensionless
+           ((*par->theta)(mtx::idx_ijk(lev)))(0,0,0) * // TODO: nicer syntax needed!
+           pow( 
+             real_t(.5) * ( // pressure within a layer as an average of surface pressures
+               (*par->p)(mtx::idx_ijk(ii, jj, l  )) + 
+               (*par->p)(mtx::idx_ijk(ii, jj, l+1))
+             ), 
+             par->Rd_over_cp 
+           );
 
       // eq. (6) in Szmelter & Smolarkiewicz 2011, Computers & Fluids
       R(ijk) -= 
-        M_unit * par->p_unit / (real_t(2 * (di + dj)) * dxy) // real units of the rhs
-        * si::seconds / par->q_unit // to get a dimensionless forcing
-        * ((*psi[par->idx_dp[lev]])(ijk)) * (
-          (M(ijk.i + di, ijk.j + dj, ijk.k))
-          - 
-          (M(ijk.i - di, ijk.j - dj, ijk.k))
+        M_unit * par->p_unit / si::metres * // real units of the rhs
+        si::seconds / par->q_unit * // inv. unit of R (to get a dimensionless forcing)
+        ((*psi[par->idx_dp[lev]])(ijk)) * 
+        ( 
+          par->g / si::metres_per_second_squared *
+          ( // di = 0 || dj = 0
+            di * (*par->dHdx)(mtx::idx_ijk(ijk.i, ijk.j, 0)) +
+            dj * (*par->dHdy)(mtx::idx_ijk(ijk.i, ijk.j, 0))
+          ) 
+          +
+          ( // spatial derivative
+            ((*par->M)(ijk.i + di, ijk.j + dj, ijk.k)) - 
+            ((*par->M)(ijk.i - di, ijk.j - dj, ijk.k))
+          ) / (real_t(2) * dxy / si::metres)
         );
     };
   };
 
   private: params par;
   public: eqs_isentropic(const grd<real_t> &grid, const ini<real_t> &intcond,
-    int nlev, quantity<si::acceleration, real_t> g)
+    int nlev, 
+    quantity<si::pressure, real_t> p_max,
+    quantity<si::acceleration, real_t> g
+  )
   {
     if (grid.nz() != 1) error_macro("TODO") // TODO!
 
     // constants
     par.g = g;
+    par.p_max = p_max;
     par.p_unit = 1 * si::pascals;
     par.q_unit = 1 * si::pascals * si::metres / si::seconds;
-    par.nlev = nlev;
     par.p0 = 100000 * si::pascals; // definition of potential temperature
     par.cp = 1005 * si::joules / si::kilograms / si::kelvins;
     par.Rd_over_cp = si::constants::codata::R / (0.02896 * si::kilograms / si::moles) / par.cp; // TODO!!!!
 
     // potential temperature profile
-    par.theta.resize(nlev);
-    par.theta[0] = 200 * si::kelvins; // TEMP
-    par.theta[1] = 300 * si::kelvins; // TEMP
-    par.theta[2] = 400 * si::kelvins; // TEMP
+    par.theta.reset(new mtx::arr<real_t>(mtx::idx_ijk(mtx::rng(0,nlev-1))));
+    intcond.populate_scalar_field("theta", par.theta->ijk, *(par.theta));
+
+    // topography
+    mtx::idx_ijk xy(mtx::rng(0, grid.nx()-1), mtx::rng(0, grid.ny()-1), 0); // TODO: not-optimal for MPI (each node has the whole topography!)
+    par.dHdx.reset(new mtx::arr<real_t>(xy));
+    par.dHdy.reset(new mtx::arr<real_t>(xy));
+    intcond.populate_scalar_field("dHdx", par.dHdx->ijk, *(par.dHdx));
+    intcond.populate_scalar_field("dHdy", par.dHdy->ijk, *(par.dHdy));
+
+    // allocating temporary arrays (only once per simulation)
+    mtx::rng // TODO: non-optimal for MPI!
+      ii(0 - 1, grid.nx() + 1),
+      jj(0 - 1, grid.ny() + 1),
+      ll(0, nlev);
+    par.M.reset(new mtx::arr<real_t>(mtx::idx_ijk(ii, jj, 0))); // mid-layer Montgomery potentials
+    par.p.reset(new mtx::arr<real_t>(mtx::idx_ijk(ii, jj, ll))); // pressures at layer boundries       
 
     // dp var indices (to be filled in in the loop below)
     par.idx_dp.resize(nlev);

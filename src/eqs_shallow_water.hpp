@@ -67,7 +67,7 @@ class eqs_shallow_water : public eqs<real_t>
     par.q_unit = 1 * si::metres * si::metres / si::seconds;
 
     // reading topography derivatives from the input file
-    mtx::idx_ijk xy(mtx::rng(0, grid.nx()-1), mtx::rng(0, grid.ny()-1), 0);
+    mtx::idx_ijk xy(mtx::rng(0, grid.nx()-1), mtx::rng(0, grid.ny()-1), 0); // TODO: not-optimal for MPI (each node has the whole topography!)
     par.dHdx.reset(new mtx::arr<real_t>(xy));
     par.dHdy.reset(new mtx::arr<real_t>(xy));
     intcond.populate_scalar_field("dHdx", par.dHdx->ijk, *(par.dHdx));

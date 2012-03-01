@@ -147,8 +147,22 @@ namespace mtx
     idx_ijk(const blitz::Range &i, const blitz::Range &j, const blitz::Range &k) 
       : idx(blitz::TinyVector<blitz::Range, 3>(i,j,k)) 
     { } 
-    idx_ijk(const blitz::Range &i, const blitz::Range &j, const int k) 
+    idx_ijk(const blitz::Range &i, const blitz::Range &j, const int k = 0) 
       : idx(blitz::TinyVector<blitz::Range, 3>(i,j,blitz::Range(k,k))) 
+    { } 
+    idx_ijk(const blitz::Range &i, const int j = 0, const int k = 0) 
+      : idx(blitz::TinyVector<blitz::Range, 3>(
+        i,
+        blitz::Range(j,j),
+        blitz::Range(k,k)
+      )) 
+    { } 
+    idx_ijk(const int i, const int j = 0, const int k = 0) 
+      : idx(blitz::TinyVector<blitz::Range, 3>(
+        blitz::Range(i,i),
+        blitz::Range(j,j),
+        blitz::Range(k,k)
+      )) 
     { } 
   };
 

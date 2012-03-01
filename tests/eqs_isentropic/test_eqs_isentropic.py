@@ -12,32 +12,45 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import axes3d
 from Scientific.IO.NetCDF import NetCDFFile
 
-nx = 100
+nx = 80
 nlev = 3
-dt = .005
-nt = 50
+dt = .01
+nt = 40
 nout = 10
 
 # first: creating a netCDF file with the initial condition
 f = NetCDFFile('ini.nc', 'w')
 
 f.createDimension('X', nx)
-f.createDimension('Y', 1)
-f.createDimension('Z', 1)
+f.createDimension('Y', 1) #TODO: should not be needed
+f.createDimension('Z', 1) # TODO: should not be needed
+f.createDimension('level', nlev)
 
 v_dp = [None]*nlev
 v_qx = [None]*nlev
 v_qy = [None]*nlev
 for lev in range(nlev) :
-  v_dp[lev] = f.createVariable('dp_' + str(lev), 'd', ('X','Y','Z'))
-  v_dp[lev][:,0,0] = 1.
-  v_qx[lev] = f.createVariable('qx_' + str(lev), 'd', ('X','Y','Z'))
-  v_qx[lev][:,0,0] = 0.
-  v_qy[lev] = f.createVariable('qy_' + str(lev), 'd', ('X','Y','Z'))
-  v_qy[lev][:,0,0] = 0.
+  v_dp[lev] = f.createVariable('dp_' + str(lev), 'd', ('X',))
+  v_dp[lev][:] = 1.
+  v_qx[lev] = f.createVariable('qx_' + str(lev), 'd', ('X',))
+  v_qx[lev][:] = 0.
+  v_qy[lev] = f.createVariable('qy_' + str(lev), 'd', ('X',))
+  v_qy[lev][:] = 0.
 
-v_dp[0][:,0,0] = 1 + .33*pow(np.sin(np.arange(nx) * np.pi / nx),80)
-v_dp[1][:,0,0] = 1 - .33*pow(np.sin(np.arange(nx) * np.pi / nx),80)
+# initial perturbation at the boudry of first and second layer
+v_dp[0][:] = 1 + .33*pow(np.sin(np.arange(nx) * np.pi / nx),80)
+v_dp[1][:] = 1 - .33*pow(np.sin(np.arange(nx) * np.pi / nx),80)
+
+# potential temperatures of the layers (characteristic values)
+v_theta = f.createVariable('theta', 'd', ('level',))
+for lev in range(nlev) :
+  v_theta[lev] = 100 * (1 + lev)
+
+# flat topography
+v_dHdx = f.createVariable('dHdx', 'd', ('X',))
+v_dHdy = f.createVariable('dHdy', 'd', ('X',))
+v_dHdx[:] = 0.
+v_dHdy[:] = 0.
 
 f.close()
 
@@ -80,4 +93,5 @@ for lev in range(nlev-1,-1,-1) :
   Z += (f.variables['dp_' + str(lev)])[:,:,0,0]
   ax.plot_wireframe(X, Y, -Z)
 
-plt.show()
+ax.view_init(13, -100) 
+plt.savefig('fig1.svg')

@@ -217,9 +217,19 @@ class slv_serial : public slv<real_t>
           {
             {
               assert(isfinite(sum((psi[var][nm0])(psi[var][nm0].ijk))));
-              (*(Q[xyz][nm0]))(Q[xyz][nm0]->ijk) /= (psi[var][nm0])(psi[var][nm0].ijk); // TODO
               assert(isfinite(sum((psi[var][nm1])(psi[var][nm1].ijk))));
-              (*(Q[xyz][nm1]))(Q[xyz][nm1]->ijk) /= (psi[var][nm1])(psi[var][nm1].ijk); // TODO: two or more, use a for
+
+              (*(Q[xyz][nm0]))(Q[xyz][nm0]->ijk) = where(
+                (psi[var][nm0])(psi[var][nm0].ijk) != 0,
+                (*(Q[xyz][nm0]))(Q[xyz][nm0]->ijk) / (psi[var][nm0])(psi[var][nm0].ijk),
+                real_t(0)
+              ); // TODO
+              (*(Q[xyz][nm1]))(Q[xyz][nm1]->ijk) = where(
+                (psi[var][nm1])(psi[var][nm1].ijk) != 0,
+                (*(Q[xyz][nm1]))(Q[xyz][nm1]->ijk) / (psi[var][nm1])(psi[var][nm1].ijk),
+                real_t(0)
+              ); // TODO
+              //(*(Q[xyz][nm1]))(Q[xyz][nm1]->ijk) /= (psi[var][nm1])(psi[var][nm1].ijk); // TODO: two or more, use a for
             }
           }
           else assert(false);
