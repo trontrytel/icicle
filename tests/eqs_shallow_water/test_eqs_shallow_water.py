@@ -1,5 +1,6 @@
 ## @file
 #  @author Sylwester Arabas <slayoo@igf.fuw.edu.pl>
+#  @author Anna Jaruga <ajaruga@igf.fuw.edu.pl>
 #  @copyright University of Warsaw
 #  @date January 2012 - February 2012
 #  @section LICENSE
@@ -20,20 +21,20 @@ nout = 10
 f = NetCDFFile('ini.nc', 'w')
 
 f.createDimension('X', nx)
-f.createDimension('Y', 1)
-f.createDimension('Z', 1)
+f.createDimension('Y', 1) # TODO: should not be needed
+f.createDimension('Z', 1) # TODO: should not be needed
 
-v_h  = f.createVariable('h', 'd', ('X','Y','Z'))
-v_qx = f.createVariable('qx', 'd', ('X','Y','Z'))
-v_qy = f.createVariable('qy', 'd', ('X','Y','Z'))
-v_dHdx = f.createVariable('dHdx', 'd', ('X','Y','Z'))
-v_dHdy = f.createVariable('dHdy', 'd', ('X','Y','Z'))
+v_h  = f.createVariable('h', 'd', ('X',))
+v_qx = f.createVariable('qx', 'd', ('X',))
+v_qy = f.createVariable('qy', 'd', ('X',)) # TODO: should not be needed
+v_dHdx = f.createVariable('dHdx', 'd', ('X',))
+v_dHdy = f.createVariable('dHdy', 'd', ('X',)) # TODO: should not be needed
 
-v_h[:,0,0] = 1. - .1*pow(np.sin(np.arange(nx) * np.pi / nx),80)
-v_qx[:,0,0] = 0.
-v_qy[:,0,0] = 0.
-v_dHdx[:,0,0] = 0.
-v_dHdy[:,0,0] = 0.
+v_h[:] = 1. - .1*pow(np.sin(np.arange(nx) * np.pi / nx),80)
+v_qx[:] = 0.
+v_qy[:] = 0.
+v_dHdx[:] = 0.
+v_dHdy[:] = 0.
 
 f.close()
 
