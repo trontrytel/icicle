@@ -29,7 +29,7 @@ class eqs_isentropic : public eqs<real_t>
     quantity<si::pressure, real_t> p_unit, p0, p_max;
     quantity<velocity_times_pressure, real_t> q_unit;
     vector<int> idx_dp;
-    unique_ptr<mtx::arr<real_t>> theta, dHdx, dHdy, M, p;
+    unique_ptr<mtx::arr<real_t>> theta, dHdx, dHdy, M, p; // TODO: M and p need halo_filling - should be handled somehow by the solver!
   };
 
   private: 
@@ -52,29 +52,33 @@ class eqs_isentropic : public eqs<real_t>
         jj(ijk.lbound(mtx::j) - 1, ijk.ubound(mtx::j) + 1),
         ll(0, nlev);
 
-      // calculating pressure (at the surfaces) TODO: should be done once per timestep)
-      (*par->p)(mtx::idx_ijk(ii, jj, ll)) = par->p_max / si::pascals;
-      for (int l = nlev - 1; l >= 0; --l)
-        (*par->p)(mtx::idx_ijk(ii, jj, l)) = 
-          (*psi[par->idx_dp[l]])(mtx::idx_ijk(ii, jj, ijk.k)) 
-          + (*par->p)(mtx::idx_ijk(ii, jj, l+1));
+      // calculating pressures at the surfaces (done once per timestep) // TODO: need fill_halos!!!
+      if (lev == 0 && di == 1) // TODO: will not work in parallel!!!
+      {
+cerr << "calculating pressures!" << endl;
+        (*par->p)(mtx::idx_ijk(ii, jj, ll)) = par->p_max / si::pascals;
+        for (int l = nlev - 1; l >= 0; --l)
+          (*par->p)(mtx::idx_ijk(ii, jj, l)) = 
+            (*psi[par->idx_dp[l]])(mtx::idx_ijk(ii, jj, ijk.k)) 
+            + (*par->p)(mtx::idx_ijk(ii, jj, l+1));
+      }
 
       // "specific" Montgomery potential
       quantity<specific_energy, real_t> M_unit = 1 * si::metres_per_second_squared * si::metres;
 
       // calculating Montgomery potential (TODO: should be done incrementaly)
-      (*par->M)(mtx::idx_ijk(ii,jj,ijk.k)) = real_t(0); 
-      for (int l = 0; l < nlev; ++l)
-        (*par->M)(mtx::idx_ijk(ii,jj,ijk.k)) += par->cp * pow(par->p_unit / par->p0, par->Rd_over_cp) 
-           / M_unit * si::kelvins * // to make it dimensionless
-           ((*par->theta)(mtx::idx_ijk(lev)))(0,0,0) * // TODO: nicer syntax needed!
-           pow( 
-             real_t(.5) * ( // pressure within a layer as an average of surface pressures
-               (*par->p)(mtx::idx_ijk(ii, jj, l  )) + 
-               (*par->p)(mtx::idx_ijk(ii, jj, l+1))
-             ), 
-             par->Rd_over_cp 
-           );
+      if (lev == 0 && di == 1) (*par->M)(mtx::idx_ijk(ii,jj,ijk.k)) = real_t(0); // TODO: parallel!!!
+
+      (*par->M)(mtx::idx_ijk(ii,jj,ijk.k)) += par->cp * pow(par->p_unit / par->p0, par->Rd_over_cp) 
+         / M_unit * si::kelvins * // to make it dimensionless
+         ((*par->theta)(mtx::idx_ijk(lev)))(0,0,0) * // TODO: nicer syntax needed!
+         pow( 
+           real_t(.5) * ( // pressure within a layer as an average of surface pressures
+             (*par->p)(mtx::idx_ijk(ii, jj, lev  )) + 
+             (*par->p)(mtx::idx_ijk(ii, jj, lev+1))
+           ), 
+           par->Rd_over_cp 
+         );
 
       // eq. (6) in Szmelter & Smolarkiewicz 2011, Computers & Fluids
       R(ijk) -= 
