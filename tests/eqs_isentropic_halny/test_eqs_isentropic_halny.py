@@ -26,7 +26,7 @@ uscal = 10.  # 10. # [m/s]
 fct = 1
 iord = 2
 
-nt = 40 # 8000
+nt = 200 # 8000
 nout = nt # 2000
 
 # other parameters 
@@ -81,7 +81,7 @@ for lev in range(nz) :
 # potential temperatures of the layers (characteristic values)
 v_dtheta = f.createVariable('dtheta', 'd', ('level',))
 for lev in range(nz) :
-  v_dtheta[lev] = theta((lev) * dz) - theta((lev-1) * dz) 
+  v_dtheta[lev] = theta((lev+1) * dz) - theta((lev) * dz) 
 
 # topography (temporarily in pressure coordinates)
 topo_z = mount_amp * witch(dx * (np.arange(nx+2, dtype='float') - .5 * (nx+1)), mount_ro1)
