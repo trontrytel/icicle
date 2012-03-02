@@ -9,23 +9,25 @@
 import numpy as np                       # arrays
 import subprocess                        # shell calls
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 from Scientific.IO.NetCDF import NetCDFFile
 
 # simulation parameteters (from isopc_yale.::SHAWAT2 by P.K.Smolarkiewicz)
-nx = 81 # 160
-nz = 10 # 60
-dx = 3e3
-dz = 600. #300.
-dt = 3. # 6.
-bv = .012 # [1/s] 
+nx = 161     # 161  # [1]
+nz = 10      # 61   # [1]
+dx = 3e3     # 3e3  # [m]
+dz = 600.    # 300. # [m]
+dt = 2.      # 6.   # [s]
+bv = .012    # .012 # [1/s] 
 mount_amp = 1.6e3
 mount_ro1 = 20e3
-uscal = 10 # m/s
+uscal = 10.  # 10. # [m/s]
 
-nt = 600
-nout = 600
-#nt = 8000
-#nout = 2000
+fct = 1
+iord = 2
+
+nt = 40 # 8000
+nout = nt # 2000
 
 # other parameters 
 p_surf = 101300.
@@ -77,9 +79,9 @@ for lev in range(nz) :
   v_qy[lev][:] = 0. # TODO: should not be needed
 
 # potential temperatures of the layers (characteristic values)
-v_theta = f.createVariable('theta', 'd', ('level',))
+v_dtheta = f.createVariable('dtheta', 'd', ('level',))
 for lev in range(nz) :
-  v_theta[lev] = theta((lev + .5) * dz)
+  v_dtheta[lev] = theta((lev) * dz) - theta((lev-1) * dz) 
 
 # topography (temporarily in pressure coordinates)
 topo_z = mount_amp * witch(dx * (np.arange(nx+2, dtype='float') - .5 * (nx+1)), mount_ro1)
@@ -119,8 +121,8 @@ cmd = (
   '--grd.dx',str(dx),
   '--grd.nx',str(nx),
   '--adv','mpdata',
-    '--adv.mpdata.fct','1',
-    '--adv.mpdata.iord','2',
+    '--adv.mpdata.fct',str(fct),
+    '--adv.mpdata.iord',str(iord),
   '--vel','momeq_extrapol',
   '--nt',str(nt),'--dt',str(dt),'--nout',str(nout),
   '--out','netcdf','--out.netcdf.file','out.nc',
@@ -135,17 +137,17 @@ ax = fig.add_subplot(111)
 ax.set_xlabel('X [m]')
 ax.set_ylabel('-ln(p/p_surf) [1]')
 
-for t in range(nt/nout+1):
-  X = f.variables['X']
+X = f.variables['X']
+ax.fill(X, -np.log(topo_p/p_surf), color='#BBBBBB', linewidth=0)
 
+for t in range(nt/nout+1):
   # top isentrope
   P = np.zeros(nx) + pres(nz * dz)
-  ax.plot(X, -np.log(P/p_surf))
+  ax.plot(X, -np.log(P/p_surf), color='purple')
 
   # other isentropes
   for lev in range(nz-1,-1,-1) :
     P += (f.variables['dp_' + str(lev)])[t,:,0,0]
-    ax.plot(X, -np.log(P/p_surf))
+    ax.plot(X, -np.log(P/p_surf), color=cm.hot(lev/10.,1))
 
-ax.plot(X, -np.log(topo_p/p_surf))
 plt.savefig('fig1.svg')

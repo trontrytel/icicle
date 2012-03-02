@@ -29,7 +29,7 @@ class eqs_isentropic : public eqs<real_t>
     quantity<si::pressure, real_t> p_unit, p0, p_max;
     quantity<velocity_times_pressure, real_t> q_unit;
     vector<int> idx_dp;
-    unique_ptr<mtx::arr<real_t>> theta, dHdx, dHdy, M, p; // TODO: M and p need halo_filling - should be handled somehow by the solver!
+    unique_ptr<mtx::arr<real_t>> dtheta, dHdx, dHdy, M, p; // TODO: M and p need halo_filling - should be handled somehow by the solver!
   };
 
   private: 
@@ -72,15 +72,16 @@ cerr << "calculating pressures!" << endl;
         (*par->M)(mtx::idx_ijk(ii,jj,ijk.k)) = real_t(0); // TODO: parallel!!!
       if (calc_M) 
       {
+cerr << "calculating Montgomery at lev=" << lev << endl;
+        // this assumes we go from the bottom up to the top layer
+        // (the order of equations in the ctor below)
         (*par->M)(mtx::idx_ijk(ii,jj,ijk.k)) += par->cp * pow(par->p_unit / par->p0, par->Rd_over_cp) 
            / M_unit * si::kelvins * // to make it dimensionless
-           ((*par->theta)(mtx::idx_ijk(lev)))(0,0,0) * // TODO: nicer syntax needed!
-           pow( 
-             real_t(.5) * ( // pressure within a layer as an average of surface pressures
-               (*par->p)(mtx::idx_ijk(ii, jj, lev  )) + 
-               (*par->p)(mtx::idx_ijk(ii, jj, lev+1))
-             ), 
-             par->Rd_over_cp 
+           ((*par->dtheta)(mtx::idx_ijk(lev)))(0,0,0) * // TODO: nicer syntax needed!
+           real_t(.5) * // Exner function within a layer as an average of surface Ex-fun values
+           ( 
+             pow((*par->p)(mtx::idx_ijk(ii, jj, lev  )), par->Rd_over_cp) +
+             pow((*par->p)(mtx::idx_ijk(ii, jj, lev+1)), par->Rd_over_cp)
            );
       }
 
@@ -123,8 +124,8 @@ cerr << "calculating pressures!" << endl;
     par.Rd_over_cp = si::constants::codata::R / (0.02896 * si::kilograms / si::moles) / par.cp; // TODO!!!!
 
     // potential temperature profile
-    par.theta.reset(new mtx::arr<real_t>(mtx::idx_ijk(mtx::rng(0,nlev-1))));
-    intcond.populate_scalar_field("theta", par.theta->ijk, *(par.theta));
+    par.dtheta.reset(new mtx::arr<real_t>(mtx::idx_ijk(mtx::rng(0,nlev-1))));
+    intcond.populate_scalar_field("dtheta", par.dtheta->ijk, *(par.dtheta));
 
     // topography
     mtx::idx_ijk xy(mtx::rng(0, grid.nx()-1), mtx::rng(0, grid.ny()-1), 0); // TODO: not-optimal for MPI (each node has the whole topography!)
@@ -137,7 +138,7 @@ cerr << "calculating pressures!" << endl;
     mtx::rng // TODO: non-optimal for MPI!
       ii(0 - 1, grid.nx() + 1),
       jj(0 - 1, grid.ny() + 1),
-      ll(0, nlev);
+      ll(0, nlev); // this means nlev+1 surfaces
     par.M.reset(new mtx::arr<real_t>(mtx::idx_ijk(ii, jj, 0))); // mid-layer Montgomery potentials
     par.p.reset(new mtx::arr<real_t>(mtx::idx_ijk(ii, jj, ll))); // pressures at layer boundries       
 

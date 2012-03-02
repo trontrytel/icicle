@@ -114,6 +114,8 @@ class slv_parallel : public slv<real_t>
     // time stepping
     for (unsigned long t = 0; t < setup->nt; ++t) 
     {   
+      if (sd == 0) cerr << "t/dt=" << t << endl;
+
       adv<real_t> *a;
       bool fallback = this->choose_an(&a, &n, t, advsch, fllbck);
 

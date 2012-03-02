@@ -266,8 +266,8 @@ class slv_serial : public slv<real_t>
 
     // TODO: sanity checks for Courant limits
     cerr << "Courant x: " << min(C[0]) << " ... " << max(C[0]) << endl;
-    cerr << "Courant y: " << min(C[1]) << " ... " << max(C[1]) << endl;
-    cerr << "Courant z: " << min(C[2]) << " ... " << max(C[2]) << endl;
+    //cerr << "Courant y: " << min(C[1]) << " ... " << max(C[1]) << endl;
+    //cerr << "Courant z: " << min(C[2]) << " ... " << max(C[2]) << endl;
   }
 
   /// \param n the time level to use for updating the forcings
