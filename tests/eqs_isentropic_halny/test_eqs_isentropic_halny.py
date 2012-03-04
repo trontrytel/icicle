@@ -13,11 +13,11 @@ import matplotlib.cm as cm
 from Scientific.IO.NetCDF import NetCDFFile
 
 # simulation parameteters (from isopc_yale.::SHAWAT2 by P.K.Smolarkiewicz)
-nx = 161     # 161  # [1]
-nz = 10      # 61   # [1]
+nx = 100      # 161  # [1]
+nz = 50      # 61   # [1]
 dx = 3e3     # 3e3  # [m]
 dz = 600.    # 300. # [m]
-dt = 2.      # 6.   # [s]
+dt = 5.      # 6.   # [s]
 bv = .012    # .012 # [1/s] 
 mount_amp = 1.6e3
 mount_ro1 = 20e3
@@ -26,7 +26,7 @@ uscal = 10.  # 10. # [m/s]
 fct = 1
 iord = 2
 
-nt = 200 # 8000
+nt = 40 # 8000
 nout = nt # 2000
 
 # other parameters 
@@ -53,7 +53,7 @@ def theta(z, st, th_c):
   return th_c * np.exp(st * z)
 
 # height of the bottom of a layer
-def z(th_up, th_dn, st, z_dn):
+def alt(th_up, th_dn, st, z_dn):
   return z_dn + 1./st * np.log(th_up / th_dn)
 
 # pressure profile for hydrostatic constant-stability layer
@@ -72,7 +72,7 @@ def pres(z, st, th_c, p_c):
 #       g       p0^Rd/cp        / 1     1   \
 # st = --- ------------------- | --- - ----  |
 #      cp  p^Rd/cp - p_c^Rd/cp  \ th   th_c /
-def st(p_dn, p_up, th_dn, th_up):
+def sta(p_dn, p_up, th_dn, th_up):
   return g / cp * (1/th_up - 1/th_dn) * p0**(Rdcp) / (p_up**Rdcp - p_dn**Rdcp)
 
 # first: creating a netCDF file with the initial condition
@@ -94,21 +94,23 @@ for lev in range(nz) :
 
 # potential temperatures of the layers (characteristic values)
 v_dtheta = f.createVariable('dtheta', 'd', ('level',))
+dtheta = np.zeros(nz, dtype='float')
 for lev in range(nz) :
-  v_dtheta[lev] = theta((lev+1) * dz, st0, th_surf) - theta((lev) * dz, st0, th_surf) 
+  dtheta[lev] = theta((lev+1) * dz, st0, th_surf) - theta((lev) * dz, st0, th_surf) 
+  v_dtheta[lev] = dtheta[lev]
 
-# topography (in altitude and in pressure coordinates)
+# topography and its spatial derivatives of the topography
 topo_z = mount_amp * witch(dx * (np.arange(nx+2, dtype='float') - .5 * (nx+1)), mount_ro1)
-topo_p = pres(topo_z[1:-1], st0, th_surf, p_surf)
-
-# spatial derivatives of the topography
 v_dHdx = f.createVariable('dHdx', 'd', ('X',))
 v_dHdy = f.createVariable('dHdy', 'd', ('X',)) # should not be needed
 v_dHdx[:] = (topo_z[2:] - topo_z[0:-2]) / (2. * dx)
 v_dHdy[:] = 0. # TODO: should not be needed
+topo_z = topo_z[1:-1]
 
 # initilising pressure intervals with topography adjustment
-p_up = np.zeros(nx, dtype='float') + pres(nz * dz, st0, th_surf, p_surf)
+topo_p = pres(topo_z, st0, th_surf, p_surf)
+p_top = pres(nz * dz, st0, th_surf, p_surf)
+p_up = np.zeros(nx, dtype='float') + p_top
 p_dn = np.zeros(nx, dtype='float')
 for lev in range(nz-1,-1,-1) :
   for i in range(nx):
@@ -154,34 +156,31 @@ ax.set_ylabel('h [m]')
 X = f.variables['X']
 ax.fill(X, topo_z, color='#BBBBBB', linewidth=0)
 
-p_top = pres(z_top, st0, th_surf, p_surf)
 for t in range(nt/nout+1):
   # top isentrope (invariable)
-  ax.plot(X, nz * dz, color='purple')
+  #ax.plot(X, nz * dz, color='purple')
 
   # from top to bottom - calculating pressures
-  p_up = np.zeros(nx) + p_top
-  p_dn = np.zeros(nx)
+  p_dn = np.zeros(nx) + p_top
   for lev in range(nz-1,-1,-1) :
-    dp = (f.variables['dp_' + str(lev)])[t,:,0,0]
-    p_dn[:] = p_up[:] + dp
-    p_up = p_dn
+    p_dn[:] += (f.variables['dp_' + str(lev)])[t,:,0,0]
 
   # from bottom to top - calculating heights
   th_dn = th_surf
   z_dn = topo_z
+  z_up = np.zeros(nx)
   for lev in range(nz) :
     # calculating isentrope height
-    dth = (f.variables['dtheta'])[lev]
-    th_up = th_dn + dth
-    st = st(p_dn, p_up, th_dn, th_up)
-    z_up = z_up(th_up, th_dn, st, z_dn)
+    dp = (f.variables['dp_' + str(lev)])[t,:,0,0]
+    th_up = th_dn + dtheta[lev]
+    st = sta(p_dn, p_dn - dp, th_dn, th_up)
+    z_up = alt(th_up, th_dn, st, z_dn)
     # plotting
-    ax.plot(X, z_up, color=cm.hot(lev/10.,1))
+    ax.plot(X, z_dn, color=cm.gist_heat((1.*lev)/nz,1))
+    ax.plot(X, z_up, color=cm.gist_heat((1.*lev)/nz,1))
     # storing values for the next iteration
     z_dn = z_up
     th_dn = th_up
-    dp = (f.variables['dp_' + str(lev)])[t,:,0,0]
     p_dn -= dp
 
 plt.savefig('fig1.svg')
