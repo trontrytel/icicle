@@ -29,7 +29,6 @@ class eqs : root
   };
 
   public: bool is_homogeneous(int e) {
-    //for (int e = 0; e < system().size(); ++e) 
     if (system().at(e).source_terms.size() > 0) return false;
     return true;
   }
@@ -71,30 +70,58 @@ class eqs : root
     // TODO try/catch if i within range
     return system().at(i).name;
   }
- 
-  public: vector<pair<int,int>> velmap(int g, int xyz) // equation -> power
+
+  //       group   xyz   eq-pow      eq   pow       
+  private: vector<vector<vector<pair<int, int>>>> vm;
+  private: void init_maps()
   {
-    vector<pair<int, int>> m;
-    // the first element is the one which will be multiplied/divided by others
-    for (int e = 0; e < system().size(); ++e)
+    // mem allocation (vm) and group-related sanity checks
     {
-      if (system().at(e).group.id != g) continue;
-      assert(system().at(e).pow_uvw.size() == 3);
-      if (system().at(e).pow_uvw[xyz] == 1)
+      int n_groups = 1, group_last = -1;
+      for (int e = 0; e < system().size(); ++e)
       {
-        assert(m.size() == 0); // TODO: document this limitation...
-        m.push_back(pair<int,int>(e, 1));
+        int group_curr = system().at(e).group.id;
+        if (group_last != group_curr) 
+        {
+          assert(group_last + 1 == group_curr);
+          n_groups++;
+        }
+        group_last = group_curr;
       }
+      vm.resize(n_groups);
     }
 
-    // and then goes the rest
-    for (int e = 0; e < system().size(); ++e) 
+    for (int g = 0; g < vm.size(); ++g)
     {
-      if (system().at(e).group.id != g) continue;
-      if (system().at(e).pow_uvw[xyz] != 0 && e != m.begin()->first) 
-        m.push_back(pair<int,int>(e, system().at(e).pow_uvw[xyz]));
+      vm[g].resize(3);
+      for (int xyz = 0; xyz < 3; ++xyz)
+      {
+        // the first element is the one which will be multiplied/divided by others
+        for (int e = 0; e < system().size(); ++e)
+        {
+          if (system().at(e).group.id != g) continue;
+          assert(system().at(e).pow_uvw.size() == 3);
+          if (system().at(e).pow_uvw[xyz] == 1)
+          {
+            assert(vm[g][xyz].size() == 0 && "TODO: some relevant message..."); // TODO: document this limitation...
+            vm[g][xyz].push_back(pair<int,int>(e, 1));
+          }
+        }
+
+        // and then goes the rest
+        for (int e = 0; e < system().size(); ++e) 
+        {
+          if (system().at(e).group.id != g) continue;
+          if (system().at(e).pow_uvw[xyz] != 0 && e != vm[g][xyz].begin()->first) 
+            vm[g][xyz].push_back(pair<int,int>(e, system().at(e).pow_uvw[xyz]));
+        }
+      }
     }
-    return m;
+  }
+  public: vector<pair<int,int>> &velmap(int g, int xyz) // equation -> power
+  {
+    if (vm.size() == 0) init_maps();
+    return vm[g][xyz];
   }
  
   public: string var_desc(int i)

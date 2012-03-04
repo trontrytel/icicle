@@ -117,6 +117,12 @@ class slv_serial : public slv<real_t>
         &C[0], &C[1], &C[2], setup->dt, NULL, NULL, NULL 
       );
     }
+    //else 
+    //{
+    //  // filling C with zeros
+    //  for (int xyz = 0; xyz < 3; ++xyz)
+    //    C[xyz](C[xyz].ijk) = real_t(0);
+    //}
   }
 
   public: void copy(int from, int to)
@@ -186,33 +192,28 @@ class slv_serial : public slv<real_t>
   {
     assert(!setup->velocity->is_constant());
 
-    // TODO: this is done every time step and should be done only once!!!
     mtx::arr<real_t> **Q[] = {NULL, NULL, NULL};
-    vector<vector<pair<int,int>>> vm(3);
+    for (int xyz = 0; xyz < 3; ++xyz)
     {
-      // TODO: loop
-      vm[0] = vector<pair<int,int>>(setup->eqsys->velmap(g, 0));
-      vm[1] = vector<pair<int,int>>(setup->eqsys->velmap(g, 1)); 
-      vm[2] = vector<pair<int,int>>(setup->eqsys->velmap(g, 2));
-      for (int xyz = 0; xyz < 3; ++xyz)
-      {
-        if (vm[xyz].size() > 0) // if we have any source terms
-        { 
-          Q[xyz] = psi[vm[xyz].begin()->first].c_array(); 
-          assert(vm[xyz].begin()->second == 1); // TODO: something more universal would be better
-        }
-        else C[xyz](C[xyz].ijk) = real_t(0);
+      if (setup->eqsys->velmap(g, xyz).size() > 0) // if we have any source terms
+      { 
+        Q[xyz] = psi[setup->eqsys->velmap(g, xyz).begin()->first].c_array(); 
+        // TODO: something more universal would be better
+        assert(setup->eqsys->velmap(g, xyz).begin()->second == 1); 
       }
     }
 
     // 
     for (int xyz = 0; xyz < 3; ++xyz) 
     {
-      if (vm[xyz].size() > 1) 
+      if (setup->eqsys->velmap(g, xyz).size() > 1) 
       {
-        for (int i = 1; i < vm[xyz].size(); ++i) 
+        assert(Q[xyz] != NULL);
+        for (int i = 1; i < setup->eqsys->velmap(g, xyz).size(); ++i) 
         {
-          int var = vm[xyz][i].first, pow = vm[xyz][i].second;
+          int 
+            var = setup->eqsys->velmap(g, xyz)[i].first, 
+            pow = setup->eqsys->velmap(g, xyz)[i].second;
           if (pow == -1) 
           {
             {
@@ -245,11 +246,13 @@ class slv_serial : public slv<real_t>
     // 
     for (int xyz = 0; xyz < 3; ++xyz) 
     {
-      if (vm[xyz].size() > 1) 
+      if (setup->eqsys->velmap(g, xyz).size() > 1) 
       {
-        for (int i = 1; i < vm[xyz].size(); ++i) 
+        for (int i = 1; i < setup->eqsys->velmap(g, xyz).size(); ++i) 
         {
-          int var = vm[xyz][i].first, pow = vm[xyz][i].second;
+          int 
+            var = setup->eqsys->velmap(g, xyz)[i].first, 
+            pow = setup->eqsys->velmap(g, xyz)[i].second;
           if (pow == -1) 
           {
             {
@@ -265,7 +268,9 @@ class slv_serial : public slv<real_t>
     }
 
     // TODO: sanity checks for Courant limits
-    cerr << "Courant x: " << min(C[0]) << " ... " << max(C[0]) << endl;
+    cerr << "Courant x: ";
+    cerr << min(C[0]) << " ... ";
+    cerr << max(C[0]) << endl;
     //cerr << "Courant y: " << min(C[1]) << " ... " << max(C[1]) << endl;
     //cerr << "Courant z: " << min(C[2]) << " ... " << max(C[2]) << endl;
   }
