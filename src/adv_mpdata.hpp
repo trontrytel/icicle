@@ -289,11 +289,10 @@ class adv_mpdata : public adv_upstream<real_t>
     }
   }
 
-    /// 
-    /// \f$ \psi^{n+1}_{i} = \psi^{*}_{i} -\sum\limits_{I} \left[ F^{I}( \psi^{*}_{i}, \psi^{*}_{i+1}, \tilde{U}^{I}_{i+1/2} )
-    /// - F^{I}( \psi^{*}_{i-1}, \psi^{*}_{i}, \tilde{U}^{I}_{i-1/2} ) \right] \f$ \n
-    /// where \f$ I \f$ denotes the sum over all dimensions and \f$ \tilde{U} \f$ is multidimensional antidiffusive velocity \n
-    /// eq. (12) in Smolarkiewicz 1984 (J. Comp. Phys.,54,352-362) 
+  /// \f$ \psi^{n+1}_{i} = \psi^{*}_{i} -\sum\limits_{I} \left[ F^{I}( \psi^{*}_{i}, \psi^{*}_{i+1}, \tilde{U}^{I}_{i+1/2} )
+  /// - F^{I}( \psi^{*}_{i-1}, \psi^{*}_{i}, \tilde{U}^{I}_{i-1/2} ) \right] \f$ \n
+  /// where \f$ I \f$ denotes the sum over all dimensions and \f$ \tilde{U} \f$ is multidimensional antidiffusive velocity \n
+  /// eq. (12) in Smolarkiewicz 1984 (J. Comp. Phys.,54,352-362) 
   public: void op3D(
     mtx::arr<real_t> *psi[], mtx::arr<real_t> *[], mtx::arr<real_t> *tmp_v[],
     const mtx::idx &ijk,

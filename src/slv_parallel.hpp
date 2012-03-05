@@ -129,11 +129,13 @@ class slv_parallel : public slv<real_t>
           fill_halos(sd, e, n); 
 
         // updating velocity field
-        int group = setup->eqsys->group(e);
-        if (!setup->velocity->is_constant() && group != last_group)
         {
-          slvs[sd]->update_courants(group, n + 1, n); // TODO: vector of n-s
-          last_group = group;
+          int group = setup->eqsys->group(e);
+          if (!setup->velocity->is_constant() && group != last_group)
+          {
+            slvs[sd]->update_courants(group, n + 1, n); // TODO: vector of n-s
+            last_group = group;
+          }
         }
 
         // TODO: dependance on adv->time_leves... (does it work for leapfrog???)

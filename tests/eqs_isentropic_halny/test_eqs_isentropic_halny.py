@@ -14,35 +14,33 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from Scientific.IO.NetCDF import NetCDFFile
 
-# simulation parameteters (from isopc_yale.::SHAWAT2 by P.K.Smolarkiewicz)
-nx = 161     # 161  # [1]
-nz = 61      # 61   # [1]
+############################################################################
+# simulation parameteters (from isopc_yale.::SHAWAT2 by P.K.Smolarkiewicz) #
+############################################################################
+nx = 100      # 161  # [1]
+nz = 50      # 61   # [1]
 dx = 3e3     # 3e3  # [m]
-dz = 300.    # 300. # [m]
-dt = 6.      # 6.   # [s]
-bv = .012    # .012 # [1/s] 
+dz = 600.    # 300. # [m]
+dt = 5.      # 6.   # [s]
+bv = .012    # .012 # [1/s] (Brunt-Vaisala frequency)
 mount_amp = 1.6e3
 mount_ro1 = 20e3
 uscal = 10.  # 10. # [m/s]
-
-fct = 0 # 1
-iord = 1 # 2
-
-nt = 200 # 8000
-nout = nt # 2000
-
-# other parameters 
 p_surf = 101300.
 th_surf = 300.
+fct = 1
+iord = 2
+nt = 40 # 8000
+nout = nt # 2000
 
-# physical constants
+############################################################################
+# physical constants & heper routines for thermodynamics
+############################################################################
 g = 9.81
 cp = 1005.
 Rd = 8.314472 / 0.02896
 Rdcp = Rd / cp
 p0 = 100000 # [Pa] (in definition of theta)
-
-# initial thermodynamic profile parameters
 st0 = bv**2 / g
 
 # the witch of Agnesi shape
@@ -54,7 +52,7 @@ def witch(x, a):
 def theta(z, st, th_c):
   return th_c * np.exp(st * z)
 
-# height of the bottom of a layer
+# height of the top of a layer
 def alt(th_up, th_dn, st, z_dn):
   return z_dn + 1./st * np.log(th_up / th_dn)
 
@@ -77,7 +75,9 @@ def pres(z, st, th_c, p_c):
 def sta(p_dn, p_up, th_dn, th_up):
   return g / cp * (1/th_up - 1/th_dn) * p0**(Rdcp) / (p_up**Rdcp - p_dn**Rdcp)
 
-# first: creating a netCDF file with the initial condition
+############################################################################
+# first: creating a netCDF file with the initial condition                 #
+############################################################################
 f = NetCDFFile('ini.nc', 'w')
 
 f.createDimension('X', nx)
@@ -91,8 +91,8 @@ v_qy = [None]*nz
 for lev in range(nz) :
   v_dp[lev] = f.createVariable('dp_' + str(lev), 'd', ('X',))
   v_qx[lev] = f.createVariable('qx_' + str(lev), 'd', ('X',))
-  v_qy[lev] = f.createVariable('qy_' + str(lev), 'd', ('X',)) # TODO: should not be needed
-  v_qy[lev][:] = 0. # TODO: should not be needed
+  #v_qy[lev] = f.createVariable('qy_' + str(lev), 'd', ('X',)) # TODO: should not be needed
+  #v_qy[lev][:] = 0. # TODO: should not be needed
 
 # potential temperatures of the layers (characteristic values)
 v_dtheta = f.createVariable('dtheta', 'd', ('level',))
@@ -104,8 +104,8 @@ for lev in range(nz) :
 # topography and its spatial derivatives of the topography
 topo_z = mount_amp * witch(dx * (np.arange(nx+2, dtype='float') - .5 * (nx+1)), mount_ro1)
 v_dHdx = f.createVariable('dHdx', 'd', ('X',))
-v_dHdy = f.createVariable('dHdy', 'd', ('X',)) # should not be needed
 v_dHdx[:] = (topo_z[2:] - topo_z[0:-2]) / (2. * dx)
+v_dHdy = f.createVariable('dHdy', 'd', ('X',)) # should not be needed
 v_dHdy[:] = 0. # TODO: should not be needed
 topo_z = topo_z[1:-1]
 
@@ -128,7 +128,9 @@ for lev in range(nz-1,-1,-1) :
 # clsing the netCDF tile
 f.close()
 
-# second: running the model
+############################################################################
+# second: running the model                                                #
+############################################################################
 cmd = (
   '../../icicle',
   '--ini','netcdf',
@@ -160,10 +162,8 @@ ax.fill(X, topo_z, color='#BBBBBB', linewidth=0)
 #plt.ylim([0,nz*dz])
 plt.xlim([0,nx*dx])
 
+# TODO: animation!
 for t in range(nt/nout+1):
-  # top isentrope (invariable)
-  #ax.plot(X, nz * dz, color='purple')
-
   # from top to bottom - calculating pressures
   p_dn = np.zeros(nx) + p_top
   for lev in range(nz-1,-1,-1) :

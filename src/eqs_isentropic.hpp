@@ -112,7 +112,7 @@ cerr << "calculating Montgomery at lev=" << lev << endl;
     quantity<si::acceleration, real_t> g
   )
   {
-    if (grid.nz() != 1) error_macro("TODO") // TODO!
+    if (grid.nz() != 1) error_macro("only 1D (X or Y) or 2D (XY) simulations supported") 
 
     // constants
     par.g = g;
@@ -128,11 +128,19 @@ cerr << "calculating Montgomery at lev=" << lev << endl;
     intcond.populate_scalar_field("dtheta", par.dtheta->ijk, *(par.dtheta));
 
     // topography
-    mtx::idx_ijk xy(mtx::rng(0, grid.nx()-1), mtx::rng(0, grid.ny()-1), 0); // TODO: not-optimal for MPI (each node has the whole topography!)
-    par.dHdx.reset(new mtx::arr<real_t>(xy));
-    par.dHdy.reset(new mtx::arr<real_t>(xy));
-    intcond.populate_scalar_field("dHdx", par.dHdx->ijk, *(par.dHdx));
-    intcond.populate_scalar_field("dHdy", par.dHdy->ijk, *(par.dHdy));
+    {
+      mtx::idx_ijk xy(mtx::rng(0, grid.nx()-1), mtx::rng(0, grid.ny()-1), 0); // TODO: not-optimal for MPI (each node has the whole topography!)
+      if (grid.nx() != 1)
+      {
+        par.dHdx.reset(new mtx::arr<real_t>(xy));
+        intcond.populate_scalar_field("dHdx", par.dHdx->ijk, *(par.dHdx));
+      }
+      if (grid.ny() != 1)
+      {
+        par.dHdy.reset(new mtx::arr<real_t>(xy));
+        intcond.populate_scalar_field("dHdy", par.dHdy->ijk, *(par.dHdy));
+      }
+    }
 
     // allocating temporary arrays (only once per simulation)
     mtx::rng // TODO: non-optimal for MPI!
@@ -157,21 +165,27 @@ cerr << "calculating Montgomery at lev=" << lev << endl;
       }));
       par.idx_dp[lint] = sys.size() - 1;
 
-      sys.push_back(new struct eqs<real_t>::gte({
-        "qx_" + lstr, "layer-integrated specific momentum (x) of fluid layer " + lstr, 
-        this->quan2str(par.q_unit), 
-        vector<int>({1, 0, 0}),
-        typename eqs<real_t>::groupid(lint)
-      }));
-      sys.back().source_terms.push_back(new forcings<1,0>(par, grid.dx(), lint, lint==0, true)); 
+      if (grid.nx() != 1)
+      {
+        sys.push_back(new struct eqs<real_t>::gte({
+          "qx_" + lstr, "layer-integrated specific momentum (x) of fluid layer " + lstr, 
+          this->quan2str(par.q_unit), 
+          vector<int>({1, 0, 0}),
+          typename eqs<real_t>::groupid(lint)
+        }));
+        sys.back().source_terms.push_back(new forcings<1,0>(par, grid.dx(), lint, lint==0, true)); 
+      }
 
-      sys.push_back(new struct eqs<real_t>::gte({
-        "qy_" + lstr, "layer-integrated specific momentum (y) of fluid layer " + lstr, 
-        this->quan2str(par.q_unit), 
-        vector<int>({0, 1, 0}),
-        typename eqs<real_t>::groupid(lint)
-      }));
-      sys.back().source_terms.push_back(new forcings<0,1>(par, grid.dy(), lint, false, false)); 
+      if (grid.ny() != 1)
+      {
+        sys.push_back(new struct eqs<real_t>::gte({
+          "qy_" + lstr, "layer-integrated specific momentum (y) of fluid layer " + lstr, 
+          this->quan2str(par.q_unit), 
+          vector<int>({0, 1, 0}),
+          typename eqs<real_t>::groupid(lint)
+        }));
+        sys.back().source_terms.push_back(new forcings<0,1>(par, grid.dy(), lint, false, false)); 
+      }
     }
   }
 };
