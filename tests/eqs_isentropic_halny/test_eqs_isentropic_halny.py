@@ -8,25 +8,27 @@
 
 import numpy as np                       # arrays
 import subprocess                        # shell calls
+import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from Scientific.IO.NetCDF import NetCDFFile
 
 # simulation parameteters (from isopc_yale.::SHAWAT2 by P.K.Smolarkiewicz)
-nx = 100      # 161  # [1]
-nz = 50      # 61   # [1]
+nx = 161     # 161  # [1]
+nz = 61      # 61   # [1]
 dx = 3e3     # 3e3  # [m]
-dz = 600.    # 300. # [m]
-dt = 5.      # 6.   # [s]
+dz = 300.    # 300. # [m]
+dt = 6.      # 6.   # [s]
 bv = .012    # .012 # [1/s] 
 mount_amp = 1.6e3
 mount_ro1 = 20e3
 uscal = 10.  # 10. # [m/s]
 
-fct = 1
-iord = 2
+fct = 0 # 1
+iord = 1 # 2
 
-nt = 40 # 8000
+nt = 200 # 8000
 nout = nt # 2000
 
 # other parameters 
@@ -155,6 +157,8 @@ ax.set_ylabel('h [m]')
 
 X = f.variables['X']
 ax.fill(X, topo_z, color='#BBBBBB', linewidth=0)
+#plt.ylim([0,nz*dz])
+plt.xlim([0,nx*dx])
 
 for t in range(nt/nout+1):
   # top isentrope (invariable)
