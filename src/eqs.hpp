@@ -108,6 +108,8 @@ class eqs : root
           }
         }
 
+        if (vm[g][xyz].size() == 0) continue;
+
         // and then goes the rest
         for (int e = 0; e < system().size(); ++e) 
         {
@@ -118,6 +120,7 @@ class eqs : root
       }
     }
   }
+
   public: vector<pair<int,int>> &velmap(int g, int xyz) // equation -> power
   {
     if (vm.size() == 0) init_maps();

@@ -29,7 +29,8 @@ class eqs_isentropic : public eqs<real_t>
     quantity<si::pressure, real_t> p_unit, p0, p_max;
     quantity<velocity_times_pressure, real_t> q_unit;
     vector<int> idx_dp;
-    unique_ptr<mtx::arr<real_t>> dtheta, dHdx, dHdy, M, p; // TODO: M and p need halo_filling - should be handled somehow by the solver!
+    unique_ptr<mtx::arr<real_t>> dtheta, M, p; // TODO: M and p need halo_filling - should be handled somehow by the solver!
+    ptr_vector<mtx::arr<real_t>> dHdxy;
   };
 
   private: 
@@ -38,10 +39,11 @@ class eqs_isentropic : public eqs<real_t>
   { 
     private: struct params *par;
     private: quantity<si::length, real_t> dxy;
-    private: int lev;
+    private: int idx_dHdxy, lev;
     private: bool calc_p, calc_M;
-    public: forcings(params &par, quantity<si::length, real_t> dxy, int lev, bool calc_p, bool calc_M) 
-      : par(&par), dxy(dxy), lev(lev), calc_p(calc_p), calc_M(calc_M) {} 
+    public: forcings(params &par, quantity<si::length, real_t> dxy, 
+      int idx_dHdxy, int lev, bool calc_p, bool calc_M) 
+      : par(&par), dxy(dxy), idx_dHdxy(idx_dHdxy), lev(lev), calc_p(calc_p), calc_M(calc_M) {} 
     public: void operator()(mtx::arr<real_t> &R, mtx::arr<real_t> **psi, mtx::idx &ijk) 
     { 
       assert((di == 0 && dj == 1) || (di == 1 && dj == 0));
@@ -92,10 +94,7 @@ cerr << "calculating Montgomery at lev=" << lev << endl;
         ((*psi[par->idx_dp[lev]])(ijk)) * 
         ( 
           par->g / si::metres_per_second_squared *
-          ( // di = 0 || dj = 0
-            di * (*par->dHdx)(mtx::idx_ijk(ijk.i, ijk.j, 0)) +
-            dj * (*par->dHdy)(mtx::idx_ijk(ijk.i, ijk.j, 0))
-          ) 
+          (par->dHdxy[idx_dHdxy])(mtx::idx_ijk(ijk.i, ijk.j, 0)) 
           +
           ( // spatial derivative
             ((*par->M)(ijk.i + di, ijk.j + dj, ijk.k)) - 
@@ -128,17 +127,20 @@ cerr << "calculating Montgomery at lev=" << lev << endl;
     intcond.populate_scalar_field("dtheta", par.dtheta->ijk, *(par.dtheta));
 
     // topography
+    int idx_dHdx = -1, idx_dHdy = -1;
     {
       mtx::idx_ijk xy(mtx::rng(0, grid.nx()-1), mtx::rng(0, grid.ny()-1), 0); // TODO: not-optimal for MPI (each node has the whole topography!)
       if (grid.nx() != 1)
       {
-        par.dHdx.reset(new mtx::arr<real_t>(xy));
-        intcond.populate_scalar_field("dHdx", par.dHdx->ijk, *(par.dHdx));
+        par.dHdxy.push_back(new mtx::arr<real_t>(xy)); 
+        idx_dHdx = par.dHdxy.size() - 1;
+        intcond.populate_scalar_field("dHdx", par.dHdxy[idx_dHdx].ijk, par.dHdxy[idx_dHdx]);
       }
       if (grid.ny() != 1)
       {
-        par.dHdy.reset(new mtx::arr<real_t>(xy));
-        intcond.populate_scalar_field("dHdy", par.dHdy->ijk, *(par.dHdy));
+        par.dHdxy.push_back(new mtx::arr<real_t>(xy));
+	idx_dHdy = par.dHdxy.size() - 1;
+        intcond.populate_scalar_field("dHdy", par.dHdxy[idx_dHdy].ijk, par.dHdxy[idx_dHdy]);
       }
     }
 
@@ -173,7 +175,7 @@ cerr << "calculating Montgomery at lev=" << lev << endl;
           vector<int>({1, 0, 0}),
           typename eqs<real_t>::groupid(lint)
         }));
-        sys.back().source_terms.push_back(new forcings<1,0>(par, grid.dx(), lint, lint==0, true)); 
+        sys.back().source_terms.push_back(new forcings<1,0>(par, grid.dx(), idx_dHdx, lint, lint==0, true)); 
       }
 
       if (grid.ny() != 1)
@@ -184,7 +186,7 @@ cerr << "calculating Montgomery at lev=" << lev << endl;
           vector<int>({0, 1, 0}),
           typename eqs<real_t>::groupid(lint)
         }));
-        sys.back().source_terms.push_back(new forcings<0,1>(par, grid.dy(), lint, false, false)); 
+        sys.back().source_terms.push_back(new forcings<0,1>(par, grid.dy(), idx_dHdy, lint, false, false)); 
       }
     }
   }

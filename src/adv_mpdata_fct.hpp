@@ -117,9 +117,12 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
         *       Cz_corr = tmp_v[z_new],
         *       Cz_mono = tmp_v[0];
 
-      this->template mpdata_U<mtx::idx_ijk>(Cx_corr, psi, n, step, ii, jj, kk, *Cx_unco, *Cy_unco, *Cz_unco);
-      this->template mpdata_U<mtx::idx_jki>(Cy_corr, psi, n, step, jj, kk, ii, *Cy_unco, *Cz_unco, *Cx_unco);
-      this->template mpdata_U<mtx::idx_kij>(Cz_corr, psi, n, step, kk, ii, jj, *Cz_unco, *Cx_unco, *Cy_unco); 
+      if (ijk.i_spans)
+        this->template mpdata_U<mtx::idx_ijk>(Cx_corr, psi, n, step, ii, jj, kk, *Cx_unco, *Cy_unco, *Cz_unco);
+      if (ijk.j_spans)
+        this->template mpdata_U<mtx::idx_jki>(Cy_corr, psi, n, step, jj, kk, ii, *Cy_unco, *Cz_unco, *Cx_unco);
+      if (ijk.k_spans)
+        this->template mpdata_U<mtx::idx_kij>(Cz_corr, psi, n, step, kk, ii, jj, *Cz_unco, *Cx_unco, *Cy_unco); 
    
       // performing upstream advection using the ''monotonic'' velocities (logic from adv::op3D)
       *psi[n+1] = *psi[0]; // TODO: at least this should be placed in adv... and the leapfrog & upstream in adv_dimsplit?

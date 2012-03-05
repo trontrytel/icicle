@@ -17,11 +17,11 @@ from Scientific.IO.NetCDF import NetCDFFile
 ############################################################################
 # simulation parameteters (from isopc_yale.::SHAWAT2 by P.K.Smolarkiewicz) #
 ############################################################################
-nx = 100      # 161  # [1]
-nz = 50      # 61   # [1]
+nx = 160     # 161  # [1]
+nz = 60      # 61   # [1]
 dx = 3e3     # 3e3  # [m]
 dz = 600.    # 300. # [m]
-dt = 5.      # 6.   # [s]
+dt = 6.      # 6.   # [s]
 bv = .012    # .012 # [1/s] (Brunt-Vaisala frequency)
 mount_amp = 1.6e3
 mount_ro1 = 20e3
@@ -30,7 +30,7 @@ p_surf = 101300.
 th_surf = 300.
 fct = 1
 iord = 2
-nt = 40 # 8000
+nt = 20 # 8000
 nout = nt # 2000
 
 ############################################################################
