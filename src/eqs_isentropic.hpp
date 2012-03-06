@@ -44,7 +44,7 @@ class eqs_isentropic : public eqs<real_t>
     public: forcings(params &par, quantity<si::length, real_t> dxy, 
       int idx_dHdxy, int lev, bool calc_p, bool calc_M) 
       : par(&par), dxy(dxy), idx_dHdxy(idx_dHdxy), lev(lev), calc_p(calc_p), calc_M(calc_M) {} 
-    public: void operator()(mtx::arr<real_t> &R, mtx::arr<real_t> **psi, mtx::idx &ijk) 
+    public: void explicit_part(mtx::arr<real_t> &R, mtx::arr<real_t> **psi, mtx::idx &ijk) 
     { 
       assert((di == 0 && dj == 1) || (di == 1 && dj == 0));
       int nlev = par->idx_dp.size();

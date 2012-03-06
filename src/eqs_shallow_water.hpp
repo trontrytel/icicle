@@ -40,7 +40,7 @@ class eqs_shallow_water : public eqs<real_t>
     private: struct params *par;
     private: quantity<si::length, real_t> dxy;
     public: forcings(params &par, quantity<si::length, real_t> dxy) : par(&par), dxy(dxy) {} 
-    public: void operator()(mtx::arr<real_t> &R, mtx::arr<real_t> **psi, mtx::idx &ijk) 
+    public: void explicit_part(mtx::arr<real_t> &R, mtx::arr<real_t> **psi, mtx::idx &ijk) 
     { 
       assert((di == 0 && dj == 1) || (di == 1 && dj == 0));
       R(ijk) -= 

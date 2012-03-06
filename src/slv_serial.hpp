@@ -290,7 +290,7 @@ class slv_serial : public slv<real_t>
         (R[e])(R[e].ijk) = real_t(0);
         for (int i = 0; i < setup->eqsys->var_n_rhs(e); ++i)
         {
-           setup->eqsys->var_rhs(e, i)(R[e], tmpvec, *ijk);
+           setup->eqsys->var_rhs(e, i).explicit_part(R[e], tmpvec, *ijk);
            assert(isfinite(sum((R[e])(R[e].ijk))));
         }
       }
