@@ -80,7 +80,7 @@ class eqs_shallow_water : public eqs<real_t>
         this->quan2str(par.q_unit), 
         vector<int>({1, 0, 0})
       }));
-      sys.back().source_terms.push_back(new forcings<1,0>(par, grid.dx())); 
+      sys.back().rhs_nonlin_terms.push_back(new forcings<1,0>(par, grid.dx())); 
     }
 
     if (grid.ny() != 1)
@@ -90,7 +90,7 @@ class eqs_shallow_water : public eqs<real_t>
         this->quan2str(par.q_unit), 
         vector<int>({0, 1, 0})
       }));
-      sys.back().source_terms.push_back(new forcings<0,1>(par, grid.dy())); 
+      sys.back().rhs_nonlin_terms.push_back(new forcings<0,1>(par, grid.dy())); 
     }
 
     sys.push_back(new struct eqs<real_t>::gte({

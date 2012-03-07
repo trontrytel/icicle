@@ -20,17 +20,19 @@ from Scientific.IO.NetCDF import NetCDFFile
 nx = 160     # 161  # [1]
 nz = 60      # 61   # [1]
 dx = 3e3     # 3e3  # [m]
-dz = 600.    # 300. # [m]
+dz = 300.    # 300. # [m]
 dt = 6.      # 6.   # [s]
 bv = .012    # .012 # [1/s] (Brunt-Vaisala frequency)
-mount_amp = 1.6e3
-mount_ro1 = 20e3
+mount_amp = 1.6e3 # 1.6e3
+mount_ro1 = 20e3  # 20e3
+abslev = 3 * (nz / 4) # gravity-wave absorber starts at .75 of the domain height
+absamp = 1
 uscal = 10.  # 10. # [m/s]
 p_surf = 101300.
 th_surf = 300.
 fct = 1
 iord = 2
-nt = 20 # 8000
+nt = 50 # 8000
 nout = nt # 2000
 
 ############################################################################
@@ -137,7 +139,9 @@ cmd = (
   '--ini.netcdf.file','ini.nc',
   '--eqs','isentropic',
     '--eqs.isentropic.nlev',str(nz),
-    '--eqs.isentropic.p_max',str(pres(nz * dz, st0, th_surf, p_surf)),
+    '--eqs.isentropic.p_max',str(p_top),
+    '--eqs.isentropic.abslev',str(abslev),
+    '--eqs.isentropic.absamp',str(absamp),
   '--grd.dx',str(dx),
   '--grd.nx',str(nx),
   '--adv','mpdata',

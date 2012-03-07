@@ -1,7 +1,7 @@
 /** @file
  *  @author Sylwester Arabas <slayoo@igf.fuw.edu.pl>
  *  @copyright University of Warsaw
- *  @date Februaryy 2012
+ *  @date February 2012
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
@@ -68,11 +68,5 @@ class rhs : root
   ) 
   {}
 
-  public: virtual void implicit_part(
-    mtx::arr<real_t> &C, 
-    mtx::arr<real_t> **psi, 
-    mtx::idx &ijk
-  )
-  {}
 };  
 #endif

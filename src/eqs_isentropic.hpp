@@ -33,15 +33,29 @@ class eqs_isentropic : public eqs<real_t>
     ptr_vector<mtx::arr<real_t>> dHdxy;
   };
 
+  private:
+  class rayleigh_damping : public rhs_linear<real_t> // (aka sponge layer, aka gravity-wave absorber)
+  {
+    private: real_t tau(int lev, int nlev, int abslev, real_t absamp)
+    {
+      if (lev <= abslev) return real_t(0);
+      real_t pi = acos(real_t(-1));
+      return absamp * pow(sin(.5*pi * (lev - abslev) / ((nlev - 1) - abslev)), 2);
+    }
+    public: rayleigh_damping(int eqid, int lev, int nlev, int abslev, real_t absamp)
+      : rhs_linear<real_t>(eqid, -tau(lev, nlev, abslev, absamp))
+    { }
+  };
+
   private: 
   template <int di, int dj>
-  class forcings : public rhs<real_t>
+  class montgomery_grad : public rhs<real_t>
   { 
     private: struct params *par;
     private: quantity<si::length, real_t> dxy;
     private: int idx_dHdxy, lev;
     private: bool calc_p, calc_M;
-    public: forcings(params &par, quantity<si::length, real_t> dxy, 
+    public: montgomery_grad(params &par, quantity<si::length, real_t> dxy, 
       int idx_dHdxy, int lev, bool calc_p, bool calc_M) 
       : par(&par), dxy(dxy), idx_dHdxy(idx_dHdxy), lev(lev), calc_p(calc_p), calc_M(calc_M) {} 
     public: void explicit_part(mtx::arr<real_t> &R, mtx::arr<real_t> **psi, mtx::idx &ijk) 
@@ -58,7 +72,6 @@ class eqs_isentropic : public eqs<real_t>
       // calculating pressures at the surfaces (done once per timestep) // TODO: need fill_halos!!!
       if (calc_p) // TODO: will not work in parallel!!!
       {
-cerr << "calculating pressures!" << endl;
         (*par->p)(mtx::idx_ijk(ii, jj, ll)) = par->p_max / si::pascals;
         for (int l = nlev - 1; l >= 0; --l)
           (*par->p)(mtx::idx_ijk(ii, jj, l)) = 
@@ -74,7 +87,6 @@ cerr << "calculating pressures!" << endl;
         (*par->M)(mtx::idx_ijk(ii,jj,ijk.k)) = real_t(0); // TODO: parallel!!!
       if (calc_M) 
       {
-cerr << "calculating Montgomery at lev=" << lev << endl;
         // this assumes we go from the bottom up to the top layer
         // (the order of equations in the ctor below)
         (*par->M)(mtx::idx_ijk(ii,jj,ijk.k)) += par->cp * pow(par->p_unit / par->p0, par->Rd_over_cp) 
@@ -108,7 +120,8 @@ cerr << "calculating Montgomery at lev=" << lev << endl;
   public: eqs_isentropic(const grd<real_t> &grid, const ini<real_t> &intcond,
     int nlev, 
     quantity<si::pressure, real_t> p_max,
-    quantity<si::acceleration, real_t> g
+    quantity<si::acceleration, real_t> g,
+    int abslev, real_t absamp
   )
   {
     if (grid.nz() != 1) error_macro("only 1D (X or Y) or 2D (XY) simulations supported") 
@@ -175,7 +188,15 @@ cerr << "calculating Montgomery at lev=" << lev << endl;
           vector<int>({1, 0, 0}),
           typename eqs<real_t>::groupid(lint)
         }));
-        sys.back().source_terms.push_back(new forcings<1,0>(par, grid.dx(), idx_dHdx, lint, lint==0, true)); 
+        sys.back().rhs_nonlin_terms.push_back(
+          new montgomery_grad<1,0>(par, grid.dx(), idx_dHdx, lint, lint==0, true)
+        ); 
+        if (lint > abslev)
+        {
+          sys.back().rhs_linear_terms.push_back(
+            new rayleigh_damping(sys.size()-1, lint, nlev, abslev, absamp)
+          ); 
+        }
       }
 
       if (grid.ny() != 1)
@@ -186,7 +207,15 @@ cerr << "calculating Montgomery at lev=" << lev << endl;
           vector<int>({0, 1, 0}),
           typename eqs<real_t>::groupid(lint)
         }));
-        sys.back().source_terms.push_back(new forcings<0,1>(par, grid.dy(), idx_dHdy, lint, false, false)); 
+        sys.back().rhs_nonlin_terms.push_back(
+          new montgomery_grad<0,1>(par, grid.dy(), idx_dHdy, lint, false, false)
+        ); 
+        if (lint > abslev)
+        {
+          sys.back().rhs_linear_terms.push_back(
+            new rayleigh_damping(sys.size()-1, lint, nlev, abslev, absamp)
+          ); 
+        }
       }
     }
   }
