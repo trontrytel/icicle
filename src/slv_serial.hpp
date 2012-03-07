@@ -25,7 +25,7 @@ class slv_serial : public slv<real_t>
   private: ptr_vector<mtx::arr<real_t>> C; // TODO: nullable? (uwaga na kod w FCT! ii = i+/-1
   private: vector<ptr_vector<mtx::arr<real_t>>> psi;
   private: unique_ptr<tmp<real_t>> cache; 
-  private: ptr_vector<nullable<mtx::arr<real_t>>> R;
+  private: ptr_vector<nullable<mtx::arr<real_t>>> rhs_R, rhs_C;
 
   public: slv_serial(stp<real_t> *setup, out<real_t> *output,
     int i_min, int i_max,
@@ -72,10 +72,10 @@ class slv_serial : public slv<real_t>
 
       if (!setup->eqsys->is_homogeneous(e))
       {
-        R.push_back(new mtx::arr<real_t>(setup->grid->rng_sclr(
+        rhs_R.push_back(new mtx::arr<real_t>(setup->grid->rng_sclr(
           i_min, i_max, j_min, j_max, k_min, k_max, 0)
         ));
-      } else R.push_back(NULL);
+      } else rhs_R.push_back(NULL);
     }
 
     // caches (TODO: move to adv.hpp...)
@@ -287,11 +287,11 @@ class slv_serial : public slv<real_t>
     {
       if (!setup->eqsys->is_homogeneous(e))
       {
-        (R[e])(R[e].ijk) = real_t(0);
+        (rhs_R[e])(rhs_R[e].ijk) = real_t(0);
         for (int i = 0; i < setup->eqsys->var_n_rhs(e); ++i)
         {
-           setup->eqsys->var_rhs(e, i).explicit_part(R[e], tmpvec, *ijk);
-           assert(isfinite(sum((R[e])(R[e].ijk))));
+           setup->eqsys->var_rhs(e, i).explicit_part(rhs_R[e], tmpvec, *ijk);
+           assert(isfinite(sum((rhs_R[e])(rhs_R[e].ijk))));
         }
       }
     }
@@ -299,10 +299,15 @@ class slv_serial : public slv<real_t>
 
   public: void apply_forcings(int e, int n, quantity<si::time, real_t> dt)
   {
+    // sanity checks
     assert(!setup->eqsys->is_homogeneous(e));
     assert(isfinite(sum((psi[e][n])(*ijk))));
-    assert(isfinite(sum((R[e])(*ijk))));
-    (psi[e][n])(*ijk) += dt / si::seconds * (R[e])(*ijk);
+    assert(isfinite(sum((rhs_R[e])(*ijk))));
+
+    // nonlinear terms only
+    (psi[e][n])(*ijk) += dt / si::seconds * (rhs_R[e])(*ijk);
+
+    // linear & nonlinear terms
   }
 
   public: void cycle_arrays(const int e, const int n) // TODO: n unneeded?
