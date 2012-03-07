@@ -10,7 +10,7 @@
 #  define EQS_HPP
 
 #  include "cmn.hpp"
-#  include "rhs_linear.hpp"
+#  include "rhs.hpp"
 
 /// @brief a container for systems of generalised transport equations
 template <typename real_t>
@@ -25,15 +25,11 @@ class eqs : root
     string name, desc, unit;
     vector<int> pow_uvw; // TODO: swap place with source_terms
     groupid group;
-    ptr_vector<rhs<real_t>> rhs_nonlin_terms;
-    ptr_vector<rhs_linear<real_t>> rhs_linear_terms;
+    ptr_vector<rhs<real_t>> rhs_terms;
   };
 
   public: bool is_homogeneous(int e) {
-    if (
-      system().at(e).rhs_nonlin_terms.size() > 0 ||
-      system().at(e).rhs_linear_terms.size() > 0
-    ) return false;
+    if (system().at(e).rhs_terms.size() > 0) return false;
     return true;
   }
 
@@ -49,24 +45,14 @@ class eqs : root
     return system().size();
   }
 
-  public: int var_n_rhs_nonlin(int e)
+  public: int var_n_rhs_terms(int e)
   {
-    return system().at(e).rhs_nonlin_terms.size();
+    return system().at(e).rhs_terms.size();
   }
 
-  public: int var_n_rhs_linear(int e)
+  public: rhs<real_t> &var_rhs_term(int e, int i)
   {
-    return system().at(e).rhs_linear_terms.size();
-  }
-
-  public: rhs<real_t> &var_rhs_nonlin(int e, int i)
-  {
-    return system().at(e).rhs_nonlin_terms[i];
-  }
-
-  public: rhs_linear<real_t> &var_rhs_linear(int e, int i)
-  {
-    return system().at(e).rhs_linear_terms[i];
+    return system().at(e).rhs_terms[i];
   }
 
   public: bool var_dynamic(int e) // i.e. involved in calculation of velocities

@@ -42,10 +42,9 @@
  *
  * \f$
  *   Src(\psi, R, C) = \left[
- *     \psi \cdot (1 + \frac{\Delta t}{4} C) 
- *     + \frac{\Delta t}{2} R
+ *     \psi \cdot + \frac{\Delta t}{2} R
  *   \right] \cdot \left[
- *     1 - \frac{\Delta t}{4} C
+ *     1 - \frac{\Delta t}{2} C
  *   \right]^{-1}
  * \f$
  *
@@ -67,6 +66,11 @@ class rhs : root
     mtx::idx &ijk
   ) 
   {}
+
+  public: virtual real_t implicit_part(quantity<si::time, real_t> dt)
+  {
+    return real_t(0.);
+  }
 
 };  
 #endif

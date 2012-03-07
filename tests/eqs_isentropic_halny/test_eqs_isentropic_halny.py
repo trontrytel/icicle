@@ -25,14 +25,14 @@ dt = 6.      # 6.   # [s]
 bv = .012    # .012 # [1/s] (Brunt-Vaisala frequency)
 mount_amp = 1.6e3 # 1.6e3
 mount_ro1 = 20e3  # 20e3
-abslev = nz +1 # 3 * (nz / 4) # gravity-wave absorber starts at .75 of the domain height
-absamp = 1
+abslev = 3 * (nz / 4) # gravity-wave absorber starts at .75 of the domain height
+absamp = 0
 uscal = 10.  # 10. # [m/s]
 p_surf = 101300.
 th_surf = 300.
 fct = 1
 iord = 2
-nt = 50 # 8000
+nt = 20 # 8000
 nout = nt # 2000
 
 ############################################################################

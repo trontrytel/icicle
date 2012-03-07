@@ -34,7 +34,7 @@ class eqs_isentropic : public eqs<real_t>
   };
 
   private:
-  class rayleigh_damping : public rhs_linear<real_t> // (aka sponge layer, aka gravity-wave absorber)
+  class rayleigh_damping : public rhs<real_t> // (aka sponge layer, aka gravity-wave absorber)
   {
     private: real_t tau(int lev, int nlev, int abslev, real_t absamp)
     {
@@ -42,9 +42,12 @@ class eqs_isentropic : public eqs<real_t>
       real_t pi = acos(real_t(-1));
       return absamp * pow(sin(.5*pi * (lev - abslev) / ((nlev - 1) - abslev)), 2);
     }
-    public: rayleigh_damping(int eqid, int lev, int nlev, int abslev, real_t absamp)
-      : rhs_linear<real_t>(eqid, -tau(lev, nlev, abslev, absamp))
+    private: real_t C;
+    public: rayleigh_damping(int lev, int nlev, int abslev, real_t absamp)
+      : C(-tau(lev, nlev, abslev, absamp))
     { }
+    public: real_t implicit_part(quantity<si::time, real_t>) 
+    { return C; }
   };
 
   private: 
@@ -188,13 +191,13 @@ class eqs_isentropic : public eqs<real_t>
           vector<int>({1, 0, 0}),
           typename eqs<real_t>::groupid(lint)
         }));
-        sys.back().rhs_nonlin_terms.push_back(
+        sys.back().rhs_terms.push_back(
           new montgomery_grad<1,0>(par, grid.dx(), idx_dHdx, lint, lint==0, true)
         ); 
         if (lint > abslev)
         {
-          sys.back().rhs_linear_terms.push_back(
-            new rayleigh_damping(sys.size()-1, lint, nlev, abslev, absamp)
+          sys.back().rhs_terms.push_back(
+            new rayleigh_damping(lint, nlev, abslev, absamp)
           ); 
         }
       }
@@ -207,13 +210,13 @@ class eqs_isentropic : public eqs<real_t>
           vector<int>({0, 1, 0}),
           typename eqs<real_t>::groupid(lint)
         }));
-        sys.back().rhs_nonlin_terms.push_back(
+        sys.back().rhs_terms.push_back(
           new montgomery_grad<0,1>(par, grid.dy(), idx_dHdy, lint, false, false)
         ); 
         if (lint > abslev)
         {
-          sys.back().rhs_linear_terms.push_back(
-            new rayleigh_damping(sys.size()-1, lint, nlev, abslev, absamp)
+          sys.back().rhs_terms.push_back(
+            new rayleigh_damping(lint, nlev, abslev, absamp)
           ); 
         }
       }

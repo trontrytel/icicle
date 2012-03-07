@@ -288,9 +288,9 @@ class slv_serial : public slv<real_t>
       if (!setup->eqsys->is_homogeneous(e))
       {
         (rhs_R[e])(rhs_R[e].ijk) = real_t(0);
-        for (int i = 0; i < setup->eqsys->var_n_rhs_nonlin(e); ++i)
+        for (int i = 0; i < setup->eqsys->var_n_rhs_terms(e); ++i)
         {
-           setup->eqsys->var_rhs_nonlin(e, i).explicit_part(rhs_R[e], tmpvec, *ijk);
+           setup->eqsys->var_rhs_term(e, i).explicit_part(rhs_R[e], tmpvec, *ijk);
            assert(isfinite(sum((rhs_R[e])(rhs_R[e].ijk))));
         }
       }
@@ -304,23 +304,15 @@ class slv_serial : public slv<real_t>
     assert(isfinite(sum((psi[e][n])(*ijk))));
     assert(isfinite(sum((rhs_R[e])(*ijk))));
 
-    // treating implicitly the linear terms... tbc
-    for (int i = 0; i < setup->eqsys->var_n_rhs_linear(e); ++i)
-      (psi[e][n])(*ijk) += 
-        real_t(.5) * dt / si::seconds *
-        (setup->eqsys->var_rhs_linear(e, i).C) * 
-        (psi[setup->eqsys->var_rhs_linear(e, i).eqid][n])(*ijk);
-
     // treating explicitely the nonlinear terms
-    if (setup->eqsys->var_n_rhs_nonlin(e) > 0)
-      (psi[e][n])(*ijk) += dt / si::seconds * (rhs_R[e])(*ijk);
+    (psi[e][n])(*ijk) += dt / si::seconds * (rhs_R[e])(*ijk);
 
-    // cont. implicit part
+    // treating implicitly the linear terms
     real_t C = real_t(0);
-    for (int i = 0; i < setup->eqsys->var_n_rhs_linear(e); ++i)
-      C += setup->eqsys->var_rhs_linear(e, i).C;
+    for (int i = 0; i < setup->eqsys->var_n_rhs_terms(e); ++i)
+      C += setup->eqsys->var_rhs_term(e, i).implicit_part(dt); // TODO: document that dt -> dt/2
     if (C != real_t(0))
-      (psi[e][n])(*ijk) /= (real_t(1) - real_t(.5) * dt / si::seconds * C);
+      (psi[e][n])(*ijk) /= (real_t(1) - dt / si::seconds * C);
   }
 
   public: void cycle_arrays(const int e, const int n) // TODO: n unneeded?
