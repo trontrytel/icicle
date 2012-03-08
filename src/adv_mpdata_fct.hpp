@@ -164,21 +164,21 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
 
 #  define mpdata_fct_beta_up(_i, _j, _k) this->mpdata_frac( \
      psi_max(idx(_i,_j,_k)) - (*psi[n])(idx(_i,_j,_k)), \
-     mpdata_pospart(C_adf_x(idx(_i - grid->m_half,_j,_k))) * (*psi[n])(idx(_i-1,_j,_k)) - \
-     mpdata_negpart(C_adf_x(idx(_i + grid->p_half,_j,_k))) * (*psi[n])(idx(_i+1,_j,_k)) + \
-     mpdata_pospart(C_adf_y(idx(_i,_j - grid->m_half,_k))) * (*psi[n])(idx(_i,_j-1,_k)) - \
-     mpdata_negpart(C_adf_y(idx(_i,_j + grid->p_half,_k))) * (*psi[n])(idx(_i,_j+1,_k)) + \
-     mpdata_pospart(C_adf_z(idx(_i,_j,_k - grid->m_half))) * (*psi[n])(idx(_i,_j,_k-1)) - \
-     mpdata_negpart(C_adf_z(idx(_i,_j,_k + grid->p_half))) * (*psi[n])(idx(_i,_j,_k+1))   \
+     this->mpdata_pospart(C_adf_x(idx(_i - grid->m_half,_j,_k))) * (*psi[n])(idx(_i-1,_j,_k)) - \
+     this->mpdata_negpart(C_adf_x(idx(_i + grid->p_half,_j,_k))) * (*psi[n])(idx(_i+1,_j,_k)) + \
+     this->mpdata_pospart(C_adf_y(idx(_i,_j - grid->m_half,_k))) * (*psi[n])(idx(_i,_j-1,_k)) - \
+     this->mpdata_negpart(C_adf_y(idx(_i,_j + grid->p_half,_k))) * (*psi[n])(idx(_i,_j+1,_k)) + \
+     this->mpdata_pospart(C_adf_z(idx(_i,_j,_k - grid->m_half))) * (*psi[n])(idx(_i,_j,_k-1)) - \
+     this->mpdata_negpart(C_adf_z(idx(_i,_j,_k + grid->p_half))) * (*psi[n])(idx(_i,_j,_k+1))   \
    )
 #  define mpdata_fct_beta_dn(_i, _j, _k) this->mpdata_frac(\
      (*psi[n])(idx(_i,_j,_k)) - psi_min(idx(_i,_j,_k)), \
-     mpdata_pospart(C_adf_x(idx(_i + grid->p_half,_j,_k))) * (*psi[n])(idx(_i,_j,_k)) - \
-     mpdata_negpart(C_adf_x(idx(_i - grid->m_half,_j,_k))) * (*psi[n])(idx(_i,_j,_k)) + \
-     mpdata_pospart(C_adf_y(idx(_i,_j + grid->p_half,_k))) * (*psi[n])(idx(_i,_j,_k)) - \
-     mpdata_negpart(C_adf_y(idx(_i,_j - grid->m_half,_k))) * (*psi[n])(idx(_i,_j,_k)) + \
-     mpdata_pospart(C_adf_z(idx(_i,_j,_k + grid->p_half))) * (*psi[n])(idx(_i,_j,_k)) - \
-     mpdata_negpart(C_adf_z(idx(_i,_j,_k - grid->m_half))) * (*psi[n])(idx(_i,_j,_k))   \
+     this->mpdata_pospart(C_adf_x(idx(_i + grid->p_half,_j,_k))) * (*psi[n])(idx(_i,_j,_k)) - \
+     this->mpdata_negpart(C_adf_x(idx(_i - grid->m_half,_j,_k))) * (*psi[n])(idx(_i,_j,_k)) + \
+     this->mpdata_pospart(C_adf_y(idx(_i,_j + grid->p_half,_k))) * (*psi[n])(idx(_i,_j,_k)) - \
+     this->mpdata_negpart(C_adf_y(idx(_i,_j - grid->m_half,_k))) * (*psi[n])(idx(_i,_j,_k)) + \
+     this->mpdata_pospart(C_adf_z(idx(_i,_j,_k + grid->p_half))) * (*psi[n])(idx(_i,_j,_k)) - \
+     this->mpdata_negpart(C_adf_z(idx(_i,_j,_k - grid->m_half))) * (*psi[n])(idx(_i,_j,_k))   \
    )
     /// nonoscillatory antidiffusive velocity: \n
     /// \f$ U^{MON}_{i+1/2}=min(1,\beta ^{\downarrow}_i,\beta ^{\uparrow} _{i+1})[U_{i+1/2}]^{+} 

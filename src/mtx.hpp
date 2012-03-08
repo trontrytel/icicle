@@ -18,6 +18,13 @@ using blitz::where;
 /// fooling Doxygen - as of v1.7.5.1 it chokes on such C++11 syntax (cf. PREDEFINED in Doxyfile)
 #  define _decltype(expr) -> decltype(expr)
 
+#  define mtx_expr_1arg_macro(name,a1,expr) \
+  template<class t1> \
+  auto name(const t1 &a1) _decltype(expr) \
+  { \
+    assert(isfinite(sum(a1))); \
+    return expr; \
+  } 
 #  define mtx_expr_2arg_macro(name,a1,a2,expr) \
   template<class t1, class t2> \
   auto name(const t1 &a1, const t2 &a2) _decltype(expr) \
