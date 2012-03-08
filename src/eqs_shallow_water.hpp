@@ -13,7 +13,22 @@
 #  include "eqs.hpp"
 #  include "grd.hpp"
 
-/// @brief the 2D shallow-water equations system
+/** @brief the 2D shallow-water equations system
+ *
+ * Consult chapter 3 in Vallis 2008 for a detailed derivation.
+ *
+ * The key assumptions are:
+ * - horizontal scale is much larger than the vertical scale (\f$ u \approx u(x) \f$)
+ * - hydrostatic equillibrium
+ * - constant density
+ * 
+ * Nomenclature:
+ * - \f$ \eta(x,y) \f$ - (absolute) height of the fluid surface
+ * - \f$ \eta_0(x,y) \f$ - bathymetry
+ * - \f$ h = \eta - \eta_0 \f$ - thickness of the fluid layer
+ * - \f$ \vec{u} = (u,v) \f$
+ * - \f$ \nabla_z = \partial_x + \partial_y \f$
+ */
 template <typename real_t>
 class eqs_shallow_water : public eqs<real_t> 
 {
@@ -43,6 +58,18 @@ class eqs_shallow_water : public eqs<real_t>
     public: void explicit_part(mtx::arr<real_t> &R, mtx::arr<real_t> **psi, mtx::idx &ijk) 
     { 
       assert((di == 0 && dj == 1) || (di == 1 && dj == 0));
+
+      /// momentum equation:
+      /// \f$ \partial_t u + u \cdot \nabla_z u = - \frac{1}{\rho} \nabla_z p \f$ 
+      ///
+      /// pressure in a column of the constant-density fluid:
+      /// \f$ p = p_0 - \rho g z = p_0 + \rho g \cdot (\eta(x) - z) \f$
+      ///
+      /// mass continuity equation: 
+      /// \f$ \partial_t h + \nabla_z (h \cdot u) = 0 \f$
+      ///
+      /// momentum eq. plus u times mass continuity equation:
+      /// \f$ \partial_t (uh)  + \nabla_z (uh) = -g h \nabla_z \eta \f$
       R(ijk) -= 
         par->g * par->h_unit * par->h_unit * si::seconds / par->q_unit / si::metres *
         ((*psi[par->idx_h])(ijk)) *
@@ -73,6 +100,7 @@ class eqs_shallow_water : public eqs<real_t>
     intcond.populate_scalar_field("dHdx", par.dHdx->ijk, *(par.dHdx));
     intcond.populate_scalar_field("dHdy", par.dHdy->ijk, *(par.dHdy));
 
+    /// momentum equation for x
     if (grid.nx() != 1)
     {
       sys.push_back(new struct eqs<real_t>::gte({
@@ -83,6 +111,7 @@ class eqs_shallow_water : public eqs<real_t>
       sys.back().rhs_terms.push_back(new forcings<1,0>(par, grid.dx())); 
     }
 
+    /// momentum equation for y
     if (grid.ny() != 1)
     {
       sys.push_back(new struct eqs<real_t>::gte({
@@ -93,6 +122,8 @@ class eqs_shallow_water : public eqs<real_t>
       sys.back().rhs_terms.push_back(new forcings<0,1>(par, grid.dy())); 
     }
 
+    /// The mass continuity equation for a column of height \f$ h = \eta - \eta_0 \f$ of a constant-density fluid:
+    /// \f$ \partial_t h + \nabla_z ( \vec{u} h ) = 0 \f$
     sys.push_back(new struct eqs<real_t>::gte({
       "h", "thickness of the fluid layer", 
       this->quan2str(par.h_unit), 
