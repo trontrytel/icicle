@@ -24,13 +24,7 @@ void mdl(const po::variables_map &vm, const string &cmdline)
   unique_ptr<grd<real_t> > grid(opt_grd<real_t>(vm));
 
   // advection scheme choice
-  unique_ptr<adv<real_t> > advsch, fllbck;
-  {
-    adv<real_t> *advschp, *fllbckp;
-    opt_adv<real_t>(vm, &fllbckp, &advschp, grid.get());
-    advsch.reset(advschp);
-    if (fllbckp != NULL) fllbck.reset(fllbckp);
-  }
+  unique_ptr<adv<real_t> > advsch(opt_adv<real_t>(vm, grid.get()));
 
   // velocity field choice
   unique_ptr<vel<real_t> > velocity(opt_vel<real_t>(vm, grid.get()));
@@ -44,7 +38,6 @@ void mdl(const po::variables_map &vm, const string &cmdline)
   // grouping all above into a single set-up object
   unique_ptr<stp<real_t> > setup(opt_stp<real_t>(vm, 
     advsch.get(), 
-    fllbck.get(), 
     velocity.get(), 
     intcond.get(), 
     grid.get(), 

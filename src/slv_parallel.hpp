@@ -18,7 +18,7 @@ class slv_parallel : public slv<real_t>
   private: int nxs; // number of points per subdomain
   private: int i_min; // i_min for this set of subdomains
   private: unique_ptr<slv_serial<real_t> > *slvs; // TODO: vector_ptr!
-  private: adv<real_t> *fllbck, *advsch;
+  private: adv<real_t> *advsch;
   private: stp<real_t> *setup; 
  
   public: slv_parallel(stp<real_t> *setup, out<real_t> *output,
@@ -26,7 +26,7 @@ class slv_parallel : public slv<real_t>
     int j_min, int j_max,  
     int k_min, int k_max, 
     int nsd)
-    : nsd(nsd), i_min(i_min), fllbck(setup->fllbck), advsch(setup->advsch), setup(setup)
+    : nsd(nsd), i_min(i_min), advsch(setup->advsch), setup(setup)
   {
     // subdomain length
     int nxl = (i_max - i_min + 1);
@@ -80,18 +80,16 @@ class slv_parallel : public slv<real_t>
 
   private: void advect(int sd, int e, int n, adv<real_t> *a)
   {
-    for (int s = 1; s <= a->num_steps(); ++s)
+    for (int s = 1; s <= advsch->num_steps(); ++s)
     {   
       if (s != 1) fill_halos(sd, e, n);
       slvs[sd]->advect(e, n, s, a); 
-      if (s != a->num_steps()) slvs[sd]->cycle_arrays(e, n); 
+      if (s != advsch->num_steps()) slvs[sd]->cycle_arrays(e, n); 
     }
   }
 
   public: void integ_loop_sd(int sd) 
   {
-    assert(fllbck == NULL || fllbck->num_steps() == 1);
-
     vector<bool> homo(setup->eqsys->n_vars());
     bool allhomo = true;
     for (int e = 0; e < setup->eqsys->n_vars(); ++e)
@@ -116,8 +114,9 @@ class slv_parallel : public slv<real_t>
     {   
       if (sd == 0) cerr << "t/dt=" << t << endl;
 
-      adv<real_t> *a;
-      bool fallback = this->choose_an(&a, &n, t, advsch, fllbck);
+      assert(advsch->time_levels() <= 3); // TODO: support for other values
+      bool fallback = (t == 0 && advsch->time_levels() == 3);
+      n = fallback ? 0 : advsch->time_levels() - 2;
 
       if (t % setup->nout == 0) record(sd, n, t / setup->nout);
 
@@ -139,13 +138,13 @@ class slv_parallel : public slv<real_t>
         }
 
         // TODO: dependance on adv->time_leves... (does it work for leapfrog???)
-        bool stash = (a->num_steps() > 1 && setup->eqsys->var_dynamic(e))
+        bool stash = (advsch->num_steps() > 1 && setup->eqsys->var_dynamic(e))
           || (!setup->velocity->is_constant() && !homo[e]);
 
         slvs[sd]->fill_with_nans(e, n + 1); // TODO: fill caches with NaNs?
         if (stash) slvs[sd]->stash_cycle(e, n); 
         if (!homo[e]) slvs[sd]->apply_forcings(e, n, real_t(.5) * setup->dt);
-        advect(sd, e, n, a);
+        advect(sd, e, n, advsch);
         if (stash) slvs[sd]->stash_cycle(e, n); 
       } // e - equations
 

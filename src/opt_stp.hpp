@@ -27,7 +27,6 @@ inline void opt_stp_desc(po::options_description &desc)
 template <typename real_t>
 stp<real_t> *opt_stp(const po::variables_map& vm, 
   adv<real_t> *advsch,
-  adv<real_t> *fllbck,
   vel<real_t> *velocity,
   ini<real_t> *intcond,
   grd<real_t> *grid,
@@ -40,7 +39,7 @@ stp<real_t> *opt_stp(const po::variables_map& vm,
     if (vm.count("nt")) error_macro("nt may be specified only if dt != auto")
     if (vm.count("nout")) error_macro("nout may be specified only if dt != auto")
     return new stp<real_t>(
-      fllbck, advsch,
+      advsch,
       velocity,
       intcond,
       grid,
@@ -55,7 +54,7 @@ stp<real_t> *opt_stp(const po::variables_map& vm,
     if (vm.count("dt_out")) error_macro("dt_out may be specified only if dt == auto") 
     dt = real_cast<real_t>(vm, "dt") * si::seconds; 
     return new stp<real_t>(
-      fllbck, advsch,
+      advsch,
       velocity,
       intcond,
       grid,

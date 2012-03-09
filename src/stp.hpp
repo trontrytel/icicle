@@ -21,7 +21,7 @@
 template <typename real_t>
 struct stp : root
 {
-  adv<real_t> *fllbck, *advsch;
+  adv<real_t> *advsch;
   vel<real_t> *velocity;
   ini<real_t> *intcond;
   grd<real_t> *grid;
@@ -32,7 +32,6 @@ struct stp : root
   quantity<si::time, real_t> dt;
 
   stp(
-    adv<real_t> *fllbck, 
     adv<real_t> *advsch, 
     vel<real_t> *velocity,
     ini<real_t> *intcond,
@@ -41,7 +40,7 @@ struct stp : root
     quantity<si::time, real_t> dt_out, 
     quantity<si::time, real_t> t_max
   ) 
-    : fllbck(fllbck), advsch(advsch), 
+    : advsch(advsch), 
       velocity(velocity), 
       intcond(intcond), 
       grid(grid),
@@ -80,7 +79,6 @@ struct stp : root
   }
 
   stp(
-    adv<real_t> *fllbck, 
     adv<real_t> *advsch, 
     vel<real_t> *velocity,
     ini<real_t> *intcond,
@@ -90,7 +88,7 @@ struct stp : root
     quantity<si::time, real_t> dt, 
     unsigned long nt
   ) 
-    : fllbck(fllbck), advsch(advsch), 
+    : advsch(advsch), 
       velocity(velocity), 
       intcond(intcond), 
       grid(grid),

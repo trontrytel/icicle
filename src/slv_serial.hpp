@@ -15,7 +15,7 @@
 template <typename real_t>
 class slv_serial : public slv<real_t>
 {
-  private: adv<real_t> *fllbck, *advsch;
+  private: adv<real_t> *advsch;
   private: unique_ptr<mtx::idx> ijk;
   private: out<real_t> *output;
   private: stp<real_t> *setup;
@@ -32,10 +32,9 @@ class slv_serial : public slv<real_t>
     int j_min, int j_max,
     int k_min, int k_max
   )
-    : fllbck(setup->fllbck), advsch(setup->advsch), output(output), setup(setup)
+    : advsch(setup->advsch), output(output), setup(setup)
   {
     // computing required halo lengths
-    if (fllbck != NULL) assert(advsch->stencil_extent() >= fllbck->stencil_extent());
     halo_vctr = (advsch->stencil_extent() - 1) / 2;
     halo_sclr.assign(setup->eqsys->n_vars(), halo_vctr);
     if (!setup->velocity->is_constant())
@@ -62,7 +61,6 @@ class slv_serial : public slv<real_t>
       }
 
       int tlevs = advsch->time_levels();
-      if (fllbck != NULL) assert(tlevs > fllbck->time_levels()); // TODO: OK ?
       for (int n = 0; n < advsch->time_levels(); ++n) 
       {
         psi[e].push_back(new mtx::arr<real_t>(
@@ -79,8 +77,6 @@ class slv_serial : public slv<real_t>
     }
 
     // caches (TODO: move to adv.hpp...)
-    assert(fllbck == NULL || fllbck->num_sclr_caches() == 0);
-    assert(fllbck == NULL || fllbck->num_vctr_caches() == 0);
     cache.reset(new tmp<real_t>(advsch->num_vctr_caches(), advsch->num_sclr_caches(), setup->grid, 
       halo_vctr + (setup->velocity->is_constant() ? 0 : 1), /* TODO TODO TODO it should be max(halo_sclr, halo_vctr) */ // halo_sclr > halo_vctr only for non-const velocities, the cache is only used in adv_*
       i_min, i_max,

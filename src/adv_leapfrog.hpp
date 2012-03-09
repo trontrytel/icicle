@@ -24,10 +24,16 @@ class adv_leapfrog : public adv<real_t>
   public: const real_t courant_min() { return .5; } ; //TODO Wicker Skamarock 2002 
  
   private: grd_arakawa_c_lorenz<real_t> *grid;
+  private: unique_ptr<adv_upstream<real_t>> fallback;
 
   public: adv_leapfrog(grd_arakawa_c_lorenz<real_t> *grid)
-    : grid(grid)
-  { }
+    : grid(grid), fallback(new adv_upstream<real_t>(grid))
+  { 
+    assert(this->stencil_extent() >= fallback->stencil_extent());
+    assert(this->num_sclr_caches() == fallback->num_sclr_caches());
+    assert(this->num_vctr_caches() == fallback->num_vctr_caches());
+    assert(this->num_steps() == fallback->num_steps());
+  }
 
   public: 
   template <class idx>
@@ -41,13 +47,38 @@ class adv_leapfrog : public adv<real_t>
   )
   {
     assert(step == 1);
-    ///  \f$ \psi^{n+1}_i = \psi^{n-1}_i - C^{n}_{i} \cdot (\psi^{n}_{i+1} - \psi^{n}_{i-1}) \f$ \n
-    ///  where C is the average Courant number \n
-    ///  for Arakawa C grid: \f$ C^{n}_i=0.5\cdot(C^{n}_{i+1/2} + C^{n}_{i-1/2}) \f$
 
-    (*psi[n+1])(idx(i,j,k)) -= 
-      .5 * ((*Cx)(idx(i + grid->p_half,j,k)) + (*Cx)(idx(i - grid->m_half,j,k))) // average Courant number!
-      * ( (*psi[n])(idx(i+1,j,k)) - (*psi[n])(idx(i-1,j,k)) );
+    switch (n) 
+    {
+      case 1: 
+      {
+        /// \f$ 
+        ///   \psi^{n+1}_i = \psi^{n-1}_i - C^{n}_{i} \cdot (\psi^{n}_{i+1} - \psi^{n}_{i-1}) 
+        /// \f$
+        /// where C is the average Courant number for Arakawa C grid: 
+        /// \f$ 
+        ///   C^{n}_i=0.5\cdot(C^{n}_{i+1/2} + C^{n}_{i-1/2}) 
+        /// \f$
+        (*psi[n+1])(idx(i,j,k)) -= 
+          .5 * ( // average Courant number
+            (*Cx)(idx(i + grid->p_half,j,k)) + 
+            (*Cx)(idx(i - grid->m_half,j,k))
+          )
+          * 
+          (  
+            (*psi[n])(idx(i+1,j,k)) - 
+            (*psi[n])(idx(i-1,j,k)) 
+          );
+        break;
+      } 
+      case 0:
+      {
+        // fallback for the first timestep
+        fallback->op<idx>(psi, NULL, NULL, i, j, k, n, step, Cx, NULL, NULL);
+        break;
+      }
+      default: assert(false);
+    }
   }
 };
 #endif

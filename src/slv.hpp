@@ -31,17 +31,6 @@ class slv : root
     return nghbrs[side]->data(e, n, idx);
   }
 
-  public: bool choose_an(adv<real_t> **a, int *n, int t, 
-    adv<real_t> *advsch, adv<real_t> *fllbck
-  )
-  {
-    assert(advsch->time_levels() <= 3); // FIXME: support for other values
-    bool fallback = (t == 0 && advsch->time_levels() == 3); 
-    *a = fallback ? fllbck : advsch;
-    *n = (*a)->time_levels() - 2;
-    return fallback;
-  }
-
   public: virtual void integ_loop() = 0;
   public: virtual void sync(int e, int n) {};
 };
