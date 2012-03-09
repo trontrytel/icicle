@@ -9,8 +9,8 @@
 #ifndef ADV_HPP
 #  define ADV_HPP
 
-#  include "cmn.hpp" // root class, error reporting, ...
-#  include "grd.hpp" // m_half, p_half, ...
+#  include "cmn.hpp"
+#  include "mtx.hpp"
 
 /// @brief a base class for advection operators
 template <typename real_t>
@@ -25,13 +25,23 @@ class adv : root
   public: virtual const real_t courant_max() = 0; 
   public: virtual const real_t courant_min() = 0;
 
-  public: virtual void op3D(
-    mtx::arr<real_t> *psi[], 
-    mtx::arr<real_t> *tmp_s[], 
-    mtx::arr<real_t> *tmp_v[], 
+  // functor factory (TODO: rename to op3D)
+  public: class op3D 
+  {
+    public: virtual void operator()(
+      mtx::arr<real_t> *psi[], 
+      const int n, 
+      const int s,
+      const mtx::arr<real_t> * const Cx, 
+      const mtx::arr<real_t> * const Cy, 
+      const mtx::arr<real_t> * const Cz
+    ) = 0;
+  };
+
+  public: virtual op3D *factory(
     const mtx::idx &ijk,
-    const int n, const int s,
-    const mtx::arr<real_t> * const Cx, const mtx::arr<real_t> * const Cy, const mtx::arr<real_t> * const Cz
+    mtx::arr<real_t> *tmp_s[], 
+    mtx::arr<real_t> *tmp_v[]
   ) = 0;
 };
 #endif

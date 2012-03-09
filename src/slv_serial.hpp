@@ -15,8 +15,9 @@
 template <typename real_t>
 class slv_serial : public slv<real_t>
 {
-  private: adv<real_t> *advsch;
+  private: unique_ptr<typename adv<real_t>::op3D> advop;
   private: unique_ptr<mtx::idx> ijk;
+  private: adv<real_t> *advsch;
   private: out<real_t> *output;
   private: stp<real_t> *setup;
   private: vector<int> halo_sclr;
@@ -32,7 +33,7 @@ class slv_serial : public slv<real_t>
     int j_min, int j_max,
     int k_min, int k_max
   )
-    : advsch(setup->advsch), output(output), setup(setup)
+    : advsch(advsch), output(output), setup(setup)
   {
     // computing required halo lengths
     halo_vctr = (advsch->stencil_extent() - 1) / 2;
@@ -90,6 +91,9 @@ class slv_serial : public slv<real_t>
       mtx::rng(j_min, j_max), 
       mtx::rng(k_min, k_max)
     ));
+
+    // adv op
+    advop.reset(advsch->factory(*ijk, cache->sclr, cache->vctr));
 
     // initial condition
     {
@@ -179,9 +183,7 @@ class slv_serial : public slv<real_t>
 
   public: void advect(int e, int n, int s, adv<real_t> *a)
   {
-    a->op3D(psi[e].c_array(), cache->sclr, cache->vctr, *ijk, n, s, 
-      &C[0], &C[1], &C[2] 
-    );
+    (*advop)(psi[e].c_array(), n, s, &C[0], &C[1], &C[2]);
   }
 
   public: void update_courants(const int g, const int nm1, const int nm0) // TODO: this method deserves a major rewrite!

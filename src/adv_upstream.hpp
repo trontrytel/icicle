@@ -20,6 +20,65 @@
 template <typename real_t> 
 class adv_upstream : public adv<real_t> 
 {
+  public: const int stencil_extent() { return 3; }
+  public: const int time_levels() { return 2; }
+
+  // "Donor cell schemes are more accurate for larger Courant numbers"
+  // Margolin & Smolarkiewicz 1998, SIAM J. Sci. Comput. (page 923)
+  public: const real_t courant_max() { return 1.; }
+  public: const real_t courant_min() { return .5; }
+
+  private: grd_arakawa_c_lorenz<real_t> *grid;
+
+  public: adv_upstream(grd_arakawa_c_lorenz<real_t> *grid) 
+    : grid(grid)
+  { }
+
+  public: class op3D : public adv<real_t>::op3D
+  {
+    // private nested class for storing indices
+    private:
+    template <class idx>
+    class indices
+    {
+      public: idx i_j_k, iph_j_k, imh_j_k, ip1_j_k, im1_j_k;
+      public: indices(const mtx::idx &ijk, const grd_arakawa_c_lorenz<real_t> &grid) :
+        i_j_k(  idx(ijk.i,               ijk.j, ijk.k)),
+        iph_j_k(idx(ijk.i + grid.m_half, ijk.j, ijk.k)),
+        imh_j_k(idx(ijk.i - grid.p_half, ijk.j, ijk.k)),
+        ip1_j_k(idx(ijk.i + 1,           ijk.j, ijk.k)),
+        im1_j_k(idx(ijk.i - 1,           ijk.j, ijk.k))
+      { }
+    };
+
+    // private members 
+    private: mtx::idx ijk;
+    private: indices<mtx::idx_ijk> idxx;
+    private: indices<mtx::idx_jki> idxy;
+    private: indices<mtx::idx_kij> idxz;
+
+    // ctor
+    public: op3D(const mtx::idx &ijk, const grd_arakawa_c_lorenz<real_t> &grid)
+    : ijk(ijk), idxx(ijk, grid), idxy(ijk, grid), idxz(ijk, grid)
+    { }
+
+    // () operator
+    public: virtual void operator()(
+      mtx::arr<real_t> *psi[],
+      const int n,
+      const int s,
+      const mtx::arr<real_t> * const Cx,
+      const mtx::arr<real_t> * const Cy,
+      const mtx::arr<real_t> * const Cz
+    )
+    { 
+      *psi[n+1] = *psi[0]; // TODO: move from here to the solver?
+      if (ijk.i_spans) op1D(psi, idxx, n, s, Cx, Cy, Cz);
+      if (ijk.j_spans) op1D(psi, idxy, n, s, Cy, Cz, Cx);
+      if (ijk.k_spans) op1D(psi, idxz, n, s, Cz, Cx, Cy); 
+    }
+    
+    // protected methods
 // TODO: document, include as an option / autotest in CMake
 #  ifdef MPDATA_NEGPOSPART_ABS
   protected: mtx_expr_1arg_macro(mpdata_pospart, x,
@@ -45,63 +104,43 @@ class adv_upstream : public adv<real_t>
     this->mpdata_pospart(U) * p1 + this->mpdata_negpart(U) * p2
   )
 
-  public: const int stencil_extent() { return 3; }
-  public: const int time_levels() { return 2; }
 
-  // "Donor cell schemes are more accurate for larger Courant numbers"
-  // Margolin & Smolarkiewicz 1998, SIAM J. Sci. Comput. (page 923)
-  public: const real_t courant_max() { return 1.; }
-  public: const real_t courant_min() { return .5; }
+    // private methods
+    private: 
+    template <class indices>
+    void op1D(
+      mtx::arr<real_t>* psi[], 
+      const indices &idx,
+      const int n,
+      const int step,
+      const mtx::arr<real_t> * const Cx,
+      const mtx::arr<real_t> * const,
+      const mtx::arr<real_t> * const
+    )
+    {
+      assert(step == 1);
 
-  private: grd_arakawa_c_lorenz<real_t> *grid;
+      /// \f$ 
+      ///   \psi^{n+1}_i = \psi^{n}_i - \left[ 
+      ///     F( \psi^{n}_{i}, \psi^{n}_{i+1}, U_{i+1/2} ) -
+      ///     F( \psi^{n}_{i-1}, \psi^{n}_{i}, U_{i-1/2} ) 
+      ///   \right] 
+      /// \f$ 
+      /// eq. (2) in Smolarkiewicz & Margolin 1998 (J. Comp. Phys., 140, 459-480) \n
+      (*psi[n+1])(idx.i_j_k) -= (
+        mpdata_F((*psi[n])(idx.i_j_k),   (*psi[n])(idx.ip1_j_k), (*Cx)(idx.iph_j_k)) - 
+        mpdata_F((*psi[n])(idx.im1_j_k), (*psi[n])(idx.i_j_k),   (*Cx)(idx.imh_j_k))
+      );
+    }
+  };
 
-  public: adv_upstream(grd_arakawa_c_lorenz<real_t> *grid) 
-    : grid(grid)
-  { }
-
-  public: 
-  template <class idx>
-  void op(
-    mtx::arr<real_t>* psi[], 
-    mtx::arr<real_t>* [], 
-    mtx::arr<real_t>* tmp_v[], 
-    const mtx::rng &i, const mtx::rng &j, const mtx::rng &k, 
-    const int n, const int step,
-    const mtx::arr<real_t> * const Cx, 
-    const mtx::arr<real_t> * const, 
-    const mtx::arr<real_t> * const 
-  )
-  {
-    assert(step == 1);
-
-    /// \f$ 
-    ///   \psi^{n+1}_i = \psi^{n}_i - \left[ 
-    ///     F( \psi^{n}_{i}, \psi^{n}_{i+1}, U_{i+1/2} ) -
-    ///     F( \psi^{n}_{i-1}, \psi^{n}_{i}, U_{i-1/2} ) 
-    ///   \right] 
-    /// \f$ 
-    /// eq. (2) in Smolarkiewicz & Margolin 1998 (J. Comp. Phys., 140, 459-480) \n
-    (*psi[n+1])(idx(i,j,k)) -= (
-      mpdata_F((*psi[n])(idx(i  ,j,k)), (*psi[n])(idx(i+1,j,k)), (*Cx)(idx(i + grid->p_half,j,k))) - 
-      mpdata_F((*psi[n])(idx(i-1,j,k)), (*psi[n])(idx(i  ,j,k)), (*Cx)(idx(i - grid->m_half,j,k)))
-    );
-  }
-
-  public: virtual void op3D(
-    mtx::arr<real_t> *psi[], 
-    mtx::arr<real_t> *tmp_s[], 
-    mtx::arr<real_t> *tmp_v[], 
+  public: virtual op3D *factory(
     const mtx::idx &ijk,
-    const int n, const int s,
-    const mtx::arr<real_t> * const Cx, const mtx::arr<real_t> * const Cy, const mtx::arr<real_t> * const Cz
+    mtx::arr<real_t> **,
+    mtx::arr<real_t> **
   )
   {
-    // op() uses the -= operator so the first assignment happens here
-    *psi[n+1] = *psi[0];
-    // we use the same code for each dimension switching the indices accordingly
-    if (ijk.i_spans) op<mtx::idx_ijk>(psi, tmp_s, tmp_v, ijk.i, ijk.j, ijk.k, n, s, Cx, Cy, Cz);
-    if (ijk.j_spans) op<mtx::idx_jki>(psi, tmp_s, tmp_v, ijk.j, ijk.k, ijk.i, n, s, Cy, Cz, Cx);
-    if (ijk.k_spans) op<mtx::idx_kij>(psi, tmp_s, tmp_v, ijk.k, ijk.i, ijk.j, n, s, Cz, Cx, Cy); 
+    return new op3D(ijk, *grid);
   }
 };
 #endif
