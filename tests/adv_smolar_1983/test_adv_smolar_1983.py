@@ -18,7 +18,7 @@ from mpl_toolkits.mplot3d import Axes3D  # 3D plot
 from matplotlib import cm                # colormap 
 from matplotlib.colors import LinearSegmentedColormap 
 
-for adv in ('mpdata',):#'leapfrog','upstream'):
+for adv in ('upstream','leapfrog'):#,'upstream'):
   print 'running the model...'
   os.mkdir('tmp')
   file = 'tmp/test_smolar_1983'+adv+'.nc'

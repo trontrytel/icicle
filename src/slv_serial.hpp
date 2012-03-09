@@ -33,7 +33,7 @@ class slv_serial : public slv<real_t>
     int j_min, int j_max,
     int k_min, int k_max
   )
-    : advsch(advsch), output(output), setup(setup)
+    : advsch(setup->advsch), output(output), setup(setup)
   {
     // computing required halo lengths
     halo_vctr = (advsch->stencil_extent() - 1) / 2;

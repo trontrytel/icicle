@@ -42,12 +42,17 @@ class adv_leapfrog : public adv<real_t>
     class indices
     {
       public: idx i_j_k, iph_j_k, imh_j_k, ip1_j_k, im1_j_k;
-      public: indices(const mtx::idx &ijk, const grd_arakawa_c_lorenz<real_t> &grid) :
-        i_j_k(  idx(ijk.i,               ijk.j, ijk.k)),
-        iph_j_k(idx(ijk.i + grid.m_half, ijk.j, ijk.k)),
-        imh_j_k(idx(ijk.i - grid.p_half, ijk.j, ijk.k)),
-        ip1_j_k(idx(ijk.i + 1,           ijk.j, ijk.k)),
-        im1_j_k(idx(ijk.i - 1,           ijk.j, ijk.k))
+      public: indices(
+        const mtx::rng &i, 
+        const mtx::rng &j, 
+        const mtx::rng &k, 
+        const grd_arakawa_c_lorenz<real_t> &grid
+      ) :
+        i_j_k(  idx(i,               j, k)),
+        iph_j_k(idx(i + grid.m_half, j, k)),
+        imh_j_k(idx(i - grid.p_half, j, k)),
+        ip1_j_k(idx(i + 1,           j, k)),
+        im1_j_k(idx(i - 1,           j, k))
       { }
     };
 
@@ -64,7 +69,10 @@ class adv_leapfrog : public adv<real_t>
       const grd_arakawa_c_lorenz<real_t> &grid, 
       typename adv_upstream<real_t>::op3D *fallback
     ) : 
-      ijk(ijk), idxx(ijk, grid), idxy(ijk, grid), idxz(ijk, grid)
+      ijk(ijk), 
+      idxx(ijk.i, ijk.j, ijk.k, grid), 
+      idxy(ijk.j, ijk.k, ijk.i, grid), 
+      idxz(ijk.k, ijk.i, ijk.j, grid)
     { 
       flbkop.reset(fallback);
     }

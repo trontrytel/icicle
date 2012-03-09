@@ -144,7 +144,7 @@ cmd = (
     '--eqs.isentropic.absamp',str(absamp),
   '--grd.dx',str(dx),
   '--grd.nx',str(nx),
-  '--adv','mpdata',
+  '--adv','leapfrog', # TEMP TODO TODO
     '--adv.mpdata.fct',str(fct),
     '--adv.mpdata.iord',str(iord),
   '--vel','momeq_extrapol',

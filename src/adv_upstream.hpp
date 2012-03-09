@@ -37,29 +37,39 @@ class adv_upstream : public adv<real_t>
   public: class op3D : public adv<real_t>::op3D
   {
     // private nested class for storing indices
-    private:
+    protected:
     template <class idx>
     class indices
     {
       public: idx i_j_k, iph_j_k, imh_j_k, ip1_j_k, im1_j_k;
-      public: indices(const mtx::idx &ijk, const grd_arakawa_c_lorenz<real_t> &grid) :
-        i_j_k(  idx(ijk.i,               ijk.j, ijk.k)),
-        iph_j_k(idx(ijk.i + grid.m_half, ijk.j, ijk.k)),
-        imh_j_k(idx(ijk.i - grid.p_half, ijk.j, ijk.k)),
-        ip1_j_k(idx(ijk.i + 1,           ijk.j, ijk.k)),
-        im1_j_k(idx(ijk.i - 1,           ijk.j, ijk.k))
+      public: bool do_x, do_y, do_z;
+      public: indices(
+        const mtx::rng &i,
+        const mtx::rng &j,
+        const mtx::rng &k, 
+        const grd_arakawa_c_lorenz<real_t> &grid
+      ) :
+        i_j_k(  idx(i,               j, k)),
+        iph_j_k(idx(i + grid.p_half, j, k)),
+        imh_j_k(idx(i - grid.m_half, j, k)),
+        ip1_j_k(idx(i + 1,           j, k)),
+        im1_j_k(idx(i - 1,           j, k)),
+        do_x(i.first() != i.last()),
+        do_y(j.first() != j.last()),
+        do_z(k.first() != k.last())
       { }
     };
 
     // private members 
-    private: mtx::idx ijk;
     private: indices<mtx::idx_ijk> idxx;
     private: indices<mtx::idx_jki> idxy;
     private: indices<mtx::idx_kij> idxz;
 
     // ctor
-    public: op3D(const mtx::idx &ijk, const grd_arakawa_c_lorenz<real_t> &grid)
-    : ijk(ijk), idxx(ijk, grid), idxy(ijk, grid), idxz(ijk, grid)
+    public: op3D(const mtx::idx &ijk, const grd_arakawa_c_lorenz<real_t> &grid) :
+      idxx(ijk.i, ijk.j, ijk.k, grid), 
+      idxy(ijk.j, ijk.k, ijk.i, grid), 
+      idxz(ijk.k, ijk.i, ijk.j, grid)
     { }
 
     // () operator
@@ -73,40 +83,38 @@ class adv_upstream : public adv<real_t>
     )
     { 
       *psi[n+1] = *psi[0]; // TODO: move from here to the solver?
-      if (ijk.i_spans) op1D(psi, idxx, n, s, Cx, Cy, Cz);
-      if (ijk.j_spans) op1D(psi, idxy, n, s, Cy, Cz, Cx);
-      if (ijk.k_spans) op1D(psi, idxz, n, s, Cz, Cx, Cy); 
+      if (idxx.do_x) op1D(psi, idxx, n, s, Cx, Cy, Cz);
+      if (idxx.do_y) op1D(psi, idxy, n, s, Cy, Cz, Cx);
+      if (idxx.do_z) op1D(psi, idxz, n, s, Cz, Cx, Cy); 
     }
     
     // protected methods
-// TODO: document, include as an option / autotest in CMake
+    // TODO: document, include as an option / autotest in CMake
 #  ifdef MPDATA_NEGPOSPART_ABS
-  protected: mtx_expr_1arg_macro(mpdata_pospart, x,
-    real_t(.5) * (x + abs(x))
-  )
-  protected: mtx_expr_1arg_macro(mpdata_negpart, x,
-    real_t(.5) * (x - abs(x))
-  )
+    protected: mtx_expr_1arg_macro(mpdata_pospart, x,
+      real_t(.5) * (x + abs(x))
+    )
+    protected: mtx_expr_1arg_macro(mpdata_negpart, x,
+      real_t(.5) * (x - abs(x))
+    )
 #  else
-  protected: mtx_expr_1arg_macro(mpdata_pospart, x,
-    max(real_t(0), x)
-  )
-  protected: mtx_expr_1arg_macro(mpdata_negpart, x,
-    min(real_t(0), x)
-  )
+    protected: mtx_expr_1arg_macro(mpdata_pospart, x,
+      max(real_t(0), x)
+    )
+    protected: mtx_expr_1arg_macro(mpdata_negpart, x,
+      min(real_t(0), x)
+    )
 #  endif
 
-  /// \f$ 
-  ///   F(\psi_l, \psi_r, U) = 0.5 \cdot (U + |U|) \cdot \psi_l + 0.5 \cdot (U - |U|) \cdot \psi_r 
-  /// \f$ 
-  /// eq. (3 a-d) in Smolarkiewicz & Margolin 1998 (J. Comp. Phys., 140, 459-480)
-  protected: mtx_expr_3arg_macro(mpdata_F, p1, p2, U,
-    this->mpdata_pospart(U) * p1 + this->mpdata_negpart(U) * p2
-  )
+    /// \f$ 
+    ///   F(\psi_l, \psi_r, U) = 0.5 \cdot (U + |U|) \cdot \psi_l + 0.5 \cdot (U - |U|) \cdot \psi_r 
+    /// \f$ 
+    /// eq. (3 a-d) in Smolarkiewicz & Margolin 1998 (J. Comp. Phys., 140, 459-480)
+    protected: mtx_expr_3arg_macro(mpdata_F, p1, p2, U,
+      this->mpdata_pospart(U) * p1 + this->mpdata_negpart(U) * p2
+    )
 
-
-    // private methods
-    private: 
+    protected: 
     template <class indices>
     void op1D(
       mtx::arr<real_t>* psi[], 
