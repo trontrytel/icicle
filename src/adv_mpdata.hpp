@@ -52,8 +52,8 @@ class adv_mpdata : public adv_upstream<real_t>
   template <class aon_class>
   class op3D : public aon_class, public adv_upstream<real_t>::op3D
   {
-    // private nested class for storing indices
-    private:
+    // nested class for storing indices
+    protected:
     template <class idx>
     class indices : public adv_upstream<real_t>::op3D::template indices<idx>
     {   
@@ -458,14 +458,14 @@ class adv_mpdata : public adv_upstream<real_t>
 
   // on-demand support for transporting fields of variable sign
   // see section 3.2, subsection (4) in PKS & LGM 1998 
-  private: class aon_nil 
+  protected: class aon_nil 
   { 
     protected: template<class T> T aon(const T &x) 
     { 
       return x; 
     } 
   };
-  private: class aon_abs 
+  protected: class aon_abs 
   { 
     protected: template<class T> auto aon(const T &x) -> decltype(abs(x))
     { 
