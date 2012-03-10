@@ -21,9 +21,11 @@ class eqs : root
   /// @brief representation of a generalised transport equation 
   /// (e.g. eq. 19 in Smolarkiewicz & Margolin 1998)
   protected: class groupid {public:int id;public:groupid(int id=0):id(id){}}; // yeah!
+  protected: class positive_definite {public:bool is;public:positive_definite(bool is=false):is(is){}}; // yeah!
   protected: struct gte {
     string name, desc, unit;
-    vector<int> pow_uvw; // TODO: swap place with source_terms
+    positive_definite posdef;
+    vector<int> pow_uvw; 
     groupid group;
     ptr_vector<rhs<real_t>> rhs_terms;
   };
@@ -38,6 +40,11 @@ class eqs : root
   public: int group(int e)
   {
     return system().at(e).group.id;
+  }
+
+  public: bool positive_definite(int e)
+  {
+    return system().at(e).posdef.is;
   }
 
   public: int n_vars()

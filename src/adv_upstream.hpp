@@ -145,7 +145,8 @@ class adv_upstream : public adv<real_t>
   public: virtual op3D *factory(
     const mtx::idx &ijk,
     mtx::arr<real_t> **,
-    mtx::arr<real_t> **
+    mtx::arr<real_t> **,
+    bool
   )
   {
     return new op3D(ijk, *grid);

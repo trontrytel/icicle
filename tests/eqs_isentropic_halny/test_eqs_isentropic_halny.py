@@ -17,6 +17,7 @@ from Scientific.IO.NetCDF import NetCDFFile
 ############################################################################
 # simulation parameteters (from isopc_yale.::SHAWAT2 by P.K.Smolarkiewicz) #
 ############################################################################
+bits = 32
 nx = 160     # 161  # [1]
 nz = 60      # 61   # [1]
 dx = 3e3     # 3e3  # [m]
@@ -135,6 +136,7 @@ f.close()
 ############################################################################
 cmd = (
   '../../icicle',
+  '--bits',str(bits),
   '--ini','netcdf',
   '--ini.netcdf.file','ini.nc',
   '--eqs','isentropic',
@@ -144,7 +146,7 @@ cmd = (
     '--eqs.isentropic.absamp',str(absamp),
   '--grd.dx',str(dx),
   '--grd.nx',str(nx),
-  '--adv','leapfrog', # TEMP TODO TODO
+  '--adv','mpdata', 
     '--adv.mpdata.fct',str(fct),
     '--adv.mpdata.iord',str(iord),
   '--vel','momeq_extrapol',

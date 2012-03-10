@@ -106,6 +106,7 @@ class eqs_shallow_water : public eqs<real_t>
       sys.push_back(new struct eqs<real_t>::gte({
         "qx", "heigh-integrated specific momentum (x)", 
         this->quan2str(par.q_unit), 
+        typename eqs<real_t>::positive_definite(false),
         vector<int>({1, 0, 0})
       }));
       sys.back().rhs_terms.push_back(new forcings<1,0>(par, grid.dx())); 
@@ -117,6 +118,7 @@ class eqs_shallow_water : public eqs<real_t>
       sys.push_back(new struct eqs<real_t>::gte({
         "qy", "heigh-integrated specific momentum (y)", 
         this->quan2str(par.q_unit), 
+        typename eqs<real_t>::positive_definite(false),
         vector<int>({0, 1, 0})
       }));
       sys.back().rhs_terms.push_back(new forcings<0,1>(par, grid.dy())); 
@@ -127,6 +129,7 @@ class eqs_shallow_water : public eqs<real_t>
     sys.push_back(new struct eqs<real_t>::gte({
       "h", "thickness of the fluid layer", 
       this->quan2str(par.h_unit), 
+      typename eqs<real_t>::positive_definite(true),
       vector<int>({-1, -1, 0})
     }));
     par.idx_h = sys.size() - 1;

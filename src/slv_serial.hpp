@@ -15,7 +15,7 @@
 template <typename real_t>
 class slv_serial : public slv<real_t>
 {
-  private: unique_ptr<typename adv<real_t>::op3D> advop;
+  private: ptr_vector<typename adv<real_t>::op3D> advop; // advop[positive_definite]
   private: unique_ptr<mtx::idx> ijk;
   private: adv<real_t> *advsch;
   private: out<real_t> *output;
@@ -93,7 +93,8 @@ class slv_serial : public slv<real_t>
     ));
 
     // adv op
-    advop.reset(advsch->factory(*ijk, cache->sclr, cache->vctr));
+    advop.push_back(advsch->factory(*ijk, cache->sclr, cache->vctr, /*positive_definite=*/(bool)0));
+    advop.push_back(advsch->factory(*ijk, cache->sclr, cache->vctr, /*positive_definite=*/(bool)1));
 
     // initial condition
     {
@@ -183,7 +184,7 @@ class slv_serial : public slv<real_t>
 
   public: void advect(int e, int n, int s, adv<real_t> *a)
   {
-    (*advop)(psi[e].c_array(), n, s, &C[0], &C[1], &C[2]);
+    (advop[setup->eqsys->positive_definite(e)])(psi[e].c_array(), n, s, &C[0], &C[1], &C[2]);
   }
 
   public: void update_courants(const int g, const int nm1, const int nm0) // TODO: this method deserves a major rewrite!

@@ -178,6 +178,7 @@ class eqs_isentropic : public eqs<real_t>
       sys.push_back(new struct eqs<real_t>::gte({
         "dp_" + lstr, "pressure thickness of fluid layer " + lstr,
         this->quan2str(par.p_unit), 
+        typename eqs<real_t>::positive_definite(true),
         vector<int>({-1, -1, 0}),
         typename eqs<real_t>::groupid(lint)
       }));
@@ -188,6 +189,7 @@ class eqs_isentropic : public eqs<real_t>
         sys.push_back(new struct eqs<real_t>::gte({
           "qx_" + lstr, "layer-integrated specific momentum (x) of fluid layer " + lstr, 
           this->quan2str(par.q_unit), 
+          typename eqs<real_t>::positive_definite(false),
           vector<int>({1, 0, 0}),
           typename eqs<real_t>::groupid(lint)
         }));
@@ -207,6 +209,7 @@ class eqs_isentropic : public eqs<real_t>
         sys.push_back(new struct eqs<real_t>::gte({
           "qy_" + lstr, "layer-integrated specific momentum (y) of fluid layer " + lstr, 
           this->quan2str(par.q_unit), 
+          typename eqs<real_t>::positive_definite(false),
           vector<int>({0, 1, 0}),
           typename eqs<real_t>::groupid(lint)
         }));

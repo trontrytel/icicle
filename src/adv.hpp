@@ -41,7 +41,8 @@ class adv : root
   public: virtual op3D *factory(
     const mtx::idx &ijk,
     mtx::arr<real_t> *tmp_s[], 
-    mtx::arr<real_t> *tmp_v[]
+    mtx::arr<real_t> *tmp_v[],
+    bool positive_definite
   ) = 0;
 };
 #endif

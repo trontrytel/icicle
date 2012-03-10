@@ -48,7 +48,9 @@ class adv_mpdata : public adv_upstream<real_t>
     if (iord < 3 && third_order) warning_macro("third-order accuracy needs iord >= 3")
   }
 
-  public: class op3D : public adv_upstream<real_t>::op3D
+  public: 
+  template <class aon_class>
+  class op3D : public aon_class, public adv_upstream<real_t>::op3D
   {
     // private nested class for storing indices
     private:
@@ -165,16 +167,13 @@ class adv_mpdata : public adv_upstream<real_t>
     ) 
 #    endif
 
-// section 3.2 subsection (4) PKS & LGM 1998 
-#  define aon(x) abs(x)
-
     // macros for 2nd order terms:
     private: mtx_expr_2arg_macro(mpdata_A, pr, pl,
-      this->mpdata_frac(aon(pr) - aon(pl), aon(pr) + aon(pl))
+      this->mpdata_frac(pr - pl, pr + pl)
     ) 
 
     private: mtx_expr_4arg_macro(mpdata_B, pru, plu, prd, pld,
-      real_t(.5) * this->mpdata_frac(aon(pru) + aon(plu) - aon(prd) - aon(pld), aon(pru) + aon(plu) + aon(prd) + aon(pld))
+      real_t(.5) * this->mpdata_frac(pru + plu - prd - pld, pru + plu + prd + pld)
     )
 
     private: mtx_expr_4arg_macro(mpdata_V, Vru, Vlu, Vrd, Vld, 
@@ -204,7 +203,7 @@ class adv_mpdata : public adv_upstream<real_t>
     private: mtx_expr_5arg_macro(mpdata_3rd_xx, pp2, pp1, pp0, pm1, U, 
       (real_t(3) * U * abs(U) - real_t(2) * pow(U,3) - U) 
       / real_t(3) 
-      * this->mpdata_frac(aon(pp2) - aon(pp1) - aon(pp0) + aon(pm1), aon(pp2) + aon(pp1) + aon(pp0) + aon(pm1)) 
+      * this->mpdata_frac(pp2 - pp1 - pp0 + pm1, pp2 + pp1 + pp0 + pm1) 
     )
 
     /// second term from eq. (36) from Smolarkiewicz & Margolin 1998 (with G=1)
@@ -220,8 +219,8 @@ class adv_mpdata : public adv_upstream<real_t>
     private: mtx_expr_6arg_macro(mpdata_3rd_xy, pip0jp1, pip0jm1, pip1jp1, pip1jm1, U, V,
       V * (abs(U) - real_t(2) * pow(U,2)) 
       * this->mpdata_frac( 
-        aon(pip1jp1) - aon(pip0jp1) - aon(pip1jm1) + aon(pip0jm1), 
-        aon(pip1jp1) + aon(pip0jp1) + aon(pip1jm1) + aon(pip0jm1) 
+        pip1jp1 - pip0jp1 - pip1jm1 + pip0jm1, 
+        pip1jp1 + pip0jp1 + pip1jm1 + pip0jm1 
       ) 
     )
 
@@ -246,10 +245,10 @@ class adv_mpdata : public adv_upstream<real_t>
       pip0jp1km1, pip0jm1km1, pip1jp1km1, pip1jm1km1, 
       U, V, W, 
       real_t(2./3.) * U * V * W * this->mpdata_frac( 
-        aon(pip0jp1kp1) - aon(pip0jm1kp1) + aon(pip1jp1kp1) - aon(pip1jm1kp1) - 
-        aon(pip0jp1km1) + aon(pip0jm1km1) - aon(pip1jp1km1) + aon(pip1jm1km1), 
-        aon(pip0jp1kp1) + aon(pip0jm1kp1) + aon(pip1jp1kp1) + aon(pip1jm1kp1) + 
-        aon(pip0jp1km1) + aon(pip0jm1km1) + aon(pip1jp1km1) + aon(pip1jm1km1) 
+        pip0jp1kp1 - pip0jm1kp1 + pip1jp1kp1 - pip1jm1kp1 - 
+        pip0jp1km1 + pip0jm1km1 - pip1jp1km1 + pip1jm1km1, 
+        pip0jp1kp1 + pip0jm1kp1 + pip1jp1kp1 + pip1jm1kp1 + 
+        pip0jp1km1 + pip0jm1km1 + pip1jp1km1 + pip1jm1km1 
       ) 
     )
 
@@ -271,6 +270,7 @@ class adv_mpdata : public adv_upstream<real_t>
     ///   } 
     /// \f$
     /// eq. (13-14) in Smolarkiewicz 1984 (J. Comp. Phys.,54,352-362) \n
+
     protected:
     template <class indices>
     void mpdata_U(
@@ -284,7 +284,9 @@ class adv_mpdata : public adv_upstream<real_t>
     {
       (*C_adf)(idx.adfidx) = (
         mpdata_CA( 
-          (*psi[n])(idx.ir_jm_km), (*psi[n])(idx.il_jm_km), Cx(idx.ic_jm_km) 
+          this->aon((*psi[n])(idx.ir_jm_km)), 
+          this->aon((*psi[n])(idx.il_jm_km)), 
+          Cx(idx.ic_jm_km) 
         )
       );  
       if (cross_terms) 
@@ -293,8 +295,10 @@ class adv_mpdata : public adv_upstream<real_t>
         {
           (*C_adf)(idx.adfidx) -= (
             mpdata_CB( 
-              (*psi[n])(idx.ir_jmp1_km), (*psi[n])(idx.il_jmp1_km), 
-              (*psi[n])(idx.ir_jmm1_km), (*psi[n])(idx.il_jmm1_km), 
+              this->aon((*psi[n])(idx.ir_jmp1_km)), 
+              this->aon((*psi[n])(idx.il_jmp1_km)), 
+              this->aon((*psi[n])(idx.ir_jmm1_km)), 
+              this->aon((*psi[n])(idx.il_jmm1_km)), 
               Cx(idx.ic_jm_km), mpdata_V( 
                 Cy(idx.ir_jmph_km), Cy(idx.il_jmph_km), 
                 Cy(idx.ir_jmmh_km), Cy(idx.il_jmmh_km)  
@@ -306,8 +310,10 @@ class adv_mpdata : public adv_upstream<real_t>
         {
           (*C_adf)(idx.adfidx) -= ( // otherwise Cz is uninitialised!
             mpdata_CB( 
-              (*psi[n])(idx.ir_jm_kmp1), (*psi[n])(idx.il_jm_kmp1),
-              (*psi[n])(idx.ir_jm_kmm1), (*psi[n])(idx.il_jm_kmm1),
+              this->aon((*psi[n])(idx.ir_jm_kmp1)), 
+              this->aon((*psi[n])(idx.il_jm_kmp1)),
+              this->aon((*psi[n])(idx.ir_jm_kmm1)), 
+              this->aon((*psi[n])(idx.il_jm_kmm1)),
               Cx(idx.ic_jm_km), mpdata_W( 
                 Cz(idx.ir_jm_kmph), Cz(idx.il_jm_kmph), 
                 Cz(idx.ir_jm_kmmh), Cz(idx.il_jm_kmmh)  
@@ -321,10 +327,10 @@ class adv_mpdata : public adv_upstream<real_t>
           {
             (*C_adf)(idx.adfidx) += ( // otherwise Cy is uninitialised
               mpdata_3rd_xy(
-                (*psi[n])(idx.im_jmp1_km), 
-                (*psi[n])(idx.im_jmm1_km), 
-                (*psi[n])(idx.imp1_jmp1_km), 
-                (*psi[n])(idx.imp1_jmm1_km), 
+                this->aon((*psi[n])(idx.im_jmp1_km)), 
+                this->aon((*psi[n])(idx.im_jmm1_km)), 
+                this->aon((*psi[n])(idx.imp1_jmp1_km)), 
+                this->aon((*psi[n])(idx.imp1_jmm1_km)), 
                 Cx(idx.ic_jm_km), // U, 
                 mpdata_V( // V
                   Cy(idx.ir_jmph_km), Cy(idx.il_jmph_km), 
@@ -337,10 +343,10 @@ class adv_mpdata : public adv_upstream<real_t>
           {
             (*C_adf)(idx.adfidx) += ( // otherwise Cz is uninitialised
               mpdata_3rd_xz(
-                (*psi[n])(idx.im_jm_kmp1), 
-                (*psi[n])(idx.im_jm_kmm1), 
-                (*psi[n])(idx.imp1_jm_kmp1), 
-                (*psi[n])(idx.imp1_jm_kmm1), 
+                this->aon((*psi[n])(idx.im_jm_kmp1)), 
+                this->aon((*psi[n])(idx.im_jm_kmm1)), 
+                this->aon((*psi[n])(idx.imp1_jm_kmp1)), 
+                this->aon((*psi[n])(idx.imp1_jm_kmm1)), 
                 Cx(idx.ic_jm_km), // U, 
                 mpdata_W( // W
                   Cz(idx.ir_jm_kmph), Cz(idx.il_jm_kmph), /* Wru, Wlu */ 
@@ -353,14 +359,14 @@ class adv_mpdata : public adv_upstream<real_t>
           {
             (*C_adf)(idx.adfidx) -= ( // otherwise Cx & Cz are uninitialised
               mpdata_3rd_yz(
-                (*psi[n])(idx.im_jmp1_kmp1), 
-                (*psi[n])(idx.im_jmm1_kmp1),
-                (*psi[n])(idx.imp1_jmp1_kmp1), 
-                (*psi[n])(idx.imp1_jmm1_kmp1), 
-                (*psi[n])(idx.im_jmp1_kmm1), 
-                (*psi[n])(idx.im_jmm1_kmm1), 
-                (*psi[n])(idx.imp1_jmp1_kmm1), 
-                (*psi[n])(idx.imp1_jmm1_kmm1), 
+                this->aon((*psi[n])(idx.im_jmp1_kmp1)), 
+                this->aon((*psi[n])(idx.im_jmm1_kmp1)),
+                this->aon((*psi[n])(idx.imp1_jmp1_kmp1)), 
+                this->aon((*psi[n])(idx.imp1_jmm1_kmp1)), 
+                this->aon((*psi[n])(idx.im_jmp1_kmm1)), 
+                this->aon((*psi[n])(idx.im_jmm1_kmm1)), 
+                this->aon((*psi[n])(idx.imp1_jmp1_kmm1)), 
+                this->aon((*psi[n])(idx.imp1_jmm1_kmm1)), 
                 Cx(idx.ic_jm_km), // U
                 mpdata_V( // V
                   Cy(idx.ir_jmph_km), Cy(idx.il_jmph_km), /* Vru, Vlu */ 
@@ -379,10 +385,10 @@ class adv_mpdata : public adv_upstream<real_t>
       { 
         (*C_adf)(idx.adfidx) +=(
           mpdata_3rd_xx(
-            (*psi[n])(idx.imp2_jm_km), 
-            (*psi[n])(idx.imp1_jm_km), 
-            (*psi[n])(idx.im_jm_km), 
-            (*psi[n])(idx.imm1_jm_km), 
+            this->aon((*psi[n])(idx.imp2_jm_km)), 
+            this->aon((*psi[n])(idx.imp1_jm_km)), 
+            this->aon((*psi[n])(idx.im_jm_km)), 
+            this->aon((*psi[n])(idx.imm1_jm_km)), 
             Cx(idx.ic_jm_km)
           )
         );  
@@ -450,13 +456,34 @@ class adv_mpdata : public adv_upstream<real_t>
     }
   };
 
-  public: virtual op3D *factory(
+  // on-demand support for transporting fields of variable sign
+  // see section 3.2, subsection (4) in PKS & LGM 1998 
+  private: class aon_nil 
+  { 
+    protected: template<class T> T aon(const T &x) 
+    { 
+      return x; 
+    } 
+  };
+  private: class aon_abs 
+  { 
+    protected: template<class T> auto aon(const T &x) -> decltype(abs(x))
+    { 
+      return abs(x); 
+    } 
+  };
+
+  public: virtual typename adv_upstream<real_t>::op3D *factory(
     const mtx::idx &ijk,
     mtx::arr<real_t> **tmp_s,
-    mtx::arr<real_t> **tmp_v
+    mtx::arr<real_t> **tmp_v,
+    bool positive_definite
   )
   {
-    return new op3D(ijk, *grid, tmp_s, tmp_v, cross_terms, iord, third_order);
+    if (positive_definite)
+      return new op3D<aon_nil>(ijk, *grid, tmp_s, tmp_v, cross_terms, iord, third_order);
+    else
+      return new op3D<aon_abs>(ijk, *grid, tmp_s, tmp_v, cross_terms, iord, third_order);
   }
 };
 #endif
