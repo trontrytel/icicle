@@ -60,6 +60,12 @@ using blitz::where;
     assert(isfinite(sum(a5))); \
     return expr; \
   }
+#  define mtx_expr_6arg_macro_noasserts(name, a1, a2, a3, a4, a5, a6, expr) \
+  template<class t1, class t2, class t3, class t4, class t5, class t6> \
+  static auto name(const t1 &a1, const t2 &a2, const t3 &a3, const t4 &a4, const t5 &a5, const t6 &a6) -> decltype(expr) \
+  { \
+    return expr; \
+  }
 #  define mtx_expr_6arg_macro(name, a1, a2, a3, a4, a5, a6, expr) \
   template<class t1, class t2, class t3, class t4, class t5, class t6> \
   static auto name(const t1 &a1, const t2 &a2, const t3 &a3, const t4 &a4, const t5 &a5, const t6 &a6) -> decltype(expr) \

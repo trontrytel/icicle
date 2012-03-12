@@ -51,12 +51,39 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
     template <class idx>
     class indices 
     { 
+      class beta_up
+      {
+        public: idx i_j_k, 
+          imh_j_k, iph_j_k, i_jmh_k, i_jph_k, i_j_kmh, i_j_kph, 
+          im1_j_k, ip1_j_k, i_jm1_k, i_jp1_k, i_j_km1, i_j_kp1;
+        public: beta_up(const mtx::rng &i, const mtx::rng &j, const mtx::rng &k, const grd_arakawa_c_lorenz<real_t> &grid) :
+          i_j_k(i, j, k),
+          imh_j_k(i - grid.m_half, j, k), iph_j_k(i + grid.p_half, j, k), 
+          i_jmh_k(i, j - grid.m_half, k), i_jph_k(i, j + grid.p_half, k), 
+          i_j_kmh(i, j, k - grid.m_half), i_j_kph(i, j, k + grid.p_half),
+          im1_j_k(i-1, j, k), ip1_j_k(i+1, j, k), 
+          i_jm1_k(i, j-1, k), i_jp1_k(i, j+1, k), 
+          i_j_km1(i, j, k-1), i_j_kp1(i, j, k+1)
+        { }
+      };
+   
+      class beta_dn
+      {
+        public: idx i_j_k,
+          iph_j_k, imh_j_k, i_jph_k, i_jmh_k, i_j_kph, i_j_kmh;
+        public: beta_dn(const mtx::rng &i, const mtx::rng &j, const mtx::rng &k, const grd_arakawa_c_lorenz<real_t> &grid) :
+          i_j_k(i, j, k),
+          iph_j_k(i + grid.p_half, j, k), imh_j_k(i - grid.m_half, j, k), 
+          i_jph_k(i, j + grid.p_half, k), i_jmh_k(i, j - grid.m_half, k), 
+          i_j_kph(i, j, k + grid.p_half), i_j_kmh(i, j, k - grid.m_half)
+        { }
+      };
+
       public: mtx::rng iv, ii, jj, kk;
       public: idx ii_jj_kk, iim1_jj_kk, iip1_jj_kk, ii_jjm1_kk, ii_jjp1_kk, ii_jj_kkm1, ii_jj_kkp1;
-      public: idx iv_j_k, ivph_j_k, ivmh_j_k, iv_jph_k, iv_jmh_k, iv_j_kph, iv_j_kmh,
-        ivp1mh_j_k, ivp1ph_j_k, ivp2_j_k, ivp1_jmh_k, ivp1_jm1_k, ivp1_jph_k, ivp1_jp1_k,
-        ivp1_j_kmh, ivp1_j_km1, ivp1_j_kph, ivp1_j_kp1, ivp1_j_k, ivm1_j_k, iv_jm1_k, iv_jp1_k, 
-        iv_j_km1, iv_j_kp1;
+      public: beta_up bu_ivp1_j_k, bu_iv_j_k;
+      public: beta_dn bd_ivp1_j_k, bd_iv_j_k;
+      public: idx iv_j_k, ivph_j_k, ivmh_j_k, ivp1_j_k, ivm1_j_k;
       public: indices(
         const mtx::rng &i, 
         const mtx::rng &j, 
@@ -79,30 +106,13 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
 
         iv(i.first()-1, i.last()), // as in mpdata_U, we compute u_{i+1/2} for iv=(i-1, ... i) instead of u_{i+1/2} and u_{i-1/2} for all i
 
+        bu_ivp1_j_k(iv+1, j, k, grid), bu_iv_j_k(iv, j, k, grid), 
+        bd_ivp1_j_k(iv+1, j, k, grid), bd_iv_j_k(iv, j, k, grid),
         iv_j_k(iv, j, k), 
         ivph_j_k(iv + grid.p_half, j, k), 
-        ivmh_j_k(iv - grid.m_half, j, k), 
-        iv_jph_k(iv, j + grid.p_half, k),
-        iv_jmh_k(iv, j - grid.m_half, k), 
-        iv_j_kph(iv, j, k + grid.p_half), 
-        iv_j_kmh(iv, j, k - grid.m_half),
-        ivp1mh_j_k(iv + 1 - grid.m_half, j, k),
-        ivp1ph_j_k(iv + 1 + grid.p_half, j, k),
-        ivp2_j_k(iv + 2, j, k),
-        ivp1_jmh_k(iv + 1, j - grid.m_half, k),
-        ivp1_jm1_k(iv + 1, j - 1, k),
-        ivp1_jph_k(iv + 1, j + grid.p_half, k),
-        ivp1_jp1_k(iv + 1, j + 1, k),
-        ivp1_j_kmh(iv + 1, j, k - grid.m_half),
-        ivp1_j_km1(iv + 1, j, k - 1),
-        ivp1_j_kph(iv + 1, j, k + grid.p_half),
-        ivp1_j_kp1(iv + 1, j, k + 1),
+        ivmh_j_k(iv - grid.m_half, j, k),
         ivp1_j_k(iv + 1, j, k),
-        ivm1_j_k(iv - 1, j, k), 
-        iv_jm1_k(iv, j - 1, k), 
-        iv_jp1_k(iv, j + 1, k), 
-        iv_j_km1(iv, j, k - 1), 
-        iv_j_kp1(iv, j, k + 1)
+        ivm1_j_k(iv - 1, j, k)
       { }
     };  
 
@@ -211,11 +221,11 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
           *       Cz_corr = tmp_v[z_new],
           *       Cz_mono = tmp_v[0];
   
-        if (this->do_x())
+        //if (this->do_x()) // TODO: optimise!
           mpdata.mpdata_U(Cx_corr, psi, n, step, mpdata.indcs_x, *Cx_unco, *Cy_unco, *Cz_unco);
-        if (this->do_y())
+        //if (this->do_y()) // TODO: optimise!
           mpdata.mpdata_U(Cy_corr, psi, n, step, mpdata.indcs_y, *Cy_unco, *Cz_unco, *Cx_unco);
-        if (this->do_z())
+        //if (this->do_z()) // TODO: optimise!
           mpdata.mpdata_U(Cz_corr, psi, n, step, mpdata.indcs_z, *Cz_unco, *Cx_unco, *Cy_unco); 
    
         // performing upstream advection using the ''monotonic'' velocities (logic from adv::op3D)
@@ -238,6 +248,43 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
       }
     }
 
+/// \f$ \beta^{\uparrow}_{i} = \frac { \psi^{max}_{i}- \psi^{*}_{i} }
+/// { \sum\limits_{I} \frac{\Delta t}{\Delta x^{I}} \left( [u^{I}_{i-1/2}]^{+} \psi^{*}_{i-1} - 
+/// [u^{I}_{i+1/2}]^{-} \psi^{*}_{i+1} \right)  } \f$ \n
+/// eq.(19a) in Smolarkiewicz & Grabowski 1990 (J.Comp.Phys.,86,355-375)
+  //private: mtx_expr_6arg_macro_noasserts(fct_beta_up, aaa, psimax, psi, C_adf_x, C_adf_y, C_adf_z,
+# define fct_beta_up(aaa, psimax, psi, C_adf_x, C_adf_y, C_adf_z) \
+     adv_mpdata<real_t>::frac( \
+       psimax(aaa.i_j_k) - (psi)(aaa.i_j_k), \
+       adv<real_t>::pospart(C_adf_x(aaa.imh_j_k)) * (psi)(aaa.im1_j_k) - \
+       adv<real_t>::negpart(C_adf_x(aaa.iph_j_k)) * (psi)(aaa.ip1_j_k) + \
+       adv<real_t>::pospart(C_adf_y(aaa.i_jmh_k)) * (psi)(aaa.i_jm1_k) - \
+       adv<real_t>::negpart(C_adf_y(aaa.i_jph_k)) * (psi)(aaa.i_jp1_k) + \
+       adv<real_t>::pospart(C_adf_z(aaa.i_j_kmh)) * (psi)(aaa.i_j_km1) - \
+       adv<real_t>::negpart(C_adf_z(aaa.i_j_kph)) * (psi)(aaa.i_j_kp1)   \
+     ) 
+
+/// \f$ \beta^{\downarrow}_{i} = \frac { \psi^{*}_{i}- \psi^{min}_{i} }
+/// { \sum\limits_{I} \frac{\Delta t}{\Delta x^{I}} \left( [u^{I}_{i+1/2}]^{+} \psi^{*}_{i} - 
+/// [u^{I}_{i-1/2}]^{-} \psi^{*}_{i} \right)  } \f$ \n
+/// eq.(19b) in Smolarkiewicz & Grabowski 1990 (J.Comp.Phys.,86,355-375)
+  // private: mtx_expr_6arg_macro_noasserts(fct_beta_dn, aaa, psimin, psi, C_adf_x, C_adf_y, C_adf_z,
+#  define fct_beta_dn(aaa, psimin, psi, C_adf_x, C_adf_y, C_adf_z) \
+    adv_mpdata<real_t>::frac( \
+      (psi)(aaa.i_j_k) - psimin(aaa.i_j_k), \
+      adv<real_t>::pospart(C_adf_x(aaa.iph_j_k)) * (psi)(aaa.i_j_k) - \
+      adv<real_t>::negpart(C_adf_x(aaa.imh_j_k)) * (psi)(aaa.i_j_k) + \
+      adv<real_t>::pospart(C_adf_y(aaa.i_jph_k)) * (psi)(aaa.i_j_k) - \
+      adv<real_t>::negpart(C_adf_y(aaa.i_jmh_k)) * (psi)(aaa.i_j_k) + \
+      adv<real_t>::pospart(C_adf_z(aaa.i_j_kph)) * (psi)(aaa.i_j_k) - \
+      adv<real_t>::negpart(C_adf_z(aaa.i_j_kmh)) * (psi)(aaa.i_j_k)   \
+    )
+
+    /// nonoscillatory antidiffusive velocity: \n
+    /// \f$ U^{MON}_{i+1/2}=min(1,\beta ^{\downarrow}_i,\beta ^{\uparrow} _{i+1})[U_{i+1/2}]^{+} 
+    /// + min(1,\beta^{\uparrow}_{i},\beta^{\downarrow}_{i+1/2})[u_{i+1/2}]^{-} \f$ \n
+    /// where \f$ [\cdot]^{+}=max(\cdot,0) \f$ and \f$ [\cdot]^{-}=min(\cdot,0) \f$ \n
+    /// eq.(18) in Smolarkiewicz & Grabowski 1990 (J.Comp.Phys.,86,355-375)
     private:
     template <class indices>
     void fct_helper(
@@ -248,97 +295,17 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
       int n
     )  
     {
-///
-/// \f$ \beta^{\uparrow}_{i} = \frac { \psi^{max}_{i}- \psi^{*}_{i} }
-/// { \sum\limits_{I} \frac{\Delta t}{\Delta x^{I}} \left( [u^{I}_{i-1/2}]^{+} \psi^{*}_{i-1} - 
-/// [u^{I}_{i+1/2}]^{-} \psi^{*}_{i+1} \right)  } \f$ \n
-/// \f$ \beta^{\downarrow}_{i} = \frac { \psi^{*}_{i}- \psi^{min}_{i} }
-/// { \sum\limits_{I} \frac{\Delta t}{\Delta x^{I}} \left( [u^{I}_{i+1/2}]^{+} \psi^{*}_{i} - 
-/// [u^{I}_{i-1/2}]^{-} \psi^{*}_{i} \right)  } \f$ \n
-/// eq.(19a, 19b) in Smolarkiewicz & Grabowski 1990 (J.Comp.Phys.,86,355-375)
-
-#  define mpdata_fct_beta_up(i_j_k, imh_j_k, iph_j_k, i_jmh_k, i_jph_k, i_j_kmh, i_j_kph, im1_j_k, ip1_j_k, i_jm1_k, i_jp1_k, i_j_km1, i_j_kp1) adv_mpdata<real_t>::frac( \
-     psi_max(i_j_k) - (*psi[n])(i_j_k), \
-     adv<real_t>::pospart(C_adf_x(imh_j_k)) * (*psi[n])(im1_j_k) - \
-     adv<real_t>::negpart(C_adf_x(iph_j_k)) * (*psi[n])(ip1_j_k) + \
-     adv<real_t>::pospart(C_adf_y(i_jmh_k)) * (*psi[n])(i_jm1_k) - \
-     adv<real_t>::negpart(C_adf_y(i_jph_k)) * (*psi[n])(i_jp1_k) + \
-     adv<real_t>::pospart(C_adf_z(i_j_kmh)) * (*psi[n])(i_j_km1) - \
-     adv<real_t>::negpart(C_adf_z(i_j_kph)) * (*psi[n])(i_j_kp1)   \
-   )
-#  define mpdata_fct_beta_dn(i_j_k, iph_j_k, imh_j_k, i_jph_k, i_jmh_k, i_j_kph, i_j_kmh) adv_mpdata<real_t>::frac(\
-     (*psi[n])(i_j_k) - psi_min(i_j_k), \
-     adv<real_t>::pospart(C_adf_x(iph_j_k)) * (*psi[n])(i_j_k) - \
-     adv<real_t>::negpart(C_adf_x(imh_j_k)) * (*psi[n])(i_j_k) + \
-     adv<real_t>::pospart(C_adf_y(i_jph_k)) * (*psi[n])(i_j_k) - \
-     adv<real_t>::negpart(C_adf_y(i_jmh_k)) * (*psi[n])(i_j_k) + \
-     adv<real_t>::pospart(C_adf_z(i_j_kph)) * (*psi[n])(i_j_k) - \
-     adv<real_t>::negpart(C_adf_z(i_j_kmh)) * (*psi[n])(i_j_k)   \
-   )
-      /// nonoscillatory antidiffusive velocity: \n
-      /// \f$ U^{MON}_{i+1/2}=min(1,\beta ^{\downarrow}_i,\beta ^{\uparrow} _{i+1})[U_{i+1/2}]^{+} 
-      /// + min(1,\beta^{\uparrow}_{i},\beta^{\downarrow}_{i+1/2})[u_{i+1/2}]^{-} \f$ \n
-      /// where \f$ [\cdot]^{+}=max(\cdot,0) \f$ and \f$ [\cdot]^{-}=min(\cdot,0) \f$ \n
-      /// eq.(18) in Smolarkiewicz & Grabowski 1990 (J.Comp.Phys.,86,355-375)
-
-/*
-cerr << "aqq" << endl;
-    assert(isfinite(sum((*psi[n])(idx.iv_j_k))));
-cerr << "bqq" << endl;
-    assert(isfinite(sum((*psi[n])(idx.ivp1_j_k))));
-cerr << "cqq" << endl;
-    assert(isfinite(sum((*psi[n])(idx.ivm1_j_k))));
-cerr << "dqq" << endl;
-    assert(isfinite(sum((*psi[n])(idx.ivp2_j_k))));
-cerr << "eqq" << endl;
-    assert(isfinite(sum((*psi[n])(idx.iv_jm1_k))));
-cerr << "fqq" << endl;
-    assert(isfinite(sum((*psi[n])(idx.ivp1_jp1_k))));
-cerr << "gqq" << endl;
-    assert(isfinite(sum((*psi[n])(idx.iv_j_km1))));
-cerr << "hqq" << endl;
-    assert(isfinite(sum((*psi[n])(idx.ivp1_j_kp1))));
-
-cerr << "iqq" << endl;
-cerr << C_adf_x(idx.ivph_j_k) << endl;
-    assert(isfinite(sum(C_adf_x(idx.ivph_j_k))));
-cerr << "jqq" << endl;
-    assert(isfinite(sum(C_adf_x(idx.ivmh_j_k))));
-cerr << "kqq" << endl;
-    assert(isfinite(sum(C_adf_x(idx.ivp1ph_j_k))));
-cerr << "lqq" << endl;
-    assert(isfinite(sum(C_adf_x(idx.ivp1mh_j_k))));
-
-cerr << "mqq" << endl;
-    assert(isfinite(sum(C_adf_y(idx.iv_jph_k))));
-cerr << "nqq" << endl;
-    assert(isfinite(sum(C_adf_y(idx.iv_jmh_k))));
-cerr << "oqq" << endl;
-    assert(isfinite(sum(C_adf_y(idx.ivp1_jph_k))));
-cerr << "pqq" << endl;
-    assert(isfinite(sum(C_adf_y(idx.ivp1_jmh_k))));
-
-cerr << "qqq" << endl;
-    assert(isfinite(sum(C_adf_z(idx.iv_j_kph))));
-cerr << "rqq" << endl;
-    assert(isfinite(sum(C_adf_z(idx.iv_j_kmh))));
-cerr << "sqq" << endl;
-    assert(isfinite(sum(C_adf_z(idx.ivp1_j_kph))));
-cerr << "tqq" << endl;
-    assert(isfinite(sum(C_adf_z(idx.ivp1_j_kmh))));
-*/
-
       if (positive_definite) 
         C_mon_x(idx.ivph_j_k) = C_adf_x(idx.ivph_j_k) * where(
-          C_adf_x(idx.ivph_j_k) > 0,
+          C_adf_x(idx.ivph_j_k) > 0,                  
           min(1, min(
-            mpdata_fct_beta_dn(idx.iv_j_k, idx.ivph_j_k, idx.ivmh_j_k, idx.iv_jph_k, idx.iv_jmh_k, idx.iv_j_kph, idx.iv_j_kmh), 
-            mpdata_fct_beta_up(idx.ivp1_j_k, idx.ivp1mh_j_k, idx.ivp1ph_j_k, idx.ivp1_jmh_k, idx.ivp1_jph_k, idx.ivp1_j_kmh, idx.ivp1_j_kph, idx.iv_j_k, idx.ivp2_j_k, idx.ivp1_jm1_k, idx.ivp1_jp1_k, idx.ivp1_j_km1, idx.ivp1_j_kp1))
-          ),
+            fct_beta_dn(idx.bd_iv_j_k, psi_min, *psi[n], C_adf_x, C_adf_y, C_adf_z), 
+            fct_beta_up(idx.bu_ivp1_j_k, psi_max, *psi[n], C_adf_x, C_adf_y, C_adf_z)
+          )),
           min(1, min(
-            mpdata_fct_beta_up(idx.iv_j_k, idx.ivmh_j_k, idx.ivph_j_k, idx.iv_jmh_k, idx.iv_jph_k, idx.iv_j_kmh, idx.iv_j_kph, idx.ivm1_j_k, idx.ivp1_j_k, idx.iv_jm1_k, idx.iv_jp1_k, idx.iv_j_km1, idx.iv_j_kp1), 
-            mpdata_fct_beta_dn(idx.ivp1_j_k, idx.ivp1ph_j_k, idx.ivp1mh_j_k, idx.ivp1_jph_k, idx.ivp1_jmh_k, idx.ivp1_j_kph, idx.ivp1_j_kmh))
-          )
+            fct_beta_up(idx.bu_iv_j_k, psi_max, *psi[n], C_adf_x, C_adf_y, C_adf_z), 
+            fct_beta_dn(idx.bd_ivp1_j_k, psi_min, *psi[n], C_adf_x, C_adf_y, C_adf_z)
+          ))
         );
       else
         C_mon_x(idx.ivph_j_k) = C_adf_x(idx.ivph_j_k) * 
@@ -347,23 +314,23 @@ cerr << "tqq" << endl;
             where(
               (*psi[n])(idx.iv_j_k) > 0,
               min(1, min(
-                mpdata_fct_beta_dn(idx.iv_j_k, idx.ivph_j_k, idx.ivmh_j_k, idx.iv_jph_k, idx.iv_jmh_k, idx.iv_j_kph, idx.iv_j_kmh), 
-                mpdata_fct_beta_up(idx.ivp1_j_k, idx.ivp1mh_j_k, idx.ivp1ph_j_k, idx.ivp1_jmh_k, idx.ivp1_jph_k, idx.ivp1_j_kmh, idx.ivp1_j_kph, idx.iv_j_k, idx.ivp2_j_k, idx.ivp1_jm1_k, idx.ivp1_jp1_k, idx.ivp1_j_km1, idx.ivp1_j_kp1)
+                fct_beta_dn(idx.bd_iv_j_k, psi_min, *psi[n], C_adf_x, C_adf_y, C_adf_z), 
+                fct_beta_up(idx.bu_ivp1_j_k, psi_max, *psi[n], C_adf_x, C_adf_y, C_adf_z)
               )),
               min(1, min(
-                mpdata_fct_beta_up(idx.iv_j_k, idx.ivmh_j_k, idx.ivph_j_k, idx.iv_jmh_k, idx.iv_jph_k, idx.iv_j_kmh, idx.iv_j_kph, idx.ivm1_j_k, idx.ivp1_j_k, idx.iv_jm1_k, idx.iv_jp1_k, idx.iv_j_km1, idx.iv_j_kp1), 
-                mpdata_fct_beta_dn(idx.ivp1_j_k, idx.ivp1ph_j_k, idx.ivp1mh_j_k, idx.ivp1_jph_k, idx.ivp1_jmh_k, idx.ivp1_j_kph, idx.ivp1_j_kmh)
+                fct_beta_up(idx.bu_iv_j_k, psi_max, *psi[n], C_adf_x, C_adf_y, C_adf_z), 
+                fct_beta_dn(idx.bd_ivp1_j_k, psi_min, *psi[n], C_adf_x, C_adf_y, C_adf_z)
               ))
             ),
             where(
               (*psi[n])(idx.ivp1_j_k) > 0,
               min(1, min(
-                mpdata_fct_beta_up(idx.iv_j_k, idx.ivmh_j_k, idx.ivph_j_k, idx.iv_jmh_k, idx.iv_jph_k, idx.iv_j_kmh, idx.iv_j_kph, idx.ivm1_j_k, idx.ivp1_j_k, idx.iv_jm1_k, idx.iv_jp1_k, idx.iv_j_km1, idx.iv_j_kp1), 
-                mpdata_fct_beta_dn(idx.ivp1_j_k, idx.ivp1ph_j_k, idx.ivp1mh_j_k, idx.ivp1_jph_k, idx.ivp1_jmh_k, idx.ivp1_j_kph, idx.ivp1_j_kmh)
+                fct_beta_up(idx.bu_iv_j_k, psi_max, *psi[n], C_adf_x, C_adf_y, C_adf_z), 
+                fct_beta_dn(idx.bd_ivp1_j_k, psi_min, *psi[n], C_adf_x, C_adf_y, C_adf_z)
               )),
               min(1, min(
-                mpdata_fct_beta_dn(idx.iv_j_k, idx.ivph_j_k, idx.ivmh_j_k, idx.iv_jph_k, idx.iv_jmh_k, idx.iv_j_kph, idx.iv_j_kmh), 
-                mpdata_fct_beta_up(idx.ivp1_j_k, idx.ivp1mh_j_k, idx.ivp1ph_j_k, idx.ivp1_jmh_k, idx.ivp1_jph_k, idx.ivp1_j_kmh, idx.ivp1_j_kph, idx.iv_j_k, idx.ivp2_j_k, idx.ivp1_jm1_k, idx.ivp1_jp1_k, idx.ivp1_j_km1, idx.ivp1_j_kp1)
+                fct_beta_dn(idx.bd_iv_j_k, psi_min, *psi[n], C_adf_x, C_adf_y, C_adf_z), 
+                fct_beta_up(idx.bu_ivp1_j_k, psi_max, *psi[n], C_adf_x, C_adf_y, C_adf_z)
               ))
             )
           );
