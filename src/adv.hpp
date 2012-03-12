@@ -28,6 +28,15 @@ class adv : root
   // functor factory (TODO: rename to op3D)
   public: class op3D 
   {
+    private: bool dox, doy, doz;
+    public: op3D(const mtx::idx &ijk) :
+      dox(ijk.i.first() != ijk.i.last()),
+      doy(ijk.j.first() != ijk.j.last()),
+      doz(ijk.k.first() != ijk.k.last())
+    {}
+    protected: bool do_x() { return dox; }
+    protected: bool do_y() { return doy; }
+    protected: bool do_z() { return doz; }
     public: virtual void operator()(
       mtx::arr<real_t> *psi[], 
       const int n, 
@@ -44,5 +53,23 @@ class adv : root
     mtx::arr<real_t> *tmp_v[],
     bool positive_definite
   ) = 0;
+
+    // TODO: document, include as an option / autotest in CMake
+#  ifdef MPDATA_NEGPOSPART_ABS
+    protected: mtx_expr_1arg_macro(pospart, x,
+      real_t(.5) * (x + abs(x))
+    )   
+    protected: mtx_expr_1arg_macro(negpart, x,
+      real_t(.5) * (x - abs(x))
+    )   
+#  else
+    protected: mtx_expr_1arg_macro(pospart, x,
+      max(real_t(0), x)
+    )   
+    protected: mtx_expr_1arg_macro(negpart, x,
+      min(real_t(0), x)
+    )   
+#  endif
+
 };
 #endif

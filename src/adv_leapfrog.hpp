@@ -57,8 +57,7 @@ class adv_leapfrog : public adv<real_t>
     };
 
     // private members 
-    private: mtx::idx ijk;
-    private: unique_ptr<typename adv_upstream<real_t>::op3D> flbkop;
+    private: unique_ptr<typename adv<real_t>::op3D> flbkop;
     private: indices<mtx::idx_ijk> idxx;
     private: indices<mtx::idx_jki> idxy;
     private: indices<mtx::idx_kij> idxz;
@@ -67,9 +66,9 @@ class adv_leapfrog : public adv<real_t>
     public: op3D(
       const mtx::idx &ijk, 
       const grd_arakawa_c_lorenz<real_t> &grid, 
-      typename adv_upstream<real_t>::op3D *fallback
+      typename adv<real_t>::op3D *fallback
     ) : 
-      ijk(ijk), 
+      adv<real_t>::op3D(ijk),
       idxx(ijk.i, ijk.j, ijk.k, grid), 
       idxy(ijk.j, ijk.k, ijk.i, grid), 
       idxz(ijk.k, ijk.i, ijk.j, grid)
@@ -90,9 +89,9 @@ class adv_leapfrog : public adv<real_t>
       *psi[n+1] = *psi[0]; // TODO: move from here to the solver?
       if (n == 1) // the leapfrog scheme
       {
-        if (ijk.i_spans) op1D(psi, idxx, n, s, Cx, Cy, Cz);
-        if (ijk.j_spans) op1D(psi, idxy, n, s, Cy, Cz, Cx);
-        if (ijk.k_spans) op1D(psi, idxz, n, s, Cz, Cx, Cy); 
+        if (this->do_x()) op1D(psi, idxx, n, s, Cx, Cy, Cz);
+        if (this->do_y()) op1D(psi, idxy, n, s, Cy, Cz, Cx);
+        if (this->do_z()) op1D(psi, idxz, n, s, Cz, Cx, Cy); 
       }
       else if (n == 0) // upstream as a fallback scheme  
       {
@@ -134,7 +133,7 @@ class adv_leapfrog : public adv<real_t>
     } 
   };
 
-  public: virtual op3D *factory(
+  public: typename adv<real_t>::op3D *factory(
     const mtx::idx &ijk,
     mtx::arr<real_t> **, 
     mtx::arr<real_t> **,

@@ -50,13 +50,14 @@ class adv_mpdata : public adv_upstream<real_t>
 
   public: 
   template <class aon_class>
-  class op3D : public aon_class, public adv_upstream<real_t>::op3D
+  class op3D : public aon_class, public adv<real_t>::op3D
   {
     // nested class for storing indices
     protected:
     template <class idx>
-    class indices : public adv_upstream<real_t>::op3D::template indices<idx>
+    class indices 
     {   
+      public: bool do_x, do_y, do_z;
       private: int iord_halo_yz, iord_halo_x;
       private: mtx::rng im, jm, km; // instead of computing u_{i+1/2} and u_{i-1/2} for all i we compute u_{i+1/2} for im=(i-1, ... i)
       private: mtx::rng ir, ic, il; // forward-in-space perspective
@@ -73,7 +74,9 @@ class adv_mpdata : public adv_upstream<real_t>
         int cross_terms,
         int iord, int step
       ) :
-        adv_upstream<real_t>::op3D::template indices<idx>(i, j, k, grid),
+        do_x(i.first() != i.last()), 
+        do_y(j.first() != j.last()),
+        do_z(k.first() != k.last()),
         iord_halo_yz((iord > 2 && cross_terms) ? iord - step : 0),
         iord_halo_x((iord > 3 && cross_terms && iord != step) ? iord - step - 1 : 0),
         im(i.first() - 1 - iord_halo_x, i.last() + iord_halo_x),
@@ -129,12 +132,13 @@ class adv_mpdata : public adv_upstream<real_t>
       { } 
     };  
 
-    // private members 
-    private: ptr_vector<indices<mtx::idx_ijk>> idxx;
-    private: ptr_vector<indices<mtx::idx_jki>> idxy;
-    private: ptr_vector<indices<mtx::idx_kij>> idxz;
+    // members fields
+    private: typename adv_upstream<real_t>::op3D upstream;
     private: mtx::arr<real_t> **tmp_s, **tmp_v;
     private: int iord, cross_terms, third_order;
+    public: ptr_vector<indices<mtx::idx_ijk>> indcs_x;
+    public: ptr_vector<indices<mtx::idx_jki>> indcs_y;
+    public: ptr_vector<indices<mtx::idx_kij>> indcs_z;
 
     // ctor
     public: op3D(
@@ -144,113 +148,17 @@ class adv_mpdata : public adv_upstream<real_t>
       mtx::arr<real_t> **tmp_v,
       int cross_terms, int iord, int third_order
     ) :
-      adv_upstream<real_t>::op3D(ijk, grid),
+      adv<real_t>::op3D(ijk),
+      upstream(ijk, grid),
       tmp_s(tmp_s), tmp_v(tmp_v), iord(iord), cross_terms(cross_terms), third_order(third_order)
     { 
       for (int step = 1; step <= iord; ++step)
       {
-        idxx.push_back(new indices<mtx::idx_ijk>(ijk.i, ijk.j, ijk.k, grid, cross_terms, iord, step));
-        idxy.push_back(new indices<mtx::idx_jki>(ijk.j, ijk.k, ijk.i, grid, cross_terms, iord, step)); 
-        idxz.push_back(new indices<mtx::idx_kij>(ijk.k, ijk.i, ijk.j, grid, cross_terms, iord, step));
+        indcs_x.push_back(new indices<mtx::idx_ijk>(ijk.i, ijk.j, ijk.k, grid, cross_terms, iord, step));
+        indcs_y.push_back(new indices<mtx::idx_jki>(ijk.j, ijk.k, ijk.i, grid, cross_terms, iord, step)); 
+        indcs_z.push_back(new indices<mtx::idx_kij>(ijk.k, ijk.i, ijk.j, grid, cross_terms, iord, step));
       }
     } 
-
-    // protected methods
-    // TODO: make it an option for the constructor (and recode with functors)
-#    ifdef MPDATA_FRAC_EPSILON
-    protected: mtx_expr_2arg_macro(mpdata_frac, num, den, 
-      num / (den + mtx::eps<real_t>())
-    )
-#    else
-    protected: mtx_expr_2arg_macro(mpdata_frac, num, den, 
-      where(den > real_t(0), num / den, real_t(0))
-    ) 
-#    endif
-
-    // macros for 2nd order terms:
-    private: mtx_expr_2arg_macro(mpdata_A, pr, pl,
-      this->mpdata_frac(pr - pl, pr + pl)
-    ) 
-
-    private: mtx_expr_4arg_macro(mpdata_B, pru, plu, prd, pld,
-      real_t(.5) * this->mpdata_frac(pru + plu - prd - pld, pru + plu + prd + pld)
-    )
-
-    private: mtx_expr_4arg_macro(mpdata_V, Vru, Vlu, Vrd, Vld, 
-      real_t(.25) * (Vru + Vlu + Vrd + Vld)
-    )
-
-    private: mtx_expr_4arg_macro(mpdata_W, Wru, Wlu, Wrd, Wld,
-      this->mpdata_V(Wru, Wlu, Wrd, Wld)
-    )
-
-    private: mtx_expr_3arg_macro(mpdata_CA, pr, pl, U,
-      (abs(U) - pow(U,2)) * this->mpdata_A(pr, pl)
-    )
-
-    private: mtx_expr_6arg_macro(mpdata_CB, pru, plu, prd, pld, U, V,
-      U * V * this->mpdata_B(pru, plu, prd, pld)
-    )
-
-    // macros for 3rd order terms:
-    /// first term from eq. (36) from Smolarkiewicz & Margolin 1998 (with G=1)
-    /// \f$ 
-    ///   \frac{(\delta x)^2}{6} \left( 3U|U| - 2U^3 - U \right) 
-    ///   \frac{1}{\psi} \frac{\partial^2 \psi}{\partial x^2} \approx
-    ///   (\ldots) \cdot \frac{1}{3} \cdot 
-    ///   \frac{\psi_{i+2} - \psi_{i+1} - \psi{i} + \psi{i-1}}{\psi_{i+2} + \psi_{i+1} + \psi{i} + \psi{i-1}}
-    /// \f$ \n 
-    private: mtx_expr_5arg_macro(mpdata_3rd_xx, pp2, pp1, pp0, pm1, U, 
-      (real_t(3) * U * abs(U) - real_t(2) * pow(U,3) - U) 
-      / real_t(3) 
-      * this->mpdata_frac(pp2 - pp1 - pp0 + pm1, pp2 + pp1 + pp0 + pm1) 
-    )
-
-    /// second term from eq. (36) from Smolarkiewicz & Margolin 1998 (with G=1)
-    /// \f$
-    ///   \frac{\delta x \delta y}{2} V \left( |U| - 2U^2 \right)
-    ///   \frac{1}{\psi} \frac{\partial^2 \psi}{\partial x \partial y} \approx
-    ///   V (|U| - 2U^2) \frac{
-    ///     \psi_{i+1,j+1} - \psi_{i,j+1} - \psi_{i+1,j-1} + \psi_{i,j-1}
-    ///   }{
-    ///     \psi_{i+1,j+1} + \psi_{i,j+1} + \psi_{i+1,j-1} + \psi_{i,j-1}
-    ///   }
-    /// \f$
-    private: mtx_expr_6arg_macro(mpdata_3rd_xy, pip0jp1, pip0jm1, pip1jp1, pip1jm1, U, V,
-      V * (abs(U) - real_t(2) * pow(U,2)) 
-      * this->mpdata_frac( 
-        pip1jp1 - pip0jp1 - pip1jm1 + pip0jm1, 
-        pip1jp1 + pip0jp1 + pip1jm1 + pip0jm1 
-      ) 
-    )
-
-    /// third term from eq. (36) from Smolarkiewicz & Margolin 1998 (with G=1)
-    private: mtx_expr_6arg_macro(mpdata_3rd_xz, pip0kp1, pip0km1, pip1kp1, pip1km1, U, W,
-      this->mpdata_3rd_xy(pip0kp1, pip0km1, pip1kp1, pip1km1, U, W)
-    )
-
-    /// fourth term from eq. (36) from Smolarkiewicz & Margolin 1998 (with G=1)
-    /// \f$
-    ///   \frac{2}{3} \delta x \delta z UVW \frac{1}{\psi} \frac{\partial^2 \psi}{\partial y \partial z} \approx
-    ///   \frac{2}{3} UVW \frac{
-    ///     + \psi_{i,j+1,k+1} - \psi_{i,j-1,k+1} + \psi_{i+1,j+1,k+1} - \psi_{i+1,j-1,k+1} 
-    ///     - \psi_{i,j+1,k-1} + \psi_{i,j-1,k-1} - \psi_{i+1,j+1,k-1} + \psi_{i+1,j-1,k-1}
-    ///   }{
-    ///     + \psi_{i,j+1,k+1} + \psi_{i,j-1,k+1} + \psi_{i+1,j+1,k+1} + \psi_{i+1,j-1,k+1} 
-    ///     + \psi_{i,j+1,k-1} + \psi_{i,j-1,k-1} + \psi_{i+1,j+1,k-1} + \psi_{i+1,j-1,k-1}
-    ///   }
-    /// \f$
-    private: mtx_expr_11arg_macro(mpdata_3rd_yz,
-      pip0jp1kp1, pip0jm1kp1, pip1jp1kp1, pip1jm1kp1, 
-      pip0jp1km1, pip0jm1km1, pip1jp1km1, pip1jm1km1, 
-      U, V, W, 
-      real_t(2./3.) * U * V * W * this->mpdata_frac( 
-        pip0jp1kp1 - pip0jm1kp1 + pip1jp1kp1 - pip1jm1kp1 - 
-        pip0jp1km1 + pip0jm1km1 - pip1jp1km1 + pip1jm1km1, 
-        pip0jp1kp1 + pip0jm1kp1 + pip1jp1kp1 + pip1jm1kp1 + 
-        pip0jp1km1 + pip0jm1km1 + pip1jp1km1 + pip1jm1km1 
-      ) 
-    )
 
     /// multidimensional antidiffusive velocity: 
     /// \f$ 
@@ -271,19 +179,21 @@ class adv_mpdata : public adv_upstream<real_t>
     /// \f$
     /// eq. (13-14) in Smolarkiewicz 1984 (J. Comp. Phys.,54,352-362) \n
 
-    protected:
+    public:
     template <class indices>
     void mpdata_U(
       const mtx::arr<real_t> * C_adf,
       const mtx::arr<real_t> * const psi[], const int n, const int step,
-      const indices &idx,
+      const ptr_vector<indices> &indcs,
       const mtx::arr<real_t> &Cx, 
       const mtx::arr<real_t> &Cy, 
       const mtx::arr<real_t> &Cz
     )
     {
+      const indices &idx = indcs[step-1];
+
       (*C_adf)(idx.adfidx) = (
-        mpdata_CA( 
+        adv_mpdata<real_t>::f_CA( 
           this->aon((*psi[n])(idx.ir_jm_km)), 
           this->aon((*psi[n])(idx.il_jm_km)), 
           Cx(idx.ic_jm_km) 
@@ -294,12 +204,12 @@ class adv_mpdata : public adv_upstream<real_t>
         if (idx.do_y)
         {
           (*C_adf)(idx.adfidx) -= (
-            mpdata_CB( 
+            adv_mpdata<real_t>::f_CB( 
               this->aon((*psi[n])(idx.ir_jmp1_km)), 
               this->aon((*psi[n])(idx.il_jmp1_km)), 
               this->aon((*psi[n])(idx.ir_jmm1_km)), 
               this->aon((*psi[n])(idx.il_jmm1_km)), 
-              Cx(idx.ic_jm_km), mpdata_V( 
+              Cx(idx.ic_jm_km), adv_mpdata<real_t>::f_V( 
                 Cy(idx.ir_jmph_km), Cy(idx.il_jmph_km), 
                 Cy(idx.ir_jmmh_km), Cy(idx.il_jmmh_km)  
               ) 
@@ -309,12 +219,12 @@ class adv_mpdata : public adv_upstream<real_t>
         if (idx.do_z)
         {
           (*C_adf)(idx.adfidx) -= ( // otherwise Cz is uninitialised!
-            mpdata_CB( 
+            adv_mpdata<real_t>::f_CB( 
               this->aon((*psi[n])(idx.ir_jm_kmp1)), 
               this->aon((*psi[n])(idx.il_jm_kmp1)),
               this->aon((*psi[n])(idx.ir_jm_kmm1)), 
               this->aon((*psi[n])(idx.il_jm_kmm1)),
-              Cx(idx.ic_jm_km), mpdata_W( 
+              Cx(idx.ic_jm_km), adv_mpdata<real_t>::f_W( 
                 Cz(idx.ir_jm_kmph), Cz(idx.il_jm_kmph), 
                 Cz(idx.ir_jm_kmmh), Cz(idx.il_jm_kmmh)  
               ) 
@@ -326,13 +236,13 @@ class adv_mpdata : public adv_upstream<real_t>
           if (idx.do_y)
           {
             (*C_adf)(idx.adfidx) += ( // otherwise Cy is uninitialised
-              mpdata_3rd_xy(
+              adv_mpdata<real_t>::f_3rd_xy(
                 this->aon((*psi[n])(idx.im_jmp1_km)), 
                 this->aon((*psi[n])(idx.im_jmm1_km)), 
                 this->aon((*psi[n])(idx.imp1_jmp1_km)), 
                 this->aon((*psi[n])(idx.imp1_jmm1_km)), 
                 Cx(idx.ic_jm_km), // U, 
-                mpdata_V( // V
+                adv_mpdata<real_t>::f_V( // V
                   Cy(idx.ir_jmph_km), Cy(idx.il_jmph_km), 
                   Cy(idx.ir_jmmh_km), Cy(idx.il_jmmh_km)  
                 ) 
@@ -342,13 +252,13 @@ class adv_mpdata : public adv_upstream<real_t>
           if (idx.do_z)
           {
             (*C_adf)(idx.adfidx) += ( // otherwise Cz is uninitialised
-              mpdata_3rd_xz(
+              adv_mpdata<real_t>::f_3rd_xz(
                 this->aon((*psi[n])(idx.im_jm_kmp1)), 
                 this->aon((*psi[n])(idx.im_jm_kmm1)), 
                 this->aon((*psi[n])(idx.imp1_jm_kmp1)), 
                 this->aon((*psi[n])(idx.imp1_jm_kmm1)), 
                 Cx(idx.ic_jm_km), // U, 
-                mpdata_W( // W
+                adv_mpdata<real_t>::f_W( // W
                   Cz(idx.ir_jm_kmph), Cz(idx.il_jm_kmph), /* Wru, Wlu */ 
                   Cz(idx.ir_jm_kmmh), Cz(idx.il_jm_kmmh)  /* Wrd, Wld */ 
                 ) 
@@ -358,7 +268,7 @@ class adv_mpdata : public adv_upstream<real_t>
           if (idx.do_y && idx.do_z)
           {
             (*C_adf)(idx.adfidx) -= ( // otherwise Cx & Cz are uninitialised
-              mpdata_3rd_yz(
+              adv_mpdata<real_t>::f_3rd_yz(
                 this->aon((*psi[n])(idx.im_jmp1_kmp1)), 
                 this->aon((*psi[n])(idx.im_jmm1_kmp1)),
                 this->aon((*psi[n])(idx.imp1_jmp1_kmp1)), 
@@ -368,11 +278,11 @@ class adv_mpdata : public adv_upstream<real_t>
                 this->aon((*psi[n])(idx.imp1_jmp1_kmm1)), 
                 this->aon((*psi[n])(idx.imp1_jmm1_kmm1)), 
                 Cx(idx.ic_jm_km), // U
-                mpdata_V( // V
+                adv_mpdata<real_t>::f_V( // V
                   Cy(idx.ir_jmph_km), Cy(idx.il_jmph_km), /* Vru, Vlu */ 
                   Cy(idx.ir_jmmh_km), Cy(idx.il_jmmh_km)  /* Vrd, Vld */ 
                 ), 
-                mpdata_W( // W
+                adv_mpdata<real_t>::f_W( // W
                   Cz(idx.ir_jm_kmph), Cz(idx.il_jm_kmph), /* Wru, Wlu */ 
                   Cz(idx.ir_jm_kmmh), Cz(idx.il_jm_kmmh)  /* Wrd, Wld */ 
                 ) 
@@ -384,7 +294,7 @@ class adv_mpdata : public adv_upstream<real_t>
       if (third_order)
       { 
         (*C_adf)(idx.adfidx) +=(
-          mpdata_3rd_xx(
+          adv_mpdata<real_t>::f_3rd_xx(
             this->aon((*psi[n])(idx.imp2_jm_km)), 
             this->aon((*psi[n])(idx.imp1_jm_km)), 
             this->aon((*psi[n])(idx.im_jm_km)), 
@@ -403,7 +313,7 @@ class adv_mpdata : public adv_upstream<real_t>
     /// \f$
     /// where \f$ I \f$ denotes the sum over all dimensions and \f$ \tilde{U} \f$ is 
     /// the multidimensional antidiffusive velocity eq. (12) in Smolarkiewicz 1984 (J. Comp. Phys.,54,352-362) 
-    public: virtual void operator()(
+    public: void operator()(
       mtx::arr<real_t> *psi[],
       const int n,
       const int step,
@@ -438,20 +348,20 @@ class adv_mpdata : public adv_upstream<real_t>
         *       Cz_corr = (step < 2 ? Cz : tmp_v[z_new]);
      
       *psi[n+1] = *psi[0]; // TODO: at least this should be placed in adv... and the leapfrog & upstream in adv_dimsplit?
-      if (idxx[0].do_x)
+      if (this->do_x())
       {
-        if (step > 1) mpdata_U(Cx_corr, psi, n, step, idxx[step-1], *Cx_unco, *Cy_unco, *Cz_unco);
-        this->op1D(psi, idxx[step-1], n, 1, Cx_corr, NULL, NULL);
+        if (step > 1) mpdata_U(Cx_corr, psi, n, step, indcs_x, *Cx_unco, *Cy_unco, *Cz_unco);
+        upstream.op1D(psi, upstream.indcs_x, n, 1, Cx_corr, NULL, NULL);
       }
-      if (idxx[0].do_y)
+      if (this->do_y())
       {
-        if (step > 1) mpdata_U(Cy_corr, psi, n, step, idxy[step-1], *Cy_unco, *Cz_unco, *Cx_unco);
-        this->op1D(psi, idxy[step-1], n, 1, Cy_corr, NULL, NULL);
+        if (step > 1) mpdata_U(Cy_corr, psi, n, step, indcs_y, *Cy_unco, *Cz_unco, *Cx_unco);
+        upstream.op1D(psi, upstream.indcs_y, n, 1, Cy_corr, NULL, NULL);
       }
-      if (idxx[0].do_z)
+      if (this->do_z())
       {
-        if (step > 1) mpdata_U(Cz_corr, psi, n, step, idxz[step-1], *Cz_unco, *Cx_unco, *Cy_unco);
-        this->op1D(psi, idxz[step-1], n, 1, Cz_corr, NULL, NULL);
+        if (step > 1) mpdata_U(Cz_corr, psi, n, step, indcs_z, *Cz_unco, *Cx_unco, *Cy_unco);
+        upstream.op1D(psi, upstream.indcs_z, n, 1, Cz_corr, NULL, NULL);
       }
     }
   };
@@ -473,7 +383,7 @@ class adv_mpdata : public adv_upstream<real_t>
     } 
   };
 
-  public: virtual typename adv_upstream<real_t>::op3D *factory(
+  public: typename adv<real_t>::op3D *factory(
     const mtx::idx &ijk,
     mtx::arr<real_t> **tmp_s,
     mtx::arr<real_t> **tmp_v,
@@ -485,5 +395,101 @@ class adv_mpdata : public adv_upstream<real_t>
     else
       return new op3D<aon_abs>(ijk, *grid, tmp_s, tmp_v, cross_terms, iord, third_order);
   }
+    // TODO: make it an option for the constructor (and recode with functors)
+#    ifdef MPDATA_FRAC_EPSILON
+    protected: mtx_expr_2arg_macro(frac, num, den, 
+      num / (den + mtx::eps<real_t>())
+    )
+#    else
+    protected: mtx_expr_2arg_macro(frac, num, den, 
+      where(den > real_t(0), num / den, real_t(0))
+    ) 
+#    endif
+
+    // macros for 2nd order terms:
+    private: mtx_expr_2arg_macro(f_A, pr, pl,
+      adv_mpdata<real_t>::frac(pr - pl, pr + pl)
+    ) 
+
+    private: mtx_expr_4arg_macro(f_B, pru, plu, prd, pld,
+      real_t(.5) * adv_mpdata<real_t>::frac(pru + plu - prd - pld, pru + plu + prd + pld)
+    )
+
+    private: mtx_expr_4arg_macro(f_V, Vru, Vlu, Vrd, Vld, 
+      real_t(.25) * (Vru + Vlu + Vrd + Vld)
+    )
+
+    private: mtx_expr_4arg_macro(f_W, Wru, Wlu, Wrd, Wld,
+      adv_mpdata<real_t>::f_V(Wru, Wlu, Wrd, Wld)
+    )
+
+    private: mtx_expr_3arg_macro(f_CA, pr, pl, U,
+      (abs(U) - pow(U,2)) * adv_mpdata<real_t>::f_A(pr, pl)
+    )
+
+    private: mtx_expr_6arg_macro(f_CB, pru, plu, prd, pld, U, V,
+      U * V * adv_mpdata<real_t>::f_B(pru, plu, prd, pld)
+    )
+
+    // macros for 3rd order terms:
+    /// first term from eq. (36) from Smolarkiewicz & Margolin 1998 (with G=1)
+    /// \f$ 
+    ///   \frac{(\delta x)^2}{6} \left( 3U|U| - 2U^3 - U \right) 
+    ///   \frac{1}{\psi} \frac{\partial^2 \psi}{\partial x^2} \approx
+    ///   (\ldots) \cdot \frac{1}{3} \cdot 
+    ///   \frac{\psi_{i+2} - \psi_{i+1} - \psi{i} + \psi{i-1}}{\psi_{i+2} + \psi_{i+1} + \psi{i} + \psi{i-1}}
+    /// \f$ \n 
+    private: mtx_expr_5arg_macro(f_3rd_xx, pp2, pp1, pp0, pm1, U, 
+      (real_t(3) * U * abs(U) - real_t(2) * pow(U,3) - U) 
+      / real_t(3) 
+      * adv_mpdata<real_t>::frac(pp2 - pp1 - pp0 + pm1, pp2 + pp1 + pp0 + pm1) 
+    )
+
+    /// second term from eq. (36) from Smolarkiewicz & Margolin 1998 (with G=1)
+    /// \f$
+    ///   \frac{\delta x \delta y}{2} V \left( |U| - 2U^2 \right)
+    ///   \frac{1}{\psi} \frac{\partial^2 \psi}{\partial x \partial y} \approx
+    ///   V (|U| - 2U^2) \frac{
+    ///     \psi_{i+1,j+1} - \psi_{i,j+1} - \psi_{i+1,j-1} + \psi_{i,j-1}
+    ///   }{
+    ///     \psi_{i+1,j+1} + \psi_{i,j+1} + \psi_{i+1,j-1} + \psi_{i,j-1}
+    ///   }
+    /// \f$
+    private: mtx_expr_6arg_macro(f_3rd_xy, pip0jp1, pip0jm1, pip1jp1, pip1jm1, U, V,
+      V * (abs(U) - real_t(2) * pow(U,2)) 
+      * adv_mpdata<real_t>::frac( 
+        pip1jp1 - pip0jp1 - pip1jm1 + pip0jm1, 
+        pip1jp1 + pip0jp1 + pip1jm1 + pip0jm1 
+      ) 
+    )
+
+    /// third term from eq. (36) from Smolarkiewicz & Margolin 1998 (with G=1)
+    private: mtx_expr_6arg_macro(f_3rd_xz, pip0kp1, pip0km1, pip1kp1, pip1km1, U, W,
+      adv_mpdata<real_t>::f_3rd_xy(pip0kp1, pip0km1, pip1kp1, pip1km1, U, W)
+    )
+
+    /// fourth term from eq. (36) from Smolarkiewicz & Margolin 1998 (with G=1)
+    /// \f$
+    ///   \frac{2}{3} \delta x \delta z UVW \frac{1}{\psi} \frac{\partial^2 \psi}{\partial y \partial z} \approx
+    ///   \frac{2}{3} UVW \frac{
+    ///     + \psi_{i,j+1,k+1} - \psi_{i,j-1,k+1} + \psi_{i+1,j+1,k+1} - \psi_{i+1,j-1,k+1} 
+    ///     - \psi_{i,j+1,k-1} + \psi_{i,j-1,k-1} - \psi_{i+1,j+1,k-1} + \psi_{i+1,j-1,k-1}
+    ///   }{
+    ///     + \psi_{i,j+1,k+1} + \psi_{i,j-1,k+1} + \psi_{i+1,j+1,k+1} + \psi_{i+1,j-1,k+1} 
+    ///     + \psi_{i,j+1,k-1} + \psi_{i,j-1,k-1} + \psi_{i+1,j+1,k-1} + \psi_{i+1,j-1,k-1}
+    ///   }
+    /// \f$
+    private: mtx_expr_11arg_macro(f_3rd_yz,
+      pip0jp1kp1, pip0jm1kp1, pip1jp1kp1, pip1jm1kp1, 
+      pip0jp1km1, pip0jm1km1, pip1jp1km1, pip1jm1km1, 
+      U, V, W, 
+      real_t(2./3.) * U * V * W * adv_mpdata<real_t>::frac( 
+        pip0jp1kp1 - pip0jm1kp1 + pip1jp1kp1 - pip1jm1kp1 - 
+        pip0jp1km1 + pip0jm1km1 - pip1jp1km1 + pip1jm1km1, 
+        pip0jp1kp1 + pip0jm1kp1 + pip1jp1kp1 + pip1jm1kp1 + 
+        pip0jp1km1 + pip0jm1km1 + pip1jp1km1 + pip1jm1km1 
+      ) 
+    )
+
 };
 #endif
