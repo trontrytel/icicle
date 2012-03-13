@@ -41,7 +41,7 @@ eqs<real_t> *opt_eqs(const po::variables_map& vm, const grd<real_t> &grid, const
   {
     if (!vm.count("eqs.isentropic.nlev")) error_macro("TODO")
     if (!vm.count("eqs.isentropic.abslev")) error_macro("TODO")
-    return new eqs_isentropic<real_t>(grid, intcond,
+    return new eqs_isentropic<real_t>(grid, 
       vm["eqs.isentropic.nlev"].as<int>(),
       real_cast<real_t>(vm, "eqs.isentropic.p_max") * si::pascals,
       real_cast<real_t>(vm, "eqs.isentropic.g") * si::metres_per_second_squared,

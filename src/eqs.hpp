@@ -1,7 +1,7 @@
 /** @file
  *  @author Sylwester Arabas <slayoo@igf.fuw.edu.pl>
  *  @copyright University of Warsaw
- *  @date January 2012 - February 2012
+ *  @date January 2012 - March 2012
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  *  @brief definition of the @ref eqs class - a base class for all transport equation systems
@@ -20,8 +20,18 @@ class eqs : root
 
   /// @brief representation of a generalised transport equation 
   /// (e.g. eq. 19 in Smolarkiewicz & Margolin 1998)
-  protected: class groupid {public:int id;public:groupid(int id=0):id(id){}}; // yeah!
-  protected: class positive_definite {public:bool is;public:positive_definite(bool is=false):is(is){}}; // yeah!
+  protected: class groupid 
+  {
+    public: int id;
+    public: groupid(int id=0) : id(id) {}
+  };
+  
+  protected: class positive_definite 
+  {
+    public: bool is;
+    public: positive_definite(bool is=false) : is(is) {}
+  };
+
   protected: struct gte {
     string name, desc, unit;
     positive_definite posdef;
@@ -35,7 +45,7 @@ class eqs : root
     return true;
   }
 
-  public: virtual ptr_vector<gte> &system() = 0;
+  private: virtual ptr_vector<gte> &system() = 0;
 
   public: int group(int e)
   {
@@ -154,5 +164,61 @@ class eqs : root
     tmp << boost::units::name_format << q;
     return tmp.str();
   }
+
+
+  /// auxiliary variables
+  protected: class constant
+  {
+    public: bool is; 
+    public: constant(bool is=true) : is(is) {}
+  };  
+
+  protected: struct axv {
+    string name, desc, unit;
+    vector<int> dimspan; // TODO: document the meaning of the fourth dimenions
+    vector<int> halo; // TODO: ditto
+    constant invariable;
+    static const int span = 0;
+  };  
+  
+  private: ptr_vector<axv> empty;
+  private: virtual ptr_vector<axv> &auxvars() 
+  {
+    return empty;
+  }
+
+  public: int n_auxv() { return auxvars().size(); }
+
+  public: mtx::idx aux_shape(int v, const mtx::idx &ijk) 
+  {
+    // sanity checks
+    assert(auxvars().at(v).dimspan.size() >= 3);
+    assert(auxvars().at(v).dimspan.size() >= auxvars().at(v).halo.size());
+
+    // computing the dimensions
+    vector<mtx::rng> xyz(3);
+    for (int d = 0; d < 3; ++d) 
+    {
+      int halo = auxvars().at(v).halo.size() > d 
+        ? auxvars().at(v).halo[d] 
+        : 0;
+      xyz[d] = (auxvars().at(v).dimspan[d] == axv::span) 
+        ? mtx::rng(ijk[d].first() - halo, ijk[d].last() + halo)  
+        : mtx::rng(0, auxvars().at(v).dimspan[d] - 1);
+    }
+
+    return mtx::idx_ijk(xyz[0], xyz[1], xyz[2]);
+  }
+
+  public: bool aux_const(int v)
+  {
+    return auxvars().at(v).invariable.is;
+  } 
+
+  public: string aux_name(int v)
+  {
+    return auxvars().at(v).name;
+  } 
+
 };
 #endif

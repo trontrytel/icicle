@@ -18,23 +18,24 @@
 template <typename real_t>
 class eqs_isentropic : public eqs<real_t> 
 {
-  private: ptr_vector<struct eqs<real_t>::gte> sys;
-  public: ptr_vector<struct eqs<real_t>::gte> &system() { return sys; }
-
+  // nested class (well... struct)
   private: struct params
   {
+    // TODO: add const qualifiers and initiliase here if possible
     quantity<si::acceleration, real_t> g;
     quantity<specific_heat_capacity, real_t> cp;
     quantity<si::dimensionless, real_t> Rd_over_cp;
     quantity<si::pressure, real_t> p_unit, p0, p_max;
     quantity<velocity_times_pressure, real_t> q_unit;
+    quantity<si::temperature, real_t> theta_unit;
+    quantity<specific_energy, real_t> M_unit; 
+    quantity<si::dimensionless, real_t> dHdxy_unit; 
     vector<int> idx_dp;
-    unique_ptr<mtx::arr<real_t>> dtheta, M, p; // TODO: M and p need halo_filling - should be handled somehow by the solver!
-    ptr_vector<mtx::arr<real_t>> dHdxy;
+    int idx_dtheta, idx_p, idx_M; // auxiliary variable indices
   };
 
-  private:
-  class rayleigh_damping : public rhs<real_t> // (aka sponge layer, aka gravity-wave absorber)
+  // nested class
+  private: class rayleigh_damping : public rhs<real_t> // (aka sponge layer, aka gravity-wave absorber)
   {
     private: real_t tau(int lev, int nlev, int abslev, real_t absamp)
     {
@@ -50,77 +51,91 @@ class eqs_isentropic : public eqs<real_t>
     { return C; }
   };
 
+  // nested class
   private: 
   template <int di, int dj>
   class montgomery_grad : public rhs<real_t>
   { 
+    // members
     private: struct params *par;
     private: quantity<si::length, real_t> dxy;
-    private: int idx_dHdxy, lev;
+    private: int idx_dHdxy, lev, nlev;
     private: bool calc_p, calc_M;
+
+    // ctor
     public: montgomery_grad(params &par, quantity<si::length, real_t> dxy, 
-      int idx_dHdxy, int lev, bool calc_p, bool calc_M) 
-      : par(&par), dxy(dxy), idx_dHdxy(idx_dHdxy), lev(lev), calc_p(calc_p), calc_M(calc_M) {} 
-    public: void explicit_part(mtx::arr<real_t> &R, mtx::arr<real_t> **psi, mtx::idx &ijk) 
-    { 
+      int idx_dHdxy, int lev, bool calc_p, bool calc_M
+    ) :
+      par(&par), dxy(dxy), idx_dHdxy(idx_dHdxy), lev(lev), 
+      nlev(par.idx_dp.size()), calc_p(calc_p), calc_M(calc_M) 
+    {
       assert((di == 0 && dj == 1) || (di == 1 && dj == 0));
-      int nlev = par->idx_dp.size();
+    } 
+ 
+    // method
+    public: void explicit_part(
+      mtx::arr<real_t> &R, 
+      mtx::arr<real_t> **aux, 
+      mtx::arr<real_t> **psi
+    )
+    {
+      const mtx::arr<real_t> &p = *aux[par->idx_p]; 
+      const mtx::arr<real_t> &M = *aux[par->idx_M];
+      const mtx::rng &ii = p.ijk.i, &jj = p.ijk.j;
 
-      // we need a local "halo" for the M spatial derivative
-      mtx::rng 
-        ii(ijk.lbound(mtx::i) - 1, ijk.ubound(mtx::i) + 1), 
-        jj(ijk.lbound(mtx::j) - 1, ijk.ubound(mtx::j) + 1),
-        ll(0, nlev);
-
-      // calculating pressures at the surfaces (done once per timestep) // TODO: need fill_halos!!!
-      if (calc_p) // TODO: will not work in parallel!!!
+      // calculating pressures at the surfaces (done once per timestep)
+      if (calc_p)
       {
-        (*par->p)(mtx::idx_ijk(ii, jj, ll)) = par->p_max / si::pascals;
+        p(mtx::idx_ijk(ii, jj, nlev - 1)) = par->p_max / si::pascals;
         for (int l = nlev - 1; l >= 0; --l)
-          (*par->p)(mtx::idx_ijk(ii, jj, l)) = 
-            (*psi[par->idx_dp[l]])(mtx::idx_ijk(ii, jj, ijk.k)) 
-            + (*par->p)(mtx::idx_ijk(ii, jj, l+1));
+          p(mtx::idx_ijk(ii, jj, l)) = 
+            (*psi[par->idx_dp[l]])(mtx::idx_ijk(ii, jj, 0)) 
+            + p(mtx::idx_ijk(ii, jj, l+1));
       }
 
-      // "specific" Montgomery potential
-      quantity<specific_energy, real_t> M_unit = 1 * si::metres_per_second_squared * si::metres;
-
-      // calculating Montgomery potential (TODO: should be done incrementaly)
-      if (calc_p) 
-        (*par->M)(mtx::idx_ijk(ii,jj,ijk.k)) = real_t(0); // TODO: parallel!!!
+      // calculating Montgomery potential
+      // (assuming we go from the bottom up to the top layer -
+      //  the order of equations is defined in the eqs_isentropic ctor below)
       if (calc_M) 
       {
-        // this assumes we go from the bottom up to the top layer
-        // (the order of equations in the ctor below)
-        (*par->M)(mtx::idx_ijk(ii,jj,ijk.k)) += par->cp * pow(par->p_unit / par->p0, par->Rd_over_cp) 
-           / M_unit * si::kelvins * // to make it dimensionless
-           ((*par->dtheta)(mtx::idx_ijk(lev)))(0,0,0) * // TODO: nicer syntax needed!
+        if (calc_p) M(M.ijk) = real_t(0); 
+
+        M(M.ijk) += par->cp * pow(par->p_unit / par->p0, par->Rd_over_cp) 
+           / par->M_unit * si::kelvins * // to make it dimensionless
+          ((*aux[par->idx_dtheta])(mtx::idx_ijk(lev)))(0,0,0) * // TODO: nicer syntax needed!
            real_t(.5) * // Exner function within a layer as an average of surface Ex-fun values
            ( 
-             pow((*par->p)(mtx::idx_ijk(ii, jj, lev  )), par->Rd_over_cp) +
-             pow((*par->p)(mtx::idx_ijk(ii, jj, lev+1)), par->Rd_over_cp)
+             pow(p(mtx::idx_ijk(ii, jj, lev  )), par->Rd_over_cp) +
+             pow(p(mtx::idx_ijk(ii, jj, lev+1)), par->Rd_over_cp)
            );
-      }
+       }
 
       // eq. (6) in Szmelter & Smolarkiewicz 2011, Computers & Fluids
-      R(ijk) -= 
-        M_unit * par->p_unit / si::metres * // real units of the rhs
+      R(R.ijk) -= 
+        par->M_unit * par->p_unit / si::metres * // real units of the rhs
         si::seconds / par->q_unit * // inv. unit of R (to get a dimensionless forcing)
-        ((*psi[par->idx_dp[lev]])(ijk)) * 
+        ((*psi[par->idx_dp[lev]])(R.ijk)) * 
         ( 
           par->g / si::metres_per_second_squared *
-          (par->dHdxy[idx_dHdxy])(mtx::idx_ijk(ijk.i, ijk.j, 0)) 
+          (*aux[idx_dHdxy])(mtx::idx_ijk(R.ijk.i, R.ijk.j, 0)) 
           +
           ( // spatial derivative
-            ((*par->M)(ijk.i + di, ijk.j + dj, ijk.k)) - 
-            ((*par->M)(ijk.i - di, ijk.j - dj, ijk.k))
+            (M(mtx::idx_ijk(R.ijk.i + di, R.ijk.j + dj, 0))) - 
+            (M(mtx::idx_ijk(R.ijk.i - di, R.ijk.j - dj, 0)))
           ) / (real_t(2) * dxy / si::metres)
         );
     };
   };
 
   private: params par;
-  public: eqs_isentropic(const grd<real_t> &grid, const ini<real_t> &intcond,
+
+  private: ptr_vector<struct eqs<real_t>::gte> sys;
+  public: ptr_vector<struct eqs<real_t>::gte> &system() { return sys; }
+
+  private: ptr_vector<struct eqs<real_t>::axv> aux;
+  public: ptr_vector<struct eqs<real_t>::axv> &auxvars() { return aux; }
+
+  public: eqs_isentropic(const grd<real_t> &grid,
     int nlev, 
     quantity<si::pressure, real_t> p_max,
     quantity<si::acceleration, real_t> g,
@@ -129,48 +144,74 @@ class eqs_isentropic : public eqs<real_t>
   {
     if (grid.nz() != 1) error_macro("only 1D (X or Y) or 2D (XY) simulations supported") 
 
-    // constants
-    par.g = g;
+    // parameters
     par.p_max = p_max;
+    par.g = g;
+ 
+    // units
     par.p_unit = 1 * si::pascals;
     par.q_unit = 1 * si::pascals * si::metres / si::seconds;
+    par.theta_unit = 1 * si::kelvins;
+    par.M_unit = 1 * si::metres_per_second_squared * si::metres; // "specific" Montgomery potential
+    par.dHdxy_unit = 1;
+
+    // constants
     par.p0 = 100000 * si::pascals; // definition of potential temperature
     par.cp = 1005 * si::joules / si::kilograms / si::kelvins;
     par.Rd_over_cp = si::constants::codata::R / (0.02896 * si::kilograms / si::moles) / par.cp; // TODO!!!!
 
     // potential temperature profile
-    par.dtheta.reset(new mtx::arr<real_t>(mtx::idx_ijk(mtx::rng(0,nlev-1))));
-    intcond.populate_scalar_field("dtheta", par.dtheta->ijk, *(par.dtheta));
+    aux.push_back(new struct eqs<real_t>::axv({
+      "dtheta", "potential temperature increment within a layer", this->quan2str(par.theta_unit),
+      vector<int>({nlev, 1, 1})
+    }));
+    par.idx_dtheta = aux.size() - 1;
 
     // topography
     int idx_dHdx = -1, idx_dHdy = -1;
     {
-      mtx::idx_ijk xy(mtx::rng(0, grid.nx()-1), mtx::rng(0, grid.ny()-1), 0); // TODO: not-optimal for MPI (each node has the whole topography!)
       if (grid.nx() != 1)
       {
-        par.dHdxy.push_back(new mtx::arr<real_t>(xy)); 
-        idx_dHdx = par.dHdxy.size() - 1;
-        intcond.populate_scalar_field("dHdx", par.dHdxy[idx_dHdx].ijk, par.dHdxy[idx_dHdx]);
+        //par.dHdxy.push_back(new mtx::arr<real_t>(xy)); 
+        aux.push_back(new struct eqs<real_t>::axv({
+          "dHdx", "spatial derivative of the topography (X)", this->quan2str(par.dHdxy_unit),
+          vector<int>({0, 0, 1}) // dimspan
+        }));
+        idx_dHdx = aux.size() - 1;
       }
       if (grid.ny() != 1)
       {
-        par.dHdxy.push_back(new mtx::arr<real_t>(xy));
-	idx_dHdy = par.dHdxy.size() - 1;
-        intcond.populate_scalar_field("dHdy", par.dHdxy[idx_dHdy].ijk, par.dHdxy[idx_dHdy]);
+        //par.dHdxy.push_back(new mtx::arr<real_t>(xy));
+        aux.push_back(new struct eqs<real_t>::axv({
+          "dHdy", "spatial derivative of the topograpy (Y)", this->quan2str(par.dHdxy_unit),
+          vector<int>({0, 0, 1}) // dimspan
+        }));
+	idx_dHdy = aux.size() - 1;
       }
     }
 
-    // allocating temporary arrays (only once per simulation)
-    mtx::rng // TODO: non-optimal for MPI!
-      ii(0 - 1, grid.nx() + 1),
-      jj(0 - 1, grid.ny() + 1),
-      ll(0, nlev); // this means nlev+1 surfaces
-    par.M.reset(new mtx::arr<real_t>(mtx::idx_ijk(ii, jj, 0))); // mid-layer Montgomery potentials
-    par.p.reset(new mtx::arr<real_t>(mtx::idx_ijk(ii, jj, ll))); // pressures at layer boundries       
+    // pressure 
+    aux.push_back(new struct eqs<real_t>::axv({
+      "p", "pressure", this->quan2str(par.p_unit),
+      vector<int>({0, 0, nlev+1 }), // dimspan
+      vector<int>({1, 1, 0}), // halo extent
+      typename eqs<real_t>::constant(false)
+    }));
+    par.idx_p = aux.size() - 1;
 
+    // the Montgomery potential
+    aux.push_back(new struct eqs<real_t>::axv({
+      "M", "Montgomery potential", this->quan2str(par.M_unit),
+      vector<int>({0, 0, 1}), // dimspan
+      vector<int>({1, 1, 0}),  // halo extent
+      typename eqs<real_t>::constant(false)
+    }));
+    par.idx_M = aux.size() - 1;
+    
     // dp var indices (to be filled in in the loop below)
     par.idx_dp.resize(nlev);
 
+    // loop over fluid layers
     for (int lint = 0; lint < nlev; ++lint)
     {
       string lstr = boost::lexical_cast<std::string>(lint);

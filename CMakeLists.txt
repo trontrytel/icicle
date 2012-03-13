@@ -9,7 +9,8 @@
 cmake_minimum_required(VERSION 2.6) # for simplified if-constructs
 #TODO: check which version is needed for FeatureSummary
 
-set(CMAKE_CXX_FLAGS_RELEASE "-std=c++0x -O3 -funroll-loops -fstrict-aliasing -fomit-frame-pointer -ffast-math -DNDEBUG" CACHE STRING "Release options." FORCE)
+# TODO: -fprofile-use, -fprofile-generate
+set(CMAKE_CXX_FLAGS_RELEASE "-std=c++0x -Ofast -DNDEBUG" CACHE STRING "Release options." FORCE)
 set(CMAKE_CXX_FLAGS_DEBUG "-std=c++0x -DBZ_DEBUG" CACHE STRING "Debug options." FORCE)
 
 if(NOT (

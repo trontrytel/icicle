@@ -34,6 +34,9 @@ extern void mdl_128(const po::variables_map&, const string&);
 int main(int ac, char* av[])
 {
   cerr << "-- init: icicle starting (built on " << __DATE__ << ")" << endl;
+#if defined(__GNUC__) && !defined(__FAST_MATH__)
+  warning_macro("GCC was used without the -ffast-math flag!")
+#endif
   try
   {
     // options list
