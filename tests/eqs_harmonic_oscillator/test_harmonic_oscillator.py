@@ -13,13 +13,13 @@ mpl.use('Agg') # non-X terminal
 import matplotlib.pyplot as plt 
 from Scientific.IO.NetCDF import NetCDFFile
 
-nx = 100
+nx = 500
 dx = 1.
 dt = 1.
-nt = 300
-nout = 2
-omega = 0.1
-u = .5
+nt = 600
+nout = 20
+omega =2*np.pi / dt / 400
+u = 0.5
 
 # first: creating a netCDF file with the initial condition
 f = NetCDFFile('ini.nc', 'w')
@@ -28,7 +28,8 @@ f.createDimension('Y', 1) # TODO
 f.createDimension('Z', 1) # TODO
 v_psi = f.createVariable('psi', 'd', ('X',))
 v_phi = f.createVariable('phi', 'd', ('X',))
-v_psi[:] = pow(np.sin(np.arange(nx) * np.pi / nx), 20)
+v_psi[:] = pow(np.sin( (np.arange(nx) * np.pi / nx) ), 300)
+v_psi[:] = np.roll(v_psi[:] , -40)
 v_phi[:] = 0
 f.close()
 
