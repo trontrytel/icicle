@@ -172,7 +172,6 @@ class eqs_isentropic : public eqs<real_t>
     {
       if (grid.nx() != 1)
       {
-        //par.dHdxy.push_back(new mtx::arr<real_t>(xy)); 
         aux.push_back(new struct eqs<real_t>::axv({
           "dHdx", "spatial derivative of the topography (X)", this->quan2str(par.dHdxy_unit),
           vector<int>({0, 0, 1}) // dimspan
@@ -181,7 +180,6 @@ class eqs_isentropic : public eqs<real_t>
       }
       if (grid.ny() != 1)
       {
-        //par.dHdxy.push_back(new mtx::arr<real_t>(xy));
         aux.push_back(new struct eqs<real_t>::axv({
           "dHdy", "spatial derivative of the topograpy (Y)", this->quan2str(par.dHdxy_unit),
           vector<int>({0, 0, 1}) // dimspan

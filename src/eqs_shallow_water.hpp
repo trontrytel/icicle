@@ -32,16 +32,13 @@
 template <typename real_t>
 class eqs_shallow_water : public eqs<real_t> 
 {
-  private: ptr_vector<struct eqs<real_t>::gte> sys;
-  public: ptr_vector<struct eqs<real_t>::gte> &system() { return sys; }
-
   private: struct params
   {
     quantity<si::acceleration, real_t> g;
     quantity<si::length, real_t> h_unit;
     quantity<velocity_times_length, real_t> q_unit;
+    quantity<si::dimensionless, real_t> dHdxy_unit;
     int idx_h;
-    unique_ptr<mtx::arr<real_t>> dHdx, dHdy;
   };
 
   // TODO: Coriolis (implicit!)
@@ -54,11 +51,21 @@ class eqs_shallow_water : public eqs<real_t>
   { 
     private: struct params *par;
     private: quantity<si::length, real_t> dxy;
-    public: forcings(params &par, quantity<si::length, real_t> dxy) : par(&par), dxy(dxy) {} 
-    public: void explicit_part(mtx::arr<real_t> &R, mtx::arr<real_t> **psi, mtx::idx &ijk) 
-    { 
-      assert((di == 0 && dj == 1) || (di == 1 && dj == 0));
+    private: int idx_dHdxy;
 
+    // ctor
+    public: forcings(params &par, quantity<si::length, real_t> dxy, int idx_dHdxy) : 
+      par(&par), dxy(dxy), idx_dHdxy(idx_dHdxy) 
+    {
+      assert((di == 0 && dj == 1) || (di == 1 && dj == 0));
+    } 
+
+    public: void explicit_part(
+      mtx::arr<real_t> &R, 
+      mtx::arr<real_t> **aux,
+      mtx::arr<real_t> **psi
+    ) 
+    { 
       /// momentum equation:
       /// \f$ \partial_t u + u \cdot \nabla_z u = - \frac{1}{\rho} \nabla_z p \f$ 
       ///
@@ -70,35 +77,58 @@ class eqs_shallow_water : public eqs<real_t>
       ///
       /// momentum eq. plus u times mass continuity equation:
       /// \f$ \partial_t (uh)  + \nabla_z (uh) = -g h \nabla_z \eta \f$
-      R(ijk) -= 
+      R(R.ijk) -= 
         par->g * par->h_unit * par->h_unit * si::seconds / par->q_unit / si::metres *
-        ((*psi[par->idx_h])(ijk)) *
+        ((*psi[par->idx_h])(R.ijk)) *
         (
           (
-            ((*psi[par->idx_h])(ijk.i + di, ijk.j + dj, ijk.k)) - 
-            ((*psi[par->idx_h])(ijk.i - di, ijk.j - dj, ijk.k))
+            ((*psi[par->idx_h])(mtx::idx_ijk(R.ijk.i + di, R.ijk.j + dj, 0))) - 
+            ((*psi[par->idx_h])(mtx::idx_ijk(R.ijk.i - di, R.ijk.j - dj, 0)))
           ) / (real_t(2) * dxy / si::metres)
-          + di * (*par->dHdx)(mtx::idx_ijk(ijk.i, ijk.j, 0)) 
-          + dj * (*par->dHdy)(mtx::idx_ijk(ijk.i, ijk.j, 0)) 
+          + 
+          (*aux[idx_dHdxy])(mtx::idx_ijk(R.ijk.i, R.ijk.j, 0)) 
         );
     };
   };
 
   private: params par;
-  public: eqs_shallow_water(const grd<real_t> &grid, const ini<real_t> &intcond)
+
+  private: ptr_vector<struct eqs<real_t>::gte> sys;
+  public: ptr_vector<struct eqs<real_t>::gte> &system() { return sys; }
+
+  private: ptr_vector<struct eqs<real_t>::axv> aux;
+  public: ptr_vector<struct eqs<real_t>::axv> &auxvars() { return aux; }
+
+  // ctor
+  public: eqs_shallow_water(const grd<real_t> &grid)
   {
     if (grid.nz() != 1) error_macro("only 1D (X or Y) and 2D (XY) simullations supported")
 
     par.g = real_t(10.) * si::metres_per_second_squared; // TODO: option (+ constants catalogue!)
     par.h_unit = 1 * si::metres;
     par.q_unit = 1 * si::metres * si::metres / si::seconds;
+    par.dHdxy_unit = 1;
 
-    // reading topography derivatives from the input file
-    mtx::idx_ijk xy(mtx::rng(0, grid.nx()-1), mtx::rng(0, grid.ny()-1), 0); // TODO: not-optimal for MPI (each node has the whole topography!)
-    par.dHdx.reset(new mtx::arr<real_t>(xy));
-    par.dHdy.reset(new mtx::arr<real_t>(xy));
-    intcond.populate_scalar_field("dHdx", par.dHdx->ijk, *(par.dHdx));
-    intcond.populate_scalar_field("dHdy", par.dHdy->ijk, *(par.dHdy));
+    // topography derivatives
+    int idx_dHdx = -1, idx_dHdy = -1; 
+    {   
+      if (grid.nx() != 1)
+      {   
+        aux.push_back(new struct eqs<real_t>::axv({
+          "dHdx", "spatial derivative of the topography (X)", this->quan2str(par.dHdxy_unit),
+          vector<int>({0, 0, 1}) // dimspan
+        }));
+        idx_dHdx = aux.size() - 1;
+      }   
+      if (grid.ny() != 1)
+      {   
+        aux.push_back(new struct eqs<real_t>::axv({
+          "dHdy", "spatial derivative of the topograpy (Y)", this->quan2str(par.dHdxy_unit),
+          vector<int>({0, 0, 1}) // dimspan
+        }));
+        idx_dHdy = aux.size() - 1;
+      }
+    }
 
     /// momentum equation for x
     if (grid.nx() != 1)
@@ -109,7 +139,7 @@ class eqs_shallow_water : public eqs<real_t>
         typename eqs<real_t>::positive_definite(false),
         vector<int>({1, 0, 0})
       }));
-      sys.back().rhs_terms.push_back(new forcings<1,0>(par, grid.dx())); 
+      sys.back().rhs_terms.push_back(new forcings<1,0>(par, grid.dx(), idx_dHdx)); 
     }
 
     /// momentum equation for y
@@ -121,7 +151,7 @@ class eqs_shallow_water : public eqs<real_t>
         typename eqs<real_t>::positive_definite(false),
         vector<int>({0, 1, 0})
       }));
-      sys.back().rhs_terms.push_back(new forcings<0,1>(par, grid.dy())); 
+      sys.back().rhs_terms.push_back(new forcings<0,1>(par, grid.dy(), idx_dHdy)); 
     }
 
     /// The mass continuity equation for a column of height \f$ h = \eta - \eta_0 \f$ of a constant-density fluid:

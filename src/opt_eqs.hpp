@@ -36,7 +36,7 @@ eqs<real_t> *opt_eqs(const po::variables_map& vm, const grd<real_t> &grid, const
   if (initype == "scalar_advection")
     return new eqs_scalar_advection<real_t>();
   else if (initype == "shallow_water")
-    return new eqs_shallow_water<real_t>(grid, intcond);
+    return new eqs_shallow_water<real_t>(grid);
   else if (initype == "isentropic")
   {
     if (!vm.count("eqs.isentropic.nlev")) error_macro("TODO")
