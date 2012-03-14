@@ -43,13 +43,17 @@ class vel_momeq_extrapol : public vel_momeq<real_t>
       mtx::arr<real_t> **Q[] = { Qx, Qy, Qz };
       for (int xyz = 0; xyz < 3; ++xyz)
       {
+        const mtx::idx 
+          imph_j_k(mtx::idx_ijk(C[xyz]->i - grid->p_half /* sic! */, C[xyz]->j, C[xyz]->k)),
+          ipmh_j_k(mtx::idx_ijk(C[xyz]->i + grid->m_half /* sic! */, C[xyz]->j, C[xyz]->k));
+
         if (Q[xyz] != NULL) 
         {
           (*C[xyz])(C[xyz]->ijk) = extrapol(
-            (*Q[xyz][nm0])(C[xyz]->i - grid->p_half /* sic! */, C[xyz]->j, C[xyz]->k),
-            (*Q[xyz][nm0])(C[xyz]->i + grid->m_half /* sic! */, C[xyz]->j, C[xyz]->k),
-            (*Q[xyz][nm1])(C[xyz]->i - grid->p_half /* sic! */, C[xyz]->j, C[xyz]->k),  
-            (*Q[xyz][nm1])(C[xyz]->i + grid->m_half /* sic! */, C[xyz]->j, C[xyz]->k)
+            (*Q[xyz][nm0])(imph_j_k),
+            (*Q[xyz][nm0])(ipmh_j_k),
+            (*Q[xyz][nm1])(imph_j_k),
+            (*Q[xyz][nm1])(ipmh_j_k)
           );
         }
       }

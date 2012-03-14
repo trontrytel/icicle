@@ -16,17 +16,13 @@
 template <typename real_t>
 class eqs_scalar_advection : public eqs<real_t>
 {
-  private: ptr_vector<struct eqs<real_t>::gte> sys;
-  public: ptr_vector<struct eqs<real_t>::gte> & system() { return sys; }
-
   public: eqs_scalar_advection()
   {
-    {
-      sys.push_back(new struct eqs<real_t>::gte({
-        "psi", "the transported scalar field", 
-        this->quan2str(quantity<si::dimensionless, real_t>(1.))
-      }));
-    }
+    this->sys.push_back(new struct eqs<real_t>::gte({
+      "psi", "the transported scalar field", 
+      this->quan2str(quantity<si::dimensionless, real_t>(1.))
+    }));
+    this->init_maps();
   }
 };
 #endif

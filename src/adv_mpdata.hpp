@@ -57,11 +57,11 @@ class adv_mpdata : public adv_upstream<real_t>
     template <class idx>
     class indices 
     {   
-      public: bool do_x, do_y, do_z;
-      private: int iord_halo_yz, iord_halo_x;
-      private: mtx::rng im, jm, km; // instead of computing u_{i+1/2} and u_{i-1/2} for all i we compute u_{i+1/2} for im=(i-1, ... i)
-      private: mtx::rng ir, ic, il; // forward-in-space perspective
-      public: idx adfidx, ir_jm_km, il_jmm1_km, ic_jm_km, il_jm_km, imm1_jm_km, im_jm_km, imp1_jm_km, imp2_jm_km,
+      public: const bool do_x, do_y, do_z;
+      private: const int iord_halo_yz, iord_halo_x;
+      private: const mtx::rng im, jm, km; // instead of computing u_{i+1/2} and u_{i-1/2} for all i we compute u_{i+1/2} for im=(i-1, ... i)
+      private: const mtx::rng ir, ic, il; // forward-in-space perspective
+      public: const idx adfidx, ir_jm_km, il_jmm1_km, ic_jm_km, il_jm_km, imm1_jm_km, im_jm_km, imp1_jm_km, imp2_jm_km,
         il_jm_kmmh, ir_jm_kmmh, il_jm_kmph, ir_jm_kmph, il_jmmh_km, ir_jmmh_km, il_jmph_km, ir_jmph_km, imp1_jmm1_kmm1,
         imp1_jmp1_kmm1, im_jmm1_kmm1, im_jmp1_kmm1, imp1_jmm1_kmp1, imp1_jmp1_kmp1, im_jmm1_kmp1, im_jmp1_kmp1,
         imp1_jm_kmm1, imp1_jm_kmp1, im_jm_kmm1, im_jm_kmp1, imp1_jmm1_km, imp1_jmp1_km, im_jmm1_km, im_jmp1_km,

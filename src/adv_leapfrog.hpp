@@ -41,7 +41,7 @@ class adv_leapfrog : public adv<real_t>
     template <class idx>
     class indices
     {
-      public: idx i_j_k, iph_j_k, imh_j_k, ip1_j_k, im1_j_k;
+      public: const idx i_j_k, iph_j_k, imh_j_k, ip1_j_k, im1_j_k;
       public: indices(
         const mtx::rng &i, 
         const mtx::rng &j, 
@@ -58,9 +58,9 @@ class adv_leapfrog : public adv<real_t>
 
     // private members 
     private: unique_ptr<typename adv<real_t>::op3D> flbkop;
-    private: indices<mtx::idx_ijk> idxx;
-    private: indices<mtx::idx_jki> idxy;
-    private: indices<mtx::idx_kij> idxz;
+    private: const indices<mtx::idx_ijk> idxx;
+    private: const indices<mtx::idx_jki> idxy;
+    private: const indices<mtx::idx_kij> idxz;
 
     // ctor (initialisation of the indices)
     public: op3D(

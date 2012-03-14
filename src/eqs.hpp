@@ -16,8 +16,6 @@
 template <typename real_t>
 class eqs : root
 {
-  // TODO: ctor with sanity checks for name uniqueness?
-
   /// @brief representation of a generalised transport equation 
   /// (e.g. eq. 19 in Smolarkiewicz & Margolin 1998)
   protected: class groupid 
@@ -45,7 +43,8 @@ class eqs : root
     return true;
   }
 
-  private: virtual ptr_vector<gte> &system() = 0;
+  protected: ptr_vector<struct eqs<real_t>::gte> sys;
+  private: ptr_vector<gte> &system() { return sys; }
 
   public: int group(int e)
   {
@@ -90,7 +89,8 @@ class eqs : root
 
   //       group   xyz   eq-pow      eq   pow       
   private: vector<vector<vector<pair<int, int>>>> vm;
-  private: void init_maps()
+  public: int n_group() { return vm.size(); }
+  protected: void init_maps()
   {
     // mem allocation (vm) and group-related sanity checks
     {
@@ -140,7 +140,7 @@ class eqs : root
 
   public: vector<pair<int,int>> &velmap(int g, int xyz) // equation -> power
   {
-    if (vm.size() == 0) init_maps();
+    assert(vm.size() >= g);
     return vm[g][xyz];
   }
  
@@ -181,11 +181,8 @@ class eqs : root
     static const int span = 0;
   };  
   
-  private: ptr_vector<axv> empty;
-  private: virtual ptr_vector<axv> &auxvars() 
-  {
-    return empty;
-  }
+  protected: ptr_vector<struct eqs<real_t>::axv> aux;
+  public: ptr_vector<struct eqs<real_t>::axv> &auxvars() { return aux; }
 
   public: int n_auxv() { return auxvars().size(); }
 
