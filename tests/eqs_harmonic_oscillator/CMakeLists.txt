@@ -1,0 +1,2 @@
+add_executable(test_eqs_harmonic_oscillator test_eqs_harmonic_oscillator.cpp)
+add_test(test_eqs_harmonic_oscillator test_eqs_harmonic_oscillator)

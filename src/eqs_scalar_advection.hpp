@@ -22,7 +22,6 @@ class eqs_scalar_advection : public eqs<real_t>
       "psi", "the transported scalar field", 
       this->quan2str(quantity<si::dimensionless, real_t>(1.))
     }));
-    this->init_maps();
   }
 };
 #endif

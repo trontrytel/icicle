@@ -259,7 +259,7 @@ class slv_serial : public slv<real_t>
     {
       if (setup->eqsys->velmap(g, xyz).size() > 1) 
       {
-        assert(Q[xyz] != NULL);
+        assert(Q[xyz].size() != 0);
         for (int i = 1; i < setup->eqsys->velmap(g, xyz).size(); ++i) 
         {
           int 

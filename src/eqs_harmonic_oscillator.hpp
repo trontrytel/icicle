@@ -35,7 +35,11 @@ class eqs_harmonic_oscillator : public eqs<real_t>
     {} 
 
     // public methods
-    public: void explicit_part(mtx::arr<real_t> &R, mtx::arr<real_t> **psi) 
+    public: void explicit_part(
+      mtx::arr<real_t> &R, 
+      mtx::arr<real_t> **aux,
+      mtx::arr<real_t> **psi
+    ) 
     { 
       R(R.ijk) += omega_signed * (*psi[eqid])(R.ijk);
     };
@@ -54,8 +58,6 @@ class eqs_harmonic_oscillator : public eqs<real_t>
 
     this->sys.push_back(new struct eqs<real_t>::gte({ "phi", "2nd variable", "dimensionless" }));
     this->sys.back().rhs_terms.push_back(new restoring_force(omega, -1, 0)); 
-
-    this->init_maps();
   }
 };
 #endif

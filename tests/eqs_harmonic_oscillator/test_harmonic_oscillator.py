@@ -12,12 +12,14 @@ import matplotlib as mpl
 mpl.use('Agg') # non-X terminal
 import matplotlib.pyplot as plt 
 from Scientific.IO.NetCDF import NetCDFFile
+import os                                # unlink() etc
+import shutil                            # rmtree() etc
 
-nx = 500
+nx = 1000
 dx = 1.
 dt = 1.
-nt = 600
-nout = 20
+nt = 1600
+nout = 10
 omega =2*np.pi / dt / 400
 u = 0.5
 
@@ -29,7 +31,7 @@ f.createDimension('Z', 1) # TODO
 v_psi = f.createVariable('psi', 'd', ('X',))
 v_phi = f.createVariable('phi', 'd', ('X',))
 v_psi[:] = pow(np.sin( (np.arange(nx) * np.pi / nx) ), 300)
-v_psi[:] = np.roll(v_psi[:] , -40)
+v_psi[:] = np.roll(v_psi[:] , -nx/2+80)
 v_phi[:] = 0
 f.close()
 
@@ -49,19 +51,28 @@ cmd = (
     '--vel.uniform.u',str(u),
   '--nt',str(nt),'--dt',str(dt),'--nout',str(nout),
   '--out','netcdf','--out.netcdf.file','out.nc',
-  '--slv','serial'
+  '--slv','threads','--nsd','2'
 )
 subprocess.check_call(cmd)
 
 # third: generating a plot
 f = NetCDFFile('out.nc', 'r')
-fig = plt.figure()
-ax = fig.add_subplot(111)
-ax.set_xlabel('X')
-X = f.variables['X']
+os.mkdir('tmp')
 for t in range(nt/nout):
+  fig = plt.figure()
+  plt.ylim((-1, 1))
+  ax = fig.add_subplot(111)
+  ax.set_xlabel('X')
+  X = f.variables['X']
   psi = (f.variables['psi'])[t,:,0,0]
   phi = (f.variables['phi'])[t,:,0,0]
   ax.plot(X, psi, color='#FF0000')
   ax.plot(X, phi, color='#0000FF')
-plt.savefig('fig1.svg')
+  plt.savefig('tmp/frame_'+format(t,"05d")+'.png')
+
+f.close
+cmd=('convert','tmp/frame_*.png','harmonic_osc.gif')
+subprocess.check_call(cmd)
+shutil.rmtree('tmp')
+
+

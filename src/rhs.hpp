@@ -65,12 +65,12 @@ class rhs : root
     mtx::arr<real_t> **aux, // TODO: const
     mtx::arr<real_t> **psi // TODO const
   ) 
-  {}
+  {} // TODO: better pure virtual?
 
   public: virtual real_t implicit_part(
     quantity<si::time, real_t> dt // TODO: const
   )
-  {
+  { // TODO: better pure virtual?
     return real_t(0.);
   }
 };  
