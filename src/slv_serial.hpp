@@ -25,6 +25,7 @@ class slv_serial : public slv<real_t>
 
   private: ptr_vector<mtx::arr<real_t>> C; // TODO: nullable? (uwaga na kod w FCT! ii = i+/-1
   private: vector<ptr_vector<mtx::arr<real_t>>> psi;
+  private: ptr_vector<mtx::arr<real_t>> aux;
   private: unique_ptr<tmp<real_t>> cache; 
   private: ptr_vector<nullable<mtx::arr<real_t>>> rhs_R, rhs_C;
 
@@ -61,6 +62,7 @@ class slv_serial : public slv<real_t>
           error_macro("halo length (" << halo_sclr[e] << ") may not exceed domain extent in Z (" << len << ")")
       }
 
+      // psi - the advected fields
       int tlevs = advsch->time_levels();
       for (int n = 0; n < advsch->time_levels(); ++n) 
       {
@@ -69,6 +71,7 @@ class slv_serial : public slv<real_t>
         ));
       }
 
+      // rhs - source terms
       if (!setup->eqsys->is_homogeneous(e))
       {
         rhs_R.push_back(new mtx::arr<real_t>(setup->grid->rng_sclr(
@@ -77,19 +80,27 @@ class slv_serial : public slv<real_t>
       } else rhs_R.push_back(NULL);
     }
 
+    // indices
+    ijk.reset(new mtx::idx_ijk(
+      mtx::rng(i_min, i_max), 
+      mtx::rng(j_min, j_max), 
+      mtx::rng(k_min, k_max)
+    ));
+
+    // aux - helper fields
+    for (int a = 0; a < setup->eqsys->n_auxv(); ++a)
+    {
+      aux.push_back(new mtx::arr<real_t>(setup->eqsys->aux_shape(a, *ijk)));
+      if (setup->eqsys->aux_const(a)) 
+        setup->intcond->populate_scalar_field(setup->eqsys->aux_name(a), aux[a].ijk, aux[a]);
+    }
+
     // caches (TODO: move to adv.hpp...)
     cache.reset(new tmp<real_t>(advsch->num_vctr_caches(), advsch->num_sclr_caches(), setup->grid, 
       halo_vctr + (setup->velocity->is_constant() ? 0 : 1), /* TODO TODO TODO it should be max(halo_sclr, halo_vctr) */ // halo_sclr > halo_vctr only for non-const velocities, the cache is only used in adv_*
       i_min, i_max,
       j_min, j_max,
       k_min, k_max
-    ));
-
-    // indices
-    ijk.reset(new mtx::idx_ijk(
-      mtx::rng(i_min, i_max), 
-      mtx::rng(j_min, j_max), 
-      mtx::rng(k_min, k_max)
     ));
 
     // adv op
@@ -274,8 +285,8 @@ class slv_serial : public slv<real_t>
     //cerr << "Courant z: " << min(C[2]) << " ... " << max(C[2]) << endl;
   }
 
-  /// \param n the time level to use for updating the forcings
   private: mtx::arr<real_t> **tmpvec = NULL;
+  /// \param n the time level to use for updating the forcings
   public: void update_forcings(int n)
   {
     if (tmpvec == NULL) tmpvec = new mtx::arr<real_t>*[setup->eqsys->n_vars()]; // TODO: unique_ptr
@@ -289,7 +300,7 @@ class slv_serial : public slv<real_t>
         (rhs_R[e])(rhs_R[e].ijk) = real_t(0);
         for (int i = 0; i < setup->eqsys->var_n_rhs_terms(e); ++i)
         {
-           setup->eqsys->var_rhs_term(e, i).explicit_part(rhs_R[e], tmpvec, *ijk);
+           setup->eqsys->var_rhs_term(e, i).explicit_part(rhs_R[e], aux.c_array(), tmpvec);
            assert(isfinite(sum((rhs_R[e])(rhs_R[e].ijk))));
         }
       }

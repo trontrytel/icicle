@@ -1,7 +1,7 @@
 /** @file
  *  @author Sylwester Arabas <slayoo@igf.fuw.edu.pl>
  *  @copyright University of Warsaw
- *  @date February 2012
+ *  @date February - March 2012
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
@@ -62,15 +62,16 @@ class rhs : root
 
   public: virtual void explicit_part(
     mtx::arr<real_t> &R, 
-    mtx::arr<real_t> **psi, 
-    mtx::idx &ijk
+    mtx::arr<real_t> **aux, // TODO: const
+    mtx::arr<real_t> **psi // TODO const
   ) 
   {}
 
-  public: virtual real_t implicit_part(quantity<si::time, real_t> dt)
+  public: virtual real_t implicit_part(
+    quantity<si::time, real_t> dt // TODO: const
+  )
   {
     return real_t(0.);
   }
-
 };  
 #endif

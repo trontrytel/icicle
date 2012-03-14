@@ -17,7 +17,7 @@ class slv_parallel : public slv<real_t>
   private: int nsd; // number of subdomains within this solver
   private: int nxs; // number of points per subdomain
   private: int i_min; // i_min for this set of subdomains
-  private: unique_ptr<slv_serial<real_t> > *slvs; // TODO: vector_ptr!
+  private: ptr_vector<slv_serial<real_t>> slvs; 
   private: adv<real_t> *advsch;
   private: stp<real_t> *setup; 
  
@@ -39,9 +39,12 @@ class slv_parallel : public slv<real_t>
       error_macro("subdomains of 1-element length not supported")
 
     // serial solver allocation
-    slvs = new unique_ptr<slv_serial<real_t> >[nsd];
+    {
+      // TODO: kludge!!!
+      int a = setup->eqsys->velmap(0, 0).size();
+    }
     for (int sd=0; sd < nsd; ++sd) 
-      slvs[sd].reset(new slv_serial<real_t>(setup, output,
+      slvs.push_back(new slv_serial<real_t>(setup, output,
         i_min + sd * nxs, i_min + (sd + 1) * nxs - 1,
         j_min           , j_max                     , 
         k_min           , k_max                     
@@ -52,14 +55,9 @@ class slv_parallel : public slv<real_t>
     {   
       int l = (nsd + sd - 1) % nsd; 
       int r = (nsd + sd + 1) % nsd;  
-      slvs[sd]->hook_neighbour(slv<real_t>::left, slvs[l].get());
-      slvs[sd]->hook_neighbour(slv<real_t>::rght, slvs[r].get());
+      slvs[sd].hook_neighbour(slv<real_t>::left, &slvs[l]);
+      slvs[sd].hook_neighbour(slv<real_t>::rght, &slvs[r]);
     }
-  }
-
-  public: ~slv_parallel()
-  {
-    delete[] slvs; // TODO: change to vector_ptr
   }
 
   private: virtual void barrier() = 0;
@@ -68,13 +66,13 @@ class slv_parallel : public slv<real_t>
   {
     barrier();
     if (sd == 0) // for shared mem the 0-th thread takes controll here
-      for (int sdi=0; sdi < nsd; ++sdi) slvs[sdi]->record(n, r);
+      for (int sdi=0; sdi < nsd; ++sdi) slvs[sdi].record(n, r);
   }
 
   private: void fill_halos(int sd, int e, int n)
   {
     barrier();
-    slvs[sd]->fill_halos(e, n); 
+    slvs[sd].fill_halos(e, n); 
     barrier(); // TODO: not needed with distmem?
   }
 
@@ -83,8 +81,8 @@ class slv_parallel : public slv<real_t>
     for (int s = 1; s <= advsch->num_steps(); ++s)
     {   
       if (s != 1) fill_halos(sd, e, n);
-      slvs[sd]->advect(e, n, s, a); 
-      if (s != advsch->num_steps()) slvs[sd]->cycle_arrays(e, n); 
+      slvs[sd].advect(e, n, s, a); 
+      if (s != advsch->num_steps()) slvs[sd].cycle_arrays(e, n); 
     }
   }
 
@@ -104,10 +102,10 @@ class slv_parallel : public slv<real_t>
 
     // first guess for velocity fields assuming constant momenta
     if (!setup->velocity->is_constant())
-      slvs[sd]->copy(n, n + 1); 
+      slvs[sd].copy(n, n + 1); 
 
     // forcing terms for t=0
-    if (!allhomo) slvs[sd]->update_forcings(n);
+    if (!allhomo) slvs[sd].update_forcings(n);
 
     // time stepping
     for (unsigned long t = 0; t < setup->nt; ++t) 
@@ -132,7 +130,7 @@ class slv_parallel : public slv<real_t>
           int group = setup->eqsys->group(e);
           if (!setup->velocity->is_constant() && group != last_group)
           {
-            slvs[sd]->update_courants(group, n + 1, n); // TODO: vector of n-s
+            slvs[sd].update_courants(group, n + 1, n); // TODO: vector of n-s
             last_group = group;
           }
         }
@@ -141,11 +139,11 @@ class slv_parallel : public slv<real_t>
         bool stash = (advsch->num_steps() > 1 && setup->eqsys->var_dynamic(e))
           || (!setup->velocity->is_constant() && !homo[e]);
 
-        slvs[sd]->fill_with_nans(e, n + 1); // TODO: fill caches with NaNs?
-        if (stash) slvs[sd]->stash_cycle(e, n); 
-        if (!homo[e]) slvs[sd]->apply_forcings(e, n, real_t(.5) * setup->dt);
+        slvs[sd].fill_with_nans(e, n + 1); // TODO: fill caches with NaNs?
+        if (stash) slvs[sd].stash_cycle(e, n); 
+        if (!homo[e]) slvs[sd].apply_forcings(e, n, real_t(.5) * setup->dt);
         advect(sd, e, n, advsch);
-        if (stash) slvs[sd]->stash_cycle(e, n); 
+        if (stash) slvs[sd].stash_cycle(e, n); 
       } // e - equations
 
       // for certain equation sets (e.g. isopycnic) computation of forcings
@@ -154,14 +152,14 @@ class slv_parallel : public slv<real_t>
       {
         for (int e = 0; e < setup->eqsys->n_vars(); ++e) 
           fill_halos(sd, e, n + 1); 
-        slvs[sd]->update_forcings(n + 1);
+        slvs[sd].update_forcings(n + 1);
         for (int e = 0; e < setup->eqsys->n_vars(); ++e)
-          if (!homo[e]) slvs[sd]->apply_forcings(e, n + 1, real_t(.5) * setup->dt);
+          if (!homo[e]) slvs[sd].apply_forcings(e, n + 1, real_t(.5) * setup->dt);
       } 
 
       if (!fallback) 
         for (int e = 0; e < setup->eqsys->n_vars(); ++e)
-          slvs[sd]->cycle_arrays(e, n);
+          slvs[sd].cycle_arrays(e, n);
     } // t - time
     record(sd, n, setup->nt / setup->nout);
   }
@@ -172,15 +170,15 @@ class slv_parallel : public slv<real_t>
     int sd = (idx.lbound(0) - i_min) / nxs;
     assert(sd == 0 || sd == nsd - 1);
     assert((idx.ubound(0) - i_min) / nxs == sd);
-    return slvs[sd]->data(e, n, idx); 
+    return slvs[sd].data(e, n, idx); 
   }
 
   public: void hook_neighbour(int s, slv<real_t> *n) 
   {
     switch (s)
     {
-      case slv<real_t>::left: slvs[0    ]->hook_neighbour(s, n); break;
-      case slv<real_t>::rght: slvs[nsd-1]->hook_neighbour(s, n); break;
+      case slv<real_t>::left: slvs[0    ].hook_neighbour(s, n); break;
+      case slv<real_t>::rght: slvs[nsd-1].hook_neighbour(s, n); break;
       default: assert(false);
     }
   }
