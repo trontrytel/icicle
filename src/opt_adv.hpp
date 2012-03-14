@@ -11,7 +11,7 @@
 #  include "opt.hpp"
 #  include "adv_upstream.hpp"
 #  include "adv_mpdata.hpp"
-#  include "adv_mpdata_fct.hpp"
+//#  include "adv_mpdata_fct.hpp"
 #  include "adv_leapfrog.hpp"
 
 inline void opt_adv_desc(po::options_description &desc)
@@ -38,13 +38,13 @@ adv<real_t> *opt_adv(const po::variables_map& vm, grd<real_t> *grid)
     return new adv_upstream<real_t>(g);
   else if (advscheme == "mpdata")
   {
-    if (vm["adv.mpdata.fct"].as<bool>())
-      return new adv_mpdata_fct<real_t>(g, 
-        vm["adv.mpdata.iord"].as<int>(),
-        vm["adv.mpdata.cross_terms"].as<bool>(),
-        vm["adv.mpdata.third_order"].as<bool>()
-      );
-    else
+ //   if (vm["adv.mpdata.fct"].as<bool>())
+ //     return new adv_mpdata_fct<real_t>(g, 
+ //       vm["adv.mpdata.iord"].as<int>(),
+ //       vm["adv.mpdata.cross_terms"].as<bool>(),
+ //       vm["adv.mpdata.third_order"].as<bool>()
+ //     );
+ //   else
       return new adv_mpdata<real_t>(g, 
         vm["adv.mpdata.iord"].as<int>(),
         vm["adv.mpdata.cross_terms"].as<bool>(),
