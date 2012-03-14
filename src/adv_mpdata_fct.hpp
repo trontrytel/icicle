@@ -53,7 +53,7 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
     { 
       class beta_up
       {
-        public: idx i_j_k, 
+        public: const idx i_j_k, 
           imh_j_k, iph_j_k, i_jmh_k, i_jph_k, i_j_kmh, i_j_kph, 
           im1_j_k, ip1_j_k, i_jm1_k, i_jp1_k, i_j_km1, i_j_kp1;
         public: beta_up(const mtx::rng &i, const mtx::rng &j, const mtx::rng &k, const grd_arakawa_c_lorenz<real_t> &grid) :
@@ -69,7 +69,7 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
    
       class beta_dn
       {
-        public: idx i_j_k,
+        public: const idx i_j_k,
           iph_j_k, imh_j_k, i_jph_k, i_jmh_k, i_j_kph, i_j_kmh;
         public: beta_dn(const mtx::rng &i, const mtx::rng &j, const mtx::rng &k, const grd_arakawa_c_lorenz<real_t> &grid) :
           i_j_k(i, j, k),
@@ -79,11 +79,11 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
         { }
       };
 
-      public: mtx::rng iv, ii, jj, kk;
-      public: idx ii_jj_kk, iim1_jj_kk, iip1_jj_kk, ii_jjm1_kk, ii_jjp1_kk, ii_jj_kkm1, ii_jj_kkp1;
-      public: beta_up bu_ivp1_j_k, bu_iv_j_k;
-      public: beta_dn bd_ivp1_j_k, bd_iv_j_k;
-      public: idx iv_j_k, ivph_j_k, ivmh_j_k, ivp1_j_k, ivm1_j_k;
+      public: const mtx::rng iv, ii, jj, kk;
+      public: const idx ii_jj_kk, iim1_jj_kk, iip1_jj_kk, ii_jjm1_kk, ii_jjp1_kk, ii_jj_kkm1, ii_jj_kkp1;
+      public: const beta_up bu_ivp1_j_k, bu_iv_j_k;
+      public: const beta_dn bd_ivp1_j_k, bd_iv_j_k;
+      public: const idx iv_j_k, ivph_j_k, ivmh_j_k, ivp1_j_k, ivm1_j_k;
       public: indices(
         const mtx::rng &i, 
         const mtx::rng &j, 
@@ -121,12 +121,12 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
     private: typename adv_upstream<real_t>::op3D upstream;
 
     // private members 
-    private: indices<mtx::idx_ijk> idxx;
-    private: indices<mtx::idx_jki> idxy;
-    private: indices<mtx::idx_kij> idxz;
+    private: const indices<mtx::idx_ijk> idxx;
+    private: const indices<mtx::idx_jki> idxy;
+    private: const indices<mtx::idx_kij> idxz;
     private: mtx::arr<real_t> **tmp_s, **tmp_v;
-    private: int iord;
-    private: bool positive_definite;
+    private: const int iord;
+    private: const bool positive_definite;
 
     // ctor
     public: op3D(

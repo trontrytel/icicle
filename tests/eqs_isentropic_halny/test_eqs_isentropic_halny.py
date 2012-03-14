@@ -18,22 +18,22 @@ from Scientific.IO.NetCDF import NetCDFFile
 # simulation parameteters (from isopc_yale.::SHAWAT2 by P.K.Smolarkiewicz) #
 ############################################################################
 bits = 32
-nx = 160     # 161  # [1]
-nz = 60      # 61   # [1]
+nx = 80     # 161  # [1]
+nz = 30      # 61   # [1]
 dx = 3e3     # 3e3  # [m]
 dz = 300.    # 300. # [m]
 dt = 6.      # 6.   # [s]
 bv = .012    # .012 # [1/s] (Brunt-Vaisala frequency)
 mount_amp = 1.6e3 # 1.6e3
 mount_ro1 = 20e3  # 20e3
-abslev = 3 * (nz / 4) # gravity-wave absorber starts at .75 of the domain height
-absamp = 0
+abslev = nz / 2 # gravity-wave absorber starts at .75 of the domain height
+absamp = 1
 uscal = 10.  # 10. # [m/s]
 p_surf = 101300.
 th_surf = 300.
 fct = 1
 iord = 2
-nt = 20 # 8000
+nt = 50 # 8000
 nout = nt # 2000
 
 ############################################################################
@@ -152,7 +152,7 @@ cmd = (
   '--vel','momeq_extrapol',
   '--nt',str(nt),'--dt',str(dt),'--nout',str(nout),
   '--out','netcdf','--out.netcdf.file','out.nc',
-  '--slv','serial','--nsd','1'
+  '--slv','threads','--nsd','2'
 )
 subprocess.check_call(cmd)
 

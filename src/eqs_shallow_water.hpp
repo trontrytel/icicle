@@ -93,12 +93,6 @@ class eqs_shallow_water : public eqs<real_t>
 
   private: params par;
 
-  private: ptr_vector<struct eqs<real_t>::gte> sys;
-  public: ptr_vector<struct eqs<real_t>::gte> &system() { return sys; }
-
-  private: ptr_vector<struct eqs<real_t>::axv> aux;
-  public: ptr_vector<struct eqs<real_t>::axv> &auxvars() { return aux; }
-
   // ctor
   public: eqs_shallow_water(const grd<real_t> &grid)
   {
@@ -114,55 +108,57 @@ class eqs_shallow_water : public eqs<real_t>
     {   
       if (grid.nx() != 1)
       {   
-        aux.push_back(new struct eqs<real_t>::axv({
+        this->aux.push_back(new struct eqs<real_t>::axv({
           "dHdx", "spatial derivative of the topography (X)", this->quan2str(par.dHdxy_unit),
           vector<int>({0, 0, 1}) // dimspan
         }));
-        idx_dHdx = aux.size() - 1;
+        idx_dHdx = this->aux.size() - 1;
       }   
       if (grid.ny() != 1)
       {   
-        aux.push_back(new struct eqs<real_t>::axv({
+        this->aux.push_back(new struct eqs<real_t>::axv({
           "dHdy", "spatial derivative of the topograpy (Y)", this->quan2str(par.dHdxy_unit),
           vector<int>({0, 0, 1}) // dimspan
         }));
-        idx_dHdy = aux.size() - 1;
+        idx_dHdy = this->aux.size() - 1;
       }
     }
 
     /// momentum equation for x
     if (grid.nx() != 1)
     {
-      sys.push_back(new struct eqs<real_t>::gte({
+      this->sys.push_back(new struct eqs<real_t>::gte({
         "qx", "heigh-integrated specific momentum (x)", 
         this->quan2str(par.q_unit), 
         typename eqs<real_t>::positive_definite(false),
         vector<int>({1, 0, 0})
       }));
-      sys.back().rhs_terms.push_back(new forcings<1,0>(par, grid.dx(), idx_dHdx)); 
+      this->sys.back().rhs_terms.push_back(new forcings<1,0>(par, grid.dx(), idx_dHdx)); 
     }
 
     /// momentum equation for y
     if (grid.ny() != 1)
     {
-      sys.push_back(new struct eqs<real_t>::gte({
+      this->sys.push_back(new struct eqs<real_t>::gte({
         "qy", "heigh-integrated specific momentum (y)", 
         this->quan2str(par.q_unit), 
         typename eqs<real_t>::positive_definite(false),
         vector<int>({0, 1, 0})
       }));
-      sys.back().rhs_terms.push_back(new forcings<0,1>(par, grid.dy(), idx_dHdy)); 
+      this->sys.back().rhs_terms.push_back(new forcings<0,1>(par, grid.dy(), idx_dHdy)); 
     }
 
     /// The mass continuity equation for a column of height \f$ h = \eta - \eta_0 \f$ of a constant-density fluid:
     /// \f$ \partial_t h + \nabla_z ( \vec{u} h ) = 0 \f$
-    sys.push_back(new struct eqs<real_t>::gte({
+    this->sys.push_back(new struct eqs<real_t>::gte({
       "h", "thickness of the fluid layer", 
       this->quan2str(par.h_unit), 
       typename eqs<real_t>::positive_definite(true),
       vector<int>({-1, -1, 0})
     }));
-    par.idx_h = sys.size() - 1;
+    par.idx_h = this->sys.size() - 1;
+
+    this->init_maps();
   }
 };
 #endif

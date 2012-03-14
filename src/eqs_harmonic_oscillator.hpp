@@ -18,9 +18,6 @@
 template <typename real_t>
 class eqs_harmonic_oscillator : public eqs<real_t> 
 {
-  private: ptr_vector<struct eqs<real_t>::gte> sys;
-  public: ptr_vector<struct eqs<real_t>::gte> &system() { return sys; }
-
   // nested class
   private: class restoring_force : public rhs<real_t>
   { 
@@ -52,11 +49,13 @@ class eqs_harmonic_oscillator : public eqs<real_t>
   // ctor
   public: eqs_harmonic_oscillator(quantity<si::frequency, real_t> omega)
   {
-    sys.push_back(new struct eqs<real_t>::gte({ "psi", "1st variable", "dimensionless" }));
-    sys.back().rhs_terms.push_back(new restoring_force(omega, +1, 1)); 
+    this->sys.push_back(new struct eqs<real_t>::gte({ "psi", "1st variable", "dimensionless" }));
+    this->sys.back().rhs_terms.push_back(new restoring_force(omega, +1, 1)); 
 
-    sys.push_back(new struct eqs<real_t>::gte({ "phi", "2nd variable", "dimensionless" }));
-    sys.back().rhs_terms.push_back(new restoring_force(omega, -1, 0)); 
+    this->sys.push_back(new struct eqs<real_t>::gte({ "phi", "2nd variable", "dimensionless" }));
+    this->sys.back().rhs_terms.push_back(new restoring_force(omega, -1, 0)); 
+
+    this->init_maps();
   }
 };
 #endif

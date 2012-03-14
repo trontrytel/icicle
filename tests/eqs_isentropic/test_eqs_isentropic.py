@@ -42,9 +42,8 @@ v_dp[0][:] = 1 + .33*pow(np.sin(np.arange(nx) * np.pi / nx),80)
 v_dp[1][:] = 1 - .33*pow(np.sin(np.arange(nx) * np.pi / nx),80)
 
 # potential temperatures of the layers (characteristic values)
-v_theta = f.createVariable('theta', 'd', ('level',))
-for lev in range(nlev) :
-  v_theta[lev] = 100 * (1 + lev)
+v_theta = f.createVariable('dtheta', 'd', ('level',))
+v_theta[:] = 100
 
 # flat topography
 v_dHdx = f.createVariable('dHdx', 'd', ('X',))
@@ -61,6 +60,8 @@ cmd = (
   '--ini.netcdf.file','ini.nc',
   '--eqs','isentropic',
     '--eqs.isentropic.nlev',str(nlev),
+    '--eqs.isentropic.abslev',str(nlev+1),
+    '--eqs.isentropic.absamp','0',
   '--grd.dx','1',
   '--grd.nx',str(nx),
   '--adv','mpdata',
@@ -69,7 +70,7 @@ cmd = (
   '--vel','momeq_extrapol',
   '--nt',str(nt),'--dt',str(dt),'--nout',str(nout),
   '--out','netcdf','--out.netcdf.file','out.nc',
-  '--slv','serial'
+  '--slv','threads','--nsd','2'
 )
 subprocess.check_call(cmd)
 

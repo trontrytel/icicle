@@ -20,31 +20,41 @@ class slv_serial : public slv<real_t>
   private: adv<real_t> *advsch;
   private: out<real_t> *output;
   private: stp<real_t> *setup;
-  private: vector<int> halo_sclr;
-  private: int halo_vctr;
+  private: vector<int> halo_sclr; // TODO: within ctor?
+  private: int halo_vctr; // TODO: within ctor?
 
   private: ptr_vector<mtx::arr<real_t>> C; // TODO: nullable? (uwaga na kod w FCT! ii = i+/-1
   private: vector<ptr_vector<mtx::arr<real_t>>> psi;
   private: ptr_vector<mtx::arr<real_t>> aux;
   private: unique_ptr<tmp<real_t>> cache; 
   private: ptr_vector<nullable<mtx::arr<real_t>>> rhs_R, rhs_C;
+  private: vector<mtx::arr<real_t>*> tmpvec; // used in update_forcings
+  private: vector<ptr_vector<mtx::arr<real_t>>> Q; // used in update_courants
 
+  // ctor
   public: slv_serial(stp<real_t> *setup, out<real_t> *output,
     int i_min, int i_max,
     int j_min, int j_max,
     int k_min, int k_max
   )
-    : advsch(setup->advsch), output(output), setup(setup)
+    : advsch(setup->advsch), output(output), setup(setup), tmpvec(setup->eqsys->n_vars())
   {
     // computing required halo lengths
     halo_vctr = (advsch->stencil_extent() - 1) / 2;
     halo_sclr.assign(setup->eqsys->n_vars(), halo_vctr);
+    int halo_sclr_max = halo_vctr;
     if (!setup->velocity->is_constant())
     {
       // enlarged halo needed for t=n+1/2 velocity extrapolation
       // TODO: stencil_extent()-like method in velocity?
       for (int e = 0; e < setup->eqsys->n_vars(); ++e)
-        if (setup->eqsys->var_dynamic(e)) halo_sclr[e] += 1;
+      {
+        if (setup->eqsys->var_dynamic(e))
+        {
+          halo_sclr[e] += 1;
+          halo_sclr_max = halo_sclr[e];
+        }
+      }
     }
 
     // memory allocation
@@ -95,6 +105,31 @@ class slv_serial : public slv<real_t>
         setup->intcond->populate_scalar_field(setup->eqsys->aux_name(a), aux[a].ijk, aux[a]);
     }
 
+    // helper vars for calculating velocities
+    if (!setup->velocity->is_constant())
+    {
+      Q.resize(3); // xyz
+      for (int xyz = 0; xyz < 3; ++xyz)
+      {
+        for (int g = 0; g < setup->eqsys->n_group(); ++xyz)
+        {
+          if ( // no tricks needed
+            setup->eqsys->velmap(g, xyz).size() == 1 && 
+            setup->eqsys->velmap(g, xyz)[0].second != 1
+          );
+          else 
+          {
+            // TODO: for
+            Q[xyz].push_back(new mtx::arr<real_t>(setup->grid->rng_sclr(
+              i_min, i_max, j_min, j_max, k_min, k_max, halo_sclr_max)));
+            Q[xyz].push_back(new mtx::arr<real_t>(setup->grid->rng_sclr(
+              i_min, i_max, j_min, j_max, k_min, k_max, halo_sclr_max)));
+            break;
+          }
+        }
+      }
+    }
+
     // caches (TODO: move to adv.hpp...)
     cache.reset(new tmp<real_t>(advsch->num_vctr_caches(), advsch->num_sclr_caches(), setup->grid, 
       halo_vctr + (setup->velocity->is_constant() ? 0 : 1), /* TODO TODO TODO it should be max(halo_sclr, halo_vctr) */ // halo_sclr > halo_vctr only for non-const velocities, the cache is only used in adv_*
@@ -129,12 +164,12 @@ class slv_serial : public slv<real_t>
         &C[0], &C[1], &C[2], setup->dt, NULL, NULL, NULL 
       );
     }
-    //else 
-    //{
-    //  // filling C with zeros
-    //  for (int xyz = 0; xyz < 3; ++xyz)
-    //    C[xyz](C[xyz].ijk) = real_t(0);
-    //}
+    else 
+    {
+      // filling C with zeros (TODO: this is needed for FCT, but should not be needed!!!)
+      for (int xyz = 0; xyz < 3; ++xyz)
+        C[xyz](C[xyz].ijk) = real_t(0);
+    }
   }
 
   public: void copy(int from, int to)
@@ -202,14 +237,20 @@ class slv_serial : public slv<real_t>
   {
     assert(!setup->velocity->is_constant());
 
-    mtx::arr<real_t> **Q[] = {NULL, NULL, NULL};
     for (int xyz = 0; xyz < 3; ++xyz)
     {
       if (setup->eqsys->velmap(g, xyz).size() > 0) // if we have any source terms
       { 
-        Q[xyz] = psi[setup->eqsys->velmap(g, xyz).begin()->first].c_array(); 
-        // TODO: something more universal would be better
-        assert(setup->eqsys->velmap(g, xyz).begin()->second == 1); 
+        assert(setup->eqsys->velmap(g, xyz).begin()->second == 1); // TODO: something more universal would be better
+        // TODO: foreach(nm0, nm1)
+        {
+          const mtx::arr<real_t> &nominator = psi[setup->eqsys->velmap(g, xyz).begin()->first][nm0];
+          Q[xyz][nm0](nominator.ijk) = nominator[nm0](nominator.ijk); 
+        }
+        {
+          const mtx::arr<real_t> &nominator = psi[setup->eqsys->velmap(g, xyz).begin()->first][nm1];
+          Q[xyz][nm1](nominator.ijk) = nominator(nominator.ijk); 
+        }
       }
     }
 
@@ -226,21 +267,21 @@ class slv_serial : public slv<real_t>
             pow = setup->eqsys->velmap(g, xyz)[i].second;
           if (pow == -1) 
           {
+            // TODO: foreach(nm0, nm1)!
             {
               assert(isfinite(sum((psi[var][nm0])(psi[var][nm0].ijk))));
               assert(isfinite(sum((psi[var][nm1])(psi[var][nm1].ijk))));
 
-              (*(Q[xyz][nm0]))(Q[xyz][nm0]->ijk) = where(
+              (Q[xyz][nm0])(Q[xyz][nm0].ijk) = where(
                 (psi[var][nm0])(psi[var][nm0].ijk) != 0,
-                (*(Q[xyz][nm0]))(Q[xyz][nm0]->ijk) / (psi[var][nm0])(psi[var][nm0].ijk),
+                (Q[xyz][nm0])(Q[xyz][nm0].ijk) / (psi[var][nm0])(psi[var][nm0].ijk),
                 real_t(0)
-              ); // TODO
-              (*(Q[xyz][nm1]))(Q[xyz][nm1]->ijk) = where(
+              ); 
+              (Q[xyz][nm1])(Q[xyz][nm1].ijk) = where(
                 (psi[var][nm1])(psi[var][nm1].ijk) != 0,
-                (*(Q[xyz][nm1]))(Q[xyz][nm1]->ijk) / (psi[var][nm1])(psi[var][nm1].ijk),
+                (Q[xyz][nm1])(Q[xyz][nm1].ijk) / (psi[var][nm1])(psi[var][nm1].ijk),
                 real_t(0)
-              ); // TODO
-              //(*(Q[xyz][nm1]))(Q[xyz][nm1]->ijk) /= (psi[var][nm1])(psi[var][nm1].ijk); // TODO: two or more, use a for
+              ); 
             }
           }
           else assert(false);
@@ -250,47 +291,23 @@ class slv_serial : public slv<real_t>
  
     // compute the velocities
     setup->velocity->populate_courant_fields(nm0, nm1,
-      &C[0], &C[1], &C[2], setup->dt, Q[0], Q[1], Q[2]
+      &C[0], &C[1], &C[2], setup->dt,  
+      Q[0].c_array(), 
+      Q[1].c_array(), 
+      Q[2].c_array()
     );
 
-    // 
-    for (int xyz = 0; xyz < 3; ++xyz) 
-    {
-      if (setup->eqsys->velmap(g, xyz).size() > 1) 
-      {
-        for (int i = 1; i < setup->eqsys->velmap(g, xyz).size(); ++i) 
-        {
-          int 
-            var = setup->eqsys->velmap(g, xyz)[i].first, 
-            pow = setup->eqsys->velmap(g, xyz)[i].second;
-          if (pow == -1) 
-          {
-            {
-              assert(isfinite(sum((psi[var][nm0])(psi[var][nm0].ijk))));
-              (*(Q[xyz][nm0]))(Q[xyz][nm0]->ijk) *= (psi[var][nm0])(psi[var][nm0].ijk); // TODO
-              assert(isfinite(sum((psi[var][nm1])(psi[var][nm1].ijk))));
-              (*(Q[xyz][nm1]))(Q[xyz][nm1]->ijk) *= (psi[var][nm1])(psi[var][nm1].ijk); // TODO: two or more, use a for
-            }
-          }
-          else assert(false);
-        }
-      }
-    }
-
     // TODO: sanity checks for Courant limits
-    cerr << "Courant x: ";
-    cerr << min(C[0]) << " ... ";
-    cerr << max(C[0]) << endl;
+    //cerr << "Courant x: ";
+    //cerr << min(C[0]) << " ... ";
+    //cerr << max(C[0]) << endl;
     //cerr << "Courant y: " << min(C[1]) << " ... " << max(C[1]) << endl;
     //cerr << "Courant z: " << min(C[2]) << " ... " << max(C[2]) << endl;
   }
 
-  private: mtx::arr<real_t> **tmpvec = NULL;
   /// \param n the time level to use for updating the forcings
   public: void update_forcings(int n)
   {
-    if (tmpvec == NULL) tmpvec = new mtx::arr<real_t>*[setup->eqsys->n_vars()]; // TODO: unique_ptr
-
     for (int e = 0; e < setup->eqsys->n_vars(); ++e) tmpvec[e] = psi[e].c_array()[n];
 
     for (int e = 0; e < setup->eqsys->n_vars(); ++e)
@@ -300,7 +317,8 @@ class slv_serial : public slv<real_t>
         (rhs_R[e])(rhs_R[e].ijk) = real_t(0);
         for (int i = 0; i < setup->eqsys->var_n_rhs_terms(e); ++i)
         {
-           setup->eqsys->var_rhs_term(e, i).explicit_part(rhs_R[e], aux.c_array(), tmpvec);
+           // TODO: is the &tmpvec[0] guaranteed to work???
+           setup->eqsys->var_rhs_term(e, i).explicit_part(rhs_R[e], aux.c_array(), &tmpvec[0]);
            assert(isfinite(sum((rhs_R[e])(rhs_R[e].ijk))));
         }
       }

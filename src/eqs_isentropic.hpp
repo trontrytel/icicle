@@ -116,9 +116,12 @@ class eqs_isentropic : public eqs<real_t>
         si::seconds / par->q_unit * // inv. unit of R (to get a dimensionless forcing)
         ((*psi[par->idx_dp[lev]])(R.ijk)) * 
         ( 
+// TODO !!! In the original code the topography is multipled by min(1, t * 1e-3) !!!
+/*
           par->g / si::metres_per_second_squared *
           (*aux[idx_dHdxy])(mtx::idx_ijk(R.ijk.i, R.ijk.j, 0)) 
           +
+*/
           ( // spatial derivative
             (M(mtx::idx_ijk(R.ijk.i + di, R.ijk.j + dj, 0))) - 
             (M(mtx::idx_ijk(R.ijk.i - di, R.ijk.j - dj, 0)))
@@ -129,12 +132,7 @@ class eqs_isentropic : public eqs<real_t>
 
   private: params par;
 
-  private: ptr_vector<struct eqs<real_t>::gte> sys;
-  public: ptr_vector<struct eqs<real_t>::gte> &system() { return sys; }
-
-  private: ptr_vector<struct eqs<real_t>::axv> aux;
-  public: ptr_vector<struct eqs<real_t>::axv> &auxvars() { return aux; }
-
+  // ctor
   public: eqs_isentropic(const grd<real_t> &grid,
     int nlev, 
     quantity<si::pressure, real_t> p_max,
@@ -161,50 +159,50 @@ class eqs_isentropic : public eqs<real_t>
     par.Rd_over_cp = si::constants::codata::R / (0.02896 * si::kilograms / si::moles) / par.cp; // TODO!!!!
 
     // potential temperature profile
-    aux.push_back(new struct eqs<real_t>::axv({
+    this->aux.push_back(new struct eqs<real_t>::axv({
       "dtheta", "potential temperature increment within a layer", this->quan2str(par.theta_unit),
       vector<int>({nlev, 1, 1})
     }));
-    par.idx_dtheta = aux.size() - 1;
+    par.idx_dtheta = this->aux.size() - 1;
 
     // topography
     int idx_dHdx = -1, idx_dHdy = -1;
     {
       if (grid.nx() != 1)
       {
-        aux.push_back(new struct eqs<real_t>::axv({
+        this->aux.push_back(new struct eqs<real_t>::axv({
           "dHdx", "spatial derivative of the topography (X)", this->quan2str(par.dHdxy_unit),
           vector<int>({0, 0, 1}) // dimspan
         }));
-        idx_dHdx = aux.size() - 1;
+        idx_dHdx = this->aux.size() - 1;
       }
       if (grid.ny() != 1)
       {
-        aux.push_back(new struct eqs<real_t>::axv({
+        this->aux.push_back(new struct eqs<real_t>::axv({
           "dHdy", "spatial derivative of the topograpy (Y)", this->quan2str(par.dHdxy_unit),
           vector<int>({0, 0, 1}) // dimspan
         }));
-	idx_dHdy = aux.size() - 1;
+	idx_dHdy = this->aux.size() - 1;
       }
     }
 
     // pressure 
-    aux.push_back(new struct eqs<real_t>::axv({
+    this->aux.push_back(new struct eqs<real_t>::axv({
       "p", "pressure", this->quan2str(par.p_unit),
       vector<int>({0, 0, nlev+1 }), // dimspan
       vector<int>({1, 1, 0}), // halo extent
       typename eqs<real_t>::constant(false)
     }));
-    par.idx_p = aux.size() - 1;
+    par.idx_p = this->aux.size() - 1;
 
     // the Montgomery potential
-    aux.push_back(new struct eqs<real_t>::axv({
+    this->aux.push_back(new struct eqs<real_t>::axv({
       "M", "Montgomery potential", this->quan2str(par.M_unit),
       vector<int>({0, 0, 1}), // dimspan
       vector<int>({1, 1, 0}),  // halo extent
       typename eqs<real_t>::constant(false)
     }));
-    par.idx_M = aux.size() - 1;
+    par.idx_M = this->aux.size() - 1;
     
     // dp var indices (to be filled in in the loop below)
     par.idx_dp.resize(nlev);
@@ -214,30 +212,30 @@ class eqs_isentropic : public eqs<real_t>
     {
       string lstr = boost::lexical_cast<std::string>(lint);
 
-      sys.push_back(new struct eqs<real_t>::gte({
+      this->sys.push_back(new struct eqs<real_t>::gte({
         "dp_" + lstr, "pressure thickness of fluid layer " + lstr,
         this->quan2str(par.p_unit), 
         typename eqs<real_t>::positive_definite(true),
         vector<int>({-1, -1, 0}),
         typename eqs<real_t>::groupid(lint)
       }));
-      par.idx_dp[lint] = sys.size() - 1;
+      par.idx_dp[lint] = this->sys.size() - 1;
 
       if (grid.nx() != 1)
       {
-        sys.push_back(new struct eqs<real_t>::gte({
+        this->sys.push_back(new struct eqs<real_t>::gte({
           "qx_" + lstr, "layer-integrated specific momentum (x) of fluid layer " + lstr, 
           this->quan2str(par.q_unit), 
           typename eqs<real_t>::positive_definite(false),
           vector<int>({1, 0, 0}),
           typename eqs<real_t>::groupid(lint)
         }));
-        sys.back().rhs_terms.push_back(
+        this->sys.back().rhs_terms.push_back(
           new montgomery_grad<1,0>(par, grid.dx(), idx_dHdx, lint, lint==0, true)
         ); 
         if (lint > abslev)
         {
-          sys.back().rhs_terms.push_back(
+          this->sys.back().rhs_terms.push_back(
             new rayleigh_damping(lint, nlev, abslev, absamp)
           ); 
         }
@@ -245,24 +243,25 @@ class eqs_isentropic : public eqs<real_t>
 
       if (grid.ny() != 1)
       {
-        sys.push_back(new struct eqs<real_t>::gte({
+        this->sys.push_back(new struct eqs<real_t>::gte({
           "qy_" + lstr, "layer-integrated specific momentum (y) of fluid layer " + lstr, 
           this->quan2str(par.q_unit), 
           typename eqs<real_t>::positive_definite(false),
           vector<int>({0, 1, 0}),
           typename eqs<real_t>::groupid(lint)
         }));
-        sys.back().rhs_terms.push_back(
+        this->sys.back().rhs_terms.push_back(
           new montgomery_grad<0,1>(par, grid.dy(), idx_dHdy, lint, false, false)
         ); 
         if (lint > abslev)
         {
-          sys.back().rhs_terms.push_back(
+          this->sys.back().rhs_terms.push_back(
             new rayleigh_damping(lint, nlev, abslev, absamp)
           ); 
         }
       }
     }
+    this->init_maps();
   }
 };
 #endif

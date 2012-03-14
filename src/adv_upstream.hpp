@@ -41,7 +41,7 @@ class adv_upstream : public adv<real_t>
     template <class idx>
     class indices
     {
-      public: idx i_j_k, iph_j_k, imh_j_k, ip1_j_k, im1_j_k;
+      public: const idx i_j_k, iph_j_k, imh_j_k, ip1_j_k, im1_j_k;
       public: indices(
         const mtx::rng &i,
         const mtx::rng &j,
@@ -57,9 +57,9 @@ class adv_upstream : public adv<real_t>
     };
 
     // member fields
-    public: indices<mtx::idx_ijk> indcs_x;
-    public: indices<mtx::idx_jki> indcs_y;
-    public: indices<mtx::idx_kij> indcs_z;
+    public: const indices<mtx::idx_ijk> indcs_x;
+    public: const indices<mtx::idx_jki> indcs_y;
+    public: const indices<mtx::idx_kij> indcs_z;
 
     // ctor
     public: op3D(const mtx::idx &ijk, const grd_arakawa_c_lorenz<real_t> &grid) :
