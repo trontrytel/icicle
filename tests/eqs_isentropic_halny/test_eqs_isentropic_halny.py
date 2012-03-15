@@ -100,8 +100,16 @@ for lev in range(nz) :
 # potential temperatures of the layers (characteristic values)
 v_dtheta = f.createVariable('dtheta', 'd', ('level',))
 dtheta = np.zeros(nz, dtype='float')
+rho = np.zeros(nz, dtype='float')
 for lev in range(nz) :
   dtheta[lev] = theta((lev+1) * dz, st0, th_surf) - theta((lev) * dz, st0, th_surf) 
+  rho[lev] = pres( ((lev+1/2.) * dz), st0, th_surf, p_surf )**(Rdcp+1) \
+             / Rd \
+             / theta( ((lev+1/2.) * dz), st0, th_surf ) \
+             / (p0**(Rdcp))
+  print(rho[lev])
+  print(pres( ((lev+1/2.) * dz), st0, th_surf, p_surf ))
+  print(theta( ((lev+1/2.) * dz), st0, th_surf ))
   v_dtheta[lev] = dtheta[lev]
 
 # topography and its spatial derivatives of the topography
@@ -183,8 +191,9 @@ for t in range(nt/nout+1):
     # calculating isentrope height
     dp = (f.variables['dp_' + str(lev)])[t,:,0,0]
     th_up = th_dn + dtheta[lev]
-    st = sta(p_dn, p_dn - dp, th_dn, th_up)
-    z_up = alt(th_up, th_dn, st, z_dn)
+    # st = sta(p_dn, p_dn - dp, th_dn, th_up)
+    # z_up = alt(th_up, th_dn, st, z_dn)
+    z_up = z_dn + dp / (rho[lev] * g)
     # plotting
     ax.plot(X, z_dn, color=cm.gist_heat((1.*lev)/nz,1))
     ax.plot(X, z_up, color=cm.gist_heat((1.*lev)/nz,1))
