@@ -1,2 +1,3 @@
-add_executable(test_out_netcdf test_out_netcdf.cpp)
-add_test(test_out_netcdf test_out_netcdf)
+set(tmp test_out_netcdf)
+add_executable(${tmp} ${tmp}.cpp)
+add_test(${tmp} ${tmp})

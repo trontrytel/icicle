@@ -1,2 +1,3 @@
-add_executable(test_adv_smolar_1983 test_adv_smolar_1983.cpp)
-add_test(test_adv_smolar_1983 test_adv_smolar_1983)
+set(tmp test_adv_smolar_1983)
+add_executable(${tmp} ${tmp}.cpp)
+add_test(${tmp} ${tmp})

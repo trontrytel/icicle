@@ -64,7 +64,7 @@ class inf : root
       uname(&uts);
       im["runtime_system"] = string(uts.sysname) + " " + string(uts.machine);
       char* login = getlogin();
-      if (login == NULL) warning_macro("getlogin() failed!")
+      if (login == NULL) warning_macro("getlogin() failed!") // happens e.g. with the "screen" terminal
       string tmp = (login == NULL ? "?" : login) + string("@") + uts.nodename;
       im["runtime_user"] =tmp;
     }   
