@@ -18,7 +18,7 @@ import shutil                            # rmtree() etc
 nx = 1000
 dx = 1.
 dt = 1.
-nt = 1600
+nt = 6400
 nout = 10
 omega =2*np.pi / dt / 400
 u = 0.5
@@ -74,5 +74,3 @@ f.close
 cmd=('convert','tmp/frame_*.png','harmonic_osc.gif')
 subprocess.check_call(cmd)
 shutil.rmtree('tmp')
-
-
