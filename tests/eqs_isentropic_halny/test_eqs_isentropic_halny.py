@@ -13,6 +13,8 @@ mpl.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from Scientific.IO.NetCDF import NetCDFFile
+import os                                # unlink() etc
+import shutil                            # rmtree() etc
 
 ############################################################################
 # simulation parameteters (from isopc_yale.::SHAWAT2 by P.K.Smolarkiewicz) #
@@ -33,8 +35,8 @@ p_surf = 101300.
 th_surf = 300.
 fct = 1
 iord = 2
-nt = 50 # 8000
-nout = nt # 2000
+nt = 250 # 8000
+nout = 10 # 2000
 
 ############################################################################
 # physical constants & heper routines for thermodynamics
@@ -173,10 +175,10 @@ ax.set_ylabel('h [m]')
 
 X = f.variables['X']
 ax.fill(X, topo_z, color='#BBBBBB', linewidth=0)
-#plt.ylim([0,nz*dz])
+plt.ylim([0,1.1*nz*dz])
 plt.xlim([0,nx*dx])
 
-# TODO: animation!
+os.mkdir('tmp')
 for t in range(nt/nout+1):
   # from top to bottom - calculating pressures
   p_dn = np.zeros(nx) + p_top
@@ -201,5 +203,10 @@ for t in range(nt/nout+1):
     z_dn = z_up
     th_dn = th_up
     p_dn -= dp
+    plt.savefig('tmp/frame_'+format(t,"05d")+'.png')
 
-plt.savefig('fig1.svg')
+f.close
+cmd=('convert','tmp/frame_*.png','halny.gif')
+subprocess.check_call(cmd)
+shutil.rmtree('tmp')
+

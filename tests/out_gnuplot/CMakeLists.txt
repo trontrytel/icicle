@@ -1,2 +1,3 @@
-add_executable(test_out_gnuplot test_out_gnuplot.cpp)
-add_test(test_out_gnuplot test_out_gnuplot)
+set(tmp test_out_gnuplot)
+add_executable(${tmp} ${tmp}.cpp)
+add_test(${tmp} ${tmp})

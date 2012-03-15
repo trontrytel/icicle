@@ -1,2 +1,3 @@
-add_executable(test_adv_isolines test_adv_isolines.cpp)
-add_test(test_adv_isolines test_adv_isolines)
+set(tmp test_adv_isolines)
+add_executable(${tmp} ${tmp}.cpp)
+add_test(${tmp} ${tmp})
