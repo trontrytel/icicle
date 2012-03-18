@@ -16,7 +16,7 @@ template <typename real_t>
 class slv_serial : public slv<real_t>
 {
   private: ptr_vector<typename adv<real_t>::op3D> advop; // advop[positive_definite]
-  private: unique_ptr<mtx::idx> ijk;
+  private: const mtx::idx_ijk ijk;
   private: adv<real_t> *advsch;
   private: out<real_t> *output;
   private: stp<real_t> *setup;
@@ -36,8 +36,16 @@ class slv_serial : public slv<real_t>
     int i_min, int i_max,
     int j_min, int j_max,
     int k_min, int k_max
-  )
-    : advsch(setup->advsch), output(output), setup(setup), tmpvec(setup->eqsys->n_vars())
+  ) :
+    advsch(setup->advsch), 
+    output(output), 
+    setup(setup), 
+    tmpvec(setup->eqsys->n_vars()),
+    ijk(
+      mtx::rng(i_min, i_max), 
+      mtx::rng(j_min, j_max), 
+      mtx::rng(k_min, k_max)
+    )
   {
     // computing required halo lengths
     halo_vctr = (advsch->stencil_extent() - 1) / 2;
@@ -91,16 +99,16 @@ class slv_serial : public slv<real_t>
     }
 
     // indices
-    ijk.reset(new mtx::idx_ijk(
-      mtx::rng(i_min, i_max), 
-      mtx::rng(j_min, j_max), 
-      mtx::rng(k_min, k_max)
-    ));
+//    ijk.reset(new mtx::idx_ijk(
+//      mtx::rng(i_min, i_max), 
+//      mtx::rng(j_min, j_max), 
+//      mtx::rng(k_min, k_max)
+//    ));
 
     // aux - helper fields
     for (int a = 0; a < setup->eqsys->n_auxv(); ++a)
     {
-      aux.push_back(new mtx::arr<real_t>(setup->eqsys->aux_shape(a, *ijk)));
+      aux.push_back(new mtx::arr<real_t>(setup->eqsys->aux_shape(a, ijk)));
       if (setup->eqsys->aux_const(a)) 
         setup->intcond->populate_scalar_field(setup->eqsys->aux_name(a), aux[a].ijk, aux[a]);
     }
@@ -139,14 +147,14 @@ class slv_serial : public slv<real_t>
     ));
 
     // adv op
-    advop.push_back(advsch->factory(*ijk, cache->sclr, cache->vctr, /*positive_definite=*/(bool)0));
-    advop.push_back(advsch->factory(*ijk, cache->sclr, cache->vctr, /*positive_definite=*/(bool)1));
+    advop.push_back(advsch->factory(ijk, cache->sclr, cache->vctr, /*positive_definite=*/(bool)0));
+    advop.push_back(advsch->factory(ijk, cache->sclr, cache->vctr, /*positive_definite=*/(bool)1));
 
     // initial condition
     {
       int n = 0;
       for (int e = 0; e < setup->eqsys->n_vars(); ++e)
-        setup->intcond->populate_scalar_field(setup->eqsys->var_name(e), *ijk, psi[e][n]); 
+        setup->intcond->populate_scalar_field(setup->eqsys->var_name(e), ijk, psi[e][n]); 
     }
 
     // periodic boundary in all directions
@@ -154,9 +162,9 @@ class slv_serial : public slv<real_t>
       this->hook_neighbour(s, this);
  
     // velocity fields 
-    C.push_back(new mtx::arr<real_t>(setup->grid->rng_vctr_x(*ijk, halo_vctr)));
-    C.push_back(new mtx::arr<real_t>(setup->grid->rng_vctr_y(*ijk, halo_vctr)));
-    C.push_back(new mtx::arr<real_t>(setup->grid->rng_vctr_z(*ijk, halo_vctr)));
+    C.push_back(new mtx::arr<real_t>(setup->grid->rng_vctr_x(ijk, halo_vctr)));
+    C.push_back(new mtx::arr<real_t>(setup->grid->rng_vctr_y(ijk, halo_vctr)));
+    C.push_back(new mtx::arr<real_t>(setup->grid->rng_vctr_z(ijk, halo_vctr)));
     if (setup->velocity->is_constant()) 
     {
       // filling C with constant velocity field
@@ -188,7 +196,7 @@ class slv_serial : public slv<real_t>
   public: void record(const int n, const unsigned long t)
   {
     for (int e = 0; e < setup->eqsys->n_vars(); ++e)
-      output->record(e, psi[e][n], *ijk, t);
+      output->record(e, psi[e][n], ijk, t);
   }
 
   public: typename mtx::arr<real_t>::type data(int e, int n, const mtx::idx &idx)
@@ -199,14 +207,14 @@ class slv_serial : public slv<real_t>
   public: void fill_halos(const int e, const int n)
   {
     mtx::rng 
-      i_all(ijk->lbound(mtx::i) - halo_sclr[e], ijk->ubound(mtx::i) + halo_sclr[e]), // TODO: replace with psi[e][n]->i ?
-      j_all(ijk->lbound(mtx::j) - halo_sclr[e], ijk->ubound(mtx::j) + halo_sclr[e]); // TODO: replace with psi[e][n]->j ?
-    fill_halos_helper<mtx::idx_ijk>(slv<real_t>::left, e, n, ijk->lbound(mtx::i) - halo_sclr[e], ijk->lbound(mtx::i) - 1,            ijk->j, ijk->k, setup->grid->nx());
-    fill_halos_helper<mtx::idx_ijk>(slv<real_t>::rght, e, n, ijk->ubound(mtx::i) + 1,            ijk->ubound(mtx::i) + halo_sclr[e], ijk->j, ijk->k, setup->grid->nx());
-    fill_halos_helper<mtx::idx_jki>(slv<real_t>::fore, e, n, ijk->lbound(mtx::j) - halo_sclr[e], ijk->lbound(mtx::j) - 1,            ijk->k, i_all,  setup->grid->ny());
-    fill_halos_helper<mtx::idx_jki>(slv<real_t>::hind, e, n, ijk->ubound(mtx::j) + 1,            ijk->ubound(mtx::j) + halo_sclr[e], ijk->k, i_all,  setup->grid->ny());
-    fill_halos_helper<mtx::idx_kij>(slv<real_t>::base, e, n, ijk->lbound(mtx::k) - halo_sclr[e], ijk->lbound(mtx::k) - 1,            i_all,  j_all,  setup->grid->nz());
-    fill_halos_helper<mtx::idx_kij>(slv<real_t>::apex, e, n, ijk->ubound(mtx::k) + 1,            ijk->ubound(mtx::k) + halo_sclr[e], i_all,  j_all,  setup->grid->nz());
+      i_all(ijk.lbound(mtx::i) - halo_sclr[e], ijk.ubound(mtx::i) + halo_sclr[e]), // TODO: replace with psi[e][n]->i ?
+      j_all(ijk.lbound(mtx::j) - halo_sclr[e], ijk.ubound(mtx::j) + halo_sclr[e]); // TODO: replace with psi[e][n]->j ?
+    fill_halos_helper<mtx::idx_ijk>(slv<real_t>::left, e, n, ijk.lbound(mtx::i) - halo_sclr[e], ijk.lbound(mtx::i) - 1,            ijk.j, ijk.k, setup->grid->nx());
+    fill_halos_helper<mtx::idx_ijk>(slv<real_t>::rght, e, n, ijk.ubound(mtx::i) + 1,            ijk.ubound(mtx::i) + halo_sclr[e], ijk.j, ijk.k, setup->grid->nx());
+    fill_halos_helper<mtx::idx_jki>(slv<real_t>::fore, e, n, ijk.lbound(mtx::j) - halo_sclr[e], ijk.lbound(mtx::j) - 1,            ijk.k, i_all,  setup->grid->ny());
+    fill_halos_helper<mtx::idx_jki>(slv<real_t>::hind, e, n, ijk.ubound(mtx::j) + 1,            ijk.ubound(mtx::j) + halo_sclr[e], ijk.k, i_all,  setup->grid->ny());
+    fill_halos_helper<mtx::idx_kij>(slv<real_t>::base, e, n, ijk.lbound(mtx::k) - halo_sclr[e], ijk.lbound(mtx::k) - 1,            i_all,  j_all,  setup->grid->nz());
+    fill_halos_helper<mtx::idx_kij>(slv<real_t>::apex, e, n, ijk.ubound(mtx::k) + 1,            ijk.ubound(mtx::k) + halo_sclr[e], i_all,  j_all,  setup->grid->nz());
   }
 
   private:
@@ -329,18 +337,18 @@ class slv_serial : public slv<real_t>
   {
     // sanity checks
     assert(!setup->eqsys->is_homogeneous(e));
-    assert(isfinite(sum((psi[e][n])(*ijk))));
-    assert(isfinite(sum((rhs_R[e])(*ijk))));
+    assert(isfinite(sum((psi[e][n])(ijk))));
+    assert(isfinite(sum((rhs_R[e])(ijk))));
 
     // treating explicitely the nonlinear terms
-    (psi[e][n])(*ijk) += dt / si::seconds * (rhs_R[e])(*ijk);
+    (psi[e][n])(ijk) += dt / si::seconds * (rhs_R[e])(ijk);
 
     // treating implicitly the linear terms
     real_t C = real_t(0);
     for (int i = 0; i < setup->eqsys->var_n_rhs_terms(e); ++i)
       C += setup->eqsys->var_rhs_term(e, i).implicit_part(dt); // TODO: document that dt -> dt/2
     if (C != real_t(0))
-      (psi[e][n])(*ijk) /= (real_t(1) - dt / si::seconds * C);
+      (psi[e][n])(ijk) /= (real_t(1) - dt / si::seconds * C);
   }
 
   public: void cycle_arrays(const int e, const int n) // TODO: n unneeded?

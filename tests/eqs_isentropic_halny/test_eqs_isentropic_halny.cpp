@@ -6,7 +6,7 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  *  @section DESCRIPTION
- *    \image html "../../tests/eqs_isentropic_halny/fig1.svg"
+ *    \image html "../../tests/eqs_isentropic_halny/halny.gif"
  *    \include "eqs_isentropic_halny/test_eqs_isentropic_halny.py"
  */
 
