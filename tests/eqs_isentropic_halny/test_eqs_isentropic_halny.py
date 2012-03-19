@@ -35,7 +35,7 @@ p_surf = 101300.
 th_surf = 300.
 fct = 1
 iord = 2
-nt = 250 # 8000
+nt = 300 # 8000
 nout = 10 # 2000
 
 ############################################################################
@@ -109,9 +109,6 @@ for lev in range(nz) :
              / Rd \
              / theta( ((lev+1/2.) * dz), st0, th_surf ) \
              / (p0**(Rdcp))
-  print(rho[lev])
-  print(pres( ((lev+1/2.) * dz), st0, th_surf, p_surf ))
-  print(theta( ((lev+1/2.) * dz), st0, th_surf ))
   v_dtheta[lev] = dtheta[lev]
 
 # topography and its spatial derivatives of the topography
