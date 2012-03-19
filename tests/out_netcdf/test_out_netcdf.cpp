@@ -1,5 +1,5 @@
 /** @file
- *  @example out_netcdf/test_netcdf.cpp
+ *  @example out_netcdf/test_out_netcdf.cpp
  *  @author Sylwester Arabas <slayoo@igf.fuw.edu.pl>
  *  @copyright University of Warsaw
  *  @date December 2011

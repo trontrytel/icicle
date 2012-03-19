@@ -165,18 +165,18 @@ subprocess.check_call(cmd)
 
 # third: generating a plot
 f = NetCDFFile('out.nc', 'r')
-fig = plt.figure()
-ax = fig.add_subplot(111)
-ax.set_xlabel('X [m]')
-ax.set_ylabel('h [m]')
-
-X = f.variables['X']
-ax.fill(X, topo_z, color='#BBBBBB', linewidth=0)
-plt.ylim([0,1.1*nz*dz])
-plt.xlim([0,nx*dx])
 
 os.mkdir('tmp')
 for t in range(nt/nout+1):
+  fig = plt.figure()
+  ax = fig.add_subplot(111)
+  ax.set_xlabel('X [m]')
+  ax.set_ylabel('h [m]')
+  X = f.variables['X']
+  ax.fill(X, topo_z, color='#BBBBBB', linewidth=0)
+  plt.ylim([0,1.1*nz*dz])
+  plt.xlim([0,nx*dx])
+
   # from top to bottom - calculating pressures
   p_dn = np.zeros(nx) + p_top
   for lev in range(nz-1,-1,-1) :

@@ -201,13 +201,18 @@ namespace mtx
     idx ijk;
     rng i, j, k;
 
-    void fill_with_nans() { (*this)(ijk) = nan<real_t>(); }
+    void fill_with_nans() 
+    { 
+      (*this)(ijk) = nan<real_t>(); 
+    }
 
+    // ctor
     arr(const idx &ijk) :
       blitz::Array<real_t, 3>(
         blitz::Range(ijk.lbound(0), ijk.ubound(0)),
         blitz::Range(ijk.lbound(1), ijk.ubound(1)),
-        blitz::Range(ijk.lbound(2), ijk.ubound(2))
+        blitz::Range(ijk.lbound(2), ijk.ubound(2)),
+        blitz::ColumnMajorArray<3>()
       ),
       i(blitz::Range(ijk.lbound(0), ijk.ubound(0))),
       j(blitz::Range(ijk.lbound(1), ijk.ubound(1))),

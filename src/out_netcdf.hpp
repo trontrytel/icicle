@@ -134,7 +134,7 @@ class out_netcdf : public out<real_t>
   }
 
   public: virtual void record(
-    int e,
+    const int e,
     const mtx::arr<real_t> &psi,
     const mtx::idx &ijk, 
     const unsigned long t // t is the number of the record!
@@ -144,18 +144,18 @@ class out_netcdf : public out<real_t>
     {
       vector<size_t> startp(4), countp(4, 1);
       startp[0] = t;
-      countp[3] = ijk.ubound(mtx::k) - ijk.lbound(mtx::k) + 1;
+      countp[1] = ijk.ubound(mtx::i) - ijk.lbound(mtx::i) + 1;
+      startp[1] = ijk.lbound(mtx::i);
       // due to presence of halos the data to be stored is not contiguous, 
       // hence looping over the two major ranks
-      for (int i_int = ijk.lbound(mtx::i); i_int <= ijk.ubound(mtx::i); ++i_int) // loop over "outer" dimension
+      for (int k_int = ijk.lbound(mtx::k); k_int <= ijk.ubound(mtx::k); ++k_int) // loop over "outer" dimension
       {
-        startp[1] = i_int;
+        startp[3] = k_int;
         for (int j_int = ijk.lbound(mtx::j); j_int <= ijk.ubound(mtx::j); ++j_int)
         {
-          assert((psi)(i_int, j_int, ijk.k).isStorageContiguous());
           startp[2] = j_int;
-          startp[3] = ijk.lbound(mtx::k);
-          vars.at(e).putVar(startp, countp, (psi)(i_int, j_int, ijk.k).dataFirst());
+          assert((psi)(ijk.i, j_int, k_int).isStorageContiguous());
+          vars.at(e).putVar(startp, countp, (psi)(ijk.i, j_int, k_int).dataFirst());
         }
       }
       //if (!f->sync()) warning_macro("failed to synchronise netCDF file")
