@@ -63,15 +63,14 @@ class rhs : root
   public: virtual void explicit_part(
     mtx::arr<real_t> &R, 
     mtx::arr<real_t> **aux, // TODO: const
-    mtx::arr<real_t> **psi // TODO const
-  ) 
-  {} // TODO: better pure virtual?
+    mtx::arr<real_t> **psi, // TODO const
+    const quantity<si::time, real_t> t
+  ) // = 0; TODO does not work with empty ptr_vector :(
+  {}
 
   public: virtual real_t implicit_part(
     quantity<si::time, real_t> dt // TODO: const
-  )
-  { // TODO: better pure virtual?
-    return real_t(0.);
-  }
+  ) // = 0; TODO: does not work with empty ptr_vector
+  { return real_t(0); }
 };  
 #endif

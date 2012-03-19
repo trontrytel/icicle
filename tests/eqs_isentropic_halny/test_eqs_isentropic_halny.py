@@ -12,30 +12,34 @@ import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+from matplotlib.ticker import MaxNLocator
 from Scientific.IO.NetCDF import NetCDFFile
 import os                                # unlink() etc
 import shutil                            # rmtree() etc
+import scitools
+import math
 
 ############################################################################
 # simulation parameteters (from isopc_yale.::SHAWAT2 by P.K.Smolarkiewicz) #
 ############################################################################
 bits = 32
-nx = 80     # 161  # [1]
-nz = 30      # 61   # [1]
+nx = 160     # 161  # [1]
+nz = 60      # 61   # [1]
 dx = 3e3     # 3e3  # [m]
 dz = 300.    # 300. # [m]
 dt = 6.      # 6.   # [s]
 bv = .012    # .012 # [1/s] (Brunt-Vaisala frequency)
 mount_amp = 1.6e3 # 1.6e3
 mount_ro1 = 20e3  # 20e3
-abslev = nz / 2 # gravity-wave absorber starts at .75 of the domain height
-absamp = 1
+abslev = int(3. * nz / 4.) # gravity-wave absorber starts at .75 of the domain height
+absamp = .1
+t_spinup = 5000 * dt # 1000 * dt [s]
 uscal = 10.  # 10. # [m/s]
 p_surf = 101300.
 th_surf = 300.
 fct = 1
 iord = 2
-nt = 300 # 8000
+nt = 50 # 8000
 nout = 10 # 2000
 
 ############################################################################
@@ -158,25 +162,36 @@ cmd = (
     '--adv.mpdata.iord',str(iord),
   '--vel','momeq_extrapol',
   '--nt',str(nt),'--dt',str(dt),'--nout',str(nout),
-  '--out','netcdf','--out.netcdf.file','out.nc',
-  '--slv','threads','--nsd','2'
+  '--out','netcdf','--out.netcdf.file','out_vel.nc',
+  '--slv','serial','--nsd','1'
 )
 subprocess.check_call(cmd)
 
+############################################################################
 # third: generating a plot
-f = NetCDFFile('out.nc', 'r')
+############################################################################
+f = NetCDFFile('out_vel.nc', 'r')
+os.mkdir('tmp_vel')
 
-os.mkdir('tmp')
+qui_X = np.zeros((nx,nz))
+qui_Z = np.zeros((nx,nz))
+qui_U = np.zeros((nx,nz))
+qui_V = np.zeros((nx,nz))
+qui_C = np.zeros((nx,nz))
+for lev in range(nz): qui_X[:,lev] = f.variables['X']
+
 for t in range(nt/nout+1):
+
   fig = plt.figure()
   ax = fig.add_subplot(111)
   ax.set_xlabel('X [m]')
-  ax.set_ylabel('h [m]')
-  X = f.variables['X']
-  ax.fill(X, topo_z, color='#BBBBBB', linewidth=0)
+  ax.xaxis.set_major_locator(MaxNLocator(4))
+
+  ax.fill(f.variables['X'], topo_z, color='#BBBBBB', linewidth=0)
   plt.ylim([0,1.1*nz*dz])
   plt.xlim([0,nx*dx])
-
+  ax.set_ylabel('h [m]')
+  
   # from top to bottom - calculating pressures
   p_dn = np.zeros(nx) + p_top
   for lev in range(nz-1,-1,-1) :
@@ -189,21 +204,35 @@ for t in range(nt/nout+1):
   for lev in range(nz) :
     # calculating isentrope height
     dp = (f.variables['dp_' + str(lev)])[t,:,0,0]
+    qx = (f.variables['qx_' + str(lev)])[t,:,0,0]
     th_up = th_dn + dtheta[lev]
-    # st = sta(p_dn, p_dn - dp, th_dn, th_up)
-    # z_up = alt(th_up, th_dn, st, z_dn)
     z_up = z_dn + dp / (rho[lev] * g)
-    # plotting
-    ax.plot(X, z_dn, color=cm.gist_heat((1.*lev)/nz,1))
-    ax.plot(X, z_up, color=cm.gist_heat((1.*lev)/nz,1))
+    # registering values for the plot
+    qui_Z[:,lev] = z_dn+(z_up-z_dn)/2. 
+    #sin_a = np.zeros(nx, dtype='float')
+    #cos_a = np.zeros(nx, dtype='float')
+    for i in range(nx) :
+      # only for cyclic conditions!
+      l = (i-1)%nx
+      r = (i+1)%nx
+      qui_U[i,lev] = 2*dx / math.pow( math.pow(z_dn[r]-z_dn[l],2) + math.pow(2*dx,2) , .5) * qx[i] / dp[i]
+      qui_V[i,lev] = (z_dn[r]-z_dn[l]) / math.pow( math.pow(z_dn[r]-z_dn[l],2) + math.pow(2*dx,2) , .5) * math.fabs(qx[i]) / dp[i]
+      qui_C[i,lev] = math.pow(math.pow(qui_U[i,lev],2) + math.pow(qui_V[i,lev],2),.5) 
     # storing values for the next iteration
     z_dn = z_up
     th_dn = th_up
     p_dn -= dp
-    plt.savefig('tmp/frame_'+format(t,"05d")+'.png')
+
+  vectors = ax.quiver(qui_X, qui_Z, qui_U/dx, qui_V/dz, qui_C, 
+    units='dots', pivot='mid', width=1, headwidth=4.5, headlength=6, headaxislength=6
+  )
+  cb = plt.colorbar(vectors)
+  cb.set_label("air velocity [m/s]")
+  vectors.set_clim([0,15])
+  plt.savefig('tmp_vel/frame_'+format(t,"05d")+'.png')
 
 f.close
-cmd=('convert','tmp/frame_*.png','halny.gif')
+cmd=('convert','tmp_vel/frame_*.png','halny_vel.gif')
 subprocess.check_call(cmd)
-shutil.rmtree('tmp')
+#shutil.rmtree('tmp_vel')
 

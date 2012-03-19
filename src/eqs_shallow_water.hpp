@@ -11,6 +11,7 @@
 
 #  include "cmn.hpp"
 #  include "eqs.hpp"
+#  include "rhs_explicit.hpp"
 #  include "grd.hpp"
 
 /** @brief the 2D shallow-water equations system
@@ -47,7 +48,7 @@ class eqs_shallow_water : public eqs<real_t>
   /// @brief Shallow Water Equations: Momentum forcings for the X and Y coordinates
   private: 
   template <int di, int dj>
-  class forcings : public rhs<real_t>
+  class forcings : public rhs_explicit<real_t>
   { 
     private: struct params *par;
     private: quantity<si::length, real_t> dxy;
@@ -63,7 +64,8 @@ class eqs_shallow_water : public eqs<real_t>
     public: void explicit_part(
       mtx::arr<real_t> &R, 
       mtx::arr<real_t> **aux,
-      mtx::arr<real_t> **psi
+      mtx::arr<real_t> **psi,
+      const quantity<si::time, real_t> 
     ) 
     { 
       /// momentum equation:

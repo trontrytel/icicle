@@ -24,6 +24,7 @@ inline void opt_eqs_desc(po::options_description &desc)
     ("eqs.isentropic.g", po::value<string>()->default_value("9.81"), "acceleration due to gravity [m/s2]")
     ("eqs.isentropic.abslev", po::value<int>(), "absorber lowermost level")
     ("eqs.isentropic.absamp", po::value<string>()->default_value("1"), "absorber amplitude [1]") 
+    ("eqs.isentropic.t_spinup", po::value<string>()->default_value("0"), "spin-up time [s]") 
 
     ("eqs.harmonic_oscillator.omega", po::value<string>(), "omega [Hz]") ;
   // TODO: constants container --cst.g --cst.cp ...
@@ -46,7 +47,8 @@ eqs<real_t> *opt_eqs(const po::variables_map& vm, const grd<real_t> &grid, const
       real_cast<real_t>(vm, "eqs.isentropic.p_max") * si::pascals,
       real_cast<real_t>(vm, "eqs.isentropic.g") * si::metres_per_second_squared,
       vm["eqs.isentropic.abslev"].as<int>(),
-      real_cast<real_t>(vm, "eqs.isentropic.absamp")
+      real_cast<real_t>(vm, "eqs.isentropic.absamp"),
+      real_cast<real_t>(vm, "eqs.isentropic.t_spinup") * si::seconds
     );
   }
   else if (initype == "harmonic_oscillator")
