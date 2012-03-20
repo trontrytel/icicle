@@ -24,7 +24,7 @@ import math
 ############################################################################
 bits = 32
 nx = 160     # 161  # [1]
-nz = 60      # 61   # [1]
+nz = 60     # 61   # [1]
 dx = 3e3     # 3e3  # [m]
 dz = 300.    # 300. # [m]
 dt = 6.      # 6.   # [s]
@@ -32,15 +32,15 @@ bv = .012    # .012 # [1/s] (Brunt-Vaisala frequency)
 mount_amp = 1.6e3 # 1.6e3
 mount_ro1 = 20e3  # 20e3
 abslev = int(3. * nz / 4.) # gravity-wave absorber starts at .75 of the domain height
-absamp = .1
-t_spinup = 5000 * dt # 1000 * dt [s]
+absamp = 1 # 1 ?
+t_spinup = 1e20 * dt # 1000 * dt [s]
 uscal = 10.  # 10. # [m/s]
 p_surf = 101300.
 th_surf = 300.
 fct = 1
 iord = 2
-nt = 50 # 8000
-nout = 10 # 2000
+nt = 8000 # 8000
+nout = 100 # 2000
 
 ############################################################################
 # physical constants & heper routines for thermodynamics
@@ -100,8 +100,6 @@ v_qy = [None]*nz
 for lev in range(nz) :
   v_dp[lev] = f.createVariable('dp_' + str(lev), 'd', ('X',))
   v_qx[lev] = f.createVariable('qx_' + str(lev), 'd', ('X',))
-  #v_qy[lev] = f.createVariable('qy_' + str(lev), 'd', ('X',)) # TODO: should not be needed
-  #v_qy[lev][:] = 0. # TODO: should not be needed
 
 # potential temperatures of the layers (characteristic values)
 v_dtheta = f.createVariable('dtheta', 'd', ('level',))
@@ -119,8 +117,8 @@ for lev in range(nz) :
 topo_z = mount_amp * witch(dx * (np.arange(nx+2, dtype='float') - .5 * (nx+1)), mount_ro1)
 v_dHdx = f.createVariable('dHdx', 'd', ('X',))
 v_dHdx[:] = (topo_z[2:] - topo_z[0:-2]) / (2. * dx)
-v_dHdy = f.createVariable('dHdy', 'd', ('X',)) # should not be needed
-v_dHdy[:] = 0. # TODO: should not be needed
+#v_dHdy = f.createVariable('dHdy', 'd', ('X',)) # should not be needed
+#v_dHdy[:] = 0. # TODO: should not be needed
 topo_z = topo_z[1:-1]
 
 # initilising pressure intervals with topography adjustment
@@ -155,6 +153,7 @@ cmd = (
     '--eqs.isentropic.p_max',str(p_top),
     '--eqs.isentropic.abslev',str(abslev),
     '--eqs.isentropic.absamp',str(absamp),
+    '--eqs.isentropic.t_spinup',str(t_spinup),
   '--grd.dx',str(dx),
   '--grd.nx',str(nx),
   '--adv','mpdata', 
@@ -162,16 +161,16 @@ cmd = (
     '--adv.mpdata.iord',str(iord),
   '--vel','momeq_extrapol',
   '--nt',str(nt),'--dt',str(dt),'--nout',str(nout),
-  '--out','netcdf','--out.netcdf.file','out_vel.nc',
-  '--slv','serial','--nsd','1'
+  '--out','netcdf','--out.netcdf.file','out.nc',
+  '--slv','serial','--nsd','2'
 )
 subprocess.check_call(cmd)
 
 ############################################################################
 # third: generating a plot
 ############################################################################
-f = NetCDFFile('out_vel.nc', 'r')
-os.mkdir('tmp_vel')
+f = NetCDFFile('out.nc', 'r')
+os.mkdir('tmp')
 
 qui_X = np.zeros((nx,nz))
 qui_Z = np.zeros((nx,nz))
@@ -229,10 +228,9 @@ for t in range(nt/nout+1):
   cb = plt.colorbar(vectors)
   cb.set_label("air velocity [m/s]")
   vectors.set_clim([0,15])
-  plt.savefig('tmp_vel/frame_'+format(t,"05d")+'.png')
+  plt.savefig('tmp/frame_'+format(t,"05d")+'.png')
 
 f.close
-cmd=('convert','tmp_vel/frame_*.png','halny_vel.gif')
+cmd=('convert','tmp/frame_*.png','halny_vel.gif')
 subprocess.check_call(cmd)
-#shutil.rmtree('tmp_vel')
-
+shutil.rmtree('tmp')

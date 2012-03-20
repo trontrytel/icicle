@@ -98,9 +98,9 @@ class slv_parallel : public slv<real_t>
 
     // first guess for velocity fields assuming constant momenta
     if (!setup->velocity->is_constant())
-      slvs[sd].copy(n, n + 1); 
+      slvs[sd].copy(n, n + 1); // TODO: only "dynamic" variables
 
-    // forcing terms for t=0
+    // first guess for forcing terms at t=0
     if (!allhomo) slvs[sd].update_forcings(n, 0 * si::seconds);
 
     // time stepping

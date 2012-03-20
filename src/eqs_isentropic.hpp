@@ -89,11 +89,12 @@ class eqs_isentropic : public eqs<real_t>
       // calculating pressures at the surfaces (done once per timestep)
       if (calc_p)
       {
-        p(mtx::idx_ijk(ii, jj, nlev - 1)) = par->p_max / si::pascals;
+        p(mtx::idx_ijk(ii, jj, nlev)) = par->p_max / si::pascals;
         for (int l = nlev - 1; l >= 0; --l)
           p(mtx::idx_ijk(ii, jj, l)) = 
             (*psi[par->idx_dp[l]])(mtx::idx_ijk(ii, jj, 0)) 
             + p(mtx::idx_ijk(ii, jj, l+1));
+         assert(finite(sum(p)));
       }
 
       // calculating Montgomery potential
@@ -101,17 +102,18 @@ class eqs_isentropic : public eqs<real_t>
       //  the order of equations is defined in the eqs_isentropic ctor below)
       if (calc_M) 
       {
-        if (calc_p) M(M.ijk) = real_t(0); 
+        if (calc_p) M(M.ijk) = real_t(0);  // TODO:...
 
         M(M.ijk) += par->cp * pow(par->p_unit / par->p0, par->Rd_over_cp) 
-           / par->M_unit * si::kelvins * // to make it dimensionless
+          / par->M_unit * si::kelvins * // to make it dimensionless
           ((*aux[par->idx_dtheta])(mtx::idx_ijk(lev)))(0,0,0) * // TODO: nicer syntax needed!
            real_t(.5) * // Exner function within a layer as an average of surface Ex-fun values
            ( 
              pow(p(mtx::idx_ijk(ii, jj, lev  )), par->Rd_over_cp) +
              pow(p(mtx::idx_ijk(ii, jj, lev+1)), par->Rd_over_cp)
            );
-       }
+        assert(finite(sum(M)));
+      }
 
       // eq. (6) in Szmelter & Smolarkiewicz 2011, Computers & Fluids
       R(R.ijk) -= 

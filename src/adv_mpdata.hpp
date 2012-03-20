@@ -180,17 +180,17 @@ class adv_mpdata : public adv_upstream<real_t>
     /// eq. (13-14) in Smolarkiewicz 1984 (J. Comp. Phys.,54,352-362) \n
 
     public:
-    template <class indices>
+    template <class indices_t>
     void mpdata_U(
       const mtx::arr<real_t> * C_adf,
       const mtx::arr<real_t> * const psi[], const int n, const int step,
-      const ptr_vector<indices> &indcs,
+      const ptr_vector<indices_t> &indcs,
       const mtx::arr<real_t> &Cx, 
       const mtx::arr<real_t> &Cy, 
       const mtx::arr<real_t> &Cz
     )
     {
-      const indices &idx = indcs[step-1];
+      const indices_t &idx = indcs[step-1];
 
       (*C_adf)(idx.adfidx) = (
         adv_mpdata<real_t>::f_CA( 

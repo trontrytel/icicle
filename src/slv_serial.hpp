@@ -98,13 +98,6 @@ class slv_serial : public slv<real_t>
       } else rhs_R.push_back(NULL);
     }
 
-    // indices
-//    ijk.reset(new mtx::idx_ijk(
-//      mtx::rng(i_min, i_max), 
-//      mtx::rng(j_min, j_max), 
-//      mtx::rng(k_min, k_max)
-//    ));
-
     // aux - helper fields
     for (int a = 0; a < setup->eqsys->n_auxv(); ++a)
     {
@@ -119,6 +112,7 @@ class slv_serial : public slv<real_t>
       Q.resize(3); // xyz
       for (int xyz = 0; xyz < 3; ++xyz)
       {
+        if (ijk[xyz].first() == ijk[xyz].last()) continue;
         for (int g = 0; g < setup->eqsys->n_group(); ++xyz)
         {
           if ( // no tricks needed
@@ -132,7 +126,7 @@ class slv_serial : public slv<real_t>
               i_min, i_max, j_min, j_max, k_min, k_max, halo_sclr_max)));
             Q[xyz].push_back(new mtx::arr<real_t>(setup->grid->rng_sclr(
               i_min, i_max, j_min, j_max, k_min, k_max, halo_sclr_max)));
-            break;
+            break; // group
           }
         }
       }
@@ -161,7 +155,7 @@ class slv_serial : public slv<real_t>
     for (int s=this->first; s <= this->last; ++s) 
       this->hook_neighbour(s, this);
  
-    // velocity fields 
+    // velocity fields (TODO: !!! only Cx for 1D siumulation !!!)
     C.push_back(new mtx::arr<real_t>(setup->grid->rng_vctr_x(ijk, halo_vctr)));
     C.push_back(new mtx::arr<real_t>(setup->grid->rng_vctr_y(ijk, halo_vctr)));
     C.push_back(new mtx::arr<real_t>(setup->grid->rng_vctr_z(ijk, halo_vctr)));
@@ -249,11 +243,12 @@ class slv_serial : public slv<real_t>
     {
       if (setup->eqsys->velmap(g, xyz).size() > 0) // if we have any source terms
       { 
+        // assuring that the first variable comes in with power 1
         assert(setup->eqsys->velmap(g, xyz).begin()->second == 1); // TODO: something more universal would be better
         // TODO: foreach(nm0, nm1)
         {
           const mtx::arr<real_t> &nominator = psi[setup->eqsys->velmap(g, xyz).begin()->first][nm0];
-          Q[xyz][nm0](nominator.ijk) = nominator[nm0](nominator.ijk); 
+          Q[xyz][nm0](nominator.ijk) = nominator(nominator.ijk); 
         }
         {
           const mtx::arr<real_t> &nominator = psi[setup->eqsys->velmap(g, xyz).begin()->first][nm1];
@@ -279,17 +274,18 @@ class slv_serial : public slv<real_t>
             {
               assert(isfinite(sum((psi[var][nm0])(psi[var][nm0].ijk))));
               assert(isfinite(sum((psi[var][nm1])(psi[var][nm1].ijk))));
-
               (Q[xyz][nm0])(Q[xyz][nm0].ijk) = where(
                 (psi[var][nm0])(psi[var][nm0].ijk) != 0,
                 (Q[xyz][nm0])(Q[xyz][nm0].ijk) / (psi[var][nm0])(psi[var][nm0].ijk),
                 real_t(0)
               ); 
+              assert(finite(sum(Q[xyz][nm0])));
               (Q[xyz][nm1])(Q[xyz][nm1].ijk) = where(
                 (psi[var][nm1])(psi[var][nm1].ijk) != 0,
                 (Q[xyz][nm1])(Q[xyz][nm1].ijk) / (psi[var][nm1])(psi[var][nm1].ijk),
                 real_t(0)
               ); 
+              assert(finite(sum(Q[xyz][nm1])));
             }
           }
           else assert(false);
