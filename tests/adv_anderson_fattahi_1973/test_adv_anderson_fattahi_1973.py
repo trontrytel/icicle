@@ -21,7 +21,7 @@ from matplotlib.colors import LinearSegmentedColormap
 for adv in ('mpdata','upstream','leapfrog'):
   print 'running the model...'
   os.mkdir('tmp')
-  file = 'tmp/test_smolar_1983'+adv+'.nc'
+  file = 'tmp/test_adv_anderson_fattahi_1973_'+adv+'.nc'
   if os.path.exists(file) : os.unlink(file)
   dt = .1
   nout = 24

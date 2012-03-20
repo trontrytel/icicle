@@ -38,7 +38,8 @@ class eqs_harmonic_oscillator : public eqs<real_t>
     public: void explicit_part(
       mtx::arr<real_t> &R, 
       mtx::arr<real_t> **aux,
-      mtx::arr<real_t> **psi
+      mtx::arr<real_t> **psi,
+      const quantity<si::time, real_t>
     ) 
     { 
       R(R.ijk) += omega_signed * (*psi[eqid])(R.ijk);

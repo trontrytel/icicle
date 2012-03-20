@@ -12,6 +12,7 @@
 
 #  include "cmn.hpp"
 #  include "eqs.hpp"
+#  include "rhs_implicit.hpp"
 #  include "grd.hpp"
 
 /// @brief the 3D isentropic equations system
@@ -30,12 +31,13 @@ class eqs_isentropic : public eqs<real_t>
     quantity<si::temperature, real_t> theta_unit;
     quantity<specific_energy, real_t> M_unit; 
     quantity<si::dimensionless, real_t> dHdxy_unit; 
+    quantity<si::time, real_t> t_spinup; 
     vector<int> idx_dp;
     int idx_dtheta, idx_p, idx_M; // auxiliary variable indices
   };
 
   // nested class
-  private: class rayleigh_damping : public rhs<real_t> // (aka sponge layer, aka gravity-wave absorber)
+  private: class rayleigh_damping : public rhs_implicit<real_t> // (aka sponge layer, aka gravity-wave absorber)
   {
     private: real_t tau(int lev, int nlev, int abslev, real_t absamp)
     {
@@ -54,7 +56,7 @@ class eqs_isentropic : public eqs<real_t>
   // nested class
   private: 
   template <int di, int dj>
-  class montgomery_grad : public rhs<real_t>
+  class montgomery_grad : public rhs_explicit<real_t>
   { 
     // members
     private: struct params *par;
@@ -76,7 +78,8 @@ class eqs_isentropic : public eqs<real_t>
     public: void explicit_part(
       mtx::arr<real_t> &R, 
       mtx::arr<real_t> **aux, 
-      mtx::arr<real_t> **psi
+      mtx::arr<real_t> **psi,
+      const quantity<si::time, real_t> t
     )
     {
       const mtx::arr<real_t> &p = *aux[par->idx_p]; 
@@ -116,12 +119,10 @@ class eqs_isentropic : public eqs<real_t>
         si::seconds / par->q_unit * // inv. unit of R (to get a dimensionless forcing)
         ((*psi[par->idx_dp[lev]])(R.ijk)) * 
         ( 
-// TODO !!! In the original code the topography is multipled by min(1, t * 1e-3) !!!
-/*
+          std::min(real_t(1), real_t(t / par->t_spinup)) * // spin-up
           par->g / si::metres_per_second_squared *
           (*aux[idx_dHdxy])(mtx::idx_ijk(R.ijk.i, R.ijk.j, 0)) 
           +
-*/
           ( // spatial derivative
             (M(mtx::idx_ijk(R.ijk.i + di, R.ijk.j + dj, 0))) - 
             (M(mtx::idx_ijk(R.ijk.i - di, R.ijk.j - dj, 0)))
@@ -137,7 +138,8 @@ class eqs_isentropic : public eqs<real_t>
     int nlev, 
     quantity<si::pressure, real_t> p_max,
     quantity<si::acceleration, real_t> g,
-    int abslev, real_t absamp
+    int abslev, real_t absamp,
+    quantity<si::time, real_t> t_spinup
   )
   {
     if (grid.nz() != 1) error_macro("only 1D (X or Y) or 2D (XY) simulations supported") 
@@ -145,6 +147,7 @@ class eqs_isentropic : public eqs<real_t>
     // parameters
     par.p_max = p_max;
     par.g = g;
+    par.t_spinup = t_spinup;
  
     // units
     par.p_unit = 1 * si::pascals;

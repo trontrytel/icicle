@@ -1,6 +1,6 @@
 add_subdirectory(out_netcdf)
 add_subdirectory(out_gnuplot)
-add_subdirectory(adv_smolar_1983)
+add_subdirectory(adv_anderson_fattahi_1973)
 add_subdirectory(ini_func_gauss)
 add_subdirectory(fct_limits)
 add_subdirectory(eqs_harmonic_oscillator)
