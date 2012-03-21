@@ -48,7 +48,7 @@ class eqs_isentropic : public eqs<real_t>
     public: rayleigh_damping(int lev, int nlev, int abslev, real_t absamp)
       : C(-tau(lev, nlev, abslev, absamp))
     { }
-    public: real_t implicit_part(quantity<si::time, real_t>) 
+    public: real_t implicit_part(const quantity<si::time, real_t>) 
     { return C; }
   };
 
@@ -76,8 +76,8 @@ class eqs_isentropic : public eqs<real_t>
     // method
     public: void explicit_part(
       mtx::arr<real_t> &R, 
-      mtx::arr<real_t> **aux, 
-      mtx::arr<real_t> **psi,
+      const mtx::arr<real_t> * const * const aux, 
+      const mtx::arr<real_t> * const * const psi,
       const quantity<si::time, real_t> t
     )
     {

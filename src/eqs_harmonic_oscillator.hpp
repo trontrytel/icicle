@@ -37,15 +37,17 @@ class eqs_harmonic_oscillator : public eqs<real_t>
     // public methods
     public: void explicit_part(
       mtx::arr<real_t> &R, 
-      mtx::arr<real_t> **aux,
-      mtx::arr<real_t> **psi,
+      const mtx::arr<real_t> * const * const aux,
+      const mtx::arr<real_t> * const * const psi,
       const quantity<si::time, real_t>
     ) 
     { 
       R(R.ijk) += omega_signed * (*psi[eqid])(R.ijk);
     };
 
-    public: real_t implicit_part(quantity<si::time, real_t> dt)
+    public: real_t implicit_part(
+      const quantity<si::time, real_t> dt
+    )
     {
       return -(dt / si::seconds) * pow(omega_signed, 2);
     }

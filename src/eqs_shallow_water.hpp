@@ -63,8 +63,8 @@ class eqs_shallow_water : public eqs<real_t>
 
     public: void explicit_part(
       mtx::arr<real_t> &R, 
-      mtx::arr<real_t> **aux,
-      mtx::arr<real_t> **psi,
+      const mtx::arr<real_t> * const * const aux,
+      const mtx::arr<real_t> * const * const psi,
       const quantity<si::time, real_t> 
     ) 
     { 

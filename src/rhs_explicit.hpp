@@ -14,7 +14,7 @@ template <typename real_t>
 class rhs_explicit : public rhs<real_t>
 {
   public: virtual real_t implicit_part(
-    quantity<si::time, real_t> dt 
+    const quantity<si::time, real_t> dt 
   ) 
   { 
     return real_t(0); 

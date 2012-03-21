@@ -62,8 +62,8 @@ class rhs : root
 
   public: virtual void explicit_part(
     mtx::arr<real_t> &R, 
-    mtx::arr<real_t> **aux, // TODO: const
-    mtx::arr<real_t> **psi, // TODO const
+    const mtx::arr<real_t> * const * const aux,
+    const mtx::arr<real_t> * const * const psi, 
     const quantity<si::time, real_t> t
   ) 
   {
@@ -71,7 +71,7 @@ class rhs : root
   }
 
   public: virtual real_t implicit_part(
-    quantity<si::time, real_t> dt // TODO: const
+    const quantity<si::time, real_t> dt
   ) 
   { 
     assert(false);
