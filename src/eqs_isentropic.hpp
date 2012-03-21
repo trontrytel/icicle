@@ -26,9 +26,9 @@ class eqs_isentropic : public eqs<real_t>
     quantity<si::acceleration, real_t> g;
     quantity<specific_heat_capacity, real_t> cp;
     quantity<si::dimensionless, real_t> Rd_over_cp;
-    quantity<si::pressure, real_t> p_unit, p0, p_max;
+    quantity<si::pressure, real_t> p_unit, p0, p_top;
     quantity<velocity_times_pressure, real_t> q_unit;
-    quantity<si::temperature, real_t> theta_unit;
+    quantity<si::temperature, real_t> theta_unit, theta_frst;
     quantity<specific_energy, real_t> M_unit; 
     quantity<si::dimensionless, real_t> dHdxy_unit; 
     quantity<si::time, real_t> t_spinup; 
@@ -89,12 +89,13 @@ class eqs_isentropic : public eqs<real_t>
       // calculating pressures at the surfaces (done once per timestep)
       if (calc_p)
       {
-        p(mtx::idx_ijk(ii, jj, nlev)) = par->p_max / si::pascals;
+        p(mtx::idx_ijk(ii, jj, nlev)) = par->p_top / si::pascals;
         for (int l = nlev - 1; l >= 0; --l)
           p(mtx::idx_ijk(ii, jj, l)) = 
             (*psi[par->idx_dp[l]])(mtx::idx_ijk(ii, jj, 0)) 
-            + p(mtx::idx_ijk(ii, jj, l+1));
-         assert(finite(sum(p)));
+            + 
+            p(mtx::idx_ijk(ii, jj, l+1));
+        assert(finite(sum(p)));
       }
 
       // calculating Montgomery potential
@@ -102,16 +103,24 @@ class eqs_isentropic : public eqs<real_t>
       //  the order of equations is defined in the eqs_isentropic ctor below)
       if (calc_M) 
       {
-        if (calc_p) M(M.ijk) = real_t(0);  // TODO:...
-
-        M(M.ijk) += par->cp * pow(par->p_unit / par->p0, par->Rd_over_cp) 
-          / par->M_unit * si::kelvins * // to make it dimensionless
-          ((*aux[par->idx_dtheta])(mtx::idx_ijk(lev)))(0,0,0) * // TODO: nicer syntax needed!
-           real_t(.5) * // Exner function within a layer as an average of surface Ex-fun values
-           ( 
-             pow(p(mtx::idx_ijk(ii, jj, lev  )), par->Rd_over_cp) +
-             pow(p(mtx::idx_ijk(ii, jj, lev+1)), par->Rd_over_cp)
-           );
+        if (calc_p) 
+          M(M.ijk) = par->cp * pow(par->p_unit / par->p0, par->Rd_over_cp)
+            / par->M_unit // to make it dimensionless
+            * par->theta_frst 
+            * real_t(.5) 
+            * ( 
+               pow(p(mtx::idx_ijk(ii, jj, 0)), par->Rd_over_cp) +
+               pow(p(mtx::idx_ijk(ii, jj, 1)), par->Rd_over_cp)
+            );
+        else 
+          M(M.ijk) += par->cp * pow(par->p_unit / par->p0, par->Rd_over_cp) 
+            / par->M_unit * si::kelvins * // to make it dimensionless
+            ((*aux[par->idx_dtheta])(mtx::idx_ijk(lev - 1)))(0,0,0) * // TODO: nicer syntax needed!
+             real_t(.5) * // Exner function within a layer as an average of surface Ex-fun values
+             ( 
+               pow(p(mtx::idx_ijk(ii, jj, lev  )), par->Rd_over_cp) +
+               pow(p(mtx::idx_ijk(ii, jj, lev+1)), par->Rd_over_cp)
+             );
         assert(finite(sum(M)));
       }
 
@@ -138,7 +147,8 @@ class eqs_isentropic : public eqs<real_t>
   // ctor
   public: eqs_isentropic(const grd<real_t> &grid,
     int nlev, 
-    quantity<si::pressure, real_t> p_max,
+    quantity<si::pressure, real_t> p_top,
+    quantity<si::temperature, real_t> theta_frst,
     quantity<si::acceleration, real_t> g,
     int abslev, real_t absamp,
     quantity<si::time, real_t> t_spinup
@@ -147,7 +157,8 @@ class eqs_isentropic : public eqs<real_t>
     if (grid.nz() != 1) error_macro("only 1D (X or Y) or 2D (XY) simulations supported") 
 
     // parameters
-    par.p_max = p_max;
+    par.p_top = p_top;
+    par.theta_frst = theta_frst;
     par.g = g;
     par.t_spinup = t_spinup;
  
@@ -165,8 +176,8 @@ class eqs_isentropic : public eqs<real_t>
 
     // potential temperature profile
     this->aux.push_back(new struct eqs<real_t>::axv({
-      "dtheta", "potential temperature increment within a layer", this->quan2str(par.theta_unit),
-      vector<int>({nlev, 1, 1})
+      "dtheta", "mid-layer potential temperature increment", this->quan2str(par.theta_unit),
+      vector<int>({nlev - 1, 1, 1})
     }));
     par.idx_dtheta = this->aux.size() - 1;
 

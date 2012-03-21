@@ -23,7 +23,7 @@ import math
 # simulation parameteters (from isopc_yale.::SHAWAT2 by P.K.Smolarkiewicz) #
 ############################################################################
 bits = 32
-nx = 160     # 161  # [1]
+nx = 161     # 161  # [1]
 nz = 60     # 61   # [1]
 dx = 3e3     # 3e3  # [m]
 dz = 300.    # 300. # [m]
@@ -33,14 +33,14 @@ mount_amp = 1.6e3 # 1.6e3
 mount_ro1 = 20e3  # 20e3
 abslev = int(3. * nz / 4.) # gravity-wave absorber starts at .75 of the domain height
 absamp = 1 # 1 ?
-t_spinup = 1e20 * dt # 1000 * dt [s]
+t_spinup = 0 * dt # 1000 * dt [s]
 uscal = 10.  # 10. # [m/s]
 p_surf = 101300.
 th_surf = 300.
-fct = 1
-iord = 2
-nt = 8000 # 8000
-nout = 100 # 2000
+fct = 1 # 1
+iord = 2 # 2
+nt = 1000 # 8000
+nout = 50 # 2000
 
 ############################################################################
 # physical constants & heper routines for thermodynamics
@@ -61,10 +61,6 @@ def witch(x, a):
 def theta(z, st, th_c):
   return th_c * np.exp(st * z)
 
-# height of the top of a layer
-def alt(th_up, th_dn, st, z_dn):
-  return z_dn + 1./st * np.log(th_up / th_dn)
-
 # pressure profile for hydrostatic constant-stability layer
 #         _                                         _  cp/Rd
 #        | g p0^Rd/cp  /  1        1  \              |
@@ -76,14 +72,6 @@ def pres(z, st, th_c, p_c):
     g*p0**(Rdcp)/cp/st*(1/theta(z,st,th_c)-1/th_c)+p_c**(Rdcp)
   )**(1./Rdcp)
 
-# stability within a constant-stability layer defined by 
-# thetas and pressures at the bottom and top
-#       g       p0^Rd/cp        / 1     1   \
-# st = --- ------------------- | --- - ----  |
-#      cp  p^Rd/cp - p_c^Rd/cp  \ th   th_c /
-def sta(p_dn, p_up, th_dn, th_up):
-  return g / cp * (1/th_up - 1/th_dn) * p0**(Rdcp) / (p_up**Rdcp - p_dn**Rdcp)
-
 ############################################################################
 # first: creating a netCDF file with the initial condition                 #
 ############################################################################
@@ -92,7 +80,7 @@ f = NetCDFFile('ini.nc', 'w')
 f.createDimension('X', nx)
 f.createDimension('Y', 1) #TODO: should not be needed
 f.createDimension('Z', 1) #TODO: should not be needed
-f.createDimension('level', nz)
+f.createDimension('dlevel', nz - 1)
 
 v_dp = [None]*nz
 v_qx = [None]*nz
@@ -102,23 +90,16 @@ for lev in range(nz) :
   v_qx[lev] = f.createVariable('qx_' + str(lev), 'd', ('X',))
 
 # potential temperatures of the layers (characteristic values)
-v_dtheta = f.createVariable('dtheta', 'd', ('level',))
-dtheta = np.zeros(nz, dtype='float')
-rho = np.zeros(nz, dtype='float')
-for lev in range(nz) :
-  dtheta[lev] = theta((lev+1) * dz, st0, th_surf) - theta((lev) * dz, st0, th_surf) 
-  rho[lev] = pres( ((lev+1/2.) * dz), st0, th_surf, p_surf )**(Rdcp+1) \
-             / Rd \
-             / theta( ((lev+1/2.) * dz), st0, th_surf ) \
-             / (p0**(Rdcp))
-  v_dtheta[lev] = dtheta[lev]
+v_dtheta = f.createVariable('dtheta', 'd', ('dlevel',))
+for lev in range(nz-1) :
+  v_dtheta[lev] = theta((lev+1.5) * dz, st0, th_surf) - theta((lev+.5) * dz, st0, th_surf) 
+
+theta_frst = theta(.5 * dz, st0, th_surf)
 
 # topography and its spatial derivatives of the topography
 topo_z = mount_amp * witch(dx * (np.arange(nx+2, dtype='float') - .5 * (nx+1)), mount_ro1)
 v_dHdx = f.createVariable('dHdx', 'd', ('X',))
 v_dHdx[:] = (topo_z[2:] - topo_z[0:-2]) / (2. * dx)
-#v_dHdy = f.createVariable('dHdy', 'd', ('X',)) # should not be needed
-#v_dHdy[:] = 0. # TODO: should not be needed
 topo_z = topo_z[1:-1]
 
 # initilising pressure intervals with topography adjustment
@@ -131,6 +112,11 @@ for lev in range(nz-1,-1,-1) :
     p_dn[i] = min(pres(lev * dz, st0, th_surf, p_surf), topo_p[i])
     v_dp[lev][i] = p_dn[i] - p_up[i]
   p_up[:] = p_dn[:]
+
+# saving density
+rho = np.zeros(nz, dtype='float')
+for lev in range(nz) :
+  rho[lev] = v_dp[lev][0] / g / dz
 
 # initialising momenta
 for lev in range(nz-1,-1,-1) :
@@ -150,7 +136,8 @@ cmd = (
   '--ini.netcdf.file','ini.nc',
   '--eqs','isentropic',
     '--eqs.isentropic.nlev',str(nz),
-    '--eqs.isentropic.p_max',str(p_top),
+    '--eqs.isentropic.p_top',str(p_top),
+    '--eqs.isentropic.theta_frst',str(theta_frst),
     '--eqs.isentropic.abslev',str(abslev),
     '--eqs.isentropic.absamp',str(absamp),
     '--eqs.isentropic.t_spinup',str(t_spinup),
@@ -162,7 +149,7 @@ cmd = (
   '--vel','momeq_extrapol',
   '--nt',str(nt),'--dt',str(dt),'--nout',str(nout),
   '--out','netcdf','--out.netcdf.file','out.nc',
-  '--slv','serial','--nsd','2'
+  '--slv','serial'
 )
 subprocess.check_call(cmd)
 
@@ -177,18 +164,19 @@ qui_Z = np.zeros((nx,nz))
 qui_U = np.zeros((nx,nz))
 qui_V = np.zeros((nx,nz))
 qui_C = np.zeros((nx,nz))
-for lev in range(nz): qui_X[:,lev] = f.variables['X']
+for lev in range(nz): qui_X[:,lev] = f.variables['X'] 
+qui_X *= 1e-3 # m -> km
 
 for t in range(nt/nout+1):
 
   fig = plt.figure()
   ax = fig.add_subplot(111)
-  ax.set_xlabel('X [m]')
+  ax.set_xlabel('X [km]')
   ax.xaxis.set_major_locator(MaxNLocator(4))
-
-  ax.fill(f.variables['X'], topo_z, color='#BBBBBB', linewidth=0)
+  #ax.fill(f.variables['X']*1e-3, topo_z, color='#BBBBBB', linewidth=0)
   plt.ylim([0,1.1*nz*dz])
-  plt.xlim([0,nx*dx])
+  plt.xlim([0,nx*dx*1e-3])
+  plt.suptitle('t = ' + format(int(t * dt), '05d') + ' s')
   ax.set_ylabel('h [m]')
   
   # from top to bottom - calculating pressures
@@ -197,19 +185,15 @@ for t in range(nt/nout+1):
     p_dn[:] += (f.variables['dp_' + str(lev)])[t,:,0,0]
 
   # from bottom to top - calculating heights
-  th_dn = th_surf
   z_dn = topo_z
   z_up = np.zeros(nx)
   for lev in range(nz) :
     # calculating isentrope height
     dp = (f.variables['dp_' + str(lev)])[t,:,0,0]
     qx = (f.variables['qx_' + str(lev)])[t,:,0,0]
-    th_up = th_dn + dtheta[lev]
     z_up = z_dn + dp / (rho[lev] * g)
     # registering values for the plot
     qui_Z[:,lev] = z_dn+(z_up-z_dn)/2. 
-    #sin_a = np.zeros(nx, dtype='float')
-    #cos_a = np.zeros(nx, dtype='float')
     for i in range(nx) :
       # only for cyclic conditions!
       l = (i-1)%nx
@@ -219,7 +203,6 @@ for t in range(nt/nout+1):
       qui_C[i,lev] = math.pow(math.pow(qui_U[i,lev],2) + math.pow(qui_V[i,lev],2),.5) 
     # storing values for the next iteration
     z_dn = z_up
-    th_dn = th_up
     p_dn -= dp
 
   vectors = ax.quiver(qui_X, qui_Z, qui_U/dx, qui_V/dz, qui_C, 
@@ -227,7 +210,7 @@ for t in range(nt/nout+1):
   )
   cb = plt.colorbar(vectors)
   cb.set_label("air velocity [m/s]")
-  vectors.set_clim([0,15])
+  vectors.set_clim([0,25])
   plt.savefig('tmp/frame_'+format(t,"05d")+'.png')
 
 f.close

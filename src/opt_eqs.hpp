@@ -20,7 +20,8 @@ inline void opt_eqs_desc(po::options_description &desc)
     ("eqs", po::value<string>()->default_value("scalar_advection"), "equation system: shallow_water, isentropic, ...")
 
     ("eqs.isentropic.nlev", po::value<int>(), "number of fluid layers")
-    ("eqs.isentropic.p_max", po::value<string>()->default_value("0"), "pressure at the uppermost surface [Pa]")
+    ("eqs.isentropic.p_top", po::value<string>()->default_value("0"), "pressure at the uppermost surface [Pa]")
+    ("eqs.isentropic.theta_frst", po::value<string>(), "mid-layer potential temperature of the first layer [K]")
     ("eqs.isentropic.g", po::value<string>()->default_value("9.81"), "acceleration due to gravity [m/s2]")
     ("eqs.isentropic.abslev", po::value<int>(), "absorber lowermost level")
     ("eqs.isentropic.absamp", po::value<string>()->default_value("1"), "absorber amplitude [1]") 
@@ -44,7 +45,8 @@ eqs<real_t> *opt_eqs(const po::variables_map& vm, const grd<real_t> &grid, const
     if (!vm.count("eqs.isentropic.abslev")) error_macro("TODO")
     return new eqs_isentropic<real_t>(grid, 
       vm["eqs.isentropic.nlev"].as<int>(),
-      real_cast<real_t>(vm, "eqs.isentropic.p_max") * si::pascals,
+      real_cast<real_t>(vm, "eqs.isentropic.p_top") * si::pascals,
+      real_cast<real_t>(vm, "eqs.isentropic.theta_frst") * si::kelvins,
       real_cast<real_t>(vm, "eqs.isentropic.g") * si::metres_per_second_squared,
       vm["eqs.isentropic.abslev"].as<int>(),
       real_cast<real_t>(vm, "eqs.isentropic.absamp"),
