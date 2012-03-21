@@ -23,8 +23,8 @@ import math
 # simulation parameteters (from isopc_yale.::SHAWAT2 by P.K.Smolarkiewicz) #
 ############################################################################
 bits = 32
-nx = 161     # 161  # [1]
-nz = 60     # 61   # [1]
+nx = 300     # 161  # [1]
+nz = 60      # 61   # [1]
 dx = 3e3     # 3e3  # [m]
 dz = 300.    # 300. # [m]
 dt = 6.      # 6.   # [s]
@@ -33,14 +33,13 @@ mount_amp = 1.6e3 # 1.6e3
 mount_ro1 = 20e3  # 20e3
 abslev = int(3. * nz / 4.) # gravity-wave absorber starts at .75 of the domain height
 absamp = 1 # 1 ?
-t_spinup = 0 * dt # 1000 * dt [s]
 uscal = 10.  # 10. # [m/s]
 p_surf = 101300.
 th_surf = 300.
 fct = 1 # 1
 iord = 2 # 2
 nt = 1000 # 8000
-nout = 50 # 2000
+nout = 25 # 2000
 
 ############################################################################
 # physical constants & heper routines for thermodynamics
@@ -140,7 +139,6 @@ cmd = (
     '--eqs.isentropic.theta_frst',str(theta_frst),
     '--eqs.isentropic.abslev',str(abslev),
     '--eqs.isentropic.absamp',str(absamp),
-    '--eqs.isentropic.t_spinup',str(t_spinup),
   '--grd.dx',str(dx),
   '--grd.nx',str(nx),
   '--adv','mpdata', 
@@ -167,17 +165,19 @@ qui_C = np.zeros((nx,nz))
 for lev in range(nz): qui_X[:,lev] = f.variables['X'] 
 qui_X *= 1e-3 # m -> km
 
+fig = plt.figure()
 for t in range(nt/nout+1):
-
-  fig = plt.figure()
+  plt.clf()
   ax = fig.add_subplot(111)
   ax.set_xlabel('X [km]')
   ax.xaxis.set_major_locator(MaxNLocator(4))
-  #ax.fill(f.variables['X']*1e-3, topo_z, color='#BBBBBB', linewidth=0)
-  plt.ylim([0,1.1*nz*dz])
-  plt.xlim([0,nx*dx*1e-3])
-  plt.suptitle('t = ' + format(int(t * dt), '05d') + ' s')
+  plt.ylim([0,.9*nz*dz])
+  dom_half_km = .5 * nx * dx * 1e-3
+  mount_ro1_km = mount_ro1 * 1e-3
+  plt.xlim([dom_half_km - 3 * mount_ro1_km, dom_half_km + 3 * mount_ro1_km])
   ax.set_ylabel('h [m]')
+  ax.fill(qui_X[:,0], topo_z, color='#BBBBBB', linewidth=0)
+  plt.suptitle('t = ' + format(int(t * dt), '05d') + ' s')
   
   # from top to bottom - calculating pressures
   p_dn = np.zeros(nx) + p_top
@@ -211,7 +211,7 @@ for t in range(nt/nout+1):
   cb = plt.colorbar(vectors)
   cb.set_label("air velocity [m/s]")
   vectors.set_clim([0,25])
-  plt.savefig('tmp/frame_'+format(t,"05d")+'.png')
+  plt.savefig('tmp/frame_'+format(t,"05d")+'.png', dpi=125)
 
 f.close
 cmd=('convert','tmp/frame_*.png','halny_vel.gif')
