@@ -31,7 +31,6 @@ class eqs_isentropic : public eqs<real_t>
     quantity<si::temperature, real_t> theta_unit, theta_frst;
     quantity<specific_energy, real_t> M_unit; 
     quantity<si::dimensionless, real_t> dHdxy_unit; 
-    quantity<si::time, real_t> t_spinup; 
     vector<int> idx_dp;
     int idx_dtheta, idx_p, idx_M; // auxiliary variable indices
   };
@@ -130,7 +129,6 @@ class eqs_isentropic : public eqs<real_t>
         si::seconds / par->q_unit * // inv. unit of R (to get a dimensionless forcing)
         ((*psi[par->idx_dp[lev]])(R.ijk)) * 
         ( 
-          std::min(real_t(1), real_t(t / par->t_spinup)) * // spin-up
           par->g / si::metres_per_second_squared *
           (*aux[idx_dHdxy])(mtx::idx_ijk(R.ijk.i, R.ijk.j, 0)) 
           +
@@ -150,8 +148,7 @@ class eqs_isentropic : public eqs<real_t>
     quantity<si::pressure, real_t> p_top,
     quantity<si::temperature, real_t> theta_frst,
     quantity<si::acceleration, real_t> g,
-    int abslev, real_t absamp,
-    quantity<si::time, real_t> t_spinup
+    int abslev, real_t absamp
   )
   {
     if (grid.nz() != 1) error_macro("only 1D (X or Y) or 2D (XY) simulations supported") 
@@ -160,7 +157,6 @@ class eqs_isentropic : public eqs<real_t>
     par.p_top = p_top;
     par.theta_frst = theta_frst;
     par.g = g;
-    par.t_spinup = t_spinup;
  
     // units
     par.p_unit = 1 * si::pascals;
