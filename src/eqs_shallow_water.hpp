@@ -13,6 +13,7 @@
 #  include "eqs.hpp"
 #  include "rhs_explicit.hpp"
 #  include "grd.hpp"
+#  include "phc.hpp"
 
 /** @brief the 2D shallow-water equations system
  *
@@ -35,7 +36,6 @@ class eqs_shallow_water : public eqs<real_t>
 {
   private: struct params
   {
-    quantity<si::acceleration, real_t> g;
     quantity<si::length, real_t> h_unit;
     quantity<velocity_times_length, real_t> q_unit;
     quantity<si::dimensionless, real_t> dHdxy_unit;
@@ -80,7 +80,7 @@ class eqs_shallow_water : public eqs<real_t>
       /// momentum eq. plus u times mass continuity equation:
       /// \f$ \partial_t (uh)  + \nabla_z (uh) = -g h \nabla_z \eta \f$
       R(R.ijk) -= 
-        par->g * par->h_unit * par->h_unit * si::seconds / par->q_unit / si::metres *
+        phc::g<real_t>() * par->h_unit * par->h_unit * si::seconds / par->q_unit / si::metres *
         ((*psi[par->idx_h])(R.ijk)) *
         (
           (
@@ -100,7 +100,6 @@ class eqs_shallow_water : public eqs<real_t>
   {
     if (grid.nz() != 1) error_macro("only 1D (X or Y) and 2D (XY) simullations supported")
 
-    par.g = real_t(10.) * si::metres_per_second_squared; // TODO: option (+ constants catalogue!)
     par.h_unit = 1 * si::metres;
     par.q_unit = 1 * si::metres * si::metres / si::seconds;
     par.dHdxy_unit = 1;

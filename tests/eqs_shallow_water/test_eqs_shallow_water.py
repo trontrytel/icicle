@@ -52,7 +52,7 @@ cmd = (
   '--vel','momeq_extrapol',
   '--nt',str(nt),'--dt',str(dt),'--nout',str(nout),
   '--out','netcdf','--out.netcdf.file','out.nc',
-  '--slv','threads','--nsd','2'
+  '--slv','openmp','--nsd','2'
 )
 subprocess.check_call(cmd)
 

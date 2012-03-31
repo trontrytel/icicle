@@ -23,10 +23,7 @@ class eqs_isentropic : public eqs<real_t>
   private: struct params
   {
     // TODO: add const qualifiers and initiliase here if possible
-    quantity<si::acceleration, real_t> g;
-    quantity<specific_heat_capacity, real_t> cp;
-    quantity<si::dimensionless, real_t> Rd_over_cp;
-    quantity<si::pressure, real_t> p_unit, p0, p_top;
+    quantity<si::pressure, real_t> p_unit, p_top;
     quantity<velocity_times_pressure, real_t> q_unit;
     quantity<si::temperature, real_t> theta_unit, theta_frst;
     quantity<specific_energy, real_t> M_unit; 
@@ -103,22 +100,22 @@ class eqs_isentropic : public eqs<real_t>
       if (calc_M) 
       {
         if (calc_p) 
-          M(M.ijk) = par->cp * pow(par->p_unit / par->p0, par->Rd_over_cp)
+          M(M.ijk) = phc::c_pd<real_t>() * pow(par->p_unit / phc::p_0<real_t>(), phc::R_d_over_c_pd<real_t>())
             / par->M_unit // to make it dimensionless
             * par->theta_frst 
             * real_t(.5) 
             * ( 
-               pow(p(mtx::idx_ijk(ii, jj, 0)), par->Rd_over_cp) +
-               pow(p(mtx::idx_ijk(ii, jj, 1)), par->Rd_over_cp)
+               pow(p(mtx::idx_ijk(ii, jj, 0)), phc::R_d_over_c_pd<real_t>()) +
+               pow(p(mtx::idx_ijk(ii, jj, 1)), phc::R_d_over_c_pd<real_t>())
             );
         else 
-          M(M.ijk) += par->cp * pow(par->p_unit / par->p0, par->Rd_over_cp) 
+          M(M.ijk) += phc::c_pd<real_t>() * pow(par->p_unit / phc::p_0<real_t>(), phc::R_d_over_c_pd<real_t>()) 
             / par->M_unit * si::kelvins * // to make it dimensionless
             ((*aux[par->idx_dtheta])(mtx::idx_ijk(lev - 1)))(0,0,0) * // TODO: nicer syntax needed!
              real_t(.5) * // Exner function within a layer as an average of surface Ex-fun values
              ( 
-               pow(p(mtx::idx_ijk(ii, jj, lev  )), par->Rd_over_cp) +
-               pow(p(mtx::idx_ijk(ii, jj, lev+1)), par->Rd_over_cp)
+               pow(p(mtx::idx_ijk(ii, jj, lev  )), phc::R_d_over_c_pd<real_t>()) +
+               pow(p(mtx::idx_ijk(ii, jj, lev+1)), phc::R_d_over_c_pd<real_t>())
              );
         assert(finite(sum(M)));
       }
@@ -129,7 +126,7 @@ class eqs_isentropic : public eqs<real_t>
         si::seconds / par->q_unit * // inv. unit of R (to get a dimensionless forcing)
         ((*psi[par->idx_dp[lev]])(R.ijk)) * 
         ( 
-          par->g / si::metres_per_second_squared *
+          phc::g<real_t>() / si::metres_per_second_squared *
           (*aux[idx_dHdxy])(mtx::idx_ijk(R.ijk.i, R.ijk.j, 0)) 
           +
           ( // spatial derivative
@@ -147,7 +144,6 @@ class eqs_isentropic : public eqs<real_t>
     int nlev, 
     quantity<si::pressure, real_t> p_top,
     quantity<si::temperature, real_t> theta_frst,
-    quantity<si::acceleration, real_t> g,
     int abslev, real_t absamp
   )
   {
@@ -156,7 +152,6 @@ class eqs_isentropic : public eqs<real_t>
     // parameters
     par.p_top = p_top;
     par.theta_frst = theta_frst;
-    par.g = g;
  
     // units
     par.p_unit = 1 * si::pascals;
@@ -164,11 +159,6 @@ class eqs_isentropic : public eqs<real_t>
     par.theta_unit = 1 * si::kelvins;
     par.M_unit = 1 * si::metres_per_second_squared * si::metres; // "specific" Montgomery potential
     par.dHdxy_unit = 1;
-
-    // constants
-    par.p0 = 100000 * si::pascals; // definition of potential temperature
-    par.cp = 1005 * si::joules / si::kilograms / si::kelvins;
-    par.Rd_over_cp = si::constants::codata::R / (0.02896 * si::kilograms / si::moles) / par.cp; // TODO!!!!
 
     // potential temperature profile
     this->aux.push_back(new struct eqs<real_t>::axv({
