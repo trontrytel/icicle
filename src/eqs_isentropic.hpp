@@ -14,6 +14,7 @@
 #  include "eqs.hpp"
 #  include "rhs_implicit.hpp"
 #  include "grd.hpp"
+#  include "phc.hpp"
 
 /// @brief the 3D isentropic equations system
 template <typename real_t>

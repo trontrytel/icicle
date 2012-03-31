@@ -45,8 +45,8 @@ class vel_func_rasinski : public vel_func<real_t>
  
   public: virtual quantity<si::velocity, real_t> u(
     const quantity<si::length, real_t> &x, 
-    const quantity<si::length, real_t> &, 
-    const quantity<si::length, real_t> &z
+    const quantity<si::length, real_t> &z, 
+    const quantity<si::length, real_t> &
   )   
   {   
     // u = - \frac{\partial \psi}{\partial z}
@@ -56,10 +56,10 @@ class vel_func_rasinski : public vel_func<real_t>
       : -pi/2 * A / (Z_clb - Z_top) * cos(2*pi * x / X) * sin(pi/2 * (z - Z_clb) / (Z_clb - Z_top)); 
   }
 
-  public: virtual quantity<si::velocity, real_t> w(
+  public: virtual quantity<si::velocity, real_t> v(
     const quantity<si::length, real_t> &x, 
-    const quantity<si::length, real_t> &, 
-    const quantity<si::length, real_t> &z
+    const quantity<si::length, real_t> &z, 
+    const quantity<si::length, real_t> &
   )   
   {   
     // w = \frac{\partial \psi}{\partial x}
@@ -69,7 +69,7 @@ class vel_func_rasinski : public vel_func<real_t>
       : pi/2 * A / X * sin(2*pi * x / X) * cos(pi/2 * (z - Z_clb) / (Z_clb - Z_top));
   }
 
-  public: virtual quantity<si::velocity, real_t> v(
+  public: virtual quantity<si::velocity, real_t> w(
     const quantity<si::length, real_t> &, 
     const quantity<si::length, real_t> &, 
     const quantity<si::length, real_t> &
