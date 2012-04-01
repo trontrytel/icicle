@@ -7,24 +7,33 @@
  */
 
 #include <vector>
+using std::vector;
+
 #include <netcdf>
+using netCDF::NcFile;
+
 #include <iostream>
+using std::endl;
+using std::cerr;
 
 #include <boost/units/systems/si.hpp>
+#include <boost/units/io.hpp>
 namespace si = boost::units::si;
 using boost::units::quantity;
 
 #include <blitz/array.h>
+using blitz::Array;
+
 #define GNUPLOT_ENABLE_BLITZ
 #include <gnuplot-iostream.h>
 
-#define notice_macro(msg) { std::cerr << msg << std::endl; }
+#define notice_macro(msg) { cerr << msg << endl; }
 typedef float real_t;
-typedef std::vector<size_t> start;
-typedef std::vector<size_t> count;
+typedef vector<size_t> start;
+typedef vector<size_t> count;
 
 template <typename T, int d>
-Gnuplot &operator<<(Gnuplot &gp, const blitz::Array<T,d> &arr)
+Gnuplot &operator<<(Gnuplot &gp, const Array<T,d> &arr)
 {
   gp.write(reinterpret_cast<const char*>(arr.data()), arr.size() * sizeof(T));
   return gp;
@@ -41,10 +50,17 @@ std::string binfmt(const blitz::Array<float,2> &arr, float dx, float dy)
   return tmp.str();
 }
 
+std::string zeropad(int n)
+{
+  std::ostringstream tmp;
+  tmp << std::setw(5) << std::setfill('0') << n;
+  return tmp.str();
+}
+
 int main()
 {
   notice_macro("opening netCDF file")
-  netCDF::NcFile nf("out.nc", netCDF::NcFile::read);
+  NcFile nf("out.nc", NcFile::read);
 
   notice_macro("reading dt_out")
   quantity<si::time, real_t> dt_out;
@@ -73,28 +89,49 @@ int main()
   }
 
   notice_macro("allocating temp storage space")
-  blitz::Array<real_t,2> rhod_rl(nx, ny);
+  Array<real_t,2> tmp(nx, ny);
 
   notice_macro("setting-up plot parameters")
   Gnuplot gp;
-  gp << "set term png" << std::endl;
-  gp << "set view map" << std::endl;
-  gp << "set xlabel 'X [m]'" << std::endl;
-  gp << "set xrange [" << 0 << ":" << nx * dx << "]" << std::endl;
-  gp << "set ylabel 'Y [m]'" << std::endl;
-  gp << "set yrange [" << 0 << ":" << ny * dy << "]" << std::endl;
+  gp << "set term png enhanced" << endl;
+  gp << "set view map" << endl;
+  gp << "set xlabel 'X [m]'" << endl;
+  gp << "set xrange [" << 0 << ":" << nx * dx << "]" << endl;
+  gp << "set ylabel 'Y [m]'" << endl;
+  gp << "set yrange [" << 0 << ":" << ny * dy << "]" << endl;
+
+  gp << "set contour base" << endl;
+  gp << "set nosurface" << endl;
+  gp << "set cntrparam levels 3" << endl;
+  gp << "set key outside left" << endl;
 
   system("mkdir -p tmp");
 
-  for (size_t t = 0; t < 5; ++t)
+  for (size_t t = 0; t < nt; ++t)
   {
-    gp << "set output 'tmp/test_" << t << ".png'" << std::endl;
-    gp << "splot '-' binary" << binfmt(rhod_rl, dx, dy) << " with image notitle" << std::endl;
-    nf.getVar("rhod_rl").getVar(start({t,0,0,0}), count({1,nx,ny,1}), rhod_rl.data());
-    gp << rhod_rl;
+    notice_macro("generating frame at t=" << t)
+    gp << "set title 't = " << (real_t(t) * dt_out) << "'" << endl;
+    gp << "set output 'tmp/test_" << zeropad(t) << ".png'" << endl;
+    gp << "set multiplot layout 2,1" << endl;
+
+    gp << "set cblabel 'liquid water mixing ratio [kg/kg]'" << endl;
+    nf.getVar("rhod_rl").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp.data());
+    gp << "splot '-' binary" << binfmt(tmp, dx, dy) << " with image notitle";
+    gp << ",'-' binary" << binfmt(tmp, dx, dy) << " ps 0 notitle" << endl;
+    gp << tmp;
+    gp << tmp;
+
+    gp << "set cblabel 'potential temperature [K]'" << endl;
+    nf.getVar("rhod_th").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp.data());
+    gp << "splot '-' binary" << binfmt(tmp, dx, dy) << " with image notitle";
+    gp << ",'-' binary" << binfmt(tmp, dx, dy) << " ps 0 notitle" << endl;
+    gp << tmp;
+    gp << tmp;
+
+    gp << "unset multiplot" << endl;
   }
 
-  system("convert tmp/test_*.png todo.gif");
-  system("rm -rf tmp");
+  system("convert -delay 10 tmp/test_*.png todo.gif");
+  system("rm -rf tmp/test_*.png");
   notice_macro("done.")
 }
