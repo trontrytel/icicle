@@ -78,8 +78,7 @@ int main()
   notice_macro("setting-up plot parameters")
   Gnuplot gp;
   gp << "set term png" << std::endl;
-  gp << "set pm3d map" << std::endl;
-  gp << "set palette" << std::endl;
+  gp << "set view map" << std::endl;
   gp << "set xlabel 'X [m]'" << std::endl;
   gp << "set xrange [" << 0 << ":" << nx * dx << "]" << std::endl;
   gp << "set ylabel 'Y [m]'" << std::endl;
@@ -97,6 +96,5 @@ int main()
 
   system("convert tmp/test_*.png todo.gif");
   system("rm -rf tmp");
-
   notice_macro("done.")
 }
