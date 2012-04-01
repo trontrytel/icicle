@@ -46,7 +46,7 @@ using netCDF::ncFloat;
 using netCDF::exceptions::NcException;
 
 // overloading the default d-tor with a virtual one (enforces execution of child d-tors)
-class root { public: virtual ~root() {} };
+class root { public: virtual ~root() {} }; // TODO: should not be needed!
 
 // error reporting
 #  define error_macro(msg) \

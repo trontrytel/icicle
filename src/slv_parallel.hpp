@@ -142,8 +142,7 @@ class slv_parallel : public slv<real_t>
         if (stash) slvs[sd].stash_cycle(e, n); 
       } // e - equations
 
-      // for certain equation sets (e.g. isopycnic) computation of forcings
-      // relies on the outcome of advection of ALL variables
+      // assuming that computation of forcings relies on the outcome of advection of ALL variables
       if (!allhomo)
       {
         for (int e = 0; e < setup->eqsys->n_vars(); ++e) 
