@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <netcdf>
+#include <iostream>
 
 #include <boost/units/systems/si.hpp>
 namespace si = boost::units::si;
@@ -21,6 +22,24 @@ using boost::units::quantity;
 typedef float real_t;
 typedef std::vector<size_t> start;
 typedef std::vector<size_t> count;
+
+template <typename T, int d>
+Gnuplot &operator<<(Gnuplot &gp, const blitz::Array<T,d> &arr)
+{
+  gp.write(reinterpret_cast<const char*>(arr.data()), arr.size() * sizeof(T));
+  return gp;
+}
+
+std::string binfmt(const blitz::Array<float,2> &arr, float dx, float dy)
+{
+  std::ostringstream tmp;
+  tmp << " format='%float'";
+  tmp << " array=(" << arr.extent(0) << "," << arr.extent(1) << ")";
+  if (arr.isMajorRank(0)) tmp << "scan=yx"; // i.e. C-style ordering
+  tmp << " dx=" << dx << " dy=" << dy;
+  tmp << " origin=(" << dx/2 << "," << dy/2 << ",0)";
+  return tmp.str();
+}
 
 int main()
 {
@@ -58,7 +77,6 @@ int main()
 
   notice_macro("setting-up plot parameters")
   Gnuplot gp;
-  //gp << "set term postscript color" << std::endl;
   gp << "set term png" << std::endl;
   gp << "set pm3d map" << std::endl;
   gp << "set palette" << std::endl;
@@ -67,18 +85,14 @@ int main()
   gp << "set ylabel 'Y [m]'" << std::endl;
   gp << "set yrange [" << 0 << ":" << ny * dy << "]" << std::endl;
 
-  system("mkdir tmp");
+  system("mkdir -p tmp");
 
   for (size_t t = 0; t < 5; ++t)
   {
-    //gp << "set output 'test_" << t << ".ps'" << std::endl;
     gp << "set output 'tmp/test_" << t << ".png'" << std::endl;
-    gp << "splot '-' binary";
-    gp << " format='%float' array=(" << nx << "," << ny << ") scan=yx";
-    gp << " dx=" << dx << " dy=" << dy << " origin=(" << dx/2 << "," << dy/2 << ",0)";
-    gp << " with image notitle" << std::endl;
+    gp << "splot '-' binary" << binfmt(rhod_rl, dx, dy) << " with image notitle" << std::endl;
     nf.getVar("rhod_rl").getVar(start({t,0,0,0}), count({1,nx,ny,1}), rhod_rl.data());
-    gp.write(reinterpret_cast<const char*>(rhod_rl.data()), nx * ny * sizeof(real_t));
+    gp << rhod_rl;
   }
 
   system("convert tmp/test_*.png todo.gif");
