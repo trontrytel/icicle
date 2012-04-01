@@ -6,6 +6,9 @@
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
 
+#include <string>
+using std::string;
+
 #include <vector>
 using std::vector;
 
@@ -15,6 +18,7 @@ using netCDF::NcFile;
 #include <iostream>
 using std::endl;
 using std::cerr;
+using std::ostringstream;
 
 #include <boost/units/systems/si.hpp>
 #include <boost/units/io.hpp>
@@ -31,24 +35,6 @@ using blitz::Array;
 typedef float real_t;
 typedef vector<size_t> start;
 typedef vector<size_t> count;
-
-template <typename T, int d>
-Gnuplot &operator<<(Gnuplot &gp, const Array<T,d> &arr)
-{
-  gp.write(reinterpret_cast<const char*>(arr.data()), arr.size() * sizeof(T));
-  return gp;
-}
-
-std::string binfmt(const blitz::Array<float,2> &arr, float dx, float dy)
-{
-  std::ostringstream tmp;
-  tmp << " format='%float'";
-  tmp << " array=(" << arr.extent(0) << "," << arr.extent(1) << ")";
-  if (arr.isMajorRank(0)) tmp << "scan=yx"; // i.e. C-style ordering
-  tmp << " dx=" << dx << " dy=" << dy;
-  tmp << " origin=(" << dx/2 << "," << dy/2 << ",0)";
-  return tmp.str();
-}
 
 std::string zeropad(int n)
 {
@@ -88,6 +74,13 @@ int main()
     dy -= tmp;
   }
 
+  string dxdy;
+  {
+    ostringstream tmp;
+    tmp << "dx=" << dx << "dy=" << dy << " origin=(" << dx/2 << "," << dy/2 << ",0)";
+    dxdy = tmp.str();
+  }
+
   notice_macro("allocating temp storage space")
   Array<real_t,2> tmp(nx, ny);
 
@@ -116,17 +109,17 @@ int main()
 
     gp << "set cblabel 'liquid water mixing ratio [kg/kg]'" << endl;
     nf.getVar("rhod_rl").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp.data());
-    gp << "splot '-' binary" << binfmt(tmp, dx, dy) << " with image notitle";
-    gp << ",'-' binary" << binfmt(tmp, dx, dy) << " ps 0 notitle" << endl;
-    gp << tmp;
-    gp << tmp;
+    gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " with image notitle";
+    gp << ",'-' binary" << gp.binfmt(tmp) << dxdy << " ps 0 notitle" << endl;
+    gp.sendBinary(tmp);
+    gp.sendBinary(tmp);
 
     gp << "set cblabel 'potential temperature [K]'" << endl;
     nf.getVar("rhod_th").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp.data());
-    gp << "splot '-' binary" << binfmt(tmp, dx, dy) << " with image notitle";
-    gp << ",'-' binary" << binfmt(tmp, dx, dy) << " ps 0 notitle" << endl;
-    gp << tmp;
-    gp << tmp;
+    gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " with image notitle";
+    gp << ",'-' binary" << gp.binfmt(tmp) << dxdy << " ps 0 notitle" << endl;
+    gp.sendBinary(tmp);
+    gp.sendBinary(tmp);
 
     gp << "unset multiplot" << endl;
   }
