@@ -101,7 +101,7 @@ class eqs_isentropic : public eqs<real_t>
       if (calc_M) 
       {
         if (calc_p) 
-          M(M.ijk) = phc::c_pd<real_t>() * pow(par->p_unit / phc::p_0<real_t>(), phc::R_d_over_c_pd<real_t>())
+          M(M.ijk) = phc::c_pd<real_t>() * real_t(phc::exner<real_t>(par->p_unit))
             / par->M_unit // to make it dimensionless
             * par->theta_frst 
             * real_t(.5) 
@@ -110,7 +110,7 @@ class eqs_isentropic : public eqs<real_t>
                pow(p(mtx::idx_ijk(ii, jj, 1)), phc::R_d_over_c_pd<real_t>())
             );
         else 
-          M(M.ijk) += phc::c_pd<real_t>() * pow(par->p_unit / phc::p_0<real_t>(), phc::R_d_over_c_pd<real_t>()) 
+          M(M.ijk) += phc::c_pd<real_t>() * real_t(phc::exner<real_t>(par->p_unit))
             / par->M_unit * si::kelvins * // to make it dimensionless
             (aux[par->idx_dtheta](mtx::idx_ijk(lev - 1)))(0,0,0) * // TODO: nicer syntax needed!
              real_t(.5) * // Exner function within a layer as an average of surface Ex-fun values
