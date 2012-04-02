@@ -28,7 +28,7 @@ using blitz::toEnd;
 namespace si = boost::units::si;
 using boost::units::quantity;
 
-#include 
+#include "../../src/phc.hpp"
 
 typedef float real_t;
 

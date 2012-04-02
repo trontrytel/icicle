@@ -10,11 +10,6 @@
 #ifndef PHC_HPP
 #  define PHC_HPP
 
-#  include "cmn.hpp"
-
-// not using due to missing template<real_t> logic
-//#  include <boost/units/systems/si/codata/physico-chemical_constants.hpp>
-
 #  define decltype_return(expr) -> decltype(expr) { return expr; }
 
 #  define declare_const_macro(name, value, unit) template <typename real_t> \

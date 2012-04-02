@@ -23,8 +23,17 @@ class eqs_todo : public eqs<real_t>
     quantity<si::mass_density, real_t> rho_unit;
   };
 
-  // provate field
+  // private field
   private: params par;
+
+  // the saturation adjustment (aka ,,bulk'' microphysics)
+  public: void adjustments(
+    int n,
+    const ptr_vector<mtx::arr<real_t>> &aux, 
+    const vector<ptr_vector<mtx::arr<real_t>>> &psi
+  ) 
+  {
+  }
 
   // ctor
   public: eqs_todo(const grd<real_t> &grid)
