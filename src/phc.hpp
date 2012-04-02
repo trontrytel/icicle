@@ -25,6 +25,8 @@
 
 #  define declare_funct_macro template <typename real_t> constexpr auto
 
+// TODO: would changing namespace to class and hence marking all members defined below as inline help?
+//       (but that excludes definition of namespace embers in multiple files)
 namespace phc
 {
   typedef si::dimensionless mixing_ratio;
