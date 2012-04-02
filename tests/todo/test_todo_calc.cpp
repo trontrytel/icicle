@@ -28,6 +28,8 @@ using blitz::toEnd;
 namespace si = boost::units::si;
 using boost::units::quantity;
 
+#include "../../src/phc.hpp"
+
 typedef float real_t;
 
 // simulation parameteters (the 8th WMO Cloud Modelling Workshop: Case 1    
