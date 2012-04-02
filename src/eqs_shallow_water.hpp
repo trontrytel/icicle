@@ -63,7 +63,7 @@ class eqs_shallow_water : public eqs<real_t>
 
     public: void explicit_part(
       mtx::arr<real_t> &R, 
-      const mtx::arr<real_t> * const * const aux,
+      const ptr_vector<mtx::arr<real_t>> &aux,
       const mtx::arr<real_t> * const * const psi,
       const quantity<si::time, real_t> 
     ) 
@@ -88,7 +88,7 @@ class eqs_shallow_water : public eqs<real_t>
             ((*psi[par->idx_h])(mtx::idx_ijk(R.ijk.i - di, R.ijk.j - dj, 0)))
           ) / (real_t(2) * dxy / si::metres)
           + 
-          (*aux[idx_dHdxy])(mtx::idx_ijk(R.ijk.i, R.ijk.j, 0)) 
+          aux[idx_dHdxy](mtx::idx_ijk(R.ijk.i, R.ijk.j, 0)) 
         );
     };
   };

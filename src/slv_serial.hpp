@@ -279,13 +279,13 @@ class slv_serial : public slv<real_t>
                 (Q[xyz][nm0])(Q[xyz][nm0].ijk) / (psi[var][nm0])(psi[var][nm0].ijk),
                 real_t(0)
               ); 
-              assert(finite(sum(Q[xyz][nm0])));
+              assert(isfinite(sum(Q[xyz][nm0])));
               (Q[xyz][nm1])(Q[xyz][nm1].ijk) = where(
                 (psi[var][nm1])(psi[var][nm1].ijk) != 0,
                 (Q[xyz][nm1])(Q[xyz][nm1].ijk) / (psi[var][nm1])(psi[var][nm1].ijk),
                 real_t(0)
               ); 
-              assert(finite(sum(Q[xyz][nm1])));
+              assert(isfinite(sum(Q[xyz][nm1])));
             }
           }
           else assert(false);
@@ -322,7 +322,7 @@ class slv_serial : public slv<real_t>
         for (int i = 0; i < setup->eqsys->var_n_rhs_terms(e); ++i)
         {
            // TODO: is the &tmpvec[0] guaranteed to work???
-           setup->eqsys->var_rhs_term(e, i).explicit_part(rhs_R[e], aux.c_array(), &tmpvec[0], t);
+           setup->eqsys->var_rhs_term(e, i).explicit_part(rhs_R[e], aux, &tmpvec[0], t);
            assert(isfinite(sum((rhs_R[e])(rhs_R[e].ijk))));
         }
       }
@@ -345,6 +345,11 @@ class slv_serial : public slv<real_t>
       C += setup->eqsys->var_rhs_term(e, i).implicit_part(dt); // TODO: document that dt -> dt/2
     if (C != real_t(0))
       (psi[e][n])(ijk) /= (real_t(1) - dt / si::seconds * C);
+  }
+
+  public: void apply_adjustments(int n)
+  {
+    setup->eqsys->adjustments(n, aux, psi); 
   }
 
   public: void cycle_arrays(const int e, const int n) // TODO: n unneeded?

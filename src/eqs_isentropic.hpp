@@ -74,13 +74,13 @@ class eqs_isentropic : public eqs<real_t>
     // method
     public: void explicit_part(
       mtx::arr<real_t> &R, 
-      const mtx::arr<real_t> * const * const aux, 
+      const ptr_vector<mtx::arr<real_t>> &aux,
       const mtx::arr<real_t> * const * const psi,
       const quantity<si::time, real_t> t
     )
     {
-      const mtx::arr<real_t> &p = *aux[par->idx_p]; 
-      const mtx::arr<real_t> &M = *aux[par->idx_M];
+      const mtx::arr<real_t> &p = aux[par->idx_p]; 
+      const mtx::arr<real_t> &M = aux[par->idx_M];
       const mtx::rng &ii = p.ijk.i, &jj = p.ijk.j;
 
       // calculating pressures at the surfaces (done once per timestep)
@@ -92,7 +92,7 @@ class eqs_isentropic : public eqs<real_t>
             (*psi[par->idx_dp[l]])(mtx::idx_ijk(ii, jj, 0)) 
             + 
             p(mtx::idx_ijk(ii, jj, l+1));
-        assert(finite(sum(p)));
+        assert(isfinite(sum(p)));
       }
 
       // calculating Montgomery potential
@@ -112,13 +112,13 @@ class eqs_isentropic : public eqs<real_t>
         else 
           M(M.ijk) += phc::c_pd<real_t>() * pow(par->p_unit / phc::p_0<real_t>(), phc::R_d_over_c_pd<real_t>()) 
             / par->M_unit * si::kelvins * // to make it dimensionless
-            ((*aux[par->idx_dtheta])(mtx::idx_ijk(lev - 1)))(0,0,0) * // TODO: nicer syntax needed!
+            (aux[par->idx_dtheta](mtx::idx_ijk(lev - 1)))(0,0,0) * // TODO: nicer syntax needed!
              real_t(.5) * // Exner function within a layer as an average of surface Ex-fun values
              ( 
                pow(p(mtx::idx_ijk(ii, jj, lev  )), phc::R_d_over_c_pd<real_t>()) +
                pow(p(mtx::idx_ijk(ii, jj, lev+1)), phc::R_d_over_c_pd<real_t>())
              );
-        assert(finite(sum(M)));
+        assert(isfinite(sum(M)));
       }
 
       // eq. (6) in Szmelter & Smolarkiewicz 2011, Computers & Fluids
@@ -128,7 +128,7 @@ class eqs_isentropic : public eqs<real_t>
         ((*psi[par->idx_dp[lev]])(R.ijk)) * 
         ( 
           phc::g<real_t>() / si::metres_per_second_squared *
-          (*aux[idx_dHdxy])(mtx::idx_ijk(R.ijk.i, R.ijk.j, 0)) 
+          aux[idx_dHdxy](mtx::idx_ijk(R.ijk.i, R.ijk.j, 0)) 
           +
           ( // spatial derivative
             (M(mtx::idx_ijk(R.ijk.i + di, R.ijk.j + dj, 0))) - 

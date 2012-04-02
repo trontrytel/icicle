@@ -12,12 +12,10 @@
 #  include "cmn.hpp"
 #  include "rhs.hpp"
 
-/// @brief a container for systems of generalised transport equations
+/// @brief a class defining a system of generalised transport equations
 template <typename real_t>
-class eqs : root
+class eqs 
 {
-  /// @brief representation of a generalised transport equation 
-  /// (e.g. eq. 19 in Smolarkiewicz & Margolin 1998)
   protected: class groupid 
   {
     public: int id;
@@ -30,6 +28,8 @@ class eqs : root
     public: positive_definite(bool is=false) : is(is) {}
   };
 
+  /// @brief representation of a generalised transport equation 
+  /// (e.g. eq. 19 in Smolarkiewicz & Margolin 1998)
   protected: struct gte {
     string name, desc, unit;
     positive_definite posdef;
@@ -165,8 +165,10 @@ class eqs : root
     return tmp.str();
   }
 
+  //////////////////////////
+  /// auxiliary variables //
+  //////////////////////////
 
-  /// auxiliary variables
   protected: class constant
   {
     public: bool is; 
@@ -216,6 +218,15 @@ class eqs : root
   {
     return auxvars().at(v).name;
   } 
+
+  /// @brief allows for post-advection and post-rhs adjustments to the state vector
+  ///        (e.g. saturation adjustment in the ,,bulk'' cloud parameterisation
+  ///        or some kind of smoothing)
+  virtual void adjustments(
+    int n,
+    const ptr_vector<mtx::arr<real_t>> &aux, 
+    const vector<ptr_vector<mtx::arr<real_t>>> &psi
+  ) {} // no default adjustments
 
 };
 #endif

@@ -37,7 +37,7 @@ class eqs_harmonic_oscillator : public eqs<real_t>
     // public methods
     public: void explicit_part(
       mtx::arr<real_t> &R, 
-      const mtx::arr<real_t> * const * const aux,
+      const ptr_vector<mtx::arr<real_t>> &,
       const mtx::arr<real_t> * const * const psi,
       const quantity<si::time, real_t>
     ) 
