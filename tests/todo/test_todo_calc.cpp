@@ -121,8 +121,8 @@ cerr << "rhod_rv: " << rhod_rv << endl;
 
 cerr << "rhod_th: " << rhod_th << endl;
 
-    // writing the profiles to the netCDF TODO: multi-column
-    for (size_t i = 0; i < nx; ++i)
+    // writing the profiles to the netCDF 
+    for (size_t i = 0; i < nx; ++i) // TODO: this logic should be handled within icicle! - it's quite usual to provide profiles
     {
       nvrhod.putVar(start({i,0}), count({1,ny}), rhod.data());
       nvrhod_rv.putVar(start({i,0}), count({1,ny}), rhod_rv.data());
