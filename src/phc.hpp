@@ -35,7 +35,7 @@ namespace phc
   declare_const_macro(c_pw, 4218, si::joules / si::kilograms / si::kelvins) // liquid water
 
   // pressure in the definition of potential temperature
-  declare_const_macro(p_0, 100000, si::pascals)
+  declare_const_macro(p_1000, 100000, si::pascals)
 
   // molar masses
   declare_const_macro(M_d, 0.02896, si::kilograms / si::moles) // dry air
@@ -80,16 +80,20 @@ namespace phc
     ))
 
   // saturation vapour mixing ratio for water
-  declare_funct_macro r_vs(quantity<si::temperature> T, quantity<si::pressure> p)
+  declare_funct_macro r_vs(quantity<si::temperature, real_t> T, quantity<si::pressure, real_t> p)
     decltype_return(eps<real_t>() / (p / p_vs<real_t>(T) - 1))
 
   // Exner function for dry air
-  declare_funct_macro exner(quantity<si::pressure> p)
-    decltype_return(pow(p / p_0<real_t>(), R_d_over_c_pd<real_t>()))
+  declare_funct_macro exner(quantity<si::pressure, real_t> p)
+    decltype_return(pow(p / p_1000<real_t>(), R_d_over_c_pd<real_t>()))
 
   // Exner function for moist air
-  declare_funct_macro exner(quantity<si::pressure> p, quantity<mixing_ratio> r)
-    decltype_return(pow(p / p_0<real_t>(), R<real_t>(r) / c_p<real_t>(r)))
+  declare_funct_macro exner(quantity<si::pressure, real_t> p, quantity<mixing_ratio, real_t> r)
+    decltype_return(pow(p / p_1000<real_t>(), R<real_t>(r) / c_p<real_t>(r)))
+
+  // water vapour partial pressure as a function of mixing ratio
+  declare_funct_macro p_v(quantity<si::pressure, real_t> p, quantity<mixing_ratio, real_t> r)
+    decltype_return(p * r / (r + eps<real_t>()))
 };
 
 #  undef decltype_return

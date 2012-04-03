@@ -33,6 +33,7 @@ class eqs_todo : public eqs<real_t>
     const vector<ptr_vector<mtx::arr<real_t>>> &psi
   ) 
   {
+    // TODO: iterative solution of r^{n+1} = r_s(r^{n+1}, theta^{n+1})
   }
 
   // ctor

@@ -42,9 +42,11 @@ const quantity<si::length,real_t>
   dy = 20 * si::metres,       // 20 m
   z_inv = real_t(ny) * dy;
 const quantity<si::temperature, real_t>
-  th_l_0 = 289 * si::kelvins; // 289 K
-const quantity<si::dimensionless, real_t>
-  q_t_0 = 7.5e-3;             // 7.5e-3 kg/kg
+  th_0 = 289 * si::kelvins;   // 289 K
+const quantity<phc::mixing_ratio, real_t>
+  rt_0 = 7.5e-3;              // 7.5e-3 kg/kg
+const quantity<si::pressure, real_t> 
+  p_0 = 101500 * si::pascals; // 1015 hPa
 
 // other parameters:
 const int 
@@ -56,6 +58,24 @@ const size_t
   nt = 10000;
 const quantity<si::time, real_t> 
   dt = 10 * si::seconds; 
+
+// pressure profile derived by integrating the hydrostatic eq.
+// assuming constant theta, constant rv and R=R(rv) 
+quantity<si::pressure,real_t> p_hydrostatic(
+  quantity<si::length> z,
+  quantity<si::temperature,real_t> th_0,
+  quantity<phc::mixing_ratio, real_t> r,
+  quantity<si::length, real_t> z_0,
+  quantity<si::pressure, real_t> p_0
+)
+{
+  return phc::p_1000<real_t>();/* * pow(
+    pow(p_0 / phc::p_1000<real_t>(), phc::R_d_over_c_pd<real_t>()) 
+    - 
+    phc::R_d_over_c_pd<real_t>() * phc::g<real_t>() / th_0 / phc::R<real_t>(r) * (z - z_0), 
+    phc::c_pd<real_t>() / phc::R_d<real_t>()
+  );*/
+}
 
 int main()
 {
@@ -75,10 +95,23 @@ int main()
     // auxiliary fields
     NcVar nvrhod = nf.addVar("rhod", ncFloat, vector<NcDim>({ndx, ndy}));
 
-    // initial condition 
-    Array<real_t, 2> rhod_l(nx, ny);
-    rhod_l = 0;
-    rhod_l(Range::all(), Range(ny/2, toEnd)) = .001;
+    // initial values: first, assuming no liquid water
+    Array<real_t, 1> rhod(ny);
+    for (int j = 0; j < ny; ++j) 
+    {
+      quantity<si::pressure, real_t> p =
+        p_hydrostatic((j + .5) * si::metres, th_0, rt_0, 0 * si::metres, p_0);
+      rhod(j) = (
+        (p - phc::p_v<real_t>(p, rt_0)) / phc::R_d<real_t>() / (phc::exner<real_t>(p, rt_0) * th_0) 
+      ) / si::pascals;
+    }
+    Range j(0, ny-1);
+    Array<real_t, 1> rhod_rl(j); 
+    rhod_rl = 0; // to be adjusted by the model
+    Array<real_t, 1> rhod_rv(rhod(j) * (rt_0 - rhod_rl(j)));
+    Array<real_t, 1> rhod_th(j); // TODO!
+
+    // writing the profiles to the netCDF TODO: multi-column
     nvrhod_rl.putVar(rhod_l.data());
   }
   

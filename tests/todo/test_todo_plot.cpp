@@ -105,7 +105,7 @@ int main()
     notice_macro("generating frame at t=" << t)
     gp << "set title 't = " << (real_t(t) * dt_out) << "'" << endl;
     gp << "set output 'tmp/test_" << zeropad(t) << ".png'" << endl;
-    gp << "set multiplot layout 2,1" << endl;
+//    gp << "set multiplot layout 2,1" << endl;
 
     gp << "set cblabel 'liquid water mixing ratio [kg/kg]'" << endl;
     nf.getVar("rhod_rl").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp.data());
@@ -114,14 +114,14 @@ int main()
     gp.sendBinary(tmp);
     gp.sendBinary(tmp);
 
-    gp << "set cblabel 'potential temperature [K]'" << endl;
-    nf.getVar("rhod_th").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp.data());
-    gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " with image notitle";
-    gp << ",'-' binary" << gp.binfmt(tmp) << dxdy << " ps 0 notitle" << endl;
-    gp.sendBinary(tmp);
-    gp.sendBinary(tmp);
+//    gp << "set cblabel 'potential temperature [K]'" << endl;
+//    nf.getVar("rhod_th").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp.data());
+//    gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " with image notitle";
+//    gp << ",'-' binary" << gp.binfmt(tmp) << dxdy << " ps 0 notitle" << endl;
+//    gp.sendBinary(tmp);
+//    gp.sendBinary(tmp);
 
-    gp << "unset multiplot" << endl;
+//    gp << "unset multiplot" << endl;
   }
 
   system("convert -delay 10 tmp/test_*.png todo.gif");

@@ -93,6 +93,9 @@ class slv_parallel : public slv<real_t>
     }
     int n = 0;
 
+    // adjustments for the initial condition
+    slvs[sd].apply_adjustments(n);
+
     for (int e = 0; e < setup->eqsys->n_vars(); ++e) 
       fill_halos(sd, e, n); 
 
