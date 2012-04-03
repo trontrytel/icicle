@@ -6,17 +6,21 @@
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
 
+#include <vector>
+using std::vector;
+
 #include <netcdf>
 using netCDF::NcFile;
 using netCDF::NcDim;
 using netCDF::NcVar;
 using netCDF::ncFloat;
-
-#include <vector>
-using std::vector;
+typedef vector<size_t> start;
+typedef vector<size_t> count;
 
 #include <iostream>
 using std::ostringstream;
+using std::cerr;
+using std::endl;
 
 #include <blitz/array.h>
 using blitz::Array;
@@ -62,19 +66,19 @@ const quantity<si::time, real_t>
 // pressure profile derived by integrating the hydrostatic eq.
 // assuming constant theta, constant rv and R=R(rv) 
 quantity<si::pressure,real_t> p_hydrostatic(
-  quantity<si::length> z,
+  quantity<si::length, real_t> z,
   quantity<si::temperature,real_t> th_0,
   quantity<phc::mixing_ratio, real_t> r,
   quantity<si::length, real_t> z_0,
   quantity<si::pressure, real_t> p_0
 )
 {
-  return phc::p_1000<real_t>();/* * pow(
+  return phc::p_1000<real_t>() * real_t(pow(
     pow(p_0 / phc::p_1000<real_t>(), phc::R_d_over_c_pd<real_t>()) 
     - 
     phc::R_d_over_c_pd<real_t>() * phc::g<real_t>() / th_0 / phc::R<real_t>(r) * (z - z_0), 
     phc::c_pd<real_t>() / phc::R_d<real_t>()
-  );*/
+  ));
 }
 
 int main()
@@ -95,24 +99,36 @@ int main()
     // auxiliary fields
     NcVar nvrhod = nf.addVar("rhod", ncFloat, vector<NcDim>({ndx, ndy}));
 
-    // initial values: first, assuming no liquid water
+    // initial values: (assuming no liquid water -> to be adjusted by the model)
     Array<real_t, 1> rhod(ny);
     for (int j = 0; j < ny; ++j) 
     {
       quantity<si::pressure, real_t> p =
-        p_hydrostatic((j + .5) * si::metres, th_0, rt_0, 0 * si::metres, p_0);
+        p_hydrostatic(real_t(j + .5) * si::metres, th_0, rt_0, real_t(0) * si::metres, p_0);
       rhod(j) = (
-        (p - phc::p_v<real_t>(p, rt_0)) / phc::R_d<real_t>() / (phc::exner<real_t>(p, rt_0) * th_0) 
-      ) / si::pascals;
+        (p - phc::p_v<real_t>(p, rt_0)) / (phc::exner<real_t>(p, rt_0) * phc::R_d<real_t>() * th_0) 
+      ) / si::kilograms * si::metres * si::metres * si::metres;
     }
     Range j(0, ny-1);
     Array<real_t, 1> rhod_rl(j); 
     rhod_rl = 0; // to be adjusted by the model
     Array<real_t, 1> rhod_rv(rhod(j) * (rt_0 - rhod_rl(j)));
-    Array<real_t, 1> rhod_th(j); // TODO!
+    Array<real_t, 1> rhod_th(rhod(j) * (th_0 / si::kelvins)); // TODO! theta^\star
+
+cerr << "rhod: " << rhod << endl;
+
+cerr << "rhod_rv: " << rhod_rv << endl;
+
+cerr << "rhod_th: " << rhod_th << endl;
 
     // writing the profiles to the netCDF TODO: multi-column
-    nvrhod_rl.putVar(rhod_l.data());
+    for (size_t i = 0; i < nx; ++i)
+    {
+      nvrhod.putVar(start({i,0}), count({1,ny}), rhod.data());
+      nvrhod_rv.putVar(start({i,0}), count({1,ny}), rhod_rv.data());
+      nvrhod_rl.putVar(start({i,0}), count({1,ny}), rhod_rl.data());
+      nvrhod_th.putVar(start({i,0}), count({1,ny}), rhod_th.data());
+    }
   }
   
   ostringstream cmd;

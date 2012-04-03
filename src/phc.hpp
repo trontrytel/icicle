@@ -18,7 +18,9 @@
 #  define derived_const_macro(name, value) template <typename real_t> \
   static constexpr auto name() decltype_return(value)
 
-#  define declare_funct_macro template <typename real_t> constexpr auto
+#  define declare_funct_macro template <typename real_t> constexpr 
+
+// TODO: the same functions with Blitz arguments - how to automate???
 
 // TODO: would changing namespace to class and hence marking all members defined below as inline help?
 //       (but that excludes definition of namespace embers in multiple files)
@@ -63,37 +65,43 @@ namespace phc
     decltype_return((dry + r * vap) / (1 + r))
 
   // gas constant for moist air
-  declare_funct_macro R(quantity<mixing_ratio, real_t> r)
+  declare_funct_macro auto R(quantity<mixing_ratio, real_t> r)
     decltype_return(mix(R_d<real_t>(), R_v<real_t>(), r))
  
   // specific heat capacity of moist air
-  declare_funct_macro c_p(quantity<mixing_ratio, real_t> r)
+  declare_funct_macro auto c_p(quantity<mixing_ratio, real_t> r)
     decltype_return(mix(c_pd<real_t>(), c_pv<real_t>(), r))
 
   // saturation vapour pressure for water assuming constant c_p_v and c_p_w 
   // with constants taken at triple point
   // (solution to the Clausius-Clapeyron equation assuming rho_vapour << rho_liquid)
-  declare_funct_macro p_vs(quantity<si::temperature, real_t> T)
+  declare_funct_macro auto p_vs(quantity<si::temperature, real_t> T)
     decltype_return(p_tri<real_t>() * exp(
       (l_tri<real_t>() + (c_pw<real_t>() - c_pv<real_t>()) * T_tri<real_t>()) / R_v<real_t>() * (1 / T_tri<real_t>() - 1 / T)
       - (c_pw<real_t>() - c_pv<real_t>()) / R_v<real_t>() * log(T / T_tri<real_t>())
     ))
 
   // saturation vapour mixing ratio for water
-  declare_funct_macro r_vs(quantity<si::temperature, real_t> T, quantity<si::pressure, real_t> p)
+  declare_funct_macro auto r_vs(quantity<si::temperature, real_t> T, quantity<si::pressure, real_t> p)
     decltype_return(eps<real_t>() / (p / p_vs<real_t>(T) - 1))
 
   // Exner function for dry air
-  declare_funct_macro exner(quantity<si::pressure, real_t> p)
-    decltype_return(pow(p / p_1000<real_t>(), R_d_over_c_pd<real_t>()))
+  declare_funct_macro quantity<si::dimensionless, real_t> exner(quantity<si::pressure, real_t> p)
+  {
+    return pow(p / p_1000<real_t>(), R_d_over_c_pd<real_t>());
+  }
 
   // Exner function for moist air
-  declare_funct_macro exner(quantity<si::pressure, real_t> p, quantity<mixing_ratio, real_t> r)
-    decltype_return(pow(p / p_1000<real_t>(), R<real_t>(r) / c_p<real_t>(r)))
+  declare_funct_macro quantity<si::dimensionless, real_t> exner(quantity<si::pressure, real_t> p, quantity<mixing_ratio, real_t> r)
+  {
+    return pow(p / p_1000<real_t>(), R<real_t>(r) / c_p<real_t>(r));
+  }
 
   // water vapour partial pressure as a function of mixing ratio
-  declare_funct_macro p_v(quantity<si::pressure, real_t> p, quantity<mixing_ratio, real_t> r)
-    decltype_return(p * r / (r + eps<real_t>()))
+  declare_funct_macro quantity<si::pressure, real_t> p_v(quantity<si::pressure, real_t> p, quantity<mixing_ratio, real_t> r)
+  {
+    return p * r / (r + eps<real_t>());
+  }
 };
 
 #  undef decltype_return

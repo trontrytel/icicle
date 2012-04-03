@@ -14,6 +14,8 @@ using std::vector;
 
 #include <netcdf>
 using netCDF::NcFile;
+typedef vector<size_t> start;
+typedef vector<size_t> count;
 
 #include <iostream>
 using std::endl;
@@ -33,8 +35,6 @@ using blitz::Array;
 
 #define notice_macro(msg) { cerr << msg << endl; }
 typedef float real_t;
-typedef vector<size_t> start;
-typedef vector<size_t> count;
 
 std::string zeropad(int n)
 {
