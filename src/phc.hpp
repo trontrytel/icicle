@@ -91,10 +91,16 @@ namespace phc
     return pow(p / p_1000<real_t>(), R_d_over_c_pd<real_t>());
   }
 
+  // Exner function exponent for moist air
+  declare_funct_macro quantity<si::dimensionless, real_t> R_over_c_p(quantity<mixing_ratio, real_t> r)
+  {
+    return R<real_t>(r) / c_p<real_t>(r);
+  }
+
   // Exner function for moist air
   declare_funct_macro quantity<si::dimensionless, real_t> exner(quantity<si::pressure, real_t> p, quantity<mixing_ratio, real_t> r)
   {
-    return pow(p / p_1000<real_t>(), R<real_t>(r) / c_p<real_t>(r));
+    return pow(p / p_1000<real_t>(), R_over_c_p<real_t>(r));
   }
 
   // water vapour partial pressure as a function of mixing ratio

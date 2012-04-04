@@ -21,6 +21,7 @@ typedef vector<size_t> count;
 using std::ostringstream;
 using std::cerr;
 using std::endl;
+#define notice_macro(msg) { cerr << msg << endl; }
 
 #include <blitz/array.h>
 using blitz::Array;
@@ -84,53 +85,53 @@ quantity<si::pressure,real_t> p_hydrostatic(
 int main()
 {
   {
+    notice_macro("creating ini.nc ...")
     NcFile nf("ini.nc", NcFile::newFile);
 
     // dimensions
-    NcDim ndx = nf.addDim("X", nx); 
     NcDim ndy = nf.addDim("Y", ny); 
-    NcDim ndz = nf.addDim("Z", 1); // TODO: should not be needed
+
+    // dimension-annotating variable
+    NcVar nvy = nf.addVar("Y", ncFloat, vector<NcDim>({ndy}));
  
     // advected fields
-    NcVar nvrhod_rv = nf.addVar("rhod_rv", ncFloat, vector<NcDim>({ndx, ndy}));
-    NcVar nvrhod_rl = nf.addVar("rhod_rl", ncFloat, vector<NcDim>({ndx, ndy}));
-    NcVar nvrhod_th = nf.addVar("rhod_th", ncFloat, vector<NcDim>({ndx, ndy}));
+    NcVar nvrhod_rv = nf.addVar("rhod_rv", ncFloat, vector<NcDim>({ndy}));
+    NcVar nvrhod_rl = nf.addVar("rhod_rl", ncFloat, vector<NcDim>({ndy}));
+    NcVar nvrhod_th = nf.addVar("rhod_th", ncFloat, vector<NcDim>({ndy}));
 
     // auxiliary fields
-    NcVar nvrhod = nf.addVar("rhod", ncFloat, vector<NcDim>({ndx, ndy}));
+    NcVar nvrhod = nf.addVar("rhod", ncFloat, vector<NcDim>({ndy}));
 
     // initial values: (assuming no liquid water -> to be adjusted by the model)
-    Array<real_t, 1> rhod(ny);
+    Array<real_t, 1> arr_rhod(ny), arr_z(ny), arr_rhod_rl(ny), arr_rhod_rv(ny), arr_rhod_th(ny);
     for (int j = 0; j < ny; ++j) 
     {
-      quantity<si::pressure, real_t> p =
-        p_hydrostatic(real_t(j + .5) * si::metres, th_0, rt_0, real_t(0) * si::metres, p_0);
-      rhod(j) = (
-        (p - phc::p_v<real_t>(p, rt_0)) / (phc::exner<real_t>(p, rt_0) * phc::R_d<real_t>() * th_0) 
-      ) / si::kilograms * si::metres * si::metres * si::metres;
+      quantity<si::length, real_t> z = real_t(j + .5) * dy;
+      quantity<si::pressure, real_t> p = p_hydrostatic(z, th_0, rt_0, real_t(0) * si::metres, p_0);
+      quantity<si::mass_density, real_t> rhod = (p - phc::p_v<real_t>(p, rt_0)) / (phc::exner<real_t>(p, rt_0) * phc::R_d<real_t>() * th_0);
+      quantity<si::temperature, real_t> T = p / rhod / phc::R_d<real_t>();
+      // theta^\star as a function of theta
+      quantity<si::temperature, real_t> th = real_t(pow(
+        real_t(th_0 / T) * pow(T / si::kelvins, pow(phc::R_over_c_p<real_t>(rt_0),-1)), 
+        phc::R_over_c_p<real_t>(rt_0)
+      )) * si::kelvins;
+
+      arr_z(j) = z / si::metres;
+      arr_rhod(j) = rhod / si::kilograms * si::cubic_metres;
+      arr_rhod_rl(j) = 0; // to be adjusted by the model
+      arr_rhod_rv(j) = arr_rhod(j) * rt_0;
+      arr_rhod_th(j) = arr_rhod(j) * th / si::kelvins;
     }
-    Range j(0, ny-1);
-    Array<real_t, 1> rhod_rl(j); 
-    rhod_rl = 0; // to be adjusted by the model
-    Array<real_t, 1> rhod_rv(rhod(j) * (rt_0 - rhod_rl(j)));
-    Array<real_t, 1> rhod_th(rhod(j) * (th_0 / si::kelvins)); // TODO! theta^\star
-
-cerr << "rhod: " << rhod << endl;
-
-cerr << "rhod_rv: " << rhod_rv << endl;
-
-cerr << "rhod_th: " << rhod_th << endl;
 
     // writing the profiles to the netCDF 
-    for (size_t i = 0; i < nx; ++i) // TODO: this logic should be handled within icicle! - it's quite usual to provide profiles
-    {
-      nvrhod.putVar(start({i,0}), count({1,ny}), rhod.data());
-      nvrhod_rv.putVar(start({i,0}), count({1,ny}), rhod_rv.data());
-      nvrhod_rl.putVar(start({i,0}), count({1,ny}), rhod_rl.data());
-      nvrhod_th.putVar(start({i,0}), count({1,ny}), rhod_th.data());
-    }
+    nvy.putVar(arr_z.data());
+    nvrhod.putVar(arr_rhod.data());
+    nvrhod_rv.putVar(arr_rhod_rv.data());
+    nvrhod_rl.putVar(arr_rhod_rl.data());
+    nvrhod_th.putVar(arr_rhod_th.data());
   }
   
+  notice_macro("calling the solver ...")
   ostringstream cmd;
   cmd
     << "../../icicle"
