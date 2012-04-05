@@ -69,7 +69,7 @@ const quantity<si::time, real_t>
 quantity<si::pressure,real_t> p_hydrostatic(
   quantity<si::length, real_t> z,
   quantity<si::temperature,real_t> th_0,
-  quantity<phc::mixing_ratio, real_t> r,
+  quantity<phc::mixing_ratio, real_t> r_0,
   quantity<si::length, real_t> z_0,
   quantity<si::pressure, real_t> p_0
 )
@@ -77,16 +77,43 @@ quantity<si::pressure,real_t> p_hydrostatic(
   return phc::p_1000<real_t>() * real_t(pow(
     pow(p_0 / phc::p_1000<real_t>(), phc::R_d_over_c_pd<real_t>()) 
     - 
-    phc::R_d_over_c_pd<real_t>() * phc::g<real_t>() / th_0 / phc::R<real_t>(r) * (z - z_0), 
+    phc::R_d_over_c_pd<real_t>() * phc::g<real_t>() / th_0 / phc::R<real_t>(r_0) * (z - z_0), 
     phc::c_pd<real_t>() / phc::R_d<real_t>()
   ));
+}
+
+// TODO: document it and name it correctly
+quantity<si::mass_density, real_t> rhod_todo(
+  quantity<si::pressure, real_t> p,
+  quantity<si::temperature, real_t> th_0,
+  quantity<phc::mixing_ratio, real_t> r_0
+)
+{
+  return (p - phc::p_v<real_t>(p, rt_0)) / (phc::exner<real_t>(p, rt_0) * phc::R_d<real_t>() * th_0);
 }
 
 int main()
 {
   {
+    notice_macro("creating vel.nc ...")
+    NcFile nf("vel.nc", NcFile::newFile, NcFile::classic);
+
+    // dimensions
+    NcDim ndx = nf.addDim("X", nx+1); 
+    NcDim ndy = nf.addDim("Y", ny+1); 
+    NcDim ndz = nf.addDim("Z", 1); 
+
+    // dimension-annotating variables
+    NcVar nvx = nf.addVar("X", ncFloat, vector<NcDim>({ndx,ndy,ndz}));
+    NcVar nvy = nf.addVar("Y", ncFloat, vector<NcDim>({ndx,ndy,ndz}));
+  
+    // variables with velocity comonents
+    NcVar nvu = nf.addVar("u", ncFloat, vector<NcDim>({ndx,ndy,ndz}));
+    NcVar nvv = nf.addVar("v", ncFloat, vector<NcDim>({ndx,ndy,ndz}));
+  }
+  {
     notice_macro("creating ini.nc ...")
-    NcFile nf("ini.nc", NcFile::newFile);
+    NcFile nf("ini.nc", NcFile::newFile, NcFile::classic);
 
     // dimensions
     NcDim ndx = nf.addDim("X", 1); 
@@ -110,7 +137,7 @@ int main()
     {
       quantity<si::length, real_t> z = real_t(j + .5) * dy;
       quantity<si::pressure, real_t> p = p_hydrostatic(z, th_0, rt_0, real_t(0) * si::metres, p_0);
-      quantity<si::mass_density, real_t> rhod = (p - phc::p_v<real_t>(p, rt_0)) / (phc::exner<real_t>(p, rt_0) * phc::R_d<real_t>() * th_0);
+      quantity<si::mass_density, real_t> rhod = rhod_todo(p, th_0, rt_0); // - phc::p_v<real_t>(p, rt_0)) / (phc::exner<real_t>(p, rt_0) * phc::R_d<real_t>() * th_0);
       quantity<si::temperature, real_t> T = p / rhod / phc::R_d<real_t>();
       // theta^\star as a function of theta
       quantity<si::temperature, real_t> th = real_t(pow(
@@ -148,6 +175,8 @@ int main()
     << " --adv mpdata"
       << " --adv.mpdata.fct " << fct
       << " --adv.mpdata.iord " << iord
+    //<< " --vel netcdf"
+    //  << " --vel.netcdf.file vel.nc"
     << " --vel rasinski"
       << " --vel.rasinski.Z_clb " << real_t(.5) * z_inv / si::metres
       << " --vel.rasinski.Z_top " << z_inv
