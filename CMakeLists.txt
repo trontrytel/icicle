@@ -149,6 +149,7 @@ endif()
 #### </Blitz> ##########################################################
 
 #### <Boost.program_options> (mandatory) ###############################
+# TODO: could it just be set(CMAKE_REQUIRED_LIBRARIES "-laqq-mt -laqq") ???
 foreach(sfx "-mt" "") # tagged installation layout issue               
   set(CMAKE_REQUIRED_LIBRARIES "-lboost_program_options${sfx}")  # TODO? should we use CMAKE_PUSH_CHECK_STATE() and CMAKE_POP_CHECK_STATE() ??
   check_cxx_source_compiles(

@@ -31,7 +31,7 @@ using boost::units::quantity;
 using blitz::Array;
 
 #define GNUPLOT_ENABLE_BLITZ
-#include <gnuplot-iostream.h>
+#include <gnuplot-iostream/gnuplot-iostream.h>
 
 #define notice_macro(msg) { cerr << msg << endl; }
 typedef float real_t;
