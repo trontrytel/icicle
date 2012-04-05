@@ -60,7 +60,7 @@ const int
   iord = 2;  
 const size_t
   nout = 50,
-  nt = 10000;
+  nt = 100;
 const quantity<si::time, real_t> 
   dt = 10 * si::seconds; 
 
@@ -89,18 +89,20 @@ int main()
     NcFile nf("ini.nc", NcFile::newFile);
 
     // dimensions
+    NcDim ndx = nf.addDim("X", 1); 
     NcDim ndy = nf.addDim("Y", ny); 
+    NcDim ndz = nf.addDim("Z", 1); 
 
     // dimension-annotating variable
-    NcVar nvy = nf.addVar("Y", ncFloat, vector<NcDim>({ndy}));
+    NcVar nvy = nf.addVar("Y", ncFloat, vector<NcDim>({ndx,ndy,ndz}));
  
     // advected fields
-    NcVar nvrhod_rv = nf.addVar("rhod_rv", ncFloat, vector<NcDim>({ndy}));
-    NcVar nvrhod_rl = nf.addVar("rhod_rl", ncFloat, vector<NcDim>({ndy}));
-    NcVar nvrhod_th = nf.addVar("rhod_th", ncFloat, vector<NcDim>({ndy}));
+    NcVar nvrhod_rv = nf.addVar("rhod_rv", ncFloat, vector<NcDim>({ndx,ndy,ndz}));
+    NcVar nvrhod_rl = nf.addVar("rhod_rl", ncFloat, vector<NcDim>({ndx,ndy,ndz}));
+    NcVar nvrhod_th = nf.addVar("rhod_th", ncFloat, vector<NcDim>({ndx,ndy,ndz}));
 
     // auxiliary fields
-    NcVar nvrhod = nf.addVar("rhod", ncFloat, vector<NcDim>({ndy}));
+    NcVar nvrhod = nf.addVar("rhod", ncFloat, vector<NcDim>({ndx,ndy,ndz}));
 
     // initial values: (assuming no liquid water -> to be adjusted by the model)
     Array<real_t, 1> arr_rhod(ny), arr_z(ny), arr_rhod_rl(ny), arr_rhod_rv(ny), arr_rhod_th(ny);

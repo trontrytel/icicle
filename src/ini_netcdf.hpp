@@ -15,6 +15,7 @@ template <typename real_t>
 class ini_netcdf : public ini<real_t>
 {
   private: unique_ptr<NcFile> f;
+  private: size_t xs, ys, zs;
   private: string filename;
   private: const grd<real_t> *grid;
   public: ini_netcdf(const grd<real_t> &grid, const string filename)
@@ -31,12 +32,15 @@ class ini_netcdf : public ini<real_t>
       if (d_x.isNull()) error_macro("X dimension not found in file " << filename)
       if (d_y.isNull()) error_macro("Y dimension not found in file " << filename) // TODO: should not be needed if ny == 1...
       if (d_z.isNull()) error_macro("Z dimension not found in file " << filename)
+      xs = d_x.getSize();
+      ys = d_y.getSize();
+      zs = d_z.getSize();
       if (
-        d_x.getSize() != grid.nx() ||
-        d_y.getSize() != grid.ny() ||
-        d_z.getSize() != grid.nz()
+        (xs != grid.nx() && xs != 1) ||
+        (ys != grid.ny() && ys != 1) ||
+        (zs != grid.nz() && zs != 1)
       ) error_macro(
-        "X,Y or Z dim extent (" << d_x.getSize() << "," << d_y.getSize() << "," << d_z.getSize() << ") " <<
+        "X,Y or Z dim extent (" << xs << "," << ys << "," << zs << ") " <<
         "does not match grid extent (" << grid.nx() << "," << grid.ny() << "," << grid.nz() << ")")
       // TODO: check variable X,Y,Z (dx, Arakawa-C setting etc)
     }
@@ -55,19 +59,29 @@ class ini_netcdf : public ini<real_t>
       if (v.isNull()) 
         error_macro("variable " << varname << " not found in file " << filename)
       // TODO: check if it has (x,y,z) dimensions
+
       vector<size_t> startp(3), countp(3, 1);
-      countp[0] = ijk.ubound(mtx::i) - ijk.lbound(mtx::i) + 1;
-      startp[0] = ijk.lbound(mtx::i);
+      // reading a range or just one element if e.g. a profile is to be copied along a dimension
+      countp[0] = (xs == 1 ? 1 : ijk.ubound(mtx::i) - ijk.lbound(mtx::i) + 1);
+      startp[0] = (xs == 1 ? 0 : ijk.lbound(mtx::i));
       // due to presence of halos the data to be stored is not contiguous, 
       // hence looping over the two major ranks
       for (int k_int = ijk.lbound(mtx::k); k_int <= ijk.ubound(mtx::k); ++k_int) // loop over "outer" dimension
       { 
-        startp[2] = k_int;
+        startp[2] = (zs == 1 ? 0 : k_int);
         for (int j_int = ijk.lbound(mtx::j); j_int <= ijk.ubound(mtx::j); ++j_int)
         { 
-          startp[1] = j_int;
-          assert(data(ijk.i, j_int, k_int).isStorageContiguous());
-          v.getVar(startp, countp, data(ijk.i, j_int, k_int).dataFirst());
+          startp[1] = (ys == 1 ? 0 : j_int);
+          if (xs != 1)
+          {
+            assert(data(ijk.i, j_int, k_int).isStorageContiguous());
+            v.getVar(startp, countp, data(ijk.i, j_int, k_int).dataFirst());
+          }
+          else
+          {
+            for (int i_int = ijk.lbound(mtx::i); i_int <= ijk.ubound(mtx::i); ++i_int)
+              v.getVar(startp, countp, &data(i_int, j_int, k_int));
+          }
         }   
       }  
     } 
