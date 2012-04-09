@@ -66,18 +66,21 @@ class root { public: virtual ~root() {} }; // TODO: should not be needed!
 namespace si = boost::units::si;
 using boost::units::quantity; 
 using boost::units::pow;
+using boost::units::multiply_typeof_helper;
+using boost::units::divide_typeof_helper;
 
-typedef boost::units::multiply_typeof_helper<
-    si::velocity,
-    si::length
-  >::type velocity_times_length;
+// TODO: remove all this...
+//typedef boost::units::multiply_typeof_helper<
+//    si::velocity,
+//    si::length
+//  >::type velocity_times_length;
 
-typedef boost::units::multiply_typeof_helper<
+typedef multiply_typeof_helper<
     si::velocity,
     si::pressure
   >::type velocity_times_pressure;
 
-typedef boost::units::multiply_typeof_helper<
+typedef multiply_typeof_helper<
     si::acceleration,
     si::length
   >::type specific_energy;

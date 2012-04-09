@@ -11,7 +11,7 @@
 #  include "opt.hpp"
 #  include "grd.hpp"
 #  include "vel_func_uniform.hpp"
-#  include "vel_func_rasinski.hpp"
+#  include "vel_func_stream_rasinski.hpp"
 #  include "vel_func_test.hpp"
 #  include "vel_momeq_extrapol.hpp"
 
@@ -24,6 +24,7 @@ inline void opt_vel_desc(po::options_description &desc)
     ("vel.uniform.v", po::value<string>()->default_value("0"), "velocity (Y) [m/s]")
     ("vel.uniform.w", po::value<string>()->default_value("0"), "velocity (Z) [m/s]")
 
+    ("vel.rasinski.file", po::value<string>(), "netCDF filename (rho(z) profile)")
     ("vel.rasinski.Z_clb", po::value<string>(), "cloud base height [m]")
     ("vel.rasinski.Z_top", po::value<string>(), "cloud top height [m]")
     ("vel.rasinski.A", po::value<string>(), "amplitude [m2/s]")
@@ -33,7 +34,7 @@ inline void opt_vel_desc(po::options_description &desc)
 }
 
 template <typename real_t>
-vel<real_t> *opt_vel(const po::variables_map& vm, grd<real_t> *grid)
+vel<real_t> *opt_vel(const po::variables_map& vm, const grd<real_t> &grid)
 {
   string veltype= vm.count("vel") ? vm["vel"].as<string>() : "<unspecified>";
   if (veltype == "uniform")
@@ -44,28 +45,36 @@ vel<real_t> *opt_vel(const po::variables_map& vm, grd<real_t> *grid)
       w = real_cast<real_t>(vm, "vel.uniform.w") * si::metres / si::seconds;
     return new vel_func_uniform<real_t>(grid, u, v, w);
   }
-  else if (veltype == "rasinski")
-  {
-    if (!vm.count("vel.rasinski.Z_clb") || !vm.count("vel.rasinski.Z_top") || !vm.count("vel.rasinski.A"))
-      error_macro("vel.rasinski.[Z_clb,Z_top,A] must be specified")
-    quantity<si::length, real_t> 
-      Z_clb = real_cast<real_t>(vm, "vel.rasinski.Z_clb") * si::metres,
-      Z_top = real_cast<real_t>(vm, "vel.rasinski.Z_top") * si::metres,
-      X = real_t(grid->nx()) * grid->dx(); // TODO nx+1 dla Arakawa-C ...
-    quantity<velocity_times_length, real_t>
-      A = real_cast<real_t>(vm, "vel.rasinski.A") * si::metres * si::metres / si::seconds; // TODO: since we pass grid, this could be calculated in the constructor
-    return new vel_func_rasinski<real_t>(grid, X, Z_clb, Z_top, A);
-  }
   else if (veltype == "test")
   {
     if (!vm.count("vel.test.omega")) error_macro("vel.test.omega must be specified")
     quantity<si::frequency, real_t> omega = real_cast<real_t>(vm, "vel.test.omega") / si::seconds;
     quantity<si::velocity, real_t> v = real_cast<real_t>(vm, "vel.test.v") * si::metres / si::seconds;
-    return new vel_func_test<real_t>(grid, omega, real_t(.5 * grid->nx()) * grid->dx(), real_t(.5 * grid->nz()) * grid->dz(), v);
+    return new vel_func_test<real_t>(grid, omega, real_t(.5 * grid.nx()) * grid.dx(), real_t(.5 * grid.nz()) * grid.dz(), v); // TODO: we pass grid, so part of it could be calculated in the ctor
   }
   else if (veltype == "momeq_extrapol")
   {
     return new vel_momeq_extrapol<real_t>(grid);
+  }
+  else if (veltype == "rasinski")
+  {
+    if (
+      !vm.count("vel.rasinski.Z_clb") || 
+      !vm.count("vel.rasinski.Z_top") || 
+      !vm.count("vel.rasinski.A") ||
+      !vm.count("vel.rasinski.file") 
+    )
+      error_macro("vel.rasinski.[Z_clb,Z_top,A] must be specified")
+    quantity<si::length, real_t> 
+      Z_clb = real_cast<real_t>(vm, "vel.rasinski.Z_clb") * si::metres,
+      Z_top = real_cast<real_t>(vm, "vel.rasinski.Z_top") * si::metres;
+    //quantity<velocity_times_length, real_t>
+    //  A = real_cast<real_t>(vm, "vel.rasinski.A") * si::metres * si::metres / si::seconds; 
+    return new vel_func_stream_rasinski<real_t>(grid, vm["vel.rasinski.file" ].as<string>(), 
+      Z_clb,  
+      Z_top, 
+      real_cast<real_t>(vm, "vel.rasinski.A") * si::kilograms / si::metres / si::seconds
+    );
   }
   else error_macro("unsupported velocity field type: " << veltype)
 }

@@ -37,7 +37,7 @@ class eqs_shallow_water : public eqs<real_t>
   private: struct params
   {
     quantity<si::length, real_t> h_unit;
-    quantity<velocity_times_length, real_t> q_unit;
+    quantity<multiply_typeof_helper<si::velocity, si::length>::type, real_t> q_unit;
     quantity<si::dimensionless, real_t> dHdxy_unit;
     int idx_h;
   };

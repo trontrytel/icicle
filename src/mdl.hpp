@@ -27,7 +27,7 @@ void mdl(const po::variables_map &vm, const string &cmdline)
   unique_ptr<adv<real_t> > advsch(opt_adv<real_t>(vm, grid.get()));
 
   // velocity field choice
-  unique_ptr<vel<real_t> > velocity(opt_vel<real_t>(vm, grid.get()));
+  unique_ptr<vel<real_t> > velocity(opt_vel<real_t>(vm, *grid));
 
   // initial condition
   unique_ptr<ini<real_t> > intcond(opt_ini<real_t>(vm, *grid));

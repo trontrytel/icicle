@@ -32,6 +32,8 @@ using blitz::toEnd;
 #include <boost/units/io.hpp>
 namespace si = boost::units::si;
 using boost::units::quantity;
+using boost::units::divide_typeof_helper;
+using boost::units::detail::get_value;
 
 #include "../../src/phc.hpp"
 
@@ -63,6 +65,12 @@ const size_t
   nt = 100;
 const quantity<si::time, real_t> 
   dt = 10 * si::seconds; 
+const quantity<si::length, real_t> 
+  X = real_t(nx) * dx, 
+  Z_clb = 950 * si::metres, 
+  Z_top = real_t(ny) * dy;
+const quantity<divide_typeof_helper<si::momentum, si::area>::type, real_t> 
+  A = 1 * si::kilograms / si::seconds / si::metres;
 
 // pressure profile derived by integrating the hydrostatic eq.
 // assuming constant theta, constant rv and R=R(rv) 
@@ -95,21 +103,26 @@ quantity<si::mass_density, real_t> rhod_todo(
 int main()
 {
   {
-    notice_macro("creating vel.nc ...")
-    NcFile nf("vel.nc", NcFile::newFile, NcFile::classic);
+    notice_macro("creating rho.nc ...")
+    NcFile nf("rho.nc", NcFile::newFile, NcFile::classic);
 
-    // dimensions
-    NcDim ndx = nf.addDim("X", nx+1); 
-    NcDim ndy = nf.addDim("Y", ny+1); 
-    NcDim ndz = nf.addDim("Z", 1); 
-
-    // dimension-annotating variables
-    NcVar nvx = nf.addVar("X", ncFloat, vector<NcDim>({ndx,ndy,ndz}));
-    NcVar nvy = nf.addVar("Y", ncFloat, vector<NcDim>({ndx,ndy,ndz}));
+    // dimensions and variables
+    NcDim ndy = nf.addDim("Y", 2 * ny+1); 
+    NcVar nvy = nf.addVar("Y", ncFloat, vector<NcDim>({ndy}));
+    NcVar nvrho = nf.addVar("rho", ncFloat, vector<NcDim>({ndy}));
   
-    // variables with velocity comonents
-    NcVar nvu = nf.addVar("u", ncFloat, vector<NcDim>({ndx,ndy,ndz}));
-    NcVar nvv = nf.addVar("v", ncFloat, vector<NcDim>({ndx,ndy,ndz}));
+    // dry air density at all needed levels
+    for (size_t j = 0; j < 2 * ny + 1; ++j) 
+    {
+      // calculating
+      quantity<si::length, real_t> z = real_t(.5 * j) * dy ;
+      quantity<si::pressure, real_t> p = p_hydrostatic(z, th_0, rt_0, real_t(0) * si::metres, p_0);
+      quantity<si::mass_density, real_t> rhod = rhod_todo(p, th_0, rt_0);
+
+      // writing to the netCDF
+      nvy.putVar(start({j}), z / si::metres);
+      nvrho.putVar(start({j}), rhod * si::cubic_metres / si::kilogram);
+    }
   }
   {
     notice_macro("creating ini.nc ...")
@@ -137,7 +150,7 @@ int main()
     {
       quantity<si::length, real_t> z = real_t(j + .5) * dy;
       quantity<si::pressure, real_t> p = p_hydrostatic(z, th_0, rt_0, real_t(0) * si::metres, p_0);
-      quantity<si::mass_density, real_t> rhod = rhod_todo(p, th_0, rt_0); // - phc::p_v<real_t>(p, rt_0)) / (phc::exner<real_t>(p, rt_0) * phc::R_d<real_t>() * th_0);
+      quantity<si::mass_density, real_t> rhod = rhod_todo(p, th_0, rt_0); 
       quantity<si::temperature, real_t> T = p / rhod / phc::R_d<real_t>();
       // theta^\star as a function of theta
       quantity<si::temperature, real_t> th = real_t(pow(
@@ -175,9 +188,8 @@ int main()
     << " --adv mpdata"
       << " --adv.mpdata.fct " << fct
       << " --adv.mpdata.iord " << iord
-    //<< " --vel netcdf"
-    //  << " --vel.netcdf.file vel.nc"
     << " --vel rasinski"
+      << " --vel.rasinski.file " << "rho.nc"
       << " --vel.rasinski.Z_clb " << real_t(.5) * z_inv / si::metres
       << " --vel.rasinski.Z_top " << z_inv
       << " --vel.rasinski.A " << 1000

@@ -18,7 +18,7 @@ class vel_func_test : public vel_func<real_t>
   private: quantity<si::velocity, real_t> vv;
 
   public: vel_func_test(
-    grd<real_t> *grid,
+    const grd<real_t> &grid,
     quantity<si::frequency, real_t> omega,
     quantity<si::length, real_t> x0,
     quantity<si::length, real_t> z0,

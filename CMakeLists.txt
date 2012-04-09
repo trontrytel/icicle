@@ -94,7 +94,7 @@ else()
   message(FATAL_ERROR "-DFLOAD=NO -DDOUBLE=NO -DLDBOULBE=NO and -DFLOAT128=NO may not be specified all at once!")
 endif() 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug") 
-  target_link_libraries(icicle "-lblitz")
+  target_link_libraries(icicle "-lblitz") # TODO: could be done with the "debug" keyword to target_link_libraries()
   # TODO: check if debugging actually works, if not suggest recompiling blitz with --enable-shared
 endif()
 ########################################################################

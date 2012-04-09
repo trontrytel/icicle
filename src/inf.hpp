@@ -18,7 +18,6 @@
 
 #  include <sys/utsname.h> // uname 
 #  include <unistd.h> // getlogin
-#  include <map>
 
 /// @brief a facility for gathering simulation info - timing, compiler configurration, etc
 class inf : root
