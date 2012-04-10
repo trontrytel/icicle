@@ -29,6 +29,7 @@ class vel_func_stream : public vel_func<real_t>
     const quantity<si::length, real_t> &z
   ) 
   {
+    assert(z >= 0 * si::metres);
     return rhomap[z];
   }
 
@@ -43,7 +44,7 @@ class vel_func_stream : public vel_func<real_t>
         real_t tmp;
         nf.getVar("Y").getVar(vector<size_t>({j}), &tmp);
         quantity<si::length, real_t> z = tmp * si::metres;
-        nf.getVar("Y").getVar(vector<size_t>({j}), &tmp);
+        nf.getVar("rho").getVar(vector<size_t>({j}), &tmp);
         quantity<si::mass_density, real_t> rho = tmp * si::kilograms / si::cubic_metres;
         rhomap[z] = rho;
       }

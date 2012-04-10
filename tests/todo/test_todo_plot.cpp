@@ -114,12 +114,12 @@ int main()
   for (size_t t = 0; t < nt; ++t)
   {
     notice_macro("generating frame at t=" << t)
-    gp << "set label 't = " << int(real_t(t) * dt_out / si::seconds) << "' at screen .5,.9" << endl;
+    gp << "set label 't = " << int(real_t(t) * dt_out / si::seconds) << " s' at screen .5,.9" << endl;
     gp << "set output 'tmp/test_" << zeropad(t) << ".png'" << endl;
     gp << "set multiplot layout 1,3" << endl;
 
     gp << "set title 'water vapour mixing ratio [g/kg]'" << endl;
-    gp << "set cbrange [0:110]" << endl;
+    gp << "set cbrange [5:10]" << endl;
     nf.getVar("rhod_rv").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp.data()); 
     tmp /= rhod;
     gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " using ($1*1000) with image notitle";
@@ -137,7 +137,7 @@ int main()
     gp.sendBinary(tmp);
 
     gp << "set title 'potential temperature [K]'" << endl;
-    gp << "set cbrange [300:1400]" << endl;
+    gp << "set cbrange [280:310]" << endl;
     nf.getVar("rhod_th").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp.data()); 
     tmp /= rhod;
     gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " with image notitle";
@@ -146,6 +146,7 @@ int main()
     gp.sendBinary(tmp);
 
     gp << "unset multiplot" << endl;
+    gp << "unset label 1" << endl;
   }
 
   system("convert -delay 10 tmp/test_*.png todo.gif");

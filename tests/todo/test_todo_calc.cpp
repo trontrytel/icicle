@@ -42,7 +42,7 @@ typedef float real_t;
 // simulation parameteters (the 8th WMO Cloud Modelling Workshop: Case 1    
 // by W.W.Grabowski: http://rap.ucar.edu/~gthompsn/workshop2012/case1/case1.pdf  
 const size_t 
-  nx = 150,                   // 75 
+  nx = 75,                   // 75 
   ny = 75;                    // 75 
 const quantity<si::length,real_t> 
   dx = 20 * si::metres,       // 20 m
@@ -55,22 +55,21 @@ const quantity<phc::mixing_ratio, real_t>
 const quantity<si::pressure, real_t> 
   p_0 = 101500 * si::pascals; // 1015 hPa
 
-// other parameters:
+// other parameters deduced from the Fortran code published at:
+// http://www.rap.ucar.edu/~gthompsn/workshop2012/case1/kinematic_wrain.vocals.v3.for
 const int 
   bits = 32,
   fct = 1,  
   iord = 2;  
-const size_t
-  nout = 50,
-  nt = 100;
 const quantity<si::time, real_t> 
-  dt = 10 * si::seconds; 
-const quantity<si::length, real_t> 
-  X = real_t(nx) * dx, 
-  Z_clb = 950 * si::metres, 
-  Z_top = real_t(ny) * dy;
+  t_max = 50 * si::seconds, // 4 * 3600
+  dt_out = real_t(50) * si::seconds; // 300
+const quantity<si::velocity, real_t>
+  w_max = real_t(.6) * si::metres / si::second; // TODO: check it!
+const quantity<si::mass_density, real_t>
+  rho_0 = 1 * si::kilograms / si::cubic_metres;
 const quantity<divide_typeof_helper<si::momentum, si::area>::type, real_t> 
-  A = 1 * si::kilograms / si::seconds / si::metres;
+  ampl = rho_0 * w_max * (real_t(nx) * dx) / real_t(4*atan(1));
 
 // pressure profile derived by integrating the hydrostatic eq.
 // assuming constant theta, constant rv and R=R(rv) 
@@ -154,8 +153,8 @@ int main()
       quantity<si::temperature, real_t> T = p / rhod / phc::R_d<real_t>();
       // theta^\star as a function of theta
       quantity<si::temperature, real_t> th = real_t(pow(
-        real_t(th_0 / T) * pow(T / si::kelvins, pow(phc::R_over_c_p<real_t>(rt_0),-1)), 
-        phc::R_over_c_p<real_t>(rt_0)
+        real_t(th_0 / T) * pow(T / si::kelvins, pow(phc::R_over_c_p<real_t>(rt_0) / phc::R_d_over_c_pd<real_t>(),-1)), 
+        phc::R_over_c_p<real_t>(rt_0) / phc::R_d_over_c_pd<real_t>()
       )) * si::kelvins;
 
       arr_z(j) = z / si::metres;
@@ -190,14 +189,12 @@ int main()
       << " --adv.mpdata.iord " << iord
     << " --vel rasinski"
       << " --vel.rasinski.file " << "rho.nc"
-      << " --vel.rasinski.Z_clb " << real_t(.5) * z_inv / si::metres
-      << " --vel.rasinski.Z_top " << z_inv
-      << " --vel.rasinski.A " << 1000
-    << " --nt " << nt 
-    << " --dt " << dt / si::seconds 
-    << " --nout " << nout
+      << " --vel.rasinski.A " << ampl
+    << " --t_max " << real_t(t_max / si::seconds)
+    << " --dt " << "auto" 
+    << " --dt_out " << real_t(dt_out / si::seconds)
     << " --out netcdf" 
     << " --out.netcdf.file out.nc"
-    << " --slv openmp --nsd 2";
+    << " --slv openmp --nsd 3";
   system(cmd.str().c_str());
 }

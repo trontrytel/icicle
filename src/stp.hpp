@@ -65,14 +65,18 @@ struct stp : root
     // Cx, Cy and Cz dimensions are not the same with Arakawa-C grid!
     //real_t cmax = max(sqrt(pow2(Cx) + pow2(Cy) + pow2(Cz))); // TODO: check if that's a correct way to calculate it?
     real_t cmax = max(abs(Cx)) + max(abs(Cy)) + max(abs(Cz));
+cerr << max(abs(Cx)) << " + " << max(abs(Cy)) << " + " << max(abs(Cz)) << endl;
 
     while (cmax * dt / si::seconds > advsch->courant_max()) //TODO ? some limit to this loop
     {  
       dt = dt_out / real_t(++nout);
     }
     if (cmax*dt/si::seconds < advsch->courant_min()) 
-      error_macro("failed to calculate a reasonable time step for t_max=" << t_max << " and dt_out=" << dt_out) 
-      //TODO print some suggestions for t_out
+      error_macro("failed to calculate a reasonable time step for" << endl
+        << "t_max=" << t_max << endl
+        << "dt_out=" << dt_out << endl
+        << "cmax = " << cmax
+      ) 
     if (!velocity->is_constant())  
       warning_macro("velocity field is not const -> calculated time step may change") 
     nt = t_max / dt;

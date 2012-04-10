@@ -25,9 +25,7 @@ inline void opt_vel_desc(po::options_description &desc)
     ("vel.uniform.w", po::value<string>()->default_value("0"), "velocity (Z) [m/s]")
 
     ("vel.rasinski.file", po::value<string>(), "netCDF filename (rho(z) profile)")
-    ("vel.rasinski.Z_clb", po::value<string>(), "cloud base height [m]")
-    ("vel.rasinski.Z_top", po::value<string>(), "cloud top height [m]")
-    ("vel.rasinski.A", po::value<string>(), "amplitude [m2/s]")
+    ("vel.rasinski.A", po::value<string>(), "amplitude [kg/m/s]")
 
     ("vel.test.omega", po::value<string>(), "frequency [1/s]")
     ("vel.test.v", po::value<string>()->default_value("0"), "Y velocity [m/s]");
@@ -58,21 +56,9 @@ vel<real_t> *opt_vel(const po::variables_map& vm, const grd<real_t> &grid)
   }
   else if (veltype == "rasinski")
   {
-    if (
-      !vm.count("vel.rasinski.Z_clb") || 
-      !vm.count("vel.rasinski.Z_top") || 
-      !vm.count("vel.rasinski.A") ||
-      !vm.count("vel.rasinski.file") 
-    )
-      error_macro("vel.rasinski.[Z_clb,Z_top,A] must be specified")
-    quantity<si::length, real_t> 
-      Z_clb = real_cast<real_t>(vm, "vel.rasinski.Z_clb") * si::metres,
-      Z_top = real_cast<real_t>(vm, "vel.rasinski.Z_top") * si::metres;
-    //quantity<velocity_times_length, real_t>
-    //  A = real_cast<real_t>(vm, "vel.rasinski.A") * si::metres * si::metres / si::seconds; 
+    if (!vm.count("vel.rasinski.A") || !vm.count("vel.rasinski.file"))
+      error_macro("vel.rasinski.[A,file] must be specified")
     return new vel_func_stream_rasinski<real_t>(grid, vm["vel.rasinski.file" ].as<string>(), 
-      Z_clb,  
-      Z_top, 
       real_cast<real_t>(vm, "vel.rasinski.A") * si::kilograms / si::metres / si::seconds
     );
   }
