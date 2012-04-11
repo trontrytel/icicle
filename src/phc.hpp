@@ -72,6 +72,12 @@ namespace phc
   declare_funct_macro auto c_p(quantity<mixing_ratio, real_t> r)
     decltype_return(mix(c_pd<real_t>(), c_pv<real_t>(), r))
 
+  // latent heat for constant c_p
+  declare_funct_macro quantity<divide_typeof_helper<si::energy, si::mass>::type , real_t> l_v(quantity<si::temperature, real_t> T)
+  {
+    return l_tri<real_t>() + (c_pv<real_t>() - c_pw<real_t>()) * (T - T_tri<real_t>());
+  }
+
   // saturation vapour pressure for water assuming constant c_p_v and c_p_w 
   // with constants taken at triple point
   // (solution to the Clausius-Clapeyron equation assuming rho_vapour << rho_liquid)

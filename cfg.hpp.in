@@ -28,5 +28,6 @@
 #cmakedefine USE_BOOST_THREAD 1
 #cmakedefine USE_BOOST_MPI 1
 #cmakedefine USE_BOOST_TIMER 1
+#cmakedefine USE_BOOST_ODEINT 1
 
 #endif

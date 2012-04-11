@@ -13,7 +13,7 @@
 #  include "eqs_shallow_water.hpp"
 #  include "eqs_isentropic.hpp"
 #  include "eqs_harmonic_oscillator.hpp"
-#  include "eqs_todo.hpp"
+#  include "eqs_todo_bulk.hpp"
 
 inline void opt_eqs_desc(po::options_description &desc)
 {
@@ -54,8 +54,8 @@ eqs<real_t> *opt_eqs(const po::variables_map& vm, const grd<real_t> &grid, const
     return new eqs_harmonic_oscillator<real_t>(
       real_cast<real_t>(vm, "eqs.harmonic_oscillator.omega") / si::seconds
     );
-  else if (initype == "todo")
-    return new eqs_todo<real_t>(grid);
+  else if (initype == "todo_bulk")
+    return new eqs_todo_bulk<real_t>(grid);
   else error_macro("unsupported equation system: " << initype)
 }
 

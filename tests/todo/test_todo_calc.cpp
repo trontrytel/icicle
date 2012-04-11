@@ -57,11 +57,11 @@ const quantity<si::pressure, real_t>
 // other parameters deduced from the Fortran code published at:
 // http://www.rap.ucar.edu/~gthompsn/workshop2012/case1/kinematic_wrain.vocals.v3.for
 const int 
-  bits = 32,
+  bits = 64,
   fct = 1,  
   iord = 2;  
 const quantity<si::time, real_t> 
-  t_max = 50 * si::seconds, // 4 * 3600
+  t_max = 3600 * si::seconds, // 4 * 3600
   dt_out = real_t(50) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = real_t(.6) * si::metres / si::second; // TODO: check it!
@@ -178,7 +178,7 @@ int main()
     << " --bits " << bits
     << " --ini netcdf"
     << " --ini.netcdf.file ini.nc"
-    << " --eqs todo"
+    << " --eqs todo_bulk"
     << " --grd.dx " << dx / si::metres
     << " --grd.nx " << nx
     << " --grd.dy " << dy / si::metres
@@ -194,6 +194,8 @@ int main()
     << " --dt_out " << real_t(dt_out / si::seconds)
     << " --out netcdf" 
     << " --out.netcdf.file out.nc"
-    << " --slv openmp --nsd 3";
+    << " --slv serial"
+//    << " --slv openmp --nsd 3"
+    ;
   system(cmd.str().c_str());
 }

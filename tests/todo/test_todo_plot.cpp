@@ -78,7 +78,6 @@ int main()
   string dxdy;
   {
     ostringstream tmp;
-    tmp << " flipy";
     tmp << " dx=" << dx/1000;
     tmp << " dy=" << dy/1000;
     tmp << " origin=(" << dx/2000 << "," << dy/2000 << ",0)";
@@ -139,7 +138,7 @@ int main()
     gp.sendBinary(tmp);
 
     gp << "set title 'potential temperature [K]'" << endl;
-    gp << "set cbrange [280:310]" << endl;
+    gp << "set cbrange [288:294]" << endl;
     nf.getVar("rhod_th").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp.data()); 
     tmp /= rhod;
     gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " with image notitle";

@@ -11,7 +11,7 @@ cmake_minimum_required(VERSION 2.6) # for simplified if-constructs
 
 # TODO: -fprofile-use, -fprofile-generate
 set(TMP "-std=c++0x") # C++11 (name understandable for pre-2011 compilers)
-set(TMP "${TMP} -Wfatal-errors") # stop on first error
+#set(TMP "${TMP} -Wfatal-errors") # stop on first error
 set(CMAKE_CXX_FLAGS_RELEASE "${TMP} -Ofast -DNDEBUG" CACHE STRING "Release options." FORCE)
 set(CMAKE_CXX_FLAGS_DEBUG "${TMP} -DBZ_DEBUG" CACHE STRING "Debug options." FORCE)
 unset(TMP)
@@ -329,6 +329,8 @@ else()
       ODE integration will not be available.
       (after installation delete CMakeCache.txt before running cmake)
     ")
+  else()
+    set(USE_BOOST_ODEINT ${Find_Boost_odeint})
   endif() 
 endif()
 icicle_option(ODEINT "ODE integration with Boost.odeint" "${Find_Boost_odeint}")

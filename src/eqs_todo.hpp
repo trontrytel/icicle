@@ -18,53 +18,17 @@ template <typename real_t>
 class eqs_todo : public eqs<real_t> 
 {
   // nested class (well... struct)
-  private: struct params
+  protected: struct params
   {
     quantity<si::mass_density, real_t> rho_unit;
     int idx_rhod, idx_rhod_rv, idx_rhod_th, idx_rhod_rl; // auxiliary variable indices
   };
 
   // private field
-  private: params par;
-
-  // TODO: should it be virtual? and place in another file???
-  // the saturation adjustment (aka ,,bulk'' microphysics)
-  public: void adjustments(
-    int n, // TODO: mo¿e jednak bez n...
-    const ptr_vector<mtx::arr<real_t>> &aux, 
-    vector<ptr_vector<mtx::arr<real_t>>> &psi
-  ) 
-  {
-    const mtx::arr<real_t> 
-      &rhod = aux[par.idx_rhod];
-    mtx::arr<real_t> 
-      &rhod_rv = psi[par.idx_rhod_rv][n],
-      &rhod_rl = psi[par.idx_rhod_rl][n],
-      &rhod_th = psi[par.idx_rhod_th][n];
-
-    for (int i = rhod.lbound(mtx::i); i <= rhod.ubound(mtx::i); ++i)
-      for (int j = rhod.lbound(mtx::j); j <= rhod.ubound(mtx::j); ++j)
-        for (int k = rhod.lbound(mtx::k); k <= rhod.ubound(mtx::k); ++k)
-        {
-          quantity<phc::mixing_ratio, real_t> 
-            r = rhod_rv(i,j,k) / rhod(i,j,k);
-          quantity<si::pressure, real_t> 
-            p = phc::p_1000<real_t>() * real_t(pow(
-              (rhod_th(i,j,k) * phc::R_d<real_t>() * si::kelvins * si::kilograms / si::cubic_metres) 
-                / phc::p_1000<real_t>() * (real_t(1) + r / phc::eps<real_t>()),
-              1 / (1 - phc::R_over_c_p(r))
-            ));
-          quantity<si::temperature, real_t> 
-            T = rhod_th(i,j,k) / rhod(i,j,k) * si::kelvins * phc::exner<real_t>(p, r);
-
-          rhod_rl(i,j,k) = rhod(i,j,k) * 0.25 * std::max(real_t(0), real_t(phc::r_vs<real_t>(T,p) - r));
-//          cerr << "RH(" << i << "," << j << "," << k << ")=" 
-//            << phc::r_vs<real_t>(T,p) / r << endl;
-        }
-  }
+  protected: params par;
 
   // ctor
-  public: eqs_todo(const grd<real_t> &grid)
+  public: eqs_todo(const grd<real_t> &grid, bool bulk)
   {
     par.rho_unit = 1 * si::kilograms / si::cubic_metres;
 
@@ -85,7 +49,7 @@ class eqs_todo : public eqs<real_t>
     par.idx_rhod_rv = this->sys.size() - 1;
 
     // only for bulk model (i.e. not for super droplets)
-    if (true) // TODO!
+    if (bulk) // TODO: make it an aux var for SDM?
     {
       this->sys.push_back(new struct eqs<real_t>::gte({
         "rhod_rl", "dry air density times liquid water mixing ratio (i.e. liquid water mass density)",
