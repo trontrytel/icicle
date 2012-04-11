@@ -78,8 +78,10 @@ int main()
   string dxdy;
   {
     ostringstream tmp;
-    tmp << "dx=" << dx/1000 << "dy=" << dy/1000 
-      << " origin=(" << dx/2000 << "," << dy/2000 << ",0)";
+    tmp << " flipy";
+    tmp << " dx=" << dx/1000;
+    tmp << " dy=" << dy/1000;
+    tmp << " origin=(" << dx/2000 << "," << dy/2000 << ",0)";
     dxdy = tmp.str();
   }
 

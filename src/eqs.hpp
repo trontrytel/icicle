@@ -225,7 +225,7 @@ class eqs
   virtual void adjustments(
     int n,
     const ptr_vector<mtx::arr<real_t>> &aux, 
-    const vector<ptr_vector<mtx::arr<real_t>>> &psi
+    vector<ptr_vector<mtx::arr<real_t>>> &psi
   ) {} // no default adjustments
 
 };

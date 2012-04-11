@@ -46,8 +46,7 @@ const size_t
   ny = 75;                    // 75 
 const quantity<si::length,real_t> 
   dx = 20 * si::metres,       // 20 m
-  dy = 20 * si::metres,       // 20 m
-  z_inv = real_t(ny) * dy;
+  dy = 20 * si::metres;       // 20 m
 const quantity<si::temperature, real_t>
   th_0 = 289 * si::kelvins;   // 289 K
 const quantity<phc::mixing_ratio, real_t>

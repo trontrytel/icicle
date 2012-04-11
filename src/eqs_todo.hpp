@@ -30,13 +30,14 @@ class eqs_todo : public eqs<real_t>
   // TODO: should it be virtual? and place in another file???
   // the saturation adjustment (aka ,,bulk'' microphysics)
   public: void adjustments(
-    int n,
+    int n, // TODO: mo¿e jednak bez n...
     const ptr_vector<mtx::arr<real_t>> &aux, 
-    const vector<ptr_vector<mtx::arr<real_t>>> &psi
+    vector<ptr_vector<mtx::arr<real_t>>> &psi
   ) 
   {
     const mtx::arr<real_t> 
-      &rhod = aux[par.idx_rhod],
+      &rhod = aux[par.idx_rhod];
+    mtx::arr<real_t> 
       &rhod_rv = psi[par.idx_rhod_rv][n],
       &rhod_rl = psi[par.idx_rhod_rl][n],
       &rhod_th = psi[par.idx_rhod_th][n];
@@ -56,8 +57,9 @@ class eqs_todo : public eqs<real_t>
           quantity<si::temperature, real_t> 
             T = rhod_th(i,j,k) / rhod(i,j,k) * si::kelvins * phc::exner<real_t>(p, r);
 
-          cerr << "RH(" << i << "," << j << "," << k << ")=" 
-            << phc::r_vs<real_t>(T,p) / r << endl;
+          rhod_rl(i,j,k) = rhod(i,j,k) * 0.25 * std::max(real_t(0), real_t(phc::r_vs<real_t>(T,p) - r));
+//          cerr << "RH(" << i << "," << j << "," << k << ")=" 
+//            << phc::r_vs<real_t>(T,p) / r << endl;
         }
   }
 
