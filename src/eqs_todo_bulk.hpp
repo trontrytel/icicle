@@ -25,10 +25,14 @@ class eqs_todo_bulk : public eqs_todo<real_t>
   // RHS of the ODE to be solved
   private: class rhs
   { 
-    private: real_t const *rhod;
-    public: void init(const real_t *ptr, const real_t rhod_th, const real_t rhod_rv) 
+    private: quantity<si::mass_density, real_t> rhod;
+    public: void init(
+      const quantity<si::mass_density, real_t> _rhod, 
+      const real_t rhod_th, 
+      const real_t rhod_rv
+    ) 
     { 
-      rhod = ptr; 
+      rhod = _rhod; 
       update(rhod_th, rhod_rv);
     }
 
@@ -37,7 +41,7 @@ class eqs_todo_bulk : public eqs_todo<real_t>
     public: quantity<si::temperature, real_t> T;
     private: void update(const real_t rhod_th, const real_t rhod_rv)
     {
-      r = rhod_rv / *rhod; 
+      r = rhod_rv / (rhod / si::kilograms * si::cubic_metres); 
 
       p = phc::p_1000<real_t>() * real_t(pow(
         (rhod_th * phc::R_d<real_t>() * si::kelvins * si::kilograms / si::cubic_metres) 
@@ -45,23 +49,30 @@ class eqs_todo_bulk : public eqs_todo<real_t>
         1 / (1 - phc::R_over_c_p(r))
       ));
 
-      T = rhod_th / *rhod * si::kelvins * phc::exner<real_t>(p, r);
+      T = rhod_th / (rhod / si::kilograms * si::cubic_metres) * si::kelvins * phc::exner<real_t>(p, r);
     }
 
     // F = d (rho_d * th) / d (rho_d * r) = rho_d ()
     public: void operator()(const real_t rhod_th, real_t &F, const real_t rhod_rv)
     {
       update(rhod_th, rhod_rv);
-      F = - rhod_th * (
+      F = - rhod_th / (rhod / si::kilograms * si::cubic_metres) * (
         phc::l_v<real_t>(T) / pow(1 + r, 2) / phc::c_p(r) / T
         /* + ... TODO */
       );
     }
   };
 
-  // state_type = value_type = deriv_type = time_type = real_t
-  typedef odeint::runge_kutta4<real_t, real_t, real_t, real_t, 
-    odeint::vector_space_algebra, odeint::default_operations, odeint::never_resizer> stepper;
+  // TODO: Boost units
+  typedef odeint::runge_kutta4<
+    real_t, // state_type
+    real_t, // value_type
+    real_t, // deriv_type
+    real_t, // time_type
+    odeint::vector_space_algebra, 
+    odeint::default_operations, 
+    odeint::never_resizer
+  > stepper;
 
   // the saturation adjustment (aka ,,bulk'' microphysics)
   public: void adjustments(
@@ -82,7 +93,6 @@ class eqs_todo_bulk : public eqs_todo<real_t>
       &rhod_th = psi[this->par.idx_rhod_th][n];
 
     stepper S; // TODO: in ctor (but thread safety!)
-    //observer O(rhod_th, rhod_rv, rhod_rl);
     rhs F;
 
     for (int k = rhod.lbound(mtx::k); k <= rhod.ubound(mtx::k); ++k)
@@ -90,19 +100,31 @@ class eqs_todo_bulk : public eqs_todo<real_t>
         for (int i = rhod.lbound(mtx::i); i <= rhod.ubound(mtx::i); ++i)
         {
 
-          F.init(&rhod(i,j,k), rhod_th(i,j,k), rhod_rv(i,j,k));
-          real_t eps = -.00001; // TODO!!!
+          F.init(
+            rhod(i,j,k) * si::kilograms / si::cubic_metres, 
+            rhod_th(i,j,k), 
+            rhod_rv(i,j,k)
+          );
+          real_t 
+            rho_eps = .0001, // TODO: as an option?
+            diff;
 
-// TODO: assert czy F.r jest równe r+eps?
           while (
-            //rhod_rl(i,j,k) > eps ||  // TODO: evaporation
-            rhod_rv(i,j,k) - eps > rhod(i,j,k) * phc::r_vs<real_t>(F.T, F.p)
+            // condensation if supersaturated
+            diff = (rhod_rv(i,j,k) - rhod(i,j,k) * phc::r_vs<real_t>(F.T, F.p)) > rho_eps 
+            || // or evaporation if subsaturated and in-cloud
+            (diff < 0 && rhod_rl(i,j,k) > rho_eps)  
           ) 
           {
-            S.do_step(boost::ref(F), rhod_th(i,j,k), rhod_rv(i,j,k), eps);
-            rhod_rl(i,j,k) -= eps;
-            rhod_rv(i,j,k) += eps;
+            real_t drho = - copysign(rho_eps, diff);
+cerr << "rho_rv - rho_rs = " << (rhod_rv(i,j,k) - rhod(i,j,k) * phc::r_vs<real_t>(F.T, F.p)) << endl;
+cerr << "drho = " << drho << endl;
+            S.do_step(boost::ref(F), rhod_th(i,j,k), rhod_rv(i,j,k), drho);
+            rhod_rl(i,j,k) -= drho;
+            rhod_rv(i,j,k) += drho;
           }
+          // hopefully true for RK4
+          assert(F.r == real_t(rhod_rv(i,j,k) / rhod(i,j,k)));
         }
 #  endif
   }
