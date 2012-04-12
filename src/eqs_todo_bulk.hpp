@@ -32,7 +32,7 @@ class eqs_todo_bulk : public eqs_todo<real_t>
       update(rhod_th, rhod_rv);
     }
 
-    public: quantity<phc::mixing_ratio, real_t> r;
+    public: quantity<phc::mixing_ratio, real_t> r; // TODO: nie! r jest przecie¿ zmienn±!!!
     public: quantity<si::pressure, real_t> p;
     public: quantity<si::temperature, real_t> T;
     private: void update(const real_t rhod_th, const real_t rhod_rv)
@@ -93,6 +93,7 @@ class eqs_todo_bulk : public eqs_todo<real_t>
           F.init(&rhod(i,j,k), rhod_th(i,j,k), rhod_rv(i,j,k));
           real_t eps = -.00001; // TODO!!!
 
+// TODO: assert czy F.r jest równe r+eps?
           while (
             //rhod_rl(i,j,k) > eps ||  // TODO: evaporation
             rhod_rv(i,j,k) - eps > rhod(i,j,k) * phc::r_vs<real_t>(F.T, F.p)
