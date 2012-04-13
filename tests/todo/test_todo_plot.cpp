@@ -106,6 +106,8 @@ int main()
   gp << "set yrange [" << 0 << ":" << ny * dy/1000 << "]" << endl;
 
   gp << "set contour base" << endl;
+  //gp << "set palette maxcolors 20" << endl;
+  gp << "set palette defined (0 0 0 0, 1 0 0 1, 3 0 1 0, 4 1 0 0, 6 1 1 1)" << endl;
   gp << "set nosurface" << endl;
   gp << "set cntrparam levels 1" << endl;
   gp << "set nokey" << endl;

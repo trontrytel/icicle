@@ -336,6 +336,11 @@ endif()
 icicle_option(ODEINT "ODE integration with Boost.odeint" "${Find_Boost_odeint}")
 #### </Boost.odeint> ###################################################
 
+#### icicle options ####################################################
+# TODO!
+# icicle_option(EQS_ISENTROPIC "..." "${???}")
+########################################################################
+
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug") 
   set(INFO_CXX_FLAGS "${CMAKE_CXX_FLAGS_DEBUG} ${CMAKE_CXX_FLAGS}")
 elseif("${CMAKE_BUILD_TYPE}" STREQUAL "Release")

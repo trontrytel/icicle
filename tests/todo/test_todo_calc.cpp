@@ -194,8 +194,8 @@ int main()
     << " --dt_out " << real_t(dt_out / si::seconds)
     << " --out netcdf" 
     << " --out.netcdf.file out.nc"
-    //<< " --slv serial"
-    << " --slv openmp --nsd 3"
+    << " --slv serial"
+    //<< " --slv openmp --nsd 3"
     ;
   system(cmd.str().c_str());
 }

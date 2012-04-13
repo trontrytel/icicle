@@ -42,7 +42,8 @@ namespace phc
   // molar masses
   declare_const_macro(M_d, 0.02896, si::kilograms / si::moles) // dry air
   declare_const_macro(M_v, 0.01802, si::kilograms / si::moles) // water vapour
-  derived_const_macro(eps, M_v<real_t>() / M_d<real_t>())
+  derived_const_macro(eps, M_v<real_t>() / M_d<real_t>()) // aka epsilon
+  derived_const_macro(ups, c_pd<real_t>() / c_pv<real_t>()) // aka upsilon
 
   // universal gas constant (i.e. the Boltzmann times the Avogadro constants)
   declare_const_macro(kaBoNA, 8.314472, si::joules / si::kelvins / si::moles)

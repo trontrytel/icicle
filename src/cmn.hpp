@@ -14,6 +14,7 @@
 #  include <cmath>
 using std::cos;
 using std::sin;
+using std::log;
 using std::isfinite;
 using std::copysign;
 #  include <iostream>

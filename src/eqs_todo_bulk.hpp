@@ -64,9 +64,15 @@ class eqs_todo_bulk : public eqs_todo<real_t>
     {
       update(rhod_th, rhod_rv);
       F = - rhod_th / rhod * (
-        phc::l_v<real_t>(T) / pow(1 + r, 2) / phc::c_p(r) / T
-        /* + ... TODO */
+        phc::l_v<real_t>(T) / pow(1 + r, 2) / phc::c_p(r) / T // the 'liquid water' term
+        //+ 
+        //log(p/phc::p_1000<real_t>()) * phc::R_d_over_c_pd<real_t>() * (1/phc::eps<real_t>() - 1/phc::ups<real_t>()) * pow(1+r/phc::ups<real_t>(),-2) // the 'virtual' term
       );
+//cerr << (
+//        log(p/phc::p_1000<real_t>()) * phc::R_d_over_c_pd<real_t>() * (1/phc::eps<real_t>() - 1/phc::ups<real_t>()) * pow(1+r/phc::ups<real_t>(),-2) // the 'virtual' term
+//) / (
+//        phc::l_v<real_t>(T) / pow(1 + r, 2) / phc::c_p(r) / T // the 'liquid water' term
+//) << endl;
     }
   };
 
@@ -112,20 +118,19 @@ class eqs_todo_bulk : public eqs_todo<real_t>
             rhod_th(i,j,k) * si::kilograms / si::cubic_metres * si::kelvins, 
             rhod_rv(i,j,k) * si::kilograms / si::cubic_metres
           );
-          real_t 
+          real_t // TODO: quantity<si::mass_density
             rho_eps = .00001, // TODO: as an option?
             diff;
 
+          // TODO: something more meaningfull than 2*rho_eps!!!
           while (
             // condensation if supersaturated
-            diff = (rhod_rv(i,j,k) - rhod(i,j,k) * phc::r_vs<real_t>(F.T, F.p)) > rho_eps 
-            || // or evaporation if subsaturated and in-cloud
-            (diff < 0 && rhod_rl(i,j,k) > rho_eps)  
+            (diff = rhod_rv(i,j,k) - rhod(i,j,k) * phc::r_vs<real_t>(F.T, F.p)) > 2*rho_eps 
+//            || // or evaporation if subsaturated and in-cloud
+//            (diff < -2*rho_eps && rhod_rl(i,j,k) > rho_eps)  // TODO: evaporation as an option?
           ) 
           {
             real_t drho = - copysign(rho_eps, diff);
-//cerr << "rho_rv - rho_rs = " << (rhod_rv(i,j,k) - rhod(i,j,k) * phc::r_vs<real_t>(F.T, F.p)) << endl;
-//cerr << "drho = " << drho << endl;
             quantity<multiply_typeof_helper<si::mass_density, si::temperature>::type, real_t> 
               tmp = rhod_th(i,j,k) * si::kilograms / si::cubic_metres * si::kelvins;
             S.do_step(
