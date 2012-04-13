@@ -12,24 +12,26 @@
 
 // STL includes
 #  include <cmath>
-#  include <iostream>
-#  include <string>
-#  include <vector>
-#  include <map>
-#  include <memory>
-using std::string;
-using std::vector;
-using std::ostringstream;
-using std::map;
-using std::unique_ptr;
-using std::cout;
-using std::cerr;
-using std::endl;
-using std::exception;
 using std::cos;
 using std::sin;
 using std::isfinite;
+using std::copysign;
+#  include <iostream>
+using std::cout;
+using std::cerr;
+using std::endl;
+#  include <string>
+using std::string;
+using std::ostringstream; // TODO: header?
+#  include <vector>
+using std::vector;
+#  include <map>
+using std::map;
 using std::pair;
+#  include <memory>
+using std::unique_ptr;
+#  include <exception>
+using std::exception;
 
 // the Lynton Appel's netCDF-4 C++ API (since netCDF 4.1.1)
 #    ifdef USE_BOOST_MPI 
