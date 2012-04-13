@@ -53,15 +53,11 @@ class eqs_todo_bulk : public eqs_todo<real_t>
     {
       update(rhod_th, rhod_rv);
       F = - rhod_th * (
-        phc::l_v<real_t>(T) / pow(1 + r, 2) / phc::c_p(r) / T
+        phc::l_v<real_t>(T) / real_t(pow(real_t(1) + r, 2)) / phc::c_p(r) / T
         /* + ... TODO */
       );
     }
   };
-
-  // state_type = value_type = deriv_type = time_type = real_t
-  typedef odeint::runge_kutta4<real_t, real_t, real_t, real_t, 
-    odeint::vector_space_algebra, odeint::default_operations, odeint::never_resizer> stepper;
 
   // the saturation adjustment (aka ,,bulk'' microphysics)
   public: void adjustments(
@@ -73,6 +69,10 @@ class eqs_todo_bulk : public eqs_todo<real_t>
 #  if !defined(USE_BOOST_ODEINT)
     error_macro("eqs_todo_bulk requires icicle to be compiled with Boost.odeint");
 #  else
+
+    // state_type = value_type = deriv_type = time_type = real_t
+    typedef odeint::runge_kutta4<real_t, real_t, real_t, real_t, 
+      odeint::vector_space_algebra, odeint::default_operations, odeint::never_resizer> stepper;
 
     const mtx::arr<real_t>
       &rhod = aux[this->par.idx_rhod];
