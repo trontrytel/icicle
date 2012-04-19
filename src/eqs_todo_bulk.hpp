@@ -131,6 +131,7 @@ class eqs_todo_bulk : public eqs_todo<real_t>
           ) 
           {
             real_t drho = - copysign(rho_eps, diff);
+            // theta is modified by do_step, and hence we cannot pass an expression and we need a temp var
             quantity<multiply_typeof_helper<si::mass_density, si::temperature>::type, real_t> 
               tmp = rhod_th(i,j,k) * si::kilograms / si::cubic_metres * si::kelvins;
             S.do_step(
