@@ -64,7 +64,7 @@ class eqs_todo_bulk : public eqs_todo<real_t>
     {
       update(rhod_th, rhod_rv);
       F = - rhod_th / rhod * (
-        phc::l_v<real_t>(T) / pow(1 + r, 2) / phc::c_p(r) / T
+        phc::l_v<real_t>(T) / real_t(pow(1 + r, 2)) / phc::c_p(r) / T
         /* + ... TODO */
       );
     }
