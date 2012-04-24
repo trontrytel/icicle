@@ -103,7 +103,7 @@ int main()
 
   notice_macro("setting-up plot parameters")
   Gnuplot gp;
-  gp << "set term png enhanced size 1200,800 font '/Library/Fonts/Arial.ttf'" << endl;
+  gp << "set term png enhanced size 1200,800" << endl;
   gp << "set view map" << endl;
   gp << "set xlabel 'X [km]'" << endl;
   gp << "set xrange [" << 0 << ":" << nx * dx/1000 << "]" << endl;
@@ -123,7 +123,7 @@ int main()
   for (size_t t = 0; t < 10/*nt*/; ++t) 
   {
     notice_macro("generating frame at t=" << t)
-    gp << "set label 't = " << int(real_t(t) * dt_out / si::seconds) << " s' at screen .48,.96 left font '/Library/Fonts/Arial.ttf,15'" << endl;
+    gp << "set label 't = " << int(real_t(t) * dt_out / si::seconds) << " s' at screen .48,.96 left" << endl;
     gp << "set output 'tmp/test_" << zeropad(t) << ".png'" << endl;
     gp << "set multiplot layout 2,3" << endl;
 
@@ -145,8 +145,8 @@ int main()
     gp.sendBinary(tmp);
     gp.sendBinary(tmp);
 
-    gp << "set label 'results obtained with icicle - a GPL-ed C++ MPDATA-based solver from University of Warsaw' at screen .98,.02 right font '/Library/Fonts/Arial.ttf,8'" << endl;
-    gp << "set label '8th International Cloud Modeling Workshop 2012: Case 1 (PRELIMINARY RESULTS!)' at screen .02,.02 left font '/Library/Fonts/Arial.ttf,8'" << endl;
+    gp << "set label 'results obtained with icicle - a GPL-ed C++ MPDATA-based solver from University of Warsaw' at screen .98,.02 right" << endl;
+    gp << "set label '8th International Cloud Modeling Workshop 2012: Case 1' at screen .02,.02 left" << endl;
 
     gp << "set title 'potential temperature [K]'" << endl;
     gp << "set cbrange [288:293]" << endl;
