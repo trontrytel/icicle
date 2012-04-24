@@ -36,7 +36,7 @@ class eqs_todo_bulk : public eqs_todo<real_t>
       update(rhod_th, rhod_rv);
     }
 
-    public: quantity<phc::mixing_ratio, real_t> r; // TODO: nie! r jest przecie¿ zmienn±!!!
+    public: quantity<phc::mixing_ratio, real_t> r; // TODO: nie! r jest przecieï¿½ zmiennï¿½!!!
     public: quantity<si::pressure, real_t> p;
     public: quantity<si::temperature, real_t> T;
     private: void update(
@@ -64,7 +64,7 @@ class eqs_todo_bulk : public eqs_todo<real_t>
     {
       update(rhod_th, rhod_rv);
       F = - rhod_th / rhod * (
-        phc::l_v<real_t>(T) / pow(1 + r, 2) / phc::c_p(r) / T // the 'liquid water' term
+        phc::l_v<real_t>(T) / real_t(pow(1 + r, 2)) / phc::c_p(r) / T // the 'liquid water' term
         //+ 
         //log(p/phc::p_1000<real_t>()) * phc::R_d_over_c_pd<real_t>() * (1/phc::eps<real_t>() - 1/phc::ups<real_t>()) * pow(1+r/phc::ups<real_t>(),-2) // the 'virtual' term
       );
@@ -131,6 +131,7 @@ class eqs_todo_bulk : public eqs_todo<real_t>
           ) 
           {
             real_t drho = - copysign(rho_eps, diff);
+            // theta is modified by do_step, and hence we cannot pass an expression and we need a temp var
             quantity<multiply_typeof_helper<si::mass_density, si::temperature>::type, real_t> 
               tmp = rhod_th(i,j,k) * si::kilograms / si::cubic_metres * si::kelvins;
             S.do_step(
