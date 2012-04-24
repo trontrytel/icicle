@@ -90,7 +90,7 @@ class adv_upstream : public adv<real_t>
     ///   F(\psi_l, \psi_r, U) = 0.5 \cdot (U + |U|) \cdot \psi_l + 0.5 \cdot (U - |U|) \cdot \psi_r 
     /// \f$ 
     /// eq. (3 a-d) in Smolarkiewicz & Margolin 1998 (J. Comp. Phys., 140, 459-480)
-    protected: mtx_expr_3arg_macro(mpdata_F, p1, p2, U,
+    public: mtx_expr_3arg_macro(mpdata_F, p1, p2, U,
       adv<real_t>::pospart(U) * p1 + adv<real_t>::negpart(U) * p2
     )
 

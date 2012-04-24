@@ -9,9 +9,11 @@
  */
 #ifndef EQS_HARMONIC_OSCILLATOR_HPP
 #  define EQS_HARMONIC_OSCILLATOR_HPP
+#  if defined(USE_EQS_HARMONIC_OSCILLATOR)
 
-#  include "cmn.hpp"
-#  include "eqs.hpp"
+
+#    include "cmn.hpp"
+#    include "eqs.hpp"
 
 /// @brief a minimalistic model of a harmonic oscillator 
 ///   (consult eq. 28 in Smolarkiewicz 2006, IJNMF)
@@ -63,4 +65,5 @@ class eqs_harmonic_oscillator : public eqs<real_t>
     this->sys.back().rhs_terms.push_back(new restoring_force(omega, -1, 0)); 
   }
 };
+#  endif
 #endif

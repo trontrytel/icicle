@@ -34,11 +34,18 @@ template <typename real_t>
 eqs<real_t> *opt_eqs(const po::variables_map& vm, const grd<real_t> &grid, const ini<real_t> &intcond)
 {
   string initype= vm.count("eqs") ? vm["eqs"].as<string>() : "<unspecified>";
+#  if defined(USE_EQS_SCALAR_ADVECTION)
   if (initype == "scalar_advection")
     return new eqs_scalar_advection<real_t>();
-  else if (initype == "shallow_water")
+  else 
+#  endif
+#  if defined(USE_EQS_SHALLOW_WATER)
+  if (initype == "shallow_water")
     return new eqs_shallow_water<real_t>(grid);
-  else if (initype == "isentropic")
+  else
+#  endif
+#  if defined(USE_EQS_ISENTROPIC)
+  if (initype == "isentropic")
   {
     if (!vm.count("eqs.isentropic.nlev")) error_macro("TODO")
     if (!vm.count("eqs.isentropic.abslev")) error_macro("TODO")
@@ -50,13 +57,21 @@ eqs<real_t> *opt_eqs(const po::variables_map& vm, const grd<real_t> &grid, const
       real_cast<real_t>(vm, "eqs.isentropic.absamp")
     );
   }
-  else if (initype == "harmonic_oscillator")
+  else
+#  endif
+#  if defined(USE_EQS_HARMONIC_OSCILLATOR)
+  if (initype == "harmonic_oscillator")
     return new eqs_harmonic_oscillator<real_t>(
       real_cast<real_t>(vm, "eqs.harmonic_oscillator.omega") / si::seconds
     );
-  else if (initype == "todo_bulk")
+  else 
+#  endif
+#  if defined(USE_EQS_TODO)
+  if (initype == "todo_bulk")
     return new eqs_todo_bulk<real_t>(grid);
-  else error_macro("unsupported equation system: " << initype)
+  else 
+#  endif
+  error_macro("unsupported equation system: " << initype)
 }
 
 #endif

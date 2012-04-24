@@ -139,11 +139,11 @@ int main()
     gp.sendBinary(tmp);
     gp.sendBinary(tmp);
 
-    gp << "set title 'potential temperature [K]'" << endl;
-    gp << "set cbrange [288:294]" << endl;
-    nf.getVar("rhod_th").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp.data()); 
+    gp << "set title 'rain water mixing ratio [g/kg]'" << endl;
+    gp << "set cbrange [-.05:.05]" << endl;
+    nf.getVar("rhod_rr").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp.data()); 
     tmp /= rhod;
-    gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " with image notitle";
+    gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " using ($1*1000) with image notitle";
     gp << ",'-' binary" << gp.binfmt(tmp) << dxdy << " ps 0 notitle" << endl;
     gp.sendBinary(tmp);
     gp.sendBinary(tmp);
@@ -156,3 +156,4 @@ int main()
   system("rm -rf tmp/test_*.png");
   notice_macro("done.")
 }
+

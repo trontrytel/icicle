@@ -61,8 +61,8 @@ const int
   fct = 0,  
   iord = 2;  
 const quantity<si::time, real_t> 
-  t_max = 3600 * si::seconds, // 4 * 3600
-  dt_out = real_t(50) * si::seconds; // 300
+  t_max = 1800 * si::seconds, // 4 * 3600
+  dt_out = real_t(10) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = real_t(.6) * si::metres / si::second; // TODO: check it!
 const quantity<si::mass_density, real_t>
@@ -137,13 +137,15 @@ int main()
     // advected fields
     NcVar nvrhod_rv = nf.addVar("rhod_rv", ncFloat, vector<NcDim>({ndx,ndy,ndz}));
     NcVar nvrhod_rl = nf.addVar("rhod_rl", ncFloat, vector<NcDim>({ndx,ndy,ndz}));
+    NcVar nvrhod_rr = nf.addVar("rhod_rr", ncFloat, vector<NcDim>({ndx,ndy,ndz}));
     NcVar nvrhod_th = nf.addVar("rhod_th", ncFloat, vector<NcDim>({ndx,ndy,ndz}));
 
     // auxiliary fields
     NcVar nvrhod = nf.addVar("rhod", ncFloat, vector<NcDim>({ndx,ndy,ndz}));
 
-    // initial values: (assuming no liquid water -> to be adjusted by the model)
-    Array<real_t, 1> arr_rhod(ny), arr_z(ny), arr_rhod_rl(ny), arr_rhod_rv(ny), arr_rhod_th(ny);
+    // initial values: (assuming no liquid and rain water -> to be adjusted by the model)
+    Array<real_t, 1> arr_rhod(ny), arr_z(ny), arr_rhod_rl(ny), 
+                     arr_rhod_rv(ny), arr_rhod_rr(ny), arr_rhod_th(ny);
     for (int j = 0; j < ny; ++j) 
     {
       quantity<si::length, real_t> z = real_t(j + .5) * dy;
@@ -159,6 +161,7 @@ int main()
       arr_z(j) = z / si::metres;
       arr_rhod(j) = rhod / si::kilograms * si::cubic_metres;
       arr_rhod_rl(j) = 0; // to be adjusted by the model
+      arr_rhod_rr(j) = 0; // to be adjusted by the model
       arr_rhod_rv(j) = arr_rhod(j) * rt_0;
       arr_rhod_th(j) = arr_rhod(j) * th / si::kelvins;
     }
@@ -168,6 +171,7 @@ int main()
     nvrhod.putVar(arr_rhod.data());
     nvrhod_rv.putVar(arr_rhod_rv.data());
     nvrhod_rl.putVar(arr_rhod_rl.data());
+    nvrhod_rr.putVar(arr_rhod_rr.data());
     nvrhod_th.putVar(arr_rhod_th.data());
   }
   

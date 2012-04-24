@@ -36,6 +36,7 @@ class vel_func_stream : public vel_func<real_t>
   public: vel_func_stream(const grd<real_t> &grid, const string &filename)
     : vel_func<real_t>(grid)
   { 
+    // TODO: and what about USE_NETCDF=OFF !!!!
     try 
     {   
       NcFile nf(filename, NcFile::read);

@@ -119,6 +119,19 @@ namespace phc
   {
     return p * r / (r + eps<real_t>());
   }
+
+  // Kessler/Beard terminal velocity
+  declare_const_macro(vterm_A, 36.34, si::metre_per_second) 
+  declare_const_macro(vterm_B, 1e-3, si::cubic_metres / si::kilograms) 
+  declare_funct_macro quantity<si::velocity, real_t> vterm(
+    quantity<si::mass_density, real_t> rho_r, 
+    quantity<si::mass_density, real_t> rho_d,
+    quantity<si::mass_density, real_t> rho_d0
+  )
+  {
+// TODO: separate version for rhod=rhod(z)...
+    return vterm_A<real_t>() * real_t(pow(rho_r * vterm_B<real_t>(), .1346) * sqrt(rho_d0 / rho_d));
+  }
 };
 
 #  undef decltype_return
