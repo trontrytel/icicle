@@ -126,8 +126,8 @@ class eqs_todo_bulk : public eqs_todo<real_t>
           while (
             // condensation if supersaturated
             (diff = rhod_rv(i,j,k) - rhod(i,j,k) * phc::r_vs<real_t>(F.T, F.p)) > 2*rho_eps 
-//            || // or evaporation if subsaturated and in-cloud
-//            (diff < -2*rho_eps && rhod_rl(i,j,k) > rho_eps)  // TODO: evaporation as an option?
+            || // or evaporation if subsaturated and in-cloud
+            (diff < -2*rho_eps && rhod_rl(i,j,k) > rho_eps)  // TODO: evaporation as an option?
           ) 
           {
             real_t drho = - copysign(rho_eps, diff);
