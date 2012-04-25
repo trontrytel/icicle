@@ -120,7 +120,7 @@ int main()
 
   system("mkdir -p tmp");
 
-  for (size_t t = 0; t < 10/*nt*/; ++t) 
+  for (size_t t = 0; t < nt; ++t) 
   {
     notice_macro("generating frame at t=" << t)
     gp << "set label 't = " << int(real_t(t) * dt_out / si::seconds) << " s' at screen .48,.96 left" << endl;
@@ -146,6 +146,15 @@ int main()
     gp << endl;
     gp.sendBinary(tmp);
     //gp.sendBinary(tmp);
+
+    gp << "set title 'rain water mixing ratio [g/kg]'" << endl;
+    gp << "set cbrange [-.05:.05]" << endl;
+    nf.getVar("rhod_rr").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp.data()); 
+    tmp /= rhod;
+    gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " using ($1*1000) with image notitle";
+    gp << ",'-' binary" << gp.binfmt(tmp) << dxdy << " ps 0 notitle" << endl;
+    gp.sendBinary(tmp);
+    gp.sendBinary(tmp);
 
     gp << "set title 'potential temperature [K]'" << endl;
     gp << "set cbrange [288:293]" << endl;
