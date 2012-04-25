@@ -7,13 +7,12 @@
  */
 #ifndef EQS_TODO_HPP
 #  define EQS_TODO_HPP
-#  if defined(USE_EQS_TODO)
 
-#    include "cmn.hpp"
-#    include "eqs.hpp"
-#    include "rhs_explicit.hpp"
-#    include "grd.hpp"
-#    include "phc.hpp"
+#  include "cmn.hpp"
+#  include "eqs.hpp"
+#  include "rhs_explicit.hpp"
+#  include "grd.hpp"
+#  include "phc.hpp"
 
 template <typename real_t>
 class eqs_todo : public eqs<real_t> 
@@ -243,5 +242,4 @@ class eqs_todo : public eqs<real_t>
     par.idx_rhod_th = this->sys.size() - 1;
   }
 };
-#  endif
 #endif

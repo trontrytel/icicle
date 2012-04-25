@@ -8,10 +8,9 @@
  */
 #ifndef EQS_SCALAR_ADVECTION_HPP
 #  define EQS_SCALAR_ADVECTION_HPP
-#  if defined(USE_EQS_SCALAR_ADVECTION)
 
-#    include "cmn.hpp" // root class, error reporting
-#    include "eqs.hpp"
+#  include "cmn.hpp" // root class, error reporting
+#  include "eqs.hpp"
 
 /// @brief the simplest equation system consisting of a single homogeneous transport equation
 template <typename real_t>
@@ -25,5 +24,4 @@ class eqs_scalar_advection : public eqs<real_t>
     }));
   }
 };
-#  endif
 #endif

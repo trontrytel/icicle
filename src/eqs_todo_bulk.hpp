@@ -120,31 +120,46 @@ class eqs_todo_bulk : public eqs_todo<real_t>
             rhod_rv(i,j,k) * si::kilograms / si::cubic_metres
           );
           real_t // TODO: quantity<si::mass_density
-            rho_eps = .00001, // TODO: as an option?
-            diff;
+            rho_eps = .00002, // TODO: as an option?
+            vapour_excess;
+          real_t // TODO: quantity<si::mass_density
+            drho_rr_max = .01; //TODO!
+          bool incloud;
 
           // TODO: something more meaningfull than 2*rho_eps!!!
-          while (
-            // condensation if supersaturated
-            (diff = rhod_rv(i,j,k) - rhod(i,j,k) * phc::r_vs<real_t>(F.T, F.p)) > 2*rho_eps 
-            || // or evaporation if subsaturated and in-cloud
-            (diff < -2*rho_eps && rhod_rl(i,j,k) > rho_eps)  // TODO: evaporation as an option?
+          while ( 
+            // condensation of cloud water if supersaturated
+            (vapour_excess = rhod_rv(i,j,k) - rhod(i,j,k) * phc::r_vs<real_t>(F.T, F.p)) > rho_eps 
+            || // or ...
+            (vapour_excess < -rho_eps && ( // if subsaturated
+              (incloud = (rhod_rl(i,j,k) > 0)) || // cloud evaporation if in cloud
+              rhod_rr(i,j,k) > 0 // or rain evaportation if in rain shaft (and out-of-cloud)
+            ))  
           ) 
           {
-            real_t drho = - copysign(rho_eps, diff);
-            // theta is modified by do_step, and hence we cannot pass an expression and we need a temp var
+            real_t drho = - copysign(.5 * rho_eps, vapour_excess);
+            if (drho > 0) drho = std::min(incloud ? rhod_rl(i,j,k) : rhod_rr(i,j,k), drho); // preventing negative mixing ratios
+cerr << "rhod_rl=" << rhod_rl(i,j,k) << ", rhod_rr=" << rhod_rr(i,j,k) << ", drho=" << drho << endl;
+            // theta is modified by do_step, and hence we cannot pass an expression and we need a temp. var.
             quantity<multiply_typeof_helper<si::mass_density, si::temperature>::type, real_t> 
               tmp = rhod_th(i,j,k) * si::kilograms / si::cubic_metres * si::kelvins;
+            // integrating the First Law for moist air
             S.do_step(
               boost::ref(F), 
               tmp,
               rhod_rv(i,j,k) * si::kilograms / si::cubic_metres, 
               drho           * si::kilograms / si::cubic_metres
             );
-            // TODO: these could be done just once!
+            // latent heat source/sink due to ...
             rhod_th(i,j,k) = tmp / (si::kilograms / si::cubic_metres * si::kelvins); 
+            // ... condensation/evaporation of ...
             rhod_rv(i,j,k) += drho;
-            rhod_rl(i,j,k) -= drho;
+            if (incloud) rhod_rl(i,j,k) -= drho; // cloud water 
+            else // or rain water
+            {
+              rhod_rr(i,j,k) -= drho;
+              if ((drho_rr_max -= drho) < 0) break; // but not more than Kessler allows
+            }
           }
           // hopefully true for RK4
           assert(F.r == real_t(rhod_rv(i,j,k) / rhod(i,j,k)));
