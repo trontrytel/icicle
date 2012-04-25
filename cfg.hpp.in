@@ -32,10 +32,4 @@
 #cmakedefine USE_BOOST_TIMER 1
 #cmakedefine USE_BOOST_ODEINT 1
 
-#cmakedefine USE_EQS_SCALAR_ADVECTION 1
-#cmakedefine USE_EQS_SHALLOW_WATER 1
-#cmakedefine USE_EQS_ISENTROPIC 1
-#cmakedefine USE_EQS_HARMONIC_OSCILLATOR 1
-#cmakedefine USE_EQS_TODO 1
-
 #endif

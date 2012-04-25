@@ -158,7 +158,7 @@ int main()
     //gp.sendBinary(th);
 
     gp << "set title 'RH [%]'" << endl;
-    gp << "set cbrange [98:102]" << endl;
+    gp << "set cbrange [50:105]" << endl;
     for (int i=0; i < nx; ++i)
     {
       for (int j=0; j < ny; ++j)
