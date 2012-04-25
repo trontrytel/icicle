@@ -132,30 +132,30 @@ int main()
     nf.getVar("rhod_rv").getVar(start({t,0,0,0}), count({1,nx,ny,1}), rv.data()); 
     rv /= rhod;
     gp << "splot '-' binary" << gp.binfmt(rv) << dxdy << " using ($1*1000) with image notitle";
-    gp << ",'-' binary" << gp.binfmt(rv) << dxdy << " ps 0 notitle" << endl;
+    //gp << ",'-' binary" << gp.binfmt(rv) << dxdy << " ps 0 notitle";
+    gp << endl;
     gp.sendBinary(rv);
-    gp.sendBinary(rv);
+    //gp.sendBinary(rv);
 
     gp << "set title 'liquid water mixing ratio [g/kg]'" << endl;
     gp << "set cbrange [0:1]" << endl;
     nf.getVar("rhod_rl").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp.data()); 
     tmp /= rhod;
     gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " using ($1*1000) with image notitle";
-    gp << ",'-' binary" << gp.binfmt(tmp) << dxdy << " ps 0 notitle" << endl;
+    //gp << ",'-' binary" << gp.binfmt(tmp) << dxdy << " ps 0 notitle";
+    gp << endl;
     gp.sendBinary(tmp);
-    gp.sendBinary(tmp);
-
-    gp << "set label 'results obtained with icicle - a GPL-ed C++ MPDATA-based solver from University of Warsaw' at screen .98,.02 right" << endl;
-    gp << "set label '8th International Cloud Modeling Workshop 2012: Case 1' at screen .02,.02 left" << endl;
+    //gp.sendBinary(tmp);
 
     gp << "set title 'potential temperature [K]'" << endl;
     gp << "set cbrange [288:293]" << endl;
     nf.getVar("rhod_th").getVar(start({t,0,0,0}), count({1,nx,ny,1}), th.data()); 
     th /= rhod;
     gp << "splot '-' binary" << gp.binfmt(th) << dxdy << " with image notitle";
-    gp << ",'-' binary" << gp.binfmt(th) << dxdy << " ps 0 notitle" << endl;
+    //gp << ",'-' binary" << gp.binfmt(th) << dxdy << " ps 0 notitle";
+    gp << endl;
     gp.sendBinary(th);
-    gp.sendBinary(th);
+    //gp.sendBinary(th);
 
     gp << "set title 'RH [%]'" << endl;
     gp << "set cbrange [98:102]" << endl;
@@ -180,9 +180,21 @@ int main()
       }
     }
     gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " using ($1*100) with image notitle";
-    gp << ",'-' binary" << gp.binfmt(tmp) << dxdy << " ps 0 notitle" << endl;
+    gp << endl;
     gp.sendBinary(tmp);
+
+    gp << "set label 'results obtained with icicle - a GPL-ed C++ MPDATA-based solver from University of Warsaw' at screen .98,.02 right" << endl;
+    gp << "set label '8th International Cloud Modeling Workshop 2012: Case 1' at screen .02,.02 left" << endl;
+
+    gp << "set title 'rain water mixing ratio [g/kg]'" << endl;
+    gp << "set cbrange [-.05:.05]" << endl;
+    nf.getVar("rhod_rr").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp.data()); 
+    tmp /= rhod;
+    gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " using ($1*1000) with image notitle";
+    //gp << ",'-' binary" << gp.binfmt(tmp) << dxdy << " ps 0 notitle";
+    gp << endl;
     gp.sendBinary(tmp);
+    //gp.sendBinary(tmp);
 
     gp << "unset label" << endl;
     gp << "unset multiplot" << endl;
@@ -192,3 +204,4 @@ int main()
   system("rm -rf tmp/test_*.png");
   notice_macro("done.")
 }
+

@@ -103,6 +103,7 @@ class eqs_todo_bulk : public eqs_todo<real_t>
     mtx::arr<real_t>
       &rhod_rv = psi[this->par.idx_rhod_rv][n],
       &rhod_rl = psi[this->par.idx_rhod_rl][n],
+      &rhod_rr = psi[this->par.idx_rhod_rr][n],
       &rhod_th = psi[this->par.idx_rhod_th][n];
 
     stepper S; // TODO: in ctor (but thread safety!)
@@ -142,8 +143,8 @@ class eqs_todo_bulk : public eqs_todo<real_t>
             );
             // TODO: these could be done just once!
             rhod_th(i,j,k) = tmp / (si::kilograms / si::cubic_metres * si::kelvins); 
-            rhod_rl(i,j,k) -= drho;
             rhod_rv(i,j,k) += drho;
+            rhod_rl(i,j,k) -= drho;
           }
           // hopefully true for RK4
           assert(F.r == real_t(rhod_rv(i,j,k) / rhod(i,j,k)));

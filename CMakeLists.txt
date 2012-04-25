@@ -99,6 +99,24 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
 endif()
 ########################################################################
 
+#### USE_EQS_* #########################################################
+if (NOT "${EQS_ISENTROPIC}" STREQUAL "NO")
+  set(USE_EQS_ISENTROPIC TRUE)
+endif()
+if (NOT "${EQS_HARMONIC_OSCILLATOR}" STREQUAL "NO")
+  set(USE_EQS_HARMONIC_OSCILLATOR TRUE)
+endif()
+if (NOT "${EQS_SHALLOW_WATER}" STREQUAL "NO")
+  set(USE_EQS_SHALLOW_WATER TRUE)
+endif()
+if (NOT "${EQS_SCALAR_ADVECTION}" STREQUAL "NO")
+  set(USE_EQS_SCALAR_ADVECTION TRUE)
+endif()
+if (NOT "${EQS_TODO}" STREQUAL "NO")
+  set(USE_EQS_TODO TRUE)
+endif()
+########################################################################
+
 #### <Boost.units> (mandatory) #########################################
 check_cxx_source_compiles(
   "#include <boost/units/systems/si.hpp>\n int main() {}" 

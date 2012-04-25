@@ -8,12 +8,13 @@
  */
 #ifndef EQS_SHALLOW_WATER_HPP
 #  define EQS_SHALLOW_WATER_HPP
+#  if defined(USE_EQS_SHALLOW_WATER)
 
-#  include "cmn.hpp"
-#  include "eqs.hpp"
-#  include "rhs_explicit.hpp"
-#  include "grd.hpp"
-#  include "phc.hpp"
+#    include "cmn.hpp"
+#    include "eqs.hpp"
+#    include "rhs_explicit.hpp"
+#    include "grd.hpp"
+#    include "phc.hpp"
 
 /** @brief the 2D shallow-water equations system
  *
@@ -162,4 +163,5 @@ class eqs_shallow_water : public eqs<real_t>
     this->init_maps();
   }
 };
+#  endif
 #endif

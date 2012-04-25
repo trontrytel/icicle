@@ -9,12 +9,13 @@
  */
 #ifndef EQS_ISENTROPIC_HPP
 #  define EQS_ISENTROPIC_HPP
+#  if defined(USE_EQS_ISENTROPIC)
 
-#  include "cmn.hpp"
-#  include "eqs.hpp"
-#  include "rhs_implicit.hpp"
-#  include "grd.hpp"
-#  include "phc.hpp"
+#    include "cmn.hpp"
+#    include "eqs.hpp"
+#    include "rhs_implicit.hpp"
+#    include "grd.hpp"
+#    include "phc.hpp"
 
 /// @brief the 3D isentropic equations system
 template <typename real_t>
@@ -267,4 +268,5 @@ class eqs_isentropic : public eqs<real_t>
     this->init_maps();
   }
 };
+#  endif
 #endif
