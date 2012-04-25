@@ -23,9 +23,12 @@ using std::cerr;
 using std::ostringstream;
 
 #include <boost/units/systems/si.hpp>
+#include <boost/units/cmath.hpp>
 #include <boost/units/io.hpp>
 namespace si = boost::units::si;
 using boost::units::quantity;
+using boost::units::divide_typeof_helper; // TODO: to powinno byæ te¿ inkludowane w phc.hpp
+using boost::units::pow;
 
 #include <blitz/array.h>
 using blitz::Array;
@@ -33,6 +36,8 @@ using blitz::Range;
 
 #define GNUPLOT_ENABLE_BLITZ
 #include <gnuplot-iostream/gnuplot-iostream.h>
+
+#include "../../src/phc.hpp"
 
 #define notice_macro(msg) { cerr << msg << endl; }
 typedef float real_t;
@@ -85,7 +90,7 @@ int main()
   }
 
   notice_macro("allocating temp storage space")
-  Array<real_t,2> tmp(nx, ny), rhod(nx, ny);
+  Array<real_t,2> tmp(nx, ny), rhod(nx, ny), rv(nx,ny), th(nx,ny);
   {
     NcFile nfini("ini.nc", NcFile::read);
     for (int i = 0; i < nx; ++i)
@@ -98,7 +103,7 @@ int main()
 
   notice_macro("setting-up plot parameters")
   Gnuplot gp;
-  gp << "set term png enhanced size 1200,400" << endl;
+  gp << "set term png enhanced size 1200,800" << endl;
   gp << "set view map" << endl;
   gp << "set xlabel 'X [km]'" << endl;
   gp << "set xrange [" << 0 << ":" << nx * dx/1000 << "]" << endl;
@@ -106,29 +111,30 @@ int main()
   gp << "set yrange [" << 0 << ":" << ny * dy/1000 << "]" << endl;
 
   gp << "set contour base" << endl;
-  //gp << "set palette maxcolors 20" << endl;
-  gp << "set palette defined (0 0 0 0, 1 0 0 1, 3 0 1 0, 4 1 0 0, 6 1 1 1)" << endl;
   gp << "set nosurface" << endl;
-  gp << "set cntrparam levels 1" << endl;
+  gp << "set cntrparam levels 0" << endl;
   gp << "set nokey" << endl;
+
+  // progressive-rock connoisseur palette ;)
+  gp << "set palette defined (0 '#000000', 1 '#993399', 2 '#00CCFF', 3 '#66CC00', 4 '#FFFF00', 5 '#FC8727', 6 '#FD0000')" << endl; 
 
   system("mkdir -p tmp");
 
-  for (size_t t = 0; t < nt; ++t)
+  for (size_t t = 0; t < nt; ++t) 
   {
     notice_macro("generating frame at t=" << t)
-    gp << "set label 't = " << int(real_t(t) * dt_out / si::seconds) << " s' at screen .5,.9" << endl;
+    gp << "set label 't = " << int(real_t(t) * dt_out / si::seconds) << " s' at screen .48,.96 left" << endl;
     gp << "set output 'tmp/test_" << zeropad(t) << ".png'" << endl;
-    gp << "set multiplot layout 1,3" << endl;
+    gp << "set multiplot layout 2,3" << endl;
 
     gp << "set title 'water vapour mixing ratio [g/kg]'" << endl;
-    gp << "set cbrange [5:10]" << endl;
-    nf.getVar("rhod_rv").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp.data()); 
-    tmp /= rhod;
-    gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " using ($1*1000) with image notitle";
-    gp << ",'-' binary" << gp.binfmt(tmp) << dxdy << " ps 0 notitle" << endl;
-    gp.sendBinary(tmp);
-    gp.sendBinary(tmp);
+    gp << "set cbrange [6:8]" << endl;
+    nf.getVar("rhod_rv").getVar(start({t,0,0,0}), count({1,nx,ny,1}), rv.data()); 
+    rv /= rhod;
+    gp << "splot '-' binary" << gp.binfmt(rv) << dxdy << " using ($1*1000) with image notitle";
+    gp << ",'-' binary" << gp.binfmt(rv) << dxdy << " ps 0 notitle" << endl;
+    gp.sendBinary(rv);
+    gp.sendBinary(rv);
 
     gp << "set title 'liquid water mixing ratio [g/kg]'" << endl;
     gp << "set cbrange [0:1]" << endl;
@@ -139,6 +145,9 @@ int main()
     gp.sendBinary(tmp);
     gp.sendBinary(tmp);
 
+    gp << "set label 'results obtained with icicle - a GPL-ed C++ MPDATA-based solver from University of Warsaw' at screen .98,.02 right" << endl;
+    gp << "set label '8th International Cloud Modeling Workshop 2012: Case 1' at screen .02,.02 left" << endl;
+
     gp << "set title 'rain water mixing ratio [g/kg]'" << endl;
     gp << "set cbrange [-.05:.05]" << endl;
     nf.getVar("rhod_rr").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp.data()); 
@@ -148,8 +157,44 @@ int main()
     gp.sendBinary(tmp);
     gp.sendBinary(tmp);
 
+    gp << "set title 'potential temperature [K]'" << endl;
+    gp << "set cbrange [288:293]" << endl;
+    nf.getVar("rhod_th").getVar(start({t,0,0,0}), count({1,nx,ny,1}), th.data()); 
+    th /= rhod;
+    gp << "splot '-' binary" << gp.binfmt(th) << dxdy << " with image notitle";
+    gp << ",'-' binary" << gp.binfmt(th) << dxdy << " ps 0 notitle" << endl;
+    gp.sendBinary(th);
+    gp.sendBinary(th);
+
+    gp << "set title 'RH [%]'" << endl;
+    gp << "set cbrange [98:102]" << endl;
+    for (int i=0; i < nx; ++i)
+    {
+      for (int j=0; j < ny; ++j)
+      {
+        quantity<si::temperature, real_t> T;  
+        quantity<si::pressure, real_t> p;  
+        quantity<si::dimensionless, real_t> r = rv(i,j);
+
+        // <TODO> code repeated from eqs_todo_bulk!!!
+        p = phc::p_1000<real_t>() * real_t(pow(
+          (rhod(i,j) * si::kilograms / si::cubic_metres * th(i,j) * si::kelvins * phc::R_d<real_t>()) 
+            / phc::p_1000<real_t>() * (real_t(1) + r / phc::eps<real_t>()),
+          real_t(1) / (real_t(1) - phc::R_over_c_p(r))
+        )); 
+        T = th(i,j) * si::kelvins * phc::exner<real_t>(p, r); 
+        // </TODO>
+
+        tmp(i,j) = r / phc::r_vs<real_t>(T, p);
+      }
+    }
+    gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " using ($1*100) with image notitle";
+    gp << ",'-' binary" << gp.binfmt(tmp) << dxdy << " ps 0 notitle" << endl;
+    gp.sendBinary(tmp);
+    gp.sendBinary(tmp);
+
+    gp << "unset label" << endl;
     gp << "unset multiplot" << endl;
-    gp << "unset label 1" << endl;
   }
 
   system("convert -delay 10 tmp/test_*.png todo.gif");
