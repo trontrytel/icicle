@@ -132,14 +132,15 @@ class eqs_todo_bulk : public eqs_todo<real_t>
             (vapour_excess = rhod_rv(i,j,k) - rhod(i,j,k) * phc::r_vs<real_t>(F.T, F.p)) > rho_eps 
             || // or ...
             (vapour_excess < -rho_eps && ( // if subsaturated
-              (incloud = (rhod_rl(i,j,k) > 0)) || // cloud evaporation if in cloud
-              rhod_rr(i,j,k) > 0 // or rain evaportation if in rain shaft (and out-of-cloud)
+              (incloud = (rhod_rl(i,j,k) > 0)) // cloud evaporation if in cloud
+//              (incloud = (rhod_rl(i,j,k) > .5 * rho_eps)) // cloud evaporation if in cloud
+//              || rhod_rr(i,j,k) > 0 // or rain evaportation if in rain shaft (and out-of-cloud)
             ))  
           ) 
           {
             real_t drho = - copysign(.5 * rho_eps, vapour_excess);
             if (drho > 0) drho = std::min(incloud ? rhod_rl(i,j,k) : rhod_rr(i,j,k), drho); // preventing negative mixing ratios
-cerr << "rhod_rl=" << rhod_rl(i,j,k) << ", rhod_rr=" << rhod_rr(i,j,k) << ", drho=" << drho << endl;
+//cerr << "rhod_rl=" << rhod_rl(i,j,k) << ", rhod_rr=" << rhod_rr(i,j,k) << ", drho=" << drho << endl;
             // theta is modified by do_step, and hence we cannot pass an expression and we need a temp. var.
             quantity<multiply_typeof_helper<si::mass_density, si::temperature>::type, real_t> 
               tmp = rhod_th(i,j,k) * si::kilograms / si::cubic_metres * si::kelvins;
@@ -154,12 +155,15 @@ cerr << "rhod_rl=" << rhod_rl(i,j,k) << ", rhod_rr=" << rhod_rr(i,j,k) << ", drh
             rhod_th(i,j,k) = tmp / (si::kilograms / si::cubic_metres * si::kelvins); 
             // ... condensation/evaporation of ...
             rhod_rv(i,j,k) += drho;
-            if (incloud) rhod_rl(i,j,k) -= drho; // cloud water 
+//            if (incloud)
+            rhod_rl(i,j,k) -= drho; // cloud water 
+/*
             else // or rain water
             {
               rhod_rr(i,j,k) -= drho;
               if ((drho_rr_max -= drho) < 0) break; // but not more than Kessler allows
             }
+*/
           }
           // hopefully true for RK4
           assert(F.r == real_t(rhod_rv(i,j,k) / rhod(i,j,k)));

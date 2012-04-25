@@ -57,7 +57,7 @@ const quantity<si::pressure, real_t>
 // other parameters deduced from the Fortran code published at:
 // http://www.rap.ucar.edu/~gthompsn/workshop2012/case1/kinematic_wrain.vocals.v3.for
 const int 
-  bits = 32,
+  bits = 64,
   fct = 1,  
   toa = 0,
   iord = 2;  
