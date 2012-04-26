@@ -48,7 +48,7 @@ class eqs_todo : public eqs<real_t>
 
       assert(min(rhod_rl) >=0);
  
-      Ra(Ra.ijk) += sign*(max( 0., .001 * 
+      Ra(Ra.ijk) += sign*(max( 0., .001 * rhod(rhod.ijk) *  
                     (rhod_rl(rhod.ijk) / rhod(rhod.ijk) - .0005))); //should be .001
       cout << "Ra min: " << min(Ra(Ra.ijk)) <<" Ra max: " << max(Ra(Ra.ijk)) << endl; 
       }
@@ -69,7 +69,7 @@ class eqs_todo : public eqs<real_t>
       mtx::arr<real_t> &Rc,
       const ptr_vector<mtx::arr<real_t>> &aux,
       const mtx::arr<real_t> * const * const psi,
-      const quantity<si::time, real_t>
+      const quantity<si::time, real_t> dt
       )
       { 
       const mtx::arr<real_t>
@@ -86,34 +86,7 @@ class eqs_todo : public eqs<real_t>
       }
   };
 
-  // nested class TODO this is only needed for bulk
-/*  private: class rain_evaporation : public rhs_explicit<real_t>
-  {
-    private: struct params &par;
-    private: real_t sign ;
-    
-    //ctor
-    public: rain_evaporation(real_t sign, struct params &par)
-    : sign(sign), par(par)
-    {}
 
-    public: void explicit_part(
-      mtx::arr<real_t> &Rc,
-      const ptr_vector<mtx::arr<real_t>> &aux,
-      const mtx::arr<real_t> * const * const psi,
-      const quantity<si::time, real_t>
-      )
-      { 
-      const mtx::arr<real_t>
-        &rhod = aux[par.idx_rhod],
-        &rhod_rl = (*psi[par.idx_rhod_rl]),
-        &rhod_rr = (*psi[par.idx_rhod_rr]);
-
-      Re(Re.ijk) += 0;
-      }
-  };
-*/
- 
   // nested class TODO this is only needed for bulk
   private: class terminal_velocity : public rhs_explicit<real_t>
   {
@@ -216,8 +189,8 @@ class eqs_todo : public eqs<real_t>
         this->quan2str(par.rho_unit), 
         typename eqs<real_t>::positive_definite(true),
       }));
-      this->sys.back().rhs_terms.push_back(new collection(-1, par));
-      this->sys.back().rhs_terms.push_back(new autoconversion(-1, par));
+//      this->sys.back().rhs_terms.push_back(new collection(-1, par));
+//      this->sys.back().rhs_terms.push_back(new autoconversion(-1, par));
       par.idx_rhod_rl = this->sys.size() - 1;
 
       this->sys.push_back(new struct eqs<real_t>::gte({
@@ -226,9 +199,9 @@ class eqs_todo : public eqs<real_t>
         typename eqs<real_t>::positive_definite(true),
       }));
       //TODO should not be calculated twice
-      this->sys.back().rhs_terms.push_back(new terminal_velocity(par, grid));
-      this->sys.back().rhs_terms.push_back(new collection(+1, par));
-      this->sys.back().rhs_terms.push_back(new autoconversion(+1, par));
+//      this->sys.back().rhs_terms.push_back(new collection(+1, par));
+//      this->sys.back().rhs_terms.push_back(new autoconversion(+1, par));
+//      this->sys.back().rhs_terms.push_back(new terminal_velocity(par, grid));
       par.idx_rhod_rr = this->sys.size() - 1;
     }
 

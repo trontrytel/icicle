@@ -347,9 +347,9 @@ class slv_serial : public slv<real_t>
       (psi[e][n])(ijk) /= (real_t(1) - dt / si::seconds * C);
   }
 
-  public: void apply_adjustments(int n)
+  public: void apply_adjustments(int n, const quantity<si::time, real_t> dt)
   {
-    setup->eqsys->adjustments(n, aux, psi); 
+    setup->eqsys->adjustments(n, aux, psi, dt); 
   }
 
   public: void cycle_arrays(const int e, const int n) // TODO: n unneeded?

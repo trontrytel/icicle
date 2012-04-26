@@ -103,7 +103,7 @@ int main()
 
   notice_macro("setting-up plot parameters")
   Gnuplot gp;
-  gp << "set term png enhanced size 1200,800" << endl;
+  gp << "set term png enhanced size 1200,400" << endl;
   gp << "set view map" << endl;
   gp << "set xlabel 'X [km]'" << endl;
   gp << "set xrange [" << 0 << ":" << nx * dx/1000 << "]" << endl;
@@ -125,7 +125,7 @@ int main()
     notice_macro("generating frame at t=" << t)
     gp << "set label 't = " << int(real_t(t) * dt_out / si::seconds) << " s' at screen .48,.96 left" << endl;
     gp << "set output 'tmp/test_" << zeropad(t) << ".png'" << endl;
-    gp << "set multiplot layout 2,3" << endl;
+    gp << "set multiplot layout 1,3" << endl;
 
     gp << "set title 'water vapour mixing ratio [g/kg]'" << endl;
     gp << "set cbrange [6:8]" << endl;
@@ -148,13 +148,14 @@ int main()
     //gp.sendBinary(tmp);
 
     gp << "set title 'rain water mixing ratio [g/kg]'" << endl;
-    gp << "set cbrange [-.05:.05]" << endl;
+    gp << "set cbrange [0.:.02]" << endl;
     nf.getVar("rhod_rr").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp.data()); 
     tmp /= rhod;
     gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " using ($1*1000) with image notitle";
-    gp << ",'-' binary" << gp.binfmt(tmp) << dxdy << " ps 0 notitle" << endl;
+    //gp << ",'-' binary" << gp.binfmt(tmp) << dxdy << " ps 0 notitle";
+    gp << endl;
     gp.sendBinary(tmp);
-    gp.sendBinary(tmp);
+    //gp.sendBinary(tmp);
 
     gp << "set title 'potential temperature [K]'" << endl;
     gp << "set cbrange [288:293]" << endl;
@@ -166,6 +167,7 @@ int main()
     gp.sendBinary(th);
     //gp.sendBinary(th);
 
+/*
     gp << "set title 'RH [%]'" << endl;
     gp << "set cbrange [50:105]" << endl;
     for (int i=0; i < nx; ++i)
@@ -205,6 +207,7 @@ int main()
     gp.sendBinary(tmp);
     //gp.sendBinary(tmp);
 
+*/
     gp << "unset label" << endl;
     gp << "unset multiplot" << endl;
   }

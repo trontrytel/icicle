@@ -94,7 +94,7 @@ class slv_parallel : public slv<real_t>
     int n = 0;
 
     // adjustments for the initial condition
-    slvs[sd].apply_adjustments(n);
+    slvs[sd].apply_adjustments(n, setup->dt);
 
     for (int e = 0; e < setup->eqsys->n_vars(); ++e) 
       fill_halos(sd, e, n); 
@@ -156,7 +156,10 @@ class slv_parallel : public slv<real_t>
       } 
 
       // apply post-advection post-rhs adjustments
-      slvs[sd].apply_adjustments(n + 1);
+      slvs[sd].apply_adjustments(n + 1, setup->dt);
+// TEMP!!!!
+slvs[sd].update_forcings(n + 1, real_t(t + .5) * setup->dt);
+// TEMP!!!!
  
       if (!fallback) 
         for (int e = 0; e < setup->eqsys->n_vars(); ++e)
