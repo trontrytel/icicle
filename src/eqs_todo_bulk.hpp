@@ -123,7 +123,7 @@ class eqs_todo_bulk : public eqs_todo<real_t>
             rho_eps = .00002, // TODO: as an option?
             vapour_excess;
           real_t // TODO: quantity<si::mass_density
-            drho_rr_max = .01; //TODO!
+            drho_rr_max = 0.01; //TODO!
           bool incloud;
 
           // TODO: something more meaningfull than 2*rho_eps!!!
@@ -132,15 +132,19 @@ class eqs_todo_bulk : public eqs_todo<real_t>
             (vapour_excess = rhod_rv(i,j,k) - rhod(i,j,k) * phc::r_vs<real_t>(F.T, F.p)) > rho_eps 
             || // or ...
             (vapour_excess < -rho_eps && ( // if subsaturated
-              (incloud = (rhod_rl(i,j,k) > 0)) // cloud evaporation if in cloud
-//              (incloud = (rhod_rl(i,j,k) > .5 * rho_eps)) // cloud evaporation if in cloud
-//              || rhod_rr(i,j,k) > 0 // or rain evaportation if in rain shaft (and out-of-cloud)
-            ))  
+              (incloud = (rhod_rl(i,j,k) > 10 * mtx::eps<real_t>())) // cloud evaporation if in cloud
+              || rhod_rr(i,j,k) > 10 * mtx::eps<real_t>() // or rain evaportation if in rain shaft (and out-of-cloud)
+            ))  // TODO: brzydkie eps!, dzialalo dla >0 dla samej chmury!
           ) 
           {
-            real_t drho = - copysign(.5 * rho_eps, vapour_excess);
-            if (drho > 0) drho = std::min(incloud ? rhod_rl(i,j,k) : rhod_rr(i,j,k), drho); // preventing negative mixing ratios
-//cerr << "rhod_rl=" << rhod_rl(i,j,k) << ", rhod_rr=" << rhod_rr(i,j,k) << ", drho=" << drho << endl;
+            real_t drho_rv = - copysign(.5 * rho_eps, vapour_excess);
+            drho_rv = (vapour_excess > 0 || incloud)
+              ?  std::min(rhod_rl(i,j,k), drho_rv)
+              :  std::min(drho_rr_max, std::min(rhod_rr(i,j,k), drho_rv)); // preventing negative mixing ratios
+            //if (abs(drho_rv) < mtx::eps<real_t>()) break;// TODO: moze jako assert()?
+
+cerr << "rhod_rl=" << rhod_rl(i,j,k) << ", rhod_rr=" << rhod_rr(i,j,k) << ", drho=" << drho_rv << endl;
+
             // theta is modified by do_step, and hence we cannot pass an expression and we need a temp. var.
             quantity<multiply_typeof_helper<si::mass_density, si::temperature>::type, real_t> 
               tmp = rhod_th(i,j,k) * si::kilograms / si::cubic_metres * si::kelvins;
@@ -149,21 +153,19 @@ class eqs_todo_bulk : public eqs_todo<real_t>
               boost::ref(F), 
               tmp,
               rhod_rv(i,j,k) * si::kilograms / si::cubic_metres, 
-              drho           * si::kilograms / si::cubic_metres
+              drho_rv        * si::kilograms / si::cubic_metres
             );
             // latent heat source/sink due to ...
             rhod_th(i,j,k) = tmp / (si::kilograms / si::cubic_metres * si::kelvins); 
             // ... condensation/evaporation of ...
-            rhod_rv(i,j,k) += drho;
-//            if (incloud)
-            rhod_rl(i,j,k) -= drho; // cloud water 
-/*
+            rhod_rv(i,j,k) += drho_rv;
+            if (vapour_excess > 0 || incloud) 
+              rhod_rl(i,j,k) -= drho_rv; // cloud water 
             else // or rain water
             {
-              rhod_rr(i,j,k) -= drho;
-              if ((drho_rr_max -= drho) < 0) break; // but not more than Kessler allows
+              rhod_rr(i,j,k) -= drho_rv;
+              if ((drho_rr_max -= drho_rv) == 0) break; // but not more than Kessler allows
             }
-*/
           }
           // hopefully true for RK4
           assert(F.r == real_t(rhod_rv(i,j,k) / rhod(i,j,k)));
