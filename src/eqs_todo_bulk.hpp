@@ -17,10 +17,16 @@ namespace odeint = boost::numeric::odeint;
 template <typename real_t>
 class eqs_todo_bulk : public eqs_todo<real_t> 
 {
+  public: enum processes {cond, cevp, conv, coll, sedi, revp};
+  private: map<enum processes, bool> opts;
+
   // ctor
-  public: eqs_todo_bulk(const grd<real_t> &grid)
-    : eqs_todo<real_t>(grid, true)
-  {}
+  public: eqs_todo_bulk(const grd<real_t> &grid, map<enum processes, bool> opts)
+    : eqs_todo<real_t>(grid, true), opts(opts)
+  {
+    if (opts[revp] && !opts[cevp])
+      error_macro("rain evaporation requires cloud evaporation to be turned on")
+  }
 
   // RHS of the ODE to be solved
   private: class rhs
@@ -97,12 +103,6 @@ class eqs_todo_bulk : public eqs_todo<real_t>
     const quantity<si::time, real_t> dt
   ) 
   {
-    bool  // TODO: take values from options
-      opt_rainevap = false, 
-      opt_cloudevap = true;
-//      opt_autoconversion = true,
-//      opt_sedimentation = true;
-
     const mtx::arr<real_t>
       &rhod = aux[this->par.idx_rhod];
     mtx::arr<real_t>
@@ -111,43 +111,14 @@ class eqs_todo_bulk : public eqs_todo<real_t>
       &rhod_rl = psi[this->par.idx_rhod_rl][n],
       &rhod_rr = psi[this->par.idx_rhod_rr][n];
 
-//    if (opt_collection) collection + limiter
-//    if (opt_autoconversion) autoconversion(rhod, rhod_rl, rhod_rr, dt);
-//    if (opt_sedimentation) sedimentation(rhod, rhod_rr, dt);
-    condevap(n, aux, psi, dt, opt_rainevap, opt_cloudevap);
+    condevap(n, aux, psi, dt);
   }
  
-/*   private: void sedimentation(
-    const mtx::arr<real_t> &rhod,
-    mtx::arr<real_t> &rhod_rr,
-    const quantity<si::time, real_t> dt
-  )
-  {
-    // TODO! (needs temp var!)
-  }
-
-  private: void autoconversion(
-    const mtx::arr<real_t> &rhod,
-    mtx::arr<real_t> &rhod_rl,
-    mtx::arr<real_t> &rhod_rr,
-    const quantity<si::time, real_t> dt
-  )
-  {
-    assert(min(rhod_rl) >=0);
-    assert(min(rhod_rr) >=0);
- 
-    rhod_rl(rhod.ijk) -= (dt / si::seconds) * (max( 0., .001 * (rhod_rl(rhod.ijk) / rhod(rhod.ijk) - .0005))); //should be .001
-    rhod_rr(rhod.ijk) += (dt / si::seconds) * (max( 0., .001 * (rhod_rl(rhod.ijk) / rhod(rhod.ijk) - .0005))); //should be .001
-    //cout << "Ra min: " << min(Ra(Ra.ijk)) <<" Ra max: " << max(Ra(Ra.ijk)) << endl; 
-  }
-*/ 
   private: void condevap(
     int n, // TODO: mo¿e jednak bez n...
     const ptr_vector<mtx::arr<real_t>> &aux, 
     vector<ptr_vector<mtx::arr<real_t>>> &psi,
-    const quantity<si::time, real_t> dt,
-    bool opt_rainevap, 
-    bool opt_cloudevap
+    const quantity<si::time, real_t> dt
   )   
   {
 #  if !defined(USE_BOOST_ODEINT)
@@ -179,7 +150,7 @@ class eqs_todo_bulk : public eqs_todo<real_t>
             rho_eps = .00002, // TODO: as an option?
             vapour_excess;
           real_t drho_rr_max = 0; // TODO: quantity<si::mass_density
-          if (F.rs > F.r && rhod_rr(i,j,k) > 0 && opt_rainevap) 
+          if (F.rs > F.r && rhod_rr(i,j,k) > 0 && opts[revp]) 
             drho_rr_max = (dt / si::seconds) * (1 - F.r / F.rs) * (1.6 + 124.9 * pow(1e-3 * rhod_rr(i,j,k), .2046)) * pow(1e-3 * rhod_rr(i,j,k), .525) / 
               (5.4e2 + 2.55e5 * (1. / (F.p / si::pascals) / F.rs));
           bool incloud;
@@ -188,11 +159,10 @@ class eqs_todo_bulk : public eqs_todo<real_t>
           while ( 
             // condensation of cloud water if supersaturated
             (vapour_excess = rhod_rv(i,j,k) - rhod(i,j,k) * F.rs) > rho_eps 
-   //         || // or ...
-   //         (vapour_excess < -rho_eps && ( // if subsaturated
-   //           (incloud = (rhod_rl(i,j,k) > 0)) // cloud evaporation if in cloud
-   //           || (opt_rainevap && rhod_rr(i,j,k) > 0) // or rain evaportation if in rain shaft (and out-of-cloud)
-   //         )) 
+            || (opts[cevp] && vapour_excess < -rho_eps && ( // or if subsaturated
+              (incloud = (rhod_rl(i,j,k) > 0)) // cloud evaporation if in cloud
+              || (opts[revp] && rhod_rr(i,j,k) > 0) // or rain evaportation if in a rain shaft (and out-of-cloud)
+            )) 
           ) 
           {
             real_t drho_rv = - copysign(.5 * rho_eps, vapour_excess);
@@ -229,7 +199,7 @@ class eqs_todo_bulk : public eqs_todo<real_t>
             }
             else // or rain water
             {
-              assert(opt_rainevap);
+              assert(opts[revp]); // should be guaranteed by the while() condition above
               rhod_rr(i,j,k) -= drho_rv;
               assert(rhod_rr(i,j,k) >= 0);
               assert(isfinite(rhod_rr(i,j,k)));

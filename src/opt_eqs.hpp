@@ -26,8 +26,15 @@ inline void opt_eqs_desc(po::options_description &desc)
     ("eqs.isentropic.abslev", po::value<int>(), "absorber lowermost level")
     ("eqs.isentropic.absamp", po::value<string>()->default_value("1"), "absorber amplitude [1]") 
 
-    ("eqs.harmonic_oscillator.omega", po::value<string>(), "omega [Hz]") ;
-  // TODO: constants container --cst.g --cst.cp ...
+    ("eqs.harmonic_oscillator.omega", po::value<string>(), "omega [Hz]") 
+    
+    ("eqs.todo_bulk.cond", po::value<bool>()->default_value(true), "cloud water condensation [on/off]")
+    ("eqs.todo_bulk.cevp", po::value<bool>()->default_value(true), "cloud water evaporation [on/off]")
+    ("eqs.todo_bulk.conv", po::value<bool>()->default_value(true), "conversion of cloud water into rain [on/off]")
+    ("eqs.todo_bulk.coll", po::value<bool>()->default_value(true), "collection of cloud water by rain [on/off]")
+    ("eqs.todo_bulk.sedi", po::value<bool>()->default_value(true), "rain water sedimentation [on/off]")
+    ("eqs.todo_bulk.revp", po::value<bool>()->default_value(true), "rain water evaporation [on/off]")
+    ;
 }
 
 template <typename real_t>
@@ -59,7 +66,16 @@ eqs<real_t> *opt_eqs(const po::variables_map& vm, const grd<real_t> &grid, const
     );
   else 
   if (initype == "todo_bulk")
-    return new eqs_todo_bulk<real_t>(grid);
+    return new eqs_todo_bulk<real_t>(grid,
+      map<enum eqs_todo_bulk<real_t>::processes, bool>({
+        {eqs_todo_bulk<real_t>::cond, vm["eqs.todo_bulk.cond"].as<bool>()},
+        {eqs_todo_bulk<real_t>::cevp, vm["eqs.todo_bulk.cevp"].as<bool>()},
+        {eqs_todo_bulk<real_t>::conv, vm["eqs.todo_bulk.conv"].as<bool>()},
+        {eqs_todo_bulk<real_t>::coll, vm["eqs.todo_bulk.coll"].as<bool>()},
+        {eqs_todo_bulk<real_t>::sedi, vm["eqs.todo_bulk.sedi"].as<bool>()},
+        {eqs_todo_bulk<real_t>::revp, vm["eqs.todo_bulk.revp"].as<bool>()}
+      })
+    );
   else 
   error_macro("unsupported equation system: " << initype)
 }

@@ -145,6 +145,9 @@ class slv_parallel : public slv<real_t>
         if (stash) slvs[sd].stash_cycle(e, n); 
       } // e - equations
 
+      // apply post-advection, pre-rhs adjustments
+      slvs[sd].apply_adjustments(n + 1, setup->dt);
+
       // assuming that computation of forcings relies on the outcome of advection of ALL variables
       if (!allhomo)
       {
@@ -155,12 +158,6 @@ class slv_parallel : public slv<real_t>
           if (!homo[e]) slvs[sd].apply_forcings(e, n + 1, real_t(.5) * setup->dt);
       } 
 
-      // apply post-advection post-rhs adjustments
-      slvs[sd].apply_adjustments(n + 1, setup->dt);
-// TEMP!!!!
-slvs[sd].update_forcings(n + 1, real_t(t + .5) * setup->dt);
-// TEMP!!!!
- 
       if (!fallback) 
         for (int e = 0; e < setup->eqsys->n_vars(); ++e)
           slvs[sd].cycle_arrays(e, n);

@@ -150,6 +150,7 @@ class eqs_todo : public eqs<real_t>
           Rt(i, rhod.lbound(mtx::j), k) -= real_t(
             rhod_rr(i, rhod.lbound(mtx::j)+1,k)-rhod_rr(i, rhod.lbound(mtx::j),k)
             ) * v_iph / si::metres_per_second / real_t(grid.dy() / si::metres)  ;
+// TODO: record accumulated rainfall
         }
       }
       cout << "Rt min: " << min(Rt(Rt.ijk)) << " Rt max: " << max(Rt(Rt.ijk)) << endl;
@@ -189,8 +190,8 @@ class eqs_todo : public eqs<real_t>
         this->quan2str(par.rho_unit), 
         typename eqs<real_t>::positive_definite(true),
       }));
-//      this->sys.back().rhs_terms.push_back(new collection(-1, par));
-//      this->sys.back().rhs_terms.push_back(new autoconversion(-1, par));
+      this->sys.back().rhs_terms.push_back(new collection(-1, par)); // TODO: option
+      this->sys.back().rhs_terms.push_back(new autoconversion(-1, par)); // TODO: option
       par.idx_rhod_rl = this->sys.size() - 1;
 
       this->sys.push_back(new struct eqs<real_t>::gte({
@@ -199,9 +200,9 @@ class eqs_todo : public eqs<real_t>
         typename eqs<real_t>::positive_definite(true),
       }));
       //TODO should not be calculated twice
-//      this->sys.back().rhs_terms.push_back(new collection(+1, par));
-//      this->sys.back().rhs_terms.push_back(new autoconversion(+1, par));
-//      this->sys.back().rhs_terms.push_back(new terminal_velocity(par, grid));
+      this->sys.back().rhs_terms.push_back(new collection(+1, par)); // TODO: option
+      this->sys.back().rhs_terms.push_back(new autoconversion(+1, par)); // TODO: option
+      this->sys.back().rhs_terms.push_back(new terminal_velocity(par, grid)); // TODO: option
       par.idx_rhod_rr = this->sys.size() - 1;
     }
 

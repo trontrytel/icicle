@@ -72,6 +72,13 @@ const quantity<si::mass_density, real_t>
   rho_0 = 1 * si::kilograms / si::cubic_metres;
 const quantity<divide_typeof_helper<si::momentum, si::area>::type, real_t> 
   ampl = rho_0 * w_max * (real_t(nx) * dx) / real_t(4*atan(1));
+bool 
+  cond = true,
+  cevp = true,
+  conv = true,
+  coll = true,
+  sedi = true,
+  revp = true;
 
 // pressure profile derived by integrating the hydrostatic eq.
 // assuming constant theta, constant rv and R=R(rv) 
@@ -186,6 +193,12 @@ int main()
     << " --ini netcdf"
     << " --ini.netcdf.file ini.nc"
     << " --eqs todo_bulk"
+      << " --eqs.todo_bulk.cond " << cond
+      << " --eqs.todo_bulk.cevp " << cevp
+      << " --eqs.todo_bulk.conv " << conv
+      << " --eqs.todo_bulk.coll " << coll
+      << " --eqs.todo_bulk.sedi " << sedi
+      << " --eqs.todo_bulk.revp " << revp
     << " --grd.dx " << dx / si::metres
     << " --grd.nx " << nx
     << " --grd.dy " << dy / si::metres
