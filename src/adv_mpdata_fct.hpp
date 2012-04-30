@@ -248,36 +248,36 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
       }
     }
 
-/// \f$ \beta^{\uparrow}_{i} = \frac { \psi^{max}_{i}- \psi^{*}_{i} }
-/// { \sum\limits_{I} \frac{\Delta t}{\Delta x^{I}} \left( [u^{I}_{i-1/2}]^{+} \psi^{*}_{i-1} - 
-/// [u^{I}_{i+1/2}]^{-} \psi^{*}_{i+1} \right)  } \f$ \n
-/// eq.(19a) in Smolarkiewicz & Grabowski 1990 (J.Comp.Phys.,86,355-375)
-  //private: mtx_expr_6arg_macro_noasserts(fct_beta_up, aaa, psimax, psi, C_adf_x, C_adf_y, C_adf_z,
-# define fct_beta_up(aaa, psimax, psi, C_adf_x, C_adf_y, C_adf_z) \
-     adv_mpdata<real_t>::frac( \
-       psimax(aaa.i_j_k) - (psi)(aaa.i_j_k), \
-       adv<real_t>::pospart(C_adf_x(aaa.imh_j_k)) * (psi)(aaa.im1_j_k) - \
-       adv<real_t>::negpart(C_adf_x(aaa.iph_j_k)) * (psi)(aaa.ip1_j_k) + \
-       adv<real_t>::pospart(C_adf_y(aaa.i_jmh_k)) * (psi)(aaa.i_jm1_k) - \
-       adv<real_t>::negpart(C_adf_y(aaa.i_jph_k)) * (psi)(aaa.i_jp1_k) + \
-       adv<real_t>::pospart(C_adf_z(aaa.i_j_kmh)) * (psi)(aaa.i_j_km1) - \
-       adv<real_t>::negpart(C_adf_z(aaa.i_j_kph)) * (psi)(aaa.i_j_kp1)   \
-     ) 
+    /// \f$ \beta^{\uparrow}_{i} = \frac { \psi^{max}_{i}- \psi^{*}_{i} }
+    /// { \sum\limits_{I} \frac{\Delta t}{\Delta x^{I}} \left( [u^{I}_{i-1/2}]^{+} \psi^{*}_{i-1} - 
+    /// [u^{I}_{i+1/2}]^{-} \psi^{*}_{i+1} \right)  } \f$ \n
+    /// eq.(19a) in Smolarkiewicz & Grabowski 1990 (J.Comp.Phys.,86,355-375)
+    private: mtx_expr_6arg_macro_noasserts(fct_beta_up, aaa, psimax, psi, C_adf_x, C_adf_y, C_adf_z,
+      adv_mpdata<real_t>::frac( 
+        psimax(aaa.i_j_k) - (psi)(aaa.i_j_k), 
+        adv<real_t>::pospart(C_adf_x(aaa.imh_j_k)) * (psi)(aaa.im1_j_k) - 
+        adv<real_t>::negpart(C_adf_x(aaa.iph_j_k)) * (psi)(aaa.ip1_j_k) + 
+        adv<real_t>::pospart(C_adf_y(aaa.i_jmh_k)) * (psi)(aaa.i_jm1_k) - 
+        adv<real_t>::negpart(C_adf_y(aaa.i_jph_k)) * (psi)(aaa.i_jp1_k) + 
+        adv<real_t>::pospart(C_adf_z(aaa.i_j_kmh)) * (psi)(aaa.i_j_km1) - 
+        adv<real_t>::negpart(C_adf_z(aaa.i_j_kph)) * (psi)(aaa.i_j_kp1)   
+      )
+    )
 
-/// \f$ \beta^{\downarrow}_{i} = \frac { \psi^{*}_{i}- \psi^{min}_{i} }
-/// { \sum\limits_{I} \frac{\Delta t}{\Delta x^{I}} \left( [u^{I}_{i+1/2}]^{+} \psi^{*}_{i} - 
-/// [u^{I}_{i-1/2}]^{-} \psi^{*}_{i} \right)  } \f$ \n
-/// eq.(19b) in Smolarkiewicz & Grabowski 1990 (J.Comp.Phys.,86,355-375)
-  // private: mtx_expr_6arg_macro_noasserts(fct_beta_dn, aaa, psimin, psi, C_adf_x, C_adf_y, C_adf_z,
-#  define fct_beta_dn(aaa, psimin, psi, C_adf_x, C_adf_y, C_adf_z) \
-    adv_mpdata<real_t>::frac( \
-      (psi)(aaa.i_j_k) - psimin(aaa.i_j_k), \
-      adv<real_t>::pospart(C_adf_x(aaa.iph_j_k)) * (psi)(aaa.i_j_k) - \
-      adv<real_t>::negpart(C_adf_x(aaa.imh_j_k)) * (psi)(aaa.i_j_k) + \
-      adv<real_t>::pospart(C_adf_y(aaa.i_jph_k)) * (psi)(aaa.i_j_k) - \
-      adv<real_t>::negpart(C_adf_y(aaa.i_jmh_k)) * (psi)(aaa.i_j_k) + \
-      adv<real_t>::pospart(C_adf_z(aaa.i_j_kph)) * (psi)(aaa.i_j_k) - \
-      adv<real_t>::negpart(C_adf_z(aaa.i_j_kmh)) * (psi)(aaa.i_j_k)   \
+    /// \f$ \beta^{\downarrow}_{i} = \frac { \psi^{*}_{i}- \psi^{min}_{i} }
+    /// { \sum\limits_{I} \frac{\Delta t}{\Delta x^{I}} \left( [u^{I}_{i+1/2}]^{+} \psi^{*}_{i} - 
+    /// [u^{I}_{i-1/2}]^{-} \psi^{*}_{i} \right)  } \f$ \n
+    /// eq.(19b) in Smolarkiewicz & Grabowski 1990 (J.Comp.Phys.,86,355-375)
+    private: mtx_expr_6arg_macro_noasserts(fct_beta_dn, aaa, psimin, psi, C_adf_x, C_adf_y, C_adf_z,
+      adv_mpdata<real_t>::frac( 
+        (psi)(aaa.i_j_k) - psimin(aaa.i_j_k), 
+        adv<real_t>::pospart(C_adf_x(aaa.iph_j_k)) * (psi)(aaa.i_j_k) - 
+        adv<real_t>::negpart(C_adf_x(aaa.imh_j_k)) * (psi)(aaa.i_j_k) + 
+        adv<real_t>::pospart(C_adf_y(aaa.i_jph_k)) * (psi)(aaa.i_j_k) - 
+        adv<real_t>::negpart(C_adf_y(aaa.i_jmh_k)) * (psi)(aaa.i_j_k) + 
+        adv<real_t>::pospart(C_adf_z(aaa.i_j_kph)) * (psi)(aaa.i_j_k) - 
+        adv<real_t>::negpart(C_adf_z(aaa.i_j_kmh)) * (psi)(aaa.i_j_k)   
+      )
     )
 
     /// nonoscillatory antidiffusive velocity: \n

@@ -76,8 +76,8 @@ bool
   cond = true,
   cevp = true,
   conv = true,
-  coll = true,
-  sedi = true,
+  clct = true,
+  sedi = false,
   revp = true;
 
 // pressure profile derived by integrating the hydrostatic eq.
@@ -196,7 +196,7 @@ int main()
       << " --eqs.todo_bulk.cond " << cond
       << " --eqs.todo_bulk.cevp " << cevp
       << " --eqs.todo_bulk.conv " << conv
-      << " --eqs.todo_bulk.coll " << coll
+      << " --eqs.todo_bulk.clct " << clct
       << " --eqs.todo_bulk.sedi " << sedi
       << " --eqs.todo_bulk.revp " << revp
     << " --grd.dx " << dx / si::metres
@@ -215,8 +215,8 @@ int main()
     << " --dt_out " << real_t(dt_out / si::seconds)
     << " --out netcdf" 
     << " --out.netcdf.file out.nc"
-    << " --slv serial"
-    //<< " --slv openmp --nsd 3"
+    //<< " --slv serial"
+    << " --slv openmp --nsd 3"
     ;
   system(cmd.str().c_str());
 }

@@ -31,7 +31,7 @@ inline void opt_eqs_desc(po::options_description &desc)
     ("eqs.todo_bulk.cond", po::value<bool>()->default_value(true), "cloud water condensation [on/off]")
     ("eqs.todo_bulk.cevp", po::value<bool>()->default_value(true), "cloud water evaporation [on/off]")
     ("eqs.todo_bulk.conv", po::value<bool>()->default_value(true), "conversion of cloud water into rain [on/off]")
-    ("eqs.todo_bulk.coll", po::value<bool>()->default_value(true), "collection of cloud water by rain [on/off]")
+    ("eqs.todo_bulk.clct", po::value<bool>()->default_value(true), "collection of cloud water by rain [on/off]")
     ("eqs.todo_bulk.sedi", po::value<bool>()->default_value(true), "rain water sedimentation [on/off]")
     ("eqs.todo_bulk.revp", po::value<bool>()->default_value(true), "rain water evaporation [on/off]")
     ;
@@ -71,7 +71,7 @@ eqs<real_t> *opt_eqs(const po::variables_map& vm, const grd<real_t> &grid, const
         {eqs_todo_bulk<real_t>::cond, vm["eqs.todo_bulk.cond"].as<bool>()},
         {eqs_todo_bulk<real_t>::cevp, vm["eqs.todo_bulk.cevp"].as<bool>()},
         {eqs_todo_bulk<real_t>::conv, vm["eqs.todo_bulk.conv"].as<bool>()},
-        {eqs_todo_bulk<real_t>::coll, vm["eqs.todo_bulk.coll"].as<bool>()},
+        {eqs_todo_bulk<real_t>::clct, vm["eqs.todo_bulk.clct"].as<bool>()},
         {eqs_todo_bulk<real_t>::sedi, vm["eqs.todo_bulk.sedi"].as<bool>()},
         {eqs_todo_bulk<real_t>::revp, vm["eqs.todo_bulk.revp"].as<bool>()}
       })
