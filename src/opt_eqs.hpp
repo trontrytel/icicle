@@ -14,6 +14,7 @@
 #  include "eqs_isentropic.hpp"
 #  include "eqs_harmonic_oscillator.hpp"
 #  include "eqs_todo_bulk.hpp"
+#  include "eqs_todo_sdm.hpp"
 
 inline void opt_eqs_desc(po::options_description &desc)
 {
@@ -34,6 +35,10 @@ inline void opt_eqs_desc(po::options_description &desc)
     ("eqs.todo_bulk.clct", po::value<bool>()->default_value(true), "collection of cloud water by rain [on/off]")
     ("eqs.todo_bulk.sedi", po::value<bool>()->default_value(true), "rain water sedimentation [on/off]")
     ("eqs.todo_bulk.revp", po::value<bool>()->default_value(true), "rain water evaporation [on/off]")
+
+    ("eqs.todo_sdm.cond", po::value<bool>()->default_value(true), "condensation/evaporation [on/off]")
+    ("eqs.todo_sdm.coal", po::value<bool>()->default_value(true), "coalescence [on/off]")
+    ("eqs.todo_sdm.sedi", po::value<bool>()->default_value(true), "sedimentation [on/off]")
     ;
 }
 
@@ -74,6 +79,15 @@ eqs<real_t> *opt_eqs(const po::variables_map& vm, const grd<real_t> &grid, const
         {eqs_todo_bulk<real_t>::clct, vm["eqs.todo_bulk.clct"].as<bool>()},
         {eqs_todo_bulk<real_t>::sedi, vm["eqs.todo_bulk.sedi"].as<bool>()},
         {eqs_todo_bulk<real_t>::revp, vm["eqs.todo_bulk.revp"].as<bool>()}
+      })
+    );
+  else 
+  if (initype == "todo_sdm")
+    return new eqs_todo_sdm<real_t>(grid,
+      map<enum eqs_todo_sdm<real_t>::processes, bool>({
+        {eqs_todo_sdm<real_t>::cond, vm["eqs.todo_sdm.cond"].as<bool>()},
+        {eqs_todo_sdm<real_t>::sedi, vm["eqs.todo_sdm.sedi"].as<bool>()},
+        {eqs_todo_sdm<real_t>::coal, vm["eqs.todo_sdm.coal"].as<bool>()},
       })
     );
   else 
