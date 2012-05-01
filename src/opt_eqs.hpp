@@ -13,7 +13,7 @@
 #  include "eqs_shallow_water.hpp"
 #  include "eqs_isentropic.hpp"
 #  include "eqs_harmonic_oscillator.hpp"
-#  include "eqs_todo_bulk.hpp"
+#  include "eqs_todo_bulk_ode.hpp"
 #  include "eqs_todo_sdm.hpp"
 
 inline void opt_eqs_desc(po::options_description &desc)
@@ -71,7 +71,7 @@ eqs<real_t> *opt_eqs(const po::variables_map& vm, const grd<real_t> &grid, const
     );
   else 
   if (initype == "todo_bulk")
-    return new eqs_todo_bulk<real_t>(grid,
+    return new eqs_todo_bulk_ode<real_t>(grid,
       map<enum eqs_todo_bulk<real_t>::processes, bool>({
         {eqs_todo_bulk<real_t>::cond, vm["eqs.todo_bulk.cond"].as<bool>()},
         {eqs_todo_bulk<real_t>::cevp, vm["eqs.todo_bulk.cevp"].as<bool>()},
