@@ -72,13 +72,16 @@ const quantity<si::mass_density, real_t>
   rho_0 = 1 * si::kilograms / si::cubic_metres;
 const quantity<divide_typeof_helper<si::momentum, si::area>::type, real_t> 
   ampl = rho_0 * w_max * (real_t(nx) * dx) / real_t(4*atan(1));
+
+// options for microphysics
+std::string micro = "sdm"; // sdm | bulk
 bool 
-  cond = true,
-  cevp = true,
-  conv = true,
-  clct = true,
-  sedi = false,
-  revp = true;
+  blk_cond = true,
+  blk_cevp = true,
+  blk_conv = true,
+  blk_clct = true,
+  blk_sedi = false,
+  blk_revp = true;
 
 // pressure profile derived by integrating the hydrostatic eq.
 // assuming constant theta, constant rv and R=R(rv) 
@@ -192,13 +195,6 @@ int main()
     << " --bits " << bits
     << " --ini netcdf"
     << " --ini.netcdf.file ini.nc"
-    << " --eqs todo_bulk"
-      << " --eqs.todo_bulk.cond " << cond
-      << " --eqs.todo_bulk.cevp " << cevp
-      << " --eqs.todo_bulk.conv " << conv
-      << " --eqs.todo_bulk.clct " << clct
-      << " --eqs.todo_bulk.sedi " << sedi
-      << " --eqs.todo_bulk.revp " << revp
     << " --grd.dx " << dx / si::metres
     << " --grd.nx " << nx
     << " --grd.dy " << dy / si::metres
@@ -218,5 +214,17 @@ int main()
     //<< " --slv serial"
     << " --slv openmp --nsd 3"
     ;
-  system(cmd.str().c_str());
+    if (micro == "bulk") cmd << " --eqs todo_bulk"
+      << " --eqs.todo_bulk.cond " << blk_cond
+      << " --eqs.todo_bulk.cevp " << blk_cevp
+      << " --eqs.todo_bulk.conv " << blk_conv
+      << " --eqs.todo_bulk.clct " << blk_clct
+      << " --eqs.todo_bulk.sedi " << blk_sedi
+      << " --eqs.todo_bulk.revp " << blk_revp
+    ;
+    else if (micro == "sdm") cmd << " --eqs todo_sdm";
+    else assert(false);
+    
+  if (EXIT_SUCCESS != system(cmd.str().c_str()))
+    cerr << "model run failed: " << cmd.str() << endl;
 }

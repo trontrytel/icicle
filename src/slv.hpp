@@ -15,6 +15,7 @@ template <typename real_t>
 class slv : root
 {
   // left->i_min, rght->i_max, fore->j_min, hind->j_max, base->k_min, apex->k_max (enums may not be ++)
+  // TODO: would using C++11 enum functionalities help in anyway??
   public: static const int first=0, left=first, rght=1, fore=2, hind=3, base=4, apex=5, last=apex;
   private: slv *nghbrs[6];
 
