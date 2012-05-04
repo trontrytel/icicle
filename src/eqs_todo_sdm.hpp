@@ -22,6 +22,8 @@ namespace odeint = boost::numeric::odeint;
 #  endif
 
 #  include <thrust/random.h>
+#  include <thrust/sequence.h>
+#  include <thrust/sort.h>
 
 template <typename real_t>
 class eqs_todo_sdm : public eqs_todo<real_t> 
@@ -29,7 +31,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   // nested class (well... struct)
   protected: struct params : eqs_todo<real_t>::params
   {
-    int idx_rhod_rl, idx_rhod_rr; // auxiliary variables indices
+    int idx_sd_conc; // auxiliary variables indices
   };
   protected: params par;
 
@@ -43,6 +45,8 @@ class eqs_todo_sdm : public eqs_todo<real_t>
 
   typedef state_type deriv_type;
   typedef value_type time_type;
+
+  typedef thrust::device_vector<int>::size_type size_type;
 
   //typedef odeint::euler< // TODO: option
   typedef odeint::runge_kutta4<
@@ -65,26 +69,30 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     }
   };
 
-  // private fields for ODE
+  // private fields for ODE machinery
   private: stepper S; 
   private: rhs F;
-  private: state_type SD_v; // holds SD parameters that are variable from the ODE point of view (x,y,r,...)
 
-  typedef thrust::device_vector<int>::size_type size_type;
+  // SD parameters that are variable from the ODE point of view (x,y,r,...)
+  private: state_type SD_v; 
 
-  // private fields for storing SD parameters that are constant from the ODE point of view (n, i, j)
-  private: thrust::device_vector<size_type> SD_id;
-  private: thrust::device_vector<int> SD_i, SD_j, SD_ij, SD_n;
+  // SD parameters that are constant from the ODE point of view (n, i, j)
+  private: thrust::device_vector<size_type> SD_id, SD_n;
+  private: thrust::device_vector<int> SD_i, SD_j, SD_ij;
+
+  // spectrum moments
+  private: thrust::device_vector<int> M_ij;
+  private: thrust::device_vector<size_type> M_0;
+
+  // variables indicating where in SD_v to look for particulat SD properties
+  private: size_type offset_x, offset_y, offset_r;
 
   // TODO: take from ctor arguments -> command-line-options
-  private: const int sd_conc = 1; 
-  // TODO: random seed
-  
-
-  private: size_type offset_x, offset_y, offset_r;
+  private: const int sd_conc = 64; 
 
   // nested functor: RNG
   private: class rng {
+    // TODO: random seed as an option
     private: thrust::random::taus88 engine; // TODO: RNG engine as an option
     private: thrust::uniform_real_distribution<value_type> dist;
     public: rng(value_type a, value_type b) : dist(a, b) {}
@@ -107,47 +115,85 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     public: int operator()(int i, int j) { return i + j * n; }
   };
 
+  // nested functor: 
+  private: class unravel_indices_and_copy
+  {
+    private: int n;
+    private: thrust::device_vector<size_type> &from;
+    private: mtx::arr<real_t> &to;
+    public: unravel_indices_and_copy(int n, 
+      thrust::device_vector<size_type> &from,
+      mtx::arr<real_t> &to
+    ) : n(n), from(from), to(to) {}
+    public: void operator()(int ij) 
+    { 
+      to(ij % n, ij / n, 0) = *(from.begin() + ij); 
+    }
+  };
+
   private: size_type n_part;
   private: const grd<real_t> &grid;
 
   private: void sd_init()
   {
-    // initialise particle positions
+    // initialise particle x coordinates
     thrust::generate(
       SD_v.begin() + offset_x, 
       SD_v.begin() + offset_x + n_part, 
       rng(0, grid.nx() * (grid.dx() / si::metres))
-    ); // x
+    ); 
+    // initialise particle y coordinates
     thrust::generate(
       SD_v.begin() + offset_y,
       SD_v.begin() + offset_y + n_part, 
       rng(0, grid.ny() * (grid.dy() / si::metres))
-    ); // y
-    // initialise particle sizes and numbers
-    //thrust::generate(SD_v.begin(), SD_v.end(), rng(0, grid.nx() * (grid.dx() / si::metres))); // r
+    ); 
+    // initialise particle sizes
+    // TODO!
+    // initialise particle numbers
+    // TODO!
+    thrust::fill(SD_n.begin(), SD_n.end(), 1); // TEMP
   }
 
   private: void sd_sync()
   {
-    // initialise house-keeping info
+    // computing SD_i 
     thrust::transform(
       SD_v.begin() + offset_x, 
       SD_v.begin() + offset_x + n_part,
       SD_i.begin(),
       divide_by_constant(grid.dx() / si::metres)
     );
+    // computing SD_j
     thrust::transform(
       SD_v.begin() + offset_y, 
       SD_v.begin() + offset_y + n_part,
       SD_j.begin(),
       divide_by_constant(grid.dy() / si::metres)
     );
+    // computing SD_ij
     thrust::transform(
-      SD_i.begin(),
-      SD_i.end(),
+      SD_i.begin(), SD_i.end(),
       SD_j.begin(),
       SD_ij.begin(),
       ravel_indices(grid.ny())
+    );
+    // filling-in SD_id
+    thrust::sequence(SD_id.begin(), SD_id.end());
+    // sorting SD_ij and SD_id
+    thrust::sort_by_key(
+      SD_ij.begin(), SD_ij.end(),
+      SD_id.begin()
+    );
+    // calculating M0
+    thrust::pair<
+      thrust::device_vector<int>::iterator, 
+      thrust::device_vector<size_type>::iterator
+    > n = thrust::reduce_by_key(
+      SD_ij.begin(), SD_ij.end(),
+      SD_n.begin(),
+      M_ij.begin(),
+      M_0.begin()
     );
   }
   
@@ -155,7 +201,8 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   public: eqs_todo_sdm(const grd<real_t> &grid, map<enum processes, bool> opts) :
     eqs_todo<real_t>(grid, &par), opts(opts), grid(grid)
   {
-    n_part = grid.nx() * grid.ny() * sd_conc;
+    int n_cell = grid.nx() * grid.ny();
+    n_part = n_cell * sd_conc;
 
     offset_x = 0 * n_part;
     offset_y = 1 * n_part;
@@ -166,6 +213,10 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     SD_j.resize(n_part);
     SD_ij.resize(n_part);
     SD_n.resize(n_part);
+    SD_id.resize(n_part);
+
+    M_ij.resize(n_cell);
+    M_0.resize(n_cell);
 
     // TODO: assert that we use no paralellisation or allow some parallelism!
     // TODO: random seed as an option
@@ -178,7 +229,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       typename eqs<real_t>::constant(false),
       vector<int>({0, 0, 0})
     }));
-    //par.idx_dtheta = this->aux.size() - 1;
+    par.idx_sd_conc = this->aux.size() - 1;
   }
 
   public: void adjustments(
@@ -193,11 +244,18 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     mtx::arr<real_t>
       &rhod_th = psi[this->par.idx_rhod_th][n],
       &rhod_rv = psi[this->par.idx_rhod_rv][n],
-      &rhod_rl = psi[this->par.idx_rhod_rl][n],
-      &rhod_rr = psi[this->par.idx_rhod_rr][n];
+      //&rhod_rl = psi[this->par.idx_rhod_rl][n],
+      //&rhod_rr = psi[this->par.idx_rhod_rr][n],
+      &sd_conc = aux[this->par.idx_sd_conc];
 
     // 
     sd_sync();
+
+    assert(sd_conc.lbound(mtx::k) == sd_conc.ubound(mtx::k)); // 2D
+    sd_conc(sd_conc.ijk) = real_t(0);
+    thrust::for_each(M_ij.begin(), M_ij.end(), unravel_indices_and_copy(
+      grid.ny(), M_0, sd_conc // TODO: this is not valid for parallel runs!
+    ));
 
     // velocities?
 
