@@ -32,6 +32,7 @@ class eqs_todo : public eqs<real_t>
     // auxiliary variable
     this->aux.push_back(new struct eqs<real_t>::axv({
       "rhod", "dry air density", this->quan2str(par->rho_unit),
+      typename eqs<real_t>::constant(true),
       vector<int>({0, 0, 0})
     }));
     par->idx_rhod = this->aux.size() - 1;

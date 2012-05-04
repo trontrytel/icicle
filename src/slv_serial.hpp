@@ -190,7 +190,10 @@ class slv_serial : public slv<real_t>
   public: void record(const int n, const unsigned long t)
   {
     for (int e = 0; e < setup->eqsys->n_vars(); ++e)
-      output->record(e, psi[e][n], ijk, t);
+      output->record(setup->eqsys->var_name(e), psi[e][n], ijk, t);
+    for (int a = 0; a < setup->eqsys->n_auxv(); ++a) 
+      if (setup->eqsys->aux_tobeoutput(a))
+        output->record(setup->eqsys->aux_name(a), aux[a], ijk, t);
   }
 
   public: typename mtx::arr<real_t>::type data(int e, int n, const mtx::idx &idx)

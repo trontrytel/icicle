@@ -175,16 +175,15 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     // auxliary variable for super-droplet conc
     this->aux.push_back(new struct eqs<real_t>::axv({
       "sd_conc", "super-droplet cencentration", this->quan2str(1./si::cubic_metres),
-      vector<int>({1, 1, 1}), // dimspan
-      vector<int>({0, 0, 0}),  // halo extent
-      typename eqs<real_t>::constant(false)
+      typename eqs<real_t>::constant(false),
+      vector<int>({0, 0, 0})
     }));
     //par.idx_dtheta = this->aux.size() - 1;
   }
 
   public: void adjustments(
     int n, // TODO: mo¿e jednak bez n...
-    const ptr_vector<mtx::arr<real_t>> &aux, 
+    ptr_vector<mtx::arr<real_t>> &aux, 
     vector<ptr_vector<mtx::arr<real_t>>> &psi,
     const quantity<si::time, real_t> dt
   ) 

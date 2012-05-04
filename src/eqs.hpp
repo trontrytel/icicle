@@ -177,9 +177,9 @@ class eqs
 
   protected: struct axv {
     string name, desc, unit;
+    constant invariable;
     vector<int> dimspan; // TODO: document the meaning of the fourth dimenions
     vector<int> halo; // TODO: ditto
-    constant invariable;
     static const int span = 0;
   };  
   
@@ -214,17 +214,38 @@ class eqs
     return auxvars().at(v).invariable.is;
   } 
 
+  public: bool aux_tobeoutput(int v)
+  {
+    return (!aux_const(v) 
+      && auxvars().at(v).dimspan[0] == axv::span
+      && auxvars().at(v).dimspan[0] == axv::span
+      && auxvars().at(v).dimspan[0] == axv::span);
+  }
+
   public: string aux_name(int v)
   {
     return auxvars().at(v).name;
   } 
+
+  public: string aux_desc(int i)
+  {
+    // TODO try/catch if i within range
+    return auxvars().at(i).desc;
+  }
+
+  public: string aux_unit(int i)
+  {
+    // TODO try/catch if i within range
+    return auxvars().at(i).unit;
+  }
+
 
   /// @brief allows for post-advection and post-rhs adjustments to the state vector
   ///        (e.g. saturation adjustment in the ,,bulk'' cloud parameterisation
   ///        or some kind of smoothing)
   virtual void adjustments(
     int n,
-    const ptr_vector<mtx::arr<real_t>> &aux, 
+    ptr_vector<mtx::arr<real_t>> &aux, 
     vector<ptr_vector<mtx::arr<real_t>>> &psi,
     const quantity<si::time, real_t> dt
   ) {} // no default adjustments

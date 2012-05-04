@@ -18,13 +18,13 @@ template <typename real_t>
 class out_debug : public out<real_t>
 {
   public: virtual void record(
-    int e,
+    const string &name,
     const mtx::arr<real_t> &psi,
     const mtx::idx &ijk, 
     const unsigned long t
   ) 
   {
-    assert(e == 0);
+    assert(name == "psi"); // TODO
     std::ostringstream tmp;
     tmp
       << "{pid: " << getpid() << "} :" 

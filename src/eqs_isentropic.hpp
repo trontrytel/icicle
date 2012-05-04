@@ -164,6 +164,7 @@ class eqs_isentropic : public eqs<real_t>
     // potential temperature profile
     this->aux.push_back(new struct eqs<real_t>::axv({
       "dtheta", "mid-layer potential temperature increment", this->quan2str(par.theta_unit),
+      typename eqs<real_t>::constant(true),
       vector<int>({nlev - 1, 1, 1})
     }));
     par.idx_dtheta = this->aux.size() - 1;
@@ -175,6 +176,7 @@ class eqs_isentropic : public eqs<real_t>
       {
         this->aux.push_back(new struct eqs<real_t>::axv({
           "dHdx", "spatial derivative of the topography (X)", this->quan2str(par.dHdxy_unit),
+          typename eqs<real_t>::constant(true),
           vector<int>({0, 0, 1}) // dimspan
         }));
         idx_dHdx = this->aux.size() - 1;
@@ -183,6 +185,7 @@ class eqs_isentropic : public eqs<real_t>
       {
         this->aux.push_back(new struct eqs<real_t>::axv({
           "dHdy", "spatial derivative of the topograpy (Y)", this->quan2str(par.dHdxy_unit),
+          typename eqs<real_t>::constant(true),
           vector<int>({0, 0, 1}) // dimspan
         }));
 	idx_dHdy = this->aux.size() - 1;
@@ -192,18 +195,18 @@ class eqs_isentropic : public eqs<real_t>
     // pressure 
     this->aux.push_back(new struct eqs<real_t>::axv({
       "p", "pressure", this->quan2str(par.p_unit),
+      typename eqs<real_t>::constant(false),
       vector<int>({0, 0, nlev+1 }), // dimspan
-      vector<int>({1, 1, 0}), // halo extent
-      typename eqs<real_t>::constant(false)
+      vector<int>({1, 1, 0}) // halo extent
     }));
     par.idx_p = this->aux.size() - 1;
 
     // the Montgomery potential
     this->aux.push_back(new struct eqs<real_t>::axv({
       "M", "Montgomery potential", this->quan2str(par.M_unit),
+      typename eqs<real_t>::constant(false),
       vector<int>({0, 0, 1}), // dimspan
-      vector<int>({1, 1, 0}),  // halo extent
-      typename eqs<real_t>::constant(false)
+      vector<int>({1, 1, 0}) // halo extent
     }));
     par.idx_M = this->aux.size() - 1;
     

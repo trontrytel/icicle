@@ -111,6 +111,7 @@ class eqs_shallow_water : public eqs<real_t>
       {   
         this->aux.push_back(new struct eqs<real_t>::axv({
           "dHdx", "spatial derivative of the topography (X)", this->quan2str(par.dHdxy_unit),
+          typename eqs<real_t>::constant(true),
           vector<int>({0, 0, 1}) // dimspan
         }));
         idx_dHdx = this->aux.size() - 1;
@@ -119,6 +120,7 @@ class eqs_shallow_water : public eqs<real_t>
       {   
         this->aux.push_back(new struct eqs<real_t>::axv({
           "dHdy", "spatial derivative of the topograpy (Y)", this->quan2str(par.dHdxy_unit),
+          typename eqs<real_t>::constant(true),
           vector<int>({0, 0, 1}) // dimspan
         }));
         idx_dHdy = this->aux.size() - 1;

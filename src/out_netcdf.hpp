@@ -23,7 +23,7 @@ template <typename real_t>
 class out_netcdf : public out<real_t>
 {
   private: unique_ptr<NcFile> f;
-  private: vector<NcVar> vars;
+  private: map<string, NcVar> vars;
   private: inf info;
 
   public: out_netcdf(
@@ -93,9 +93,23 @@ class out_netcdf : public out<real_t>
         // scalar fields
         for (int v = 0; v < setup->eqsys->n_vars(); ++v)
         {
-          vars.push_back(f->addVar(setup->eqsys->var_name(v), ncFloat, sdims)); 
-          vars.at(v).putAtt("unit", setup->eqsys->var_unit(v));
-          vars.at(v).putAtt("description", setup->eqsys->var_desc(v));
+          string name = setup->eqsys->var_name(v);
+          vars[name] = f->addVar(name, ncFloat, sdims); 
+          vars[name].putAtt("unit", setup->eqsys->var_unit(v));
+          vars[name].putAtt("description", setup->eqsys->var_desc(v));
+        }
+
+        // auxiliary fields
+        for (int a = 0; a < setup->eqsys->n_auxv(); ++a)
+        {
+          if (setup->eqsys->aux_tobeoutput(a)) 
+          {
+            // TODO: assert unique!
+            string name = setup->eqsys->aux_name(a);
+            vars[name] = f->addVar(name, ncFloat, sdims); 
+            vars[name].putAtt("unit", setup->eqsys->aux_unit(a));
+            vars[name].putAtt("description", setup->eqsys->aux_desc(a));
+          }
         }
 
         // Courant field TODO
@@ -134,7 +148,7 @@ class out_netcdf : public out<real_t>
   }
 
   public: virtual void record(
-    const int e,
+    const string &name, 
     const mtx::arr<real_t> &psi,
     const mtx::idx &ijk, 
     const unsigned long t // t is the number of the record!
@@ -155,7 +169,7 @@ class out_netcdf : public out<real_t>
         {
           startp[2] = j_int;
           assert((psi)(ijk.i, j_int, k_int).isStorageContiguous());
-          vars.at(e).putVar(startp, countp, (psi)(ijk.i, j_int, k_int).dataFirst());
+          vars[name].putVar(startp, countp, (psi)(ijk.i, j_int, k_int).dataFirst());
         }
       }
       //if (!f->sync()) warning_macro("failed to synchronise netCDF file")

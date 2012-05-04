@@ -34,13 +34,13 @@ class out_gnuplot : public out<real_t>
   }
 
   public: virtual void record(
-    int e,
+    const string &name,
     const mtx::arr<real_t> &psi,
     const mtx::idx &ijk, 
     const unsigned long t
   ) 
   {
-    assert(e == 0); // TODO: maybe allow chosing which to output, or try outputting multiple fields?
+    assert(name == "psi"); // TODO: maybe allow chosing which to output, or try outputting multiple fields?
     // sanity check
     if (ijk.lbound(mtx::j) == ijk.ubound(mtx::j) && ijk.lbound(mtx::k) == ijk.ubound(mtx::k)) 
       record_helper<mtx::idx_ijk>(psi, ijk.i, t);
