@@ -84,6 +84,8 @@ bool
   blk_clct = true,
   blk_sedi = true,
   blk_revp = true;
+int 
+  sd_conc_mean = 1;
 
 // pressure profile derived by integrating the hydrostatic eq.
 // assuming constant theta, constant rv and R=R(rv) 
@@ -224,7 +226,8 @@ int main()
       << " --eqs.todo_bulk.sedi " << blk_sedi
       << " --eqs.todo_bulk.revp " << blk_revp
     ;
-    else if (micro == "sdm") cmd << " --eqs todo_sdm";
+    else if (micro == "sdm") cmd << " --eqs todo_sdm"
+      << " --eqs.todo_sdm.sd_conc_mean " << sd_conc_mean;
     else assert(false);
     
   if (EXIT_SUCCESS != system(cmd.str().c_str()))

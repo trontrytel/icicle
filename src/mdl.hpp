@@ -21,22 +21,22 @@ template <typename real_t>
 void mdl(const po::variables_map &vm, const string &cmdline) 
 {
   // grid choice
-  unique_ptr<grd<real_t> > grid(opt_grd<real_t>(vm));
+  unique_ptr<grd<real_t>> grid(opt_grd<real_t>(vm));
 
   // advection scheme choice
-  unique_ptr<adv<real_t> > advsch(opt_adv<real_t>(vm, grid.get()));
+  unique_ptr<adv<real_t>> advsch(opt_adv<real_t>(vm, grid.get()));
 
   // velocity field choice
-  unique_ptr<vel<real_t> > velocity(opt_vel<real_t>(vm, *grid));
+  unique_ptr<vel<real_t>> velocity(opt_vel<real_t>(vm, *grid));
 
   // initial condition
-  unique_ptr<ini<real_t> > intcond(opt_ini<real_t>(vm, *grid));
+  unique_ptr<ini<real_t>> intcond(opt_ini<real_t>(vm, *grid));
 
   // equations
-  unique_ptr<eqs<real_t> > eqsys(opt_eqs<real_t>(vm, *grid, *intcond));
+  unique_ptr<eqs<real_t>> eqsys(opt_eqs<real_t>(vm, *grid, *intcond, *velocity));
 
   // grouping all above into a single set-up object
-  unique_ptr<stp<real_t> > setup(opt_stp<real_t>(vm, 
+  unique_ptr<stp<real_t>> setup(opt_stp<real_t>(vm, 
     advsch.get(), 
     velocity.get(), 
     intcond.get(), 
@@ -45,10 +45,10 @@ void mdl(const po::variables_map &vm, const string &cmdline)
   ));
 
   // output choice
-  unique_ptr<out<real_t> > output(opt_out<real_t>(vm, setup.get(), cmdline));
+  unique_ptr<out<real_t>> output(opt_out<real_t>(vm, setup.get(), cmdline));
 
   // solver choice
-  unique_ptr<slv<real_t> > solver(opt_slv(vm, setup.get(), output.get()));
+  unique_ptr<slv<real_t>> solver(opt_slv(vm, setup.get(), output.get()));
 
   // integration
   solver->integ_loop(); 

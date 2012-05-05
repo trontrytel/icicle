@@ -65,7 +65,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       const state_type &x, state_type &dxdt, value_type t
     )
     {
-      //F = ...
+      //thrust::for_each(dxdt.begin());
     }
   };
 
@@ -84,11 +84,11 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   private: thrust::device_vector<int> M_ij;
   private: thrust::device_vector<size_type> M_0;
 
+  // velocity field copy at the device
+  private: thrust::device_vector<value_type> U_x, U_y;
+
   // variables indicating where in SD_v to look for particulat SD properties
   private: size_type offset_x, offset_y, offset_r;
-
-  // TODO: take from ctor arguments -> command-line-options
-  private: const int sd_conc = 64; 
 
   // nested functor: RNG
   private: class rng {
@@ -107,6 +107,14 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     public: int operator()(value_type x) { return x/c; }
   };
 
+  // nested functor: multiply by a real constant
+  private: class multiply_by_constant
+  {
+    private: value_type c;
+    public: multiply_by_constant(value_type c) : c(c) {}
+    public: value_type operator()(value_type x) { return x*c; }
+  };
+
   // nested functor: 
   private: class ravel_indices
   {
@@ -116,18 +124,36 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   };
 
   // nested functor: 
-  private: class unravel_indices_and_copy
+  private: class copy_from_device 
   {
     private: int n;
-    private: thrust::device_vector<size_type> &from;
+    private: const thrust::device_vector<size_type> &from;
     private: mtx::arr<real_t> &to;
-    public: unravel_indices_and_copy(int n, 
-      thrust::device_vector<size_type> &from,
+    public: copy_from_device(int n, 
+      const thrust::device_vector<size_type> &from,
       mtx::arr<real_t> &to
     ) : n(n), from(from), to(to) {}
     public: void operator()(int ij) 
     { 
       to(ij % n, ij / n, 0) = *(from.begin() + ij); 
+    }
+  };
+
+  // nested_functor:
+  private: class copy_to_device
+  {
+    private: int n;
+    private: const mtx::arr<real_t> &from;
+    private: thrust::device_vector<value_type> &to;
+    private: value_type scl;
+    public: copy_to_device(int n,
+      const mtx::arr<real_t> &from,
+      thrust::device_vector<value_type> &to,
+      value_type scl = value_type(1)
+    ) : n(n), from(from), to(to), scl(scl) {}
+    public: void operator()(int ij)
+    {
+      *(to.begin() + ij) = scl * from(ij % n, ij / n, 0);
     }
   };
 
@@ -197,12 +223,23 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     );
   }
   
+  private: bool constant_velocity;
+
   // ctor
-  public: eqs_todo_sdm(const grd<real_t> &grid, map<enum processes, bool> opts) :
-    eqs_todo<real_t>(grid, &par), opts(opts), grid(grid)
+  // TODO: option: number of cores to use (via Thrust)
+  public: eqs_todo_sdm(
+    const grd<real_t> &grid, 
+    const vel<real_t> &velocity,
+    map<enum processes, bool> opts,
+    int sd_conc_mean
+  ) : 
+    eqs_todo<real_t>(grid, &par), 
+    opts(opts), 
+    grid(grid), 
+    constant_velocity(velocity.is_constant())
   {
     int n_cell = grid.nx() * grid.ny();
-    n_part = n_cell * sd_conc;
+    n_part = n_cell * sd_conc_mean;
 
     offset_x = 0 * n_part;
     offset_y = 1 * n_part;
@@ -217,6 +254,9 @@ class eqs_todo_sdm : public eqs_todo<real_t>
 
     M_ij.resize(n_cell);
     M_0.resize(n_cell);
+
+    U_x.resize(n_cell + grid.ny());
+    U_y.resize(n_cell + grid.nx());
 
     // TODO: assert that we use no paralellisation or allow some parallelism!
     // TODO: random seed as an option
@@ -234,8 +274,9 @@ class eqs_todo_sdm : public eqs_todo<real_t>
 
   public: void adjustments(
     int n, // TODO: mo¿e jednak bez n...
-    ptr_vector<mtx::arr<real_t>> &aux, 
     vector<ptr_vector<mtx::arr<real_t>>> &psi,
+    ptr_vector<mtx::arr<real_t>> &aux, 
+    const ptr_vector<mtx::arr<real_t>> C,
     const quantity<si::time, real_t> dt
   ) 
   {
@@ -252,12 +293,22 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     sd_sync();
 
     assert(sd_conc.lbound(mtx::k) == sd_conc.ubound(mtx::k)); // 2D
-    sd_conc(sd_conc.ijk) = real_t(0);
-    thrust::for_each(M_ij.begin(), M_ij.end(), unravel_indices_and_copy(
-      grid.ny(), M_0, sd_conc // TODO: this is not valid for parallel runs!
+
+    // foreach below traverses only the grid cells containing super-droplets
+    sd_conc(sd_conc.ijk) = real_t(0); 
+    thrust::for_each(M_ij.begin(), M_ij.end(), copy_from_device(
+      grid.nx(), M_0, sd_conc // TODO: this is not valid for parallel runs!
     ));
 
-    // velocities?
+    // velocities (TODO: if constant_velocity -> only once!)
+    thrust::sequence(U_x.begin(), U_x.end()); // filling with (ij + j)
+    thrust::for_each(U_x.begin(), U_x.end(), copy_to_device(
+      grid.nx() + 1, C[0], U_x, (dt / si::seconds) / (grid.dx() / si::metres)
+    ));
+    thrust::sequence(U_y.begin(), U_y.end()); // filling with (ij + j)
+    thrust::for_each(U_y.begin(), U_y.end(), copy_to_device(
+      grid.nx(), C[1], U_y, (dt / si::seconds) / (grid.dx() / si::metres)
+    ));
 
     // transfer info on thermodynamics to the RHS...
 

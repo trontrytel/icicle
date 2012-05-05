@@ -15,7 +15,7 @@
 template <typename real_t>
 class vel : root
 {
-  public: virtual bool is_constant() = 0;
+  public: virtual bool is_constant() const = 0;
 
   public: virtual void populate_courant_fields(int nm0, int nm1, // TODO:
     mtx::arr<real_t> *Cx, 

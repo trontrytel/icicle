@@ -245,8 +245,9 @@ class eqs
   ///        or some kind of smoothing)
   virtual void adjustments(
     int n,
-    ptr_vector<mtx::arr<real_t>> &aux, 
-    vector<ptr_vector<mtx::arr<real_t>>> &psi,
+    vector<ptr_vector<mtx::arr<real_t>>> &psi, // advected fields
+    ptr_vector<mtx::arr<real_t>> &aux, // auxiliary variables
+    const ptr_vector<mtx::arr<real_t>> C, // Courant number fields
     const quantity<si::time, real_t> dt
   ) {} // no default adjustments
 

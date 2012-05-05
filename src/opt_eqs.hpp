@@ -39,11 +39,17 @@ inline void opt_eqs_desc(po::options_description &desc)
     ("eqs.todo_sdm.cond", po::value<bool>()->default_value(true), "condensation/evaporation [on/off]")
     ("eqs.todo_sdm.coal", po::value<bool>()->default_value(true), "coalescence [on/off]")
     ("eqs.todo_sdm.sedi", po::value<bool>()->default_value(true), "sedimentation [on/off]")
+    ("eqs.todo_sdm.sd_conc_mean", po::value<int>()->default_value(64), "mean super-droplet density per cell") // TODO: why 64? :)
     ;
 }
 
 template <typename real_t>
-eqs<real_t> *opt_eqs(const po::variables_map& vm, const grd<real_t> &grid, const ini<real_t> &intcond)
+eqs<real_t> *opt_eqs(
+  const po::variables_map& vm, 
+  const grd<real_t> &grid, 
+  const ini<real_t> &intcond, 
+  const vel<real_t> &velocity
+) 
 {
   string initype= vm.count("eqs") ? vm["eqs"].as<string>() : "<unspecified>";
   if (initype == "scalar_advection")
@@ -83,12 +89,13 @@ eqs<real_t> *opt_eqs(const po::variables_map& vm, const grd<real_t> &grid, const
     );
   else 
   if (initype == "todo_sdm")
-    return new eqs_todo_sdm<real_t>(grid,
+    return new eqs_todo_sdm<real_t>(grid, velocity,
       map<enum eqs_todo_sdm<real_t>::processes, bool>({
         {eqs_todo_sdm<real_t>::cond, vm["eqs.todo_sdm.cond"].as<bool>()},
         {eqs_todo_sdm<real_t>::sedi, vm["eqs.todo_sdm.sedi"].as<bool>()},
         {eqs_todo_sdm<real_t>::coal, vm["eqs.todo_sdm.coal"].as<bool>()},
-      })
+      }),
+      vm["eqs.todo_sdm.sd_conc_mean"].as<int>()
     );
   else 
   error_macro("unsupported equation system: " << initype)

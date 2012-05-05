@@ -13,6 +13,6 @@
 template <typename real_t>
 class vel_momeq : public vel<real_t>
 {
-  public: bool is_constant() { return false; } 
+  public: bool is_constant() const { return false; } 
 };
 #endif

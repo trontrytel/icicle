@@ -55,8 +55,6 @@
 
   - Thrust and CUDA .......... http://code.google.com/p/thrust/
 
-  - GNU Scientific Library (GSL) .... http://www.gnu.org/s/gsl/
-
 * MPI requirements:
 
   - MPI libraries with C++ bindings (optional), e.g.:
