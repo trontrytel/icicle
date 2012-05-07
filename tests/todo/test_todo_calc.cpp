@@ -66,7 +66,7 @@ const quantity<si::time, real_t>
 //  dt_out = real_t(5) * si::seconds; // 300
 //  t_max = 1800 * si::seconds, // 4 * 3600
 //  dt_out = real_t(10) * si::seconds; // 300
-  t_max = 20 * si::seconds, // 4 * 3600
+  t_max = 400 * si::seconds, // 4 * 3600
   dt_out = real_t(10) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = real_t(.6) * si::metres / si::second; // .6 TODO: check it!
@@ -85,7 +85,7 @@ bool
   blk_sedi = true,
   blk_revp = true;
 int 
-  sd_conc_mean = 1;
+  sd_conc_mean = 10;
 
 // pressure profile derived by integrating the hydrostatic eq.
 // assuming constant theta, constant rv and R=R(rv) 
