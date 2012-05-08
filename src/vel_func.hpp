@@ -13,7 +13,7 @@
 template <typename real_t>
 class vel_func : public vel<real_t>
 {
-  public: bool is_constant() { return true; } 
+  public: bool is_constant() const { return true; } 
 
   private: virtual quantity<si::velocity, real_t> u(
     const quantity<si::length, real_t> &x,

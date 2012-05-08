@@ -15,7 +15,7 @@
     this software (among other reasons, to ensure auditability 
     and reproducibility of the obtained results), although this  
     is not an obligation ..... http://sciencecodemanifesto.org/
-* funding: Polish National Science Center .. http://ncn.gov.pl/
+* funding: Polish National Science Centre .. http://ncn.gov.pl/
     grant no. 2011/01/N/ST10/01483
 
 ---------------------------------------------------------------
@@ -53,9 +53,7 @@
   - Boost Sandbox libs: http://boost.org/community/sandbox.html
     - Boost.odeint (headers only) 
 
-  - Thrust and CUDA .......... http://code.google.com/p/thrust/
-
-  - GNU Scientific Library (GSL) .... http://www.gnu.org/s/gsl/
+  - Thrust .......................... http://thrust.github.com/
 
 * MPI requirements:
 

@@ -25,6 +25,7 @@ namespace odeint = boost::numeric::odeint;
 #  include <thrust/sequence.h>
 #  include <thrust/sort.h>
 
+// @ brief implementation of the Super-Droplet Method by Shima et al. 2009 (QJRMS, 135)
 template <typename real_t>
 class eqs_todo_sdm : public eqs_todo<real_t> 
 {
@@ -33,11 +34,9 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   {
     int idx_sd_conc; // auxiliary variables indices
   };
-  protected: params par;
 
   // a container for storing options (i.e. which processes ar on/off)
   public: enum processes {cond, sedi, coal};
-  private: map<enum processes, bool> opts;
 
   typedef double value_type; // TODO: option / check if the device supports it
   //typedef thrust::device_vector< value_type > state_type; 
@@ -58,37 +57,131 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     odeint::thrust_operations
   > stepper;
 
-  // RHS of the ODE to be solved
-  private: class rhs
-  { 
-    public: void operator()(
-      const state_type &x, state_type &dxdt, value_type t
-    )
+  // nested structure: super-droplet velocity field
+  struct SD_velo
+  {
+    // velocity field copy at the device
+    thrust::device_vector<value_type> x, y;
+    int x_nx, x_ny, y_nx, y_ny; 
+
+    // ctor
+    SD_velo(int nx, int ny) 
     {
-      //F = ...
+      x_nx = nx + 1;
+      x_ny = ny;
+      y_nx = nx;
+      y_ny = ny + 1;
+      x.resize(x_nx * x_ny);
+      y.resize(y_nx * y_ny);
     }
   };
 
-  // private fields for ODE machinery
-  private: stepper S; 
-  private: rhs F;
+  // nested structure: super-droplet diagnosed variables
+  struct SD_diag
+  {
+    // spectrum moments and corresponding grid cell ids
+    thrust::device_vector<int> M_ij;
+    thrust::device_vector<size_type> M_0;
+    
+    // ctor
+    SD_diag(int nx, int ny)
+    {
+      int n_cell = nx * ny;
+      M_ij.resize(n_cell);
+      M_0.resize(n_cell);
+    }
+  };
 
-  // SD parameters that are variable from the ODE point of view (x,y,r,...)
-  private: state_type SD_v; 
+  // nested structure: super-droplet state info
+  struct SD_stat
+  {
+    size_type n_part;
 
-  // SD parameters that are constant from the ODE point of view (n, i, j)
-  private: thrust::device_vector<size_type> SD_id, SD_n;
-  private: thrust::device_vector<int> SD_i, SD_j, SD_ij;
+    // SD parameters that are variable from the ODE point of view (x,y,r,...)
+    state_type xy, r; 
 
-  // spectrum moments
-  private: thrust::device_vector<int> M_ij;
-  private: thrust::device_vector<size_type> M_0;
+    // ... and since x and y are hidden in one SD.xy, we declare helper iterators
+    state_type::iterator x_begin, x_end, y_begin, y_end;
 
-  // variables indicating where in SD_v to look for particulat SD properties
-  private: size_type offset_x, offset_y, offset_r;
+    // SD parameters that are constant from the ODE point of view (n, i, j)
+    thrust::device_vector<size_type> id, n;
+    thrust::device_vector<int> i, j, ij;
 
-  // TODO: take from ctor arguments -> command-line-options
-  private: const int sd_conc = 64; 
+    // ctor
+    SD_stat(int nx, int ny, real_t sd_conc_mean)
+    {
+      n_part = size_type(real_t(nx * ny) * sd_conc_mean);
+      xy.resize(2 * n_part);
+      r.resize(n_part);
+      i.resize(n_part);
+      j.resize(n_part);
+      ij.resize(n_part);
+      n.resize(n_part);
+      id.resize(n_part);
+
+      x_begin = xy.begin(); 
+      x_end   = x_begin + n_part;
+      y_begin = x_end;
+      y_end   = y_begin + n_part;
+    }
+  };
+
+  // nested class: RHS of the ODE to be solved to update super-droplet positions
+  private: class rhs_xy
+  { 
+    // nested functors
+    private: 
+    template <int di, int dj>
+    class interpol
+    {
+      private: const int n;
+      private: const state_type &vel;
+      private: const SD_stat &stat;
+      public: interpol(
+        const int n,
+        const state_type &vel,
+        const SD_stat &stat
+      ) : n(n), vel(vel), stat(stat) {}
+      public: value_type operator()(size_type id)
+      {
+        // TODO weighting!
+        value_type tmp = .5 * (
+          *(vel.begin() + (*(stat.i.begin() + id)     ) + (*(stat.j.begin() + id)     ) * n) + 
+          *(vel.begin() + (*(stat.i.begin() + id) + di) + (*(stat.j.begin() + id) + dj) * n)
+        );
+        return tmp;
+      }
+    };
+
+    private: const SD_stat &stat;
+    private: const SD_velo &velo;
+ 
+    // ctor
+    public: rhs_xy(const SD_stat &stat, const SD_velo &velo) : stat(stat), velo(velo) { }
+
+    // overloaded () operator invoked by odeint
+    public: void operator()(
+      const state_type &x, state_type &dxdt, const value_type t
+    )
+    {
+      {
+        thrust::counting_iterator<int> iter(0);
+        thrust::transform(
+          iter, iter + stat.n_part, 
+          dxdt.begin(), 
+          interpol<1,0>(velo.x_nx, velo.x, stat)
+        );
+      }
+      {
+        thrust::counting_iterator<int> iter(0);
+        thrust::transform(
+          iter, iter + stat.n_part, 
+          dxdt.begin() + stat.n_part, 
+          interpol<0,1>(velo.y_nx, velo.y, stat)
+        );
+      }
+    }
+  };
 
   // nested functor: RNG
   private: class rng {
@@ -96,7 +189,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     private: thrust::random::taus88 engine; // TODO: RNG engine as an option
     private: thrust::uniform_real_distribution<value_type> dist;
     public: rng(value_type a, value_type b) : dist(a, b) {}
-    public: real_t operator()() { return dist(engine); }
+    public: value_type operator()() { return dist(engine); }
   };
 
   // nested functor: divide by real constant and cast to int
@@ -105,6 +198,14 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     private: value_type c;
     public: divide_by_constant(value_type c) : c(c) {}
     public: int operator()(value_type x) { return x/c; }
+  };
+
+  // nested functor: multiply by a real constant
+  private: class multiply_by_constant
+  {
+    private: value_type c;
+    public: multiply_by_constant(value_type c) : c(c) {}
+    public: value_type operator()(value_type x) { return x*c; }
   };
 
   // nested functor: 
@@ -116,112 +217,152 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   };
 
   // nested functor: 
-  private: class unravel_indices_and_copy
+  private: class modulo
+  {
+    private: value_type mod;
+    public: modulo(value_type mod) : mod(mod) {}
+    public: value_type operator()(value_type a) { return fmod(a + mod, mod); }
+  };
+
+  // nested functor: 
+  private: class copy_from_device 
   {
     private: int n;
-    private: thrust::device_vector<size_type> &from;
+    private: const thrust::device_vector<int> &idx2ij;
+    private: const thrust::device_vector<size_type> &from;
     private: mtx::arr<real_t> &to;
-    public: unravel_indices_and_copy(int n, 
-      thrust::device_vector<size_type> &from,
+    public: copy_from_device(int n, 
+      const thrust::device_vector<int> &idx2ij,
+      const thrust::device_vector<size_type> &from,
       mtx::arr<real_t> &to
-    ) : n(n), from(from), to(to) {}
-    public: void operator()(int ij) 
+    ) : n(n), idx2ij(idx2ij), from(from), to(to) {}
+    public: void operator()(int idx) 
     { 
-      to(ij % n, ij / n, 0) = *(from.begin() + ij); 
+      int ij = *(idx2ij.begin() + idx);
+      to(ij % n, ij / n, 0) = *(from.begin() + idx); 
     }
   };
 
-  private: size_type n_part;
-  private: const grd<real_t> &grid;
+  // nested_functor:
+  private: class copy_to_device
+  {
+    private: int n;
+    private: const mtx::arr<real_t> &from;
+    private: thrust::device_vector<value_type> &to;
+    private: value_type scl;
+    public: copy_to_device(int n,
+      const mtx::arr<real_t> &from,
+      thrust::device_vector<value_type> &to,
+      value_type scl = value_type(1)
+    ) : n(n), from(from), to(to), scl(scl) {}
+    public: void operator()(int ij)
+    {
+//cerr << "to[" << ij << "] = scl * from[" << ij%n << "," << ij/n << ",0]" << endl;
+      *(to.begin() + ij) = scl * from(ij % n, ij / n, 0);
+    }
+  };
 
   private: void sd_init()
   {
     // initialise particle x coordinates
     thrust::generate(
-      SD_v.begin() + offset_x, 
-      SD_v.begin() + offset_x + n_part, 
+      stat.x_begin, stat.x_end, 
       rng(0, grid.nx() * (grid.dx() / si::metres))
     ); 
     // initialise particle y coordinates
     thrust::generate(
-      SD_v.begin() + offset_y,
-      SD_v.begin() + offset_y + n_part, 
+      stat.y_begin, stat.y_end,
       rng(0, grid.ny() * (grid.dy() / si::metres))
     ); 
     // initialise particle sizes
     // TODO!
     // initialise particle numbers
     // TODO!
-    thrust::fill(SD_n.begin(), SD_n.end(), 1); // TEMP
+    thrust::fill(stat.n.begin(), stat.n.end(), 1); // TEMP
+  }
+
+  private: void sd_periodic()
+  {
+    // in-place transforms
+    thrust::transform(stat.x_begin, stat.x_end, stat.x_begin, modulo(grid.nx() * (grid.dx() / si::metres)));
+    thrust::transform(stat.y_begin, stat.y_end, stat.y_begin, modulo(grid.ny() * (grid.dy() / si::metres)));
   }
 
   private: void sd_sync()
   {
-    // computing SD_i 
+    // computing stat.i 
     thrust::transform(
-      SD_v.begin() + offset_x, 
-      SD_v.begin() + offset_x + n_part,
-      SD_i.begin(),
+      stat.x_begin, stat.x_end,
+      stat.i.begin(),
       divide_by_constant(grid.dx() / si::metres)
     );
-    // computing SD_j
+    // computing stat.j
     thrust::transform(
-      SD_v.begin() + offset_y, 
-      SD_v.begin() + offset_y + n_part,
-      SD_j.begin(),
+      stat.y_begin, stat.y_end,
+      stat.j.begin(),
       divide_by_constant(grid.dy() / si::metres)
     );
-    // computing SD_ij
+    // computing stat.ij
     thrust::transform(
-      SD_i.begin(), SD_i.end(),
-      SD_j.begin(),
-      SD_ij.begin(),
+      stat.i.begin(), stat.i.end(),
+      stat.j.begin(),
+      stat.ij.begin(),
       ravel_indices(grid.ny())
     );
-    // filling-in SD_id
-    thrust::sequence(SD_id.begin(), SD_id.end());
-    // sorting SD_ij and SD_id
+    // filling-in stat.id
+    thrust::sequence(stat.id.begin(), stat.id.end());
+    // sorting stat.ij and stat.id
     thrust::sort_by_key(
-      SD_ij.begin(), SD_ij.end(),
-      SD_id.begin()
+      stat.ij.begin(), stat.ij.end(),
+      stat.id.begin()
     );
     // calculating M0
     thrust::pair<
       thrust::device_vector<int>::iterator, 
       thrust::device_vector<size_type>::iterator
     > n = thrust::reduce_by_key(
-      SD_ij.begin(), SD_ij.end(),
-      SD_n.begin(),
-      M_ij.begin(),
-      M_0.begin()
+      stat.ij.begin(), stat.ij.end(),
+      stat.n.begin(),
+      diag.M_ij.begin(),
+      diag.M_0.begin()
     );
   }
   
+
+  // private fields 
+  private: params par;
+  private: map<enum processes, bool> opts;
+  private: bool constant_velocity;
+  private: const grd<real_t> &grid;
+
+  // private fields for ODE machinery
+  private: stepper S; 
+  private: rhs_xy F_xy;
+
+  // private fields with super droplet structures
+  private: SD_stat stat;
+  private: SD_velo velo;
+  private: SD_diag diag;
+
   // ctor
-  public: eqs_todo_sdm(const grd<real_t> &grid, map<enum processes, bool> opts) :
-    eqs_todo<real_t>(grid, &par), opts(opts), grid(grid)
+  public: eqs_todo_sdm(
+    const grd<real_t> &grid, 
+    const vel<real_t> &velocity,
+    map<enum processes, bool> opts,
+    real_t sd_conc_mean
+  ) : 
+    eqs_todo<real_t>(grid, &par), 
+    opts(opts), 
+    grid(grid), 
+    constant_velocity(velocity.is_constant()),
+    stat(grid.nx(), grid.ny(), sd_conc_mean),
+    velo(grid.nx(), grid.ny()),
+    diag(grid.nx(), grid.ny()),
+    F_xy(stat, velo)
   {
-    int n_cell = grid.nx() * grid.ny();
-    n_part = n_cell * sd_conc;
-
-    offset_x = 0 * n_part;
-    offset_y = 1 * n_part;
-    offset_r = 2 * n_part;
-
-    SD_v.resize(3 * n_part);
-    SD_i.resize(n_part);
-    SD_j.resize(n_part);
-    SD_ij.resize(n_part);
-    SD_n.resize(n_part);
-    SD_id.resize(n_part);
-
-    M_ij.resize(n_cell);
-    M_0.resize(n_cell);
-
     // TODO: assert that we use no paralellisation or allow some parallelism!
     // TODO: random seed as an option
-
-    sd_init();
+    // TODO: option: number of cores to use (via Thrust)
 
     // auxliary variable for super-droplet conc
     this->aux.push_back(new struct eqs<real_t>::axv({
@@ -230,12 +371,16 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       vector<int>({0, 0, 0})
     }));
     par.idx_sd_conc = this->aux.size() - 1;
+
+    // initialising super-droplets
+    sd_init();
   }
 
   public: void adjustments(
     int n, // TODO: mo¿e jednak bez n...
-    ptr_vector<mtx::arr<real_t>> &aux, 
     vector<ptr_vector<mtx::arr<real_t>>> &psi,
+    ptr_vector<mtx::arr<real_t>> &aux, 
+    const ptr_vector<mtx::arr<real_t>> C,
     const quantity<si::time, real_t> dt
   ) 
   {
@@ -252,21 +397,36 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     sd_sync();
 
     assert(sd_conc.lbound(mtx::k) == sd_conc.ubound(mtx::k)); // 2D
-    sd_conc(sd_conc.ijk) = real_t(0);
-    thrust::for_each(M_ij.begin(), M_ij.end(), unravel_indices_and_copy(
-      grid.ny(), M_0, sd_conc // TODO: this is not valid for parallel runs!
-    ));
 
-    // velocities?
+    // foreach below traverses only the grid cells containing super-droplets
+    {
+      sd_conc(sd_conc.ijk) = real_t(0); 
+      thrust::counting_iterator<int> iter(0);
+      thrust::for_each(iter, iter + diag.M_ij.size(), copy_from_device(
+        grid.nx(), diag.M_ij, diag.M_0, sd_conc // TODO: this is not valid for parallel runs!
+      ));
+    }
+
+    // velocities (TODO: if constant_velocity -> only once!)
+    {
+      thrust::counting_iterator<int> iter(0);
+      thrust::for_each(iter, iter + velo.x.size(), copy_to_device(
+        grid.nx() + 1, C[0], velo.x, (grid.dx() / si::metres) / (dt / si::seconds)
+      ));
+    }
+    {
+      thrust::counting_iterator<int> iter(0);
+      thrust::for_each(iter, iter + velo.y.size(), copy_to_device(
+        grid.nx(), C[1], velo.y, (grid.dx() / si::metres) / (dt / si::seconds)
+      ));
+    }
 
     // transfer info on thermodynamics to the RHS...
 
-    // do the ODE part (condensation, evaporation, sedimentation)
-    S.do_step(boost::ref(F), SD_v, 0, dt / si::seconds);
+    // advection + sedimentation (using odeint)
+    S.do_step(boost::ref(F_xy), stat.xy, 0, dt / si::seconds);
+    sd_periodic();
 
-    // Monte Carlo part (coalescence)
-
-    // retrieve info on thermodynamics from the RHS...
   }
 
 };

@@ -103,7 +103,7 @@ int main()
 
   notice_macro("setting-up plot parameters")
   Gnuplot gp;
-  gp << "set term png enhanced size 1200,400" << endl;
+  gp << "set term png enhanced size 800,800" << endl;
   gp << "set view map" << endl;
   gp << "set xlabel 'X [km]'" << endl;
   gp << "set xrange [" << 0 << ":" << nx * dx/1000 << "]" << endl;
@@ -125,7 +125,7 @@ int main()
     notice_macro("generating frame at t=" << t)
     gp << "set label 't = " << int(real_t(t) * dt_out / si::seconds) << " s' at screen .48,.96 left" << endl;
     gp << "set output 'tmp/test_" << zeropad(t) << ".png'" << endl;
-    gp << "set multiplot layout 1,3" << endl;
+    gp << "set multiplot layout 2,2" << endl;
 
     gp << "set title 'water vapour mixing ratio [g/kg]'" << endl;
     gp << "set cbrange [6:8]" << endl;
@@ -137,6 +137,7 @@ int main()
     gp.sendBinary(rv);
     //gp.sendBinary(rv);
 
+/*
     gp << "set title 'liquid water mixing ratio [g/kg]'" << endl;
     gp << "set cbrange [0:1]" << endl;
     nf.getVar("rhod_rl").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp.data()); 
@@ -167,47 +168,19 @@ int main()
     gp.sendBinary(th);
     //gp.sendBinary(th);
 
-/*
-    gp << "set title 'RH [%]'" << endl;
-    gp << "set cbrange [50:105]" << endl;
-    for (int i=0; i < nx; ++i)
-    {
-      for (int j=0; j < ny; ++j)
-      {
-        quantity<si::temperature, real_t> T;  
-        quantity<si::pressure, real_t> p;  
-        quantity<si::dimensionless, real_t> r = rv(i,j);
-
-        // <TODO> code repeated from eqs_todo_bulk!!!
-        p = phc::p_1000<real_t>() * real_t(pow(
-          (rhod(i,j) * si::kilograms / si::cubic_metres * th(i,j) * si::kelvins * phc::R_d<real_t>()) 
-            / phc::p_1000<real_t>() * (real_t(1) + r / phc::eps<real_t>()),
-          real_t(1) / (real_t(1) - phc::R_over_c_p(r))
-        )); 
-        T = th(i,j) * si::kelvins * phc::exner<real_t>(p, r); 
-        // </TODO>
-
-        tmp(i,j) = r / phc::r_vs<real_t>(T, p);
-      }
-    }
-    gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " using ($1*100) with image notitle";
-    gp << endl;
-    gp.sendBinary(tmp);
-
     gp << "set label 'results obtained with icicle - a GPL-ed C++ MPDATA-based solver from University of Warsaw' at screen .98,.02 right" << endl;
     gp << "set label '8th International Cloud Modeling Workshop 2012: Case 1' at screen .02,.02 left" << endl;
+*/
 
-    gp << "set title 'rain water mixing ratio [g/kg]'" << endl;
-    gp << "set cbrange [-.05:.05]" << endl;
-    nf.getVar("rhod_rr").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp.data()); 
-    tmp /= rhod;
-    gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " using ($1*1000) with image notitle";
+    gp << "set title 'super-droplet conc. [1/dx/dy]'" << endl;
+    gp << "set cbrange [0:5]" << endl;
+    nf.getVar("sd_conc").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp.data()); 
+    gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " using 1 with image notitle";
     //gp << ",'-' binary" << gp.binfmt(tmp) << dxdy << " ps 0 notitle";
     gp << endl;
     gp.sendBinary(tmp);
     //gp.sendBinary(tmp);
 
-*/
     gp << "unset label" << endl;
     gp << "unset multiplot" << endl;
   }

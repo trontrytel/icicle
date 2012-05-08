@@ -175,8 +175,9 @@ class eqs_todo_bulk : public eqs_todo<real_t>
   // the saturation adjustment (aka ,,bulk'' microphysics)
   public: void adjustments(
     int n, // TODO: mo¿e jednak bez n...
-    ptr_vector<mtx::arr<real_t>> &aux, 
     vector<ptr_vector<mtx::arr<real_t>>> &psi,
+    ptr_vector<mtx::arr<real_t>> &aux, 
+    const ptr_vector<mtx::arr<real_t>> C,
     const quantity<si::time, real_t> dt
   ) 
   {

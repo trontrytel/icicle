@@ -23,11 +23,19 @@ class slv_serial : public slv<real_t>
   private: vector<int> halo_sclr; // TODO: within ctor?
   private: int halo_vctr; // TODO: within ctor?
 
+  // Courant numbers (Cx,Cy,Cz)
   private: ptr_vector<mtx::arr<real_t>> C; // TODO: nullable? (uwaga na kod w FCT! ii = i+/-1
+
+  // advected vector fields at n time levels (2 for MPDATA, 3 for leapfrog, etc)
   private: vector<ptr_vector<mtx::arr<real_t>>> psi;
+
+  // auxiliary variables 
   private: ptr_vector<mtx::arr<real_t>> aux;
-  private: unique_ptr<tmp<real_t>> cache; 
+
+  // RHS representations (implicit and explicit parts)
   private: ptr_vector<nullable<mtx::arr<real_t>>> rhs_R, rhs_C;
+
+  private: unique_ptr<tmp<real_t>> cache; 
   private: vector<mtx::arr<real_t>*> tmpvec; // used in update_forcings
   private: vector<ptr_vector<mtx::arr<real_t>>> Q; // used in update_courants
 
@@ -352,7 +360,7 @@ class slv_serial : public slv<real_t>
 
   public: void apply_adjustments(int n, const quantity<si::time, real_t> dt)
   {
-    setup->eqsys->adjustments(n, aux, psi, dt); 
+    setup->eqsys->adjustments(n, psi, aux, C, dt); 
   }
 
   public: void cycle_arrays(const int e, const int n) // TODO: n unneeded?
