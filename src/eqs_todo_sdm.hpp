@@ -11,6 +11,7 @@
 // TODO: check if Thrust available
 // TODO: something like: #  if !defined(USE_BOOST_ODEINT) error_macro("eqs_todo_sdm requires icicle to be compiled with Boost.odeint");
 // TODO: substepping with timesteps as an option
+// TODO: units in SD_stat, SD_diag, SD_velo... should be possible as odeint supports Boost.units!
 
 #  include "eqs_todo.hpp"
 #  if defined(USE_BOOST_ODEINT)
@@ -95,16 +96,18 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   // nested structure: super-droplet state info
   struct SD_stat
   {
+    // number of particles (i.e. super-droplets)
     size_type n_part;
 
-    // SD parameters that are variable from the ODE point of view (x,y,r,...)
-    state_type xy, r; 
+    // SD parameters that are variable from the ODE point of view (x,y,rw,...)
+    state_type xy, rw; 
 
     // ... and since x and y are hidden in one SD.xy, we declare helper iterators
     state_type::iterator x_begin, x_end, y_begin, y_end;
 
-    // SD parameters that are constant from the ODE point of view (n, i, j)
-    thrust::device_vector<size_type> id, n;
+    // SD parameters that are constant from the ODE point of view (n,rd,i,j)
+    thrust::device_vector<value_type> rd; // TODO-AJ
+    thrust::device_vector<size_type> id, n; // TODO-AJ (n)
     thrust::device_vector<int> i, j, ij;
 
     // ctor
@@ -112,7 +115,8 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     {
       n_part = size_type(real_t(nx * ny) * sd_conc_mean);
       xy.resize(2 * n_part);
-      r.resize(n_part);
+      rw.resize(n_part);
+      rd.resize(n_part);
       i.resize(n_part);
       j.resize(n_part);
       ij.resize(n_part);
@@ -156,7 +160,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     private: const SD_stat &stat;
     private: const SD_velo &velo;
  
-    // ctor
+    // ctor 
     public: rhs_xy(const SD_stat &stat, const SD_velo &velo) : stat(stat), velo(velo) { }
 
     // overloaded () operator invoked by odeint
@@ -262,6 +266,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     }
   };
 
+  // initialising particle sizes and positions
   private: void sd_init()
   {
     // initialise particle x coordinates
@@ -274,13 +279,14 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       stat.y_begin, stat.y_end,
       rng(0, grid.ny() * (grid.dy() / si::metres))
     ); 
-    // initialise particle sizes
-    // TODO!
+    // initialise particle dry sizes
+    // TODO-AJ
     // initialise particle numbers
-    // TODO!
+    // TODO-AJ
     thrust::fill(stat.n.begin(), stat.n.end(), 1); // TEMP
   }
 
+  // (x) -> (x % nx*dx) transformation
   private: void sd_periodic()
   {
     // in-place transforms
@@ -288,6 +294,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     thrust::transform(stat.y_begin, stat.y_end, stat.y_begin, modulo(grid.ny() * (grid.dy() / si::metres)));
   }
 
+  // sorting out which particle belongs to which grid cell
   private: void sd_sync()
   {
     // computing stat.i 
@@ -322,14 +329,17 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       thrust::device_vector<size_type>::iterator
     > n = thrust::reduce_by_key(
       stat.ij.begin(), stat.ij.end(),
-      stat.n.begin(),
+      thrust::permutation_iterator<
+        thrust::device_vector<size_type>::iterator,
+        thrust::device_vector<size_type>::iterator
+      >(stat.n.begin(), stat.id.begin()), 
       diag.M_ij.begin(),
       diag.M_0.begin()
     );
   }
   
 
-  // private fields 
+  // private fields of eqs_todo_sdm
   private: params par;
   private: map<enum processes, bool> opts;
   private: bool constant_velocity;
@@ -344,7 +354,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   private: SD_velo velo;
   private: SD_diag diag;
 
-  // ctor
+  // ctor of eqs_todo_sdm
   public: eqs_todo_sdm(
     const grd<real_t> &grid, 
     const vel<real_t> &velocity,
@@ -400,7 +410,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
 
     // foreach below traverses only the grid cells containing super-droplets
     {
-      sd_conc(sd_conc.ijk) = real_t(0); 
+      sd_conc(sd_conc.ijk) = real_t(0); // as some grid cells could be void of particles
       thrust::counting_iterator<int> iter(0);
       thrust::for_each(iter, iter + diag.M_ij.size(), copy_from_device(
         grid.nx(), diag.M_ij, diag.M_0, sd_conc // TODO: this is not valid for parallel runs!
