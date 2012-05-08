@@ -25,6 +25,7 @@ namespace odeint = boost::numeric::odeint;
 #  include <thrust/sequence.h>
 #  include <thrust/sort.h>
 
+// @ brief implementation of the Super-Droplet Method by Shima et al. 2009 (QJRMS, 135)
 template <typename real_t>
 class eqs_todo_sdm : public eqs_todo<real_t> 
 {
@@ -61,13 +62,17 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   {
     // velocity field copy at the device
     thrust::device_vector<value_type> x, y;
+    int x_nx, x_ny, y_nx, y_ny; 
 
     // ctor
-    SD_velo(int nx, int ny)
+    SD_velo(int nx, int ny) 
     {
-      int n_cell = nx * ny;
-      x.resize(n_cell + ny);
-      y.resize(n_cell + nx);
+      x_nx = nx + 1;
+      x_ny = ny;
+      y_nx = nx;
+      y_ny = ny + 1;
+      x.resize(x_nx * x_ny);
+      y.resize(y_nx * y_ny);
     }
   };
 
@@ -103,9 +108,9 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     thrust::device_vector<int> i, j, ij;
 
     // ctor
-    SD_stat(int nx, int ny, int sd_conc_mean)
+    SD_stat(int nx, int ny, real_t sd_conc_mean)
     {
-      n_part = size_type(nx) * size_type(ny) * size_type(sd_conc_mean);
+      n_part = size_type(real_t(nx * ny) * sd_conc_mean);
       xy.resize(2 * n_part);
       r.resize(n_part);
       i.resize(n_part);
@@ -125,21 +130,25 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   private: class rhs_xy
   { 
     // nested functors
-    private: class interpol
+    private: 
+    template <int di, int dj>
+    class interpol
     {
+      private: const int n;
       private: const state_type &vel;
       private: const SD_stat &stat;
       public: interpol(
+        const int n,
         const state_type &vel,
         const SD_stat &stat
-      ) : vel(vel), stat(stat) {}
+      ) : n(n), vel(vel), stat(stat) {}
       public: value_type operator()(size_type id)
       {
         // TODO weighting!
-        value_type tmp = .5/* * (
-          *(vel.begin() + *(stat.ij.begin() + id) + *(stat.j.begin() + id)) + 
-          *(vel.begin() + *(stat.ij.begin() + id) + *(stat.j.begin() + id) + 1)
-        )*/;
+        value_type tmp = .5 * (
+          *(vel.begin() + (*(stat.i.begin() + id)     ) + (*(stat.j.begin() + id)     ) * n) + 
+          *(vel.begin() + (*(stat.i.begin() + id) + di) + (*(stat.j.begin() + id) + dj) * n)
+        );
         return tmp;
       }
     };
@@ -155,16 +164,22 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       const state_type &x, state_type &dxdt, const value_type t
     )
     {
-      thrust::transform(
-        stat.id.begin(), stat.id.end(), 
-        dxdt.begin(), 
-        interpol(velo.x, stat)
-      );
-      thrust::transform(
-        stat.id.begin(), stat.id.end(), 
-        dxdt.begin() + stat.n_part, 
-        interpol(velo.y, stat)
-      );
+      {
+        thrust::counting_iterator<int> iter(0);
+        thrust::transform(
+          iter, iter + stat.n_part, 
+          dxdt.begin(), 
+          interpol<1,0>(velo.x_nx, velo.x, stat)
+        );
+      }
+      {
+        thrust::counting_iterator<int> iter(0);
+        thrust::transform(
+          iter, iter + stat.n_part, 
+          dxdt.begin() + stat.n_part, 
+          interpol<0,1>(velo.y_nx, velo.y, stat)
+        );
+      }
     }
   };
 
@@ -242,6 +257,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     ) : n(n), from(from), to(to), scl(scl) {}
     public: void operator()(int ij)
     {
+//cerr << "to[" << ij << "] = scl * from[" << ij%n << "," << ij/n << ",0]" << endl;
       *(to.begin() + ij) = scl * from(ij % n, ij / n, 0);
     }
   };
@@ -251,12 +267,12 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     // initialise particle x coordinates
     thrust::generate(
       stat.x_begin, stat.x_end, 
-      rng(0, .5 * grid.nx() * (grid.dx() / si::metres))
+      rng(0, grid.nx() * (grid.dx() / si::metres))
     ); 
     // initialise particle y coordinates
     thrust::generate(
       stat.y_begin, stat.y_end,
-      rng(0, .5 * grid.ny() * (grid.dy() / si::metres))
+      rng(0, grid.ny() * (grid.dy() / si::metres))
     ); 
     // initialise particle sizes
     // TODO!
@@ -333,7 +349,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     const grd<real_t> &grid, 
     const vel<real_t> &velocity,
     map<enum processes, bool> opts,
-    int sd_conc_mean
+    real_t sd_conc_mean
   ) : 
     eqs_todo<real_t>(grid, &par), 
     opts(opts), 
@@ -392,24 +408,25 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     }
 
     // velocities (TODO: if constant_velocity -> only once!)
-    thrust::sequence(velo.x.begin(), velo.x.end()); // filling with (ij + j) // TODO: rewrite with counting iterator
-    thrust::for_each(velo.x.begin(), velo.x.end(), copy_to_device(
-      grid.nx() + 1, C[0], velo.x, (grid.dx() / si::metres) / (dt / si::seconds)
-    ));
-    thrust::sequence(velo.y.begin(), velo.y.end()); // filling with (ij + j) // TODO: rewrite with counting iterator
-    thrust::for_each(velo.y.begin(), velo.y.end(), copy_to_device(
-      grid.nx(), C[1], velo.y, (grid.dx() / si::metres) / (dt / si::seconds)
-    ));
+    {
+      thrust::counting_iterator<int> iter(0);
+      thrust::for_each(iter, iter + velo.x.size(), copy_to_device(
+        grid.nx() + 1, C[0], velo.x, (grid.dx() / si::metres) / (dt / si::seconds)
+      ));
+    }
+    {
+      thrust::counting_iterator<int> iter(0);
+      thrust::for_each(iter, iter + velo.y.size(), copy_to_device(
+        grid.nx(), C[1], velo.y, (grid.dx() / si::metres) / (dt / si::seconds)
+      ));
+    }
 
     // transfer info on thermodynamics to the RHS...
 
-    // do the ODE part (condensation, evaporation, sedimentation)
+    // advection + sedimentation (using odeint)
     S.do_step(boost::ref(F_xy), stat.xy, 0, dt / si::seconds);
     sd_periodic();
 
-    // Monte Carlo part (coalescence)
-
-    // retrieve info on thermodynamics from the RHS...
   }
 
 };

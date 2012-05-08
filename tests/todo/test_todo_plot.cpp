@@ -173,7 +173,7 @@ int main()
 */
 
     gp << "set title 'super-droplet conc. [1/dx/dy]'" << endl;
-    gp << "set cbrange [0:50]" << endl;
+    gp << "set cbrange [0:5]" << endl;
     nf.getVar("sd_conc").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp.data()); 
     gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " using 1 with image notitle";
     //gp << ",'-' binary" << gp.binfmt(tmp) << dxdy << " ps 0 notitle";

@@ -39,7 +39,7 @@ inline void opt_eqs_desc(po::options_description &desc)
     ("eqs.todo_sdm.cond", po::value<bool>()->default_value(true), "condensation/evaporation [on/off]")
     ("eqs.todo_sdm.coal", po::value<bool>()->default_value(true), "coalescence [on/off]")
     ("eqs.todo_sdm.sedi", po::value<bool>()->default_value(true), "sedimentation [on/off]")
-    ("eqs.todo_sdm.sd_conc_mean", po::value<int>()->default_value(64), "mean super-droplet density per cell") // TODO: why 64? :)
+    ("eqs.todo_sdm.sd_conc_mean", po::value<string>()->default_value("64"), "mean super-droplet density per cell") // TODO: why 64? :)
     ;
 }
 
@@ -95,7 +95,7 @@ eqs<real_t> *opt_eqs(
         {eqs_todo_sdm<real_t>::sedi, vm["eqs.todo_sdm.sedi"].as<bool>()},
         {eqs_todo_sdm<real_t>::coal, vm["eqs.todo_sdm.coal"].as<bool>()},
       }),
-      vm["eqs.todo_sdm.sd_conc_mean"].as<int>()
+      real_cast<real_t>(vm, "eqs.todo_sdm.sd_conc_mean")
     );
   else 
   error_macro("unsupported equation system: " << initype)

@@ -66,7 +66,7 @@ const quantity<si::time, real_t>
 //  dt_out = real_t(5) * si::seconds; // 300
 //  t_max = 1800 * si::seconds, // 4 * 3600
 //  dt_out = real_t(10) * si::seconds; // 300
-  t_max = 400 * si::seconds, // 4 * 3600
+  t_max = 1000 * si::seconds, // 4 * 3600
   dt_out = real_t(10) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = real_t(.6) * si::metres / si::second; // .6 TODO: check it!
@@ -84,8 +84,8 @@ bool
   blk_clct = true,
   blk_sedi = true,
   blk_revp = true;
-int 
-  sd_conc_mean = 10;
+real_t 
+  sd_conc_mean = .5;
 
 // pressure profile derived by integrating the hydrostatic eq.
 // assuming constant theta, constant rv and R=R(rv) 
@@ -215,8 +215,8 @@ int main()
     << " --dt_out " << real_t(dt_out / si::seconds)
     << " --out netcdf" 
     << " --out.netcdf.file out.nc"
-    << " --slv serial"
-    //<< " --slv openmp --nsd 3"
+    //<< " --slv serial"
+    << " --slv openmp --nsd 1"
     ;
     if (micro == "bulk") cmd << " --eqs todo_bulk"
       << " --eqs.todo_bulk.cond " << blk_cond
