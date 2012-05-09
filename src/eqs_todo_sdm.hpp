@@ -40,20 +40,16 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   // a container for storing options (i.e. which processes ar on/off)
   public: enum processes {cond, sedi, coal};
 
-  typedef double value_type; // TODO: option / check if the device supports it
-  typedef thrust::device_vector< value_type > state_type; // TODO: cpu/gpu option
+  typedef double thrust_real_t; // TODO: option / check if the device supports it
 
-  typedef state_type deriv_type;
-  typedef value_type time_type;
-
-  typedef thrust::device_vector<int>::size_type size_type;
+  typedef thrust::device_vector<int>::size_type thrust_size_type;
 
   //typedef odeint::euler< // TODO: option
   typedef odeint::runge_kutta4<
-    state_type,
-    value_type,
-    deriv_type,
-    time_type,
+    thrust::device_vector<thrust_real_t>, // state type
+    thrust_real_t, // value_type
+    thrust::device_vector<thrust_real_t>, // deriv type
+    thrust_real_t, // time type
     odeint::thrust_algebra, 
     odeint::thrust_operations
   > stepper;
@@ -62,7 +58,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   struct SD_velo
   {
     // velocity field copy at the device
-    thrust::device_vector<value_type> x, y;
+    thrust::device_vector<thrust_real_t> x, y;
     int x_nx, x_ny, y_nx, y_ny; 
 
     // ctor
@@ -82,7 +78,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   {
     // spectrum moments and corresponding grid cell ids
     thrust::device_vector<int> M_ij;
-    thrust::device_vector<size_type> M_0;
+    thrust::device_vector<thrust_size_type> M_0;
     
     // ctor
     SD_diag(int nx, int ny)
@@ -97,23 +93,23 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   struct SD_stat
   {
     // number of particles (i.e. super-droplets)
-    size_type n_part;
+    thrust_size_type n_part;
 
     // SD parameters that are variable from the ODE point of view (x,y,rw,...)
-    state_type xy, rw; 
+    thrust::device_vector<thrust_real_t> xy, rw; 
 
     // ... and since x and y are hidden in one SD.xy, we declare helper iterators
-    state_type::iterator x_begin, x_end, y_begin, y_end;
+    thrust::device_vector<thrust_real_t>::iterator x_begin, x_end, y_begin, y_end;
 
     // SD parameters that are constant from the ODE point of view (n,rd,i,j)
-    thrust::device_vector<value_type> rd; // TODO-AJ
-    thrust::device_vector<size_type> id, n; // TODO-AJ (n)
+    thrust::device_vector<thrust_real_t> rd; // TODO-AJ
+    thrust::device_vector<thrust_size_type> id, n; // TODO-AJ (n)
     thrust::device_vector<int> i, j, ij;
 
     // ctor
     SD_stat(int nx, int ny, real_t sd_conc_mean)
     {
-      n_part = size_type(real_t(nx * ny) * sd_conc_mean);
+      n_part = thrust_size_type(real_t(nx * ny) * sd_conc_mean);
       xy.resize(2 * n_part);
       rw.resize(n_part);
       rd.resize(n_part);
@@ -133,23 +129,28 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   // nested class: RHS of the ODE to be solved to update super-droplet positions
   private: class rhs_xy
   { 
-    // nested functor
+    // nested functor 
     private: 
     template <int di, int dj>
     class interpol
     {
+      // private fields
       private: const int n;
-      private: const state_type &vel;
+      private: const thrust::device_vector<thrust_real_t> &vel;
       private: const SD_stat &stat;
+
+      // ctor
       public: interpol(
         const int n,
-        const state_type &vel,
+        const thrust::device_vector<thrust_real_t> &vel,
         const SD_stat &stat
       ) : n(n), vel(vel), stat(stat) {}
-      public: value_type operator()(size_type id)
+
+      //  overloaded () operator invoked by thrust::transform()
+      public: thrust_real_t operator()(thrust_size_type id)
       {
         // TODO weighting by position!
-        value_type tmp = .5 * (
+        thrust_real_t tmp = .5 * (
           *(vel.begin() + (*(stat.i.begin() + id)     ) + (*(stat.j.begin() + id)     ) * n) + 
           *(vel.begin() + (*(stat.i.begin() + id) + di) + (*(stat.j.begin() + id) + dj) * n)
         );
@@ -166,7 +167,9 @@ class eqs_todo_sdm : public eqs_todo<real_t>
 
     // overloaded () operator invoked by odeint
     public: void operator()(
-      const state_type &xy, state_type &dxy_dt, const value_type
+      const thrust::device_vector<thrust_real_t> &xy, 
+      thrust::device_vector<thrust_real_t> &dxy_dt, 
+      const thrust_real_t
     )
     {
       // TODO use positions to interpolate velocities! (as an option?)
@@ -192,6 +195,22 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   // nested class: RHS of the ODE to be solved to update super-droplet sizes
   private: class rhs_rw
   { 
+    // nested functor
+    private: class drop_growth_equation 
+    {
+      // private fields
+      private: const SD_stat &stat;
+
+      // ctor
+      public: drop_growth_equation(const SD_stat &stat) : stat(stat) {}
+
+      // overloaded () operator invoked by thrust::transform()
+      public: thrust_real_t operator()(thrust_size_type id)
+      {
+        return 0;
+      }
+    };
+
     // private fields
     private: const SD_stat &stat;
 
@@ -200,7 +219,9 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   
     // overloaded () operator invoked by odeint
     public: void operator()(
-      const state_type &rw, state_type &drw_dt, const value_type 
+      const thrust::device_vector<thrust_real_t> &rw, 
+      thrust::device_vector<thrust_real_t> &drw_dt, 
+      const thrust_real_t 
     )
     {
       thrust::counting_iterator<int> iter(0);
@@ -216,25 +237,25 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   private: class rng {
     // TODO: random seed as an option
     private: thrust::random::taus88 engine; // TODO: RNG engine as an option
-    private: thrust::uniform_real_distribution<value_type> dist;
-    public: rng(value_type a, value_type b) : dist(a, b) {}
-    public: value_type operator()() { return dist(engine); }
+    private: thrust::uniform_real_distribution<thrust_real_t> dist;
+    public: rng(thrust_real_t a, thrust_real_t b) : dist(a, b) {}
+    public: thrust_real_t operator()() { return dist(engine); }
   };
 
   // nested functor: divide by real constant and cast to int
   private: class divide_by_constant
   {
-    private: value_type c;
-    public: divide_by_constant(value_type c) : c(c) {}
-    public: int operator()(value_type x) { return x/c; }
+    private: thrust_real_t c;
+    public: divide_by_constant(thrust_real_t c) : c(c) {}
+    public: int operator()(thrust_real_t x) { return x/c; }
   };
 
   // nested functor: multiply by a real constant
   private: class multiply_by_constant
   {
-    private: value_type c;
-    public: multiply_by_constant(value_type c) : c(c) {}
-    public: value_type operator()(value_type x) { return x*c; }
+    private: thrust_real_t c;
+    public: multiply_by_constant(thrust_real_t c) : c(c) {}
+    public: thrust_real_t operator()(thrust_real_t x) { return x*c; }
   };
 
   // nested functor: 
@@ -248,9 +269,9 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   // nested functor: 
   private: class modulo
   {
-    private: value_type mod;
-    public: modulo(value_type mod) : mod(mod) {}
-    public: value_type operator()(value_type a) { return fmod(a + mod, mod); }
+    private: thrust_real_t mod;
+    public: modulo(thrust_real_t mod) : mod(mod) {}
+    public: thrust_real_t operator()(thrust_real_t a) { return fmod(a + mod, mod); }
   };
 
   // nested functor: 
@@ -258,11 +279,11 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   {
     private: int n;
     private: const thrust::device_vector<int> &idx2ij;
-    private: const thrust::device_vector<size_type> &from;
+    private: const thrust::device_vector<thrust_size_type> &from;
     private: mtx::arr<real_t> &to;
     public: copy_from_device(int n, 
       const thrust::device_vector<int> &idx2ij,
-      const thrust::device_vector<size_type> &from,
+      const thrust::device_vector<thrust_size_type> &from,
       mtx::arr<real_t> &to
     ) : n(n), idx2ij(idx2ij), from(from), to(to) {}
     public: void operator()(int idx) 
@@ -277,12 +298,12 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   {
     private: int n;
     private: const mtx::arr<real_t> &from;
-    private: thrust::device_vector<value_type> &to;
-    private: value_type scl;
+    private: thrust::device_vector<thrust_real_t> &to;
+    private: thrust_real_t scl;
     public: copy_to_device(int n,
       const mtx::arr<real_t> &from,
-      thrust::device_vector<value_type> &to,
-      value_type scl = value_type(1)
+      thrust::device_vector<thrust_real_t> &to,
+      thrust_real_t scl = thrust_real_t(1)
     ) : n(n), from(from), to(to), scl(scl) {}
     public: void operator()(int ij)
     {
@@ -343,12 +364,12 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     // calculating M0
     thrust::pair<
       thrust::device_vector<int>::iterator, 
-      thrust::device_vector<size_type>::iterator
+      thrust::device_vector<thrust_size_type>::iterator
     > n = thrust::reduce_by_key(
       stat.ij.begin(), stat.ij.end(),
       thrust::permutation_iterator<
-        thrust::device_vector<size_type>::iterator,
-        thrust::device_vector<size_type>::iterator
+        thrust::device_vector<thrust_size_type>::iterator,
+        thrust::device_vector<thrust_size_type>::iterator
       >(stat.n.begin(), stat.id.begin()), 
       diag.M_ij.begin(),
       diag.M_0.begin()
@@ -383,6 +404,12 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     thrust::transform(stat.y_begin, stat.y_end, stat.y_begin, modulo(grid.ny() * (grid.dy() / si::metres)));
   }
   
+  private: void sd_condensation(
+    const quantity<si::time, real_t> dt
+  )
+  {
+    S.do_step(boost::ref(F_rw), stat.rw, 0, dt / si::seconds);
+  }
 
   // private fields of eqs_todo_sdm
   private: params par;
@@ -453,7 +480,8 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     assert(sd_conc.lbound(mtx::k) == sd_conc.ubound(mtx::k)); // 2D
 
     sd_sync();
-    sd_advection(C[0], C[1], dt);
+    sd_advection(C[0], C[1], dt); // TODO: which order would be best?
+    sd_condensation(dt);
 
     // foreach below traverses only the grid cells containing super-droplets
     {
