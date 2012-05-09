@@ -27,7 +27,7 @@ namespace odeint = boost::numeric::odeint;
 #  include <thrust/sequence.h>
 #  include <thrust/sort.h>
 
-// @ brief implementation of the Super-Droplet Method by Shima et al. 2009 (QJRMS, 135)
+// @brief implementation of the Super-Droplet Method by Shima et al. 2009 (QJRMS, 135)
 template <typename real_t>
 class eqs_todo_sdm : public eqs_todo<real_t> 
 {
@@ -43,16 +43,6 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   typedef double thrust_real_t; // TODO: option / check if the device supports it
 
   typedef thrust::device_vector<int>::size_type thrust_size_type;
-
-  //typedef odeint::euler< // TODO: option
-  typedef odeint::runge_kutta4<
-    thrust::device_vector<thrust_real_t>, // state type
-    thrust_real_t, // value_type
-    thrust::device_vector<thrust_real_t>, // deriv type
-    thrust_real_t, // time type
-    odeint::thrust_algebra, 
-    odeint::thrust_operations
-  > stepper;
 
   // nested structure: super-droplet velocity field
   struct SD_velo
@@ -96,14 +86,14 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     thrust_size_type n_part;
 
     // SD parameters that are variable from the ODE point of view (x,y,rw,...)
-    thrust::device_vector<thrust_real_t> xy, rw; 
+    thrust::device_vector<thrust_real_t> xy, xi; 
 
     // ... and since x and y are hidden in one SD.xy, we declare helper iterators
     thrust::device_vector<thrust_real_t>::iterator x_begin, x_end, y_begin, y_end;
 
     // SD parameters that are constant from the ODE point of view (n,rd,i,j)
-    thrust::device_vector<thrust_real_t> rd; // TODO-AJ
-    thrust::device_vector<thrust_size_type> id, n; // TODO-AJ (n)
+    thrust::device_vector<thrust_real_t> rd3; // rd3 -> dry radius to the third power 
+    thrust::device_vector<thrust_size_type> id, n; // n -> number of real droplets in a super-droplet
     thrust::device_vector<int> i, j, ij;
 
     // ctor
@@ -111,8 +101,8 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     {
       n_part = thrust_size_type(real_t(nx * ny) * sd_conc_mean);
       xy.resize(2 * n_part);
-      rw.resize(n_part);
-      rd.resize(n_part);
+      xi.resize(n_part);
+      rd3.resize(n_part);
       i.resize(n_part);
       j.resize(n_part);
       ij.resize(n_part);
@@ -126,8 +116,51 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     }
   };
 
-  // nested class: RHS of the ODE to be solved to update super-droplet positions
-  private: class rhs_xy
+  typedef odeint::euler<
+    thrust::device_vector<thrust_real_t>, // state type
+    thrust_real_t, // value_type
+    thrust::device_vector<thrust_real_t>, // deriv type
+    thrust_real_t, // time type
+    odeint::thrust_algebra, 
+    odeint::thrust_operations
+  > algo_euler;
+
+  typedef odeint::runge_kutta4<
+    thrust::device_vector<thrust_real_t>, // state type
+    thrust_real_t, // value_type
+    thrust::device_vector<thrust_real_t>, // deriv type
+    thrust_real_t, // time type
+    odeint::thrust_algebra, 
+    odeint::thrust_operations
+  > algo_rk4;
+
+  // nested class::
+  private: 
+  template <class algo> 
+  class ode
+  {
+    private: algo stepper;
+
+    // pure virtual method
+    public: virtual void operator()(
+      const thrust::device_vector<thrust_real_t> &xy, 
+      thrust::device_vector<thrust_real_t> &dxy_dt, 
+      const thrust_real_t
+    ) = 0;
+
+    public: void advance(
+      thrust::device_vector<thrust_real_t> &x, 
+      const quantity<si::time, real_t> &dt
+    )
+    {
+      stepper.do_step(boost::ref(*this), x, 0, dt / si::seconds);
+    }
+  };
+
+  // nested class: the ODE system to be solved to update super-droplet positions
+  private: 
+  template <class algo>
+  class ode_xy : public ode<algo>
   { 
     // nested functor 
     private: 
@@ -150,11 +183,10 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       public: thrust_real_t operator()(thrust_size_type id)
       {
         // TODO weighting by position!
-        thrust_real_t tmp = .5 * (
-          *(vel.begin() + (*(stat.i.begin() + id)     ) + (*(stat.j.begin() + id)     ) * n) + 
-          *(vel.begin() + (*(stat.i.begin() + id) + di) + (*(stat.j.begin() + id) + dj) * n)
+        return .5 * (
+          vel[(stat.i[id]     ) + (stat.j[id]     ) * n] + 
+          vel[(stat.i[id] + di) + (stat.j[id] + dj) * n]
         );
-        return tmp;
       }
     };
 
@@ -163,7 +195,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     private: const SD_velo &velo;
  
     // ctor 
-    public: rhs_xy(const SD_stat &stat, const SD_velo &velo) : stat(stat), velo(velo) {}
+    public: ode_xy(const SD_stat &stat, const SD_velo &velo) : stat(stat), velo(velo) {}
 
     // overloaded () operator invoked by odeint
     public: void operator()(
@@ -192,11 +224,30 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     }
   };
 
-  // nested class: RHS of the ODE to be solved to update super-droplet sizes
-  private: class rhs_rw
+  // identity: xi = rw
+  private: template <typename T = thrust_real_t> struct xi_id 
+  { 
+    T xi(const T &rw) { return rw; }
+    T rw(const T &xi) { return xi; } 
+    T dxidrw(const T &xi) { return 1; }
+  };
+
+  // xi = ln(rw / nm)
+  private: template <typename T = thrust_real_t> struct xi_ln
+  { 
+    T xi(const T &rw) { return ln(rw / T(1e-9)); }
+    T rw(const T &xi) { return T(1e-9) * exp(xi); } 
+    T dxidrw(const T &rw) { return T(1) / rw; }
+  };
+
+  // nested class: the ODE system to be solved to update super-droplet sizes
+  private: 
+  template <class algo, class xi>
+  class ode_xi : public ode<algo>
   { 
     // nested functor
-    private: class drop_growth_equation 
+    private: 
+    class drop_growth_equation : public xi
     {
       // private fields
       private: const SD_stat &stat;
@@ -207,7 +258,8 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       // overloaded () operator invoked by thrust::transform()
       public: thrust_real_t operator()(thrust_size_type id)
       {
-        return 0;
+        return this->dxidrw(this->rw(stat.xi[id]));
+        //  * Maxwell-Mason;
       }
     };
 
@@ -215,7 +267,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     private: const SD_stat &stat;
 
     // ctor
-    public: rhs_rw(const SD_stat &stat) : stat(stat) {}
+    public: ode_xi(const SD_stat &stat) : stat(stat) {}
   
     // overloaded () operator invoked by odeint
     public: void operator()(
@@ -288,8 +340,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     ) : n(n), idx2ij(idx2ij), from(from), to(to) {}
     public: void operator()(int idx) 
     { 
-      int ij = *(idx2ij.begin() + idx);
-      to(ij % n, ij / n, 0) = *(from.begin() + idx); 
+      to(idx2ij[idx] % n, idx2ij[idx] / n, 0) = from[idx]; 
     }
   };
 
@@ -308,7 +359,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     public: void operator()(int ij)
     {
 //cerr << "to[" << ij << "] = scl * from[" << ij%n << "," << ij/n << ",0]" << endl;
-      *(to.begin() + ij) = scl * from(ij % n, ij / n, 0);
+      to[ij] = scl * from(ij % n, ij / n, 0);
     }
   };
 
@@ -397,7 +448,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     }
 
     // performing advection using odeint // TODO sedimentation
-    S.do_step(boost::ref(F_xy), stat.xy, 0, dt / si::seconds);
+    F_xy.advance(stat.xy, dt);
 
     // in-place transforms
     thrust::transform(stat.x_begin, stat.x_end, stat.x_begin, modulo(grid.nx() * (grid.dx() / si::metres)));
@@ -408,7 +459,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     const quantity<si::time, real_t> dt
   )
   {
-    S.do_step(boost::ref(F_rw), stat.rw, 0, dt / si::seconds);
+    F_xi.advance(stat.xi, dt);
   }
 
   // private fields of eqs_todo_sdm
@@ -418,9 +469,8 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   private: const grd<real_t> &grid;
 
   // private fields for ODE machinery
-  private: stepper S; 
-  private: rhs_xy F_xy;
-  private: rhs_rw F_rw;
+  private: ode_xy<algo_rk4> F_xy;
+  private: ode_xi<algo_rk4, xi_id<>> F_xi;
 
   // private fields with super droplet structures
   private: SD_stat stat;
@@ -442,7 +492,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     velo(grid.nx(), grid.ny()),
     diag(grid.nx(), grid.ny()),
     F_xy(stat, velo),
-    F_rw(stat)
+    F_xi(stat)
   {
     // TODO: assert that we use no paralellisation or allow some parallelism!
     // TODO: random seed as an option
@@ -481,7 +531,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
 
     sd_sync();
     sd_advection(C[0], C[1], dt); // TODO: which order would be best?
-    sd_condensation(dt);
+//    sd_condensation(dt);
 
     // foreach below traverses only the grid cells containing super-droplets
     {
