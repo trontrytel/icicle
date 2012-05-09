@@ -116,6 +116,14 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     }
   };
 
+/*
+  On May 9, 2012, at 7:44 PM, Karsten Ahnert wrote:
+  > ... unfortunately the Rosenbrock method cannot be used with any other state type than ublas.matrix.
+  > ... I think, the best steppers for stiff systems and thrust are the
+  > runge_kutta_fehlberg78 or the bulirsch_stoer with a very high order. But
+  > should benchmark both steppers and choose the faster one.
+*/
+
   typedef odeint::euler<
     thrust::device_vector<thrust_real_t>, // state type
     thrust_real_t, // value_type
@@ -529,9 +537,12 @@ class eqs_todo_sdm : public eqs_todo<real_t>
 
     assert(sd_conc.lbound(mtx::k) == sd_conc.ubound(mtx::k)); // 2D
 
+// TODO: which order would be best?
     sd_sync();
-    sd_advection(C[0], C[1], dt); // TODO: which order would be best?
+    sd_advection(C[0], C[1], dt); // TODO: sedimentation
 //    sd_condensation(dt);
+//    sd_coalescence(dt);
+//    sd_breakup(dt);
 
     // foreach below traverses only the grid cells containing super-droplets
     {

@@ -30,9 +30,7 @@ class eqs_harmonic_oscillator : public eqs<real_t>
       quantity<si::frequency, real_t> omega, 
       real_t sign,
       int eqid
-    ) 
-      : omega_signed(sign * omega * si::seconds), eqid(eqid)
-    {} 
+    ) : omega_signed(sign * omega * si::seconds), eqid(eqid) {} 
 
     // public methods
     public: void explicit_part(
@@ -41,25 +39,25 @@ class eqs_harmonic_oscillator : public eqs<real_t>
       const mtx::arr<real_t> * const * const psi,
       const quantity<si::time, real_t>
     ) 
-    { 
-      R(R.ijk) += omega_signed * (*psi[eqid])(R.ijk);
-    };
+    { R(R.ijk) += omega_signed * (*psi[eqid])(R.ijk); };
 
     public: real_t implicit_part(
       const quantity<si::time, real_t> dt
     )
-    {
-      return -(dt / si::seconds) * pow(omega_signed, 2);
-    }
+    { return -(dt / si::seconds) * pow(omega_signed, 2); }
   };
 
   // ctor
   public: eqs_harmonic_oscillator(quantity<si::frequency, real_t> omega)
   {
-    this->sys.push_back(new struct eqs<real_t>::gte({ "psi", "1st variable", "dimensionless" }));
+    this->sys.push_back(
+      new struct eqs<real_t>::gte({ "psi", "1st variable", "dimensionless" })
+    );
     this->sys.back().rhs_terms.push_back(new restoring_force(omega, +1, 1)); 
 
-    this->sys.push_back(new struct eqs<real_t>::gte({ "phi", "2nd variable", "dimensionless" }));
+    this->sys.push_back(
+      new struct eqs<real_t>::gte({ "phi", "2nd variable", "dimensionless" })
+    );
     this->sys.back().rhs_terms.push_back(new restoring_force(omega, -1, 0)); 
   }
 };
