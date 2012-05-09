@@ -57,16 +57,14 @@ const quantity<si::pressure, real_t>
 // other parameters deduced from the Fortran code published at:
 // http://www.rap.ucar.edu/~gthompsn/workshop2012/case1/kinematic_wrain.vocals.v3.for
 const int 
-  bits = 32,
+  bits = 64,
   fct = 1,  
   toa = 0,
   iord = 2;  
 const quantity<si::time, real_t> 
 //  t_max = 200 * si::seconds, // 4 * 3600
 //  dt_out = real_t(5) * si::seconds; // 300
-//  t_max = 1800 * si::seconds, // 4 * 3600
-//  dt_out = real_t(10) * si::seconds; // 300
-  t_max = 1000 * si::seconds, // 4 * 3600
+  t_max = 1800 * si::seconds, // 4 * 3600
   dt_out = real_t(10) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = real_t(.6) * si::metres / si::second; // .6 TODO: check it!

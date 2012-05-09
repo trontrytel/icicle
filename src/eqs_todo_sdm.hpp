@@ -12,6 +12,7 @@
 // TODO: something like: #  if !defined(USE_BOOST_ODEINT) error_macro("eqs_todo_sdm requires icicle to be compiled with Boost.odeint");
 // TODO: substepping with timesteps as an option
 // TODO: units in SD_stat, SD_diag, SD_velo... should be possible as odeint supports Boost.units!
+// TODO: check why it fails with g++ -O2!!!
 
 #  include "eqs_todo.hpp"
 #  if defined(USE_BOOST_ODEINT)
@@ -40,7 +41,6 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   public: enum processes {cond, sedi, coal};
 
   typedef double value_type; // TODO: option / check if the device supports it
-  //typedef thrust::device_vector< value_type > state_type; 
   typedef thrust::device_vector< value_type > state_type; // TODO: cpu/gpu option
 
   typedef state_type deriv_type;
@@ -133,7 +133,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   // nested class: RHS of the ODE to be solved to update super-droplet positions
   private: class rhs_xy
   { 
-    // nested functors
+    // nested functor
     private: 
     template <int di, int dj>
     class interpol
@@ -148,7 +148,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       ) : n(n), vel(vel), stat(stat) {}
       public: value_type operator()(size_type id)
       {
-        // TODO weighting!
+        // TODO weighting by position!
         value_type tmp = .5 * (
           *(vel.begin() + (*(stat.i.begin() + id)     ) + (*(stat.j.begin() + id)     ) * n) + 
           *(vel.begin() + (*(stat.i.begin() + id) + di) + (*(stat.j.begin() + id) + dj) * n)
@@ -157,22 +157,24 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       }
     };
 
+    // private fields
     private: const SD_stat &stat;
     private: const SD_velo &velo;
  
     // ctor 
-    public: rhs_xy(const SD_stat &stat, const SD_velo &velo) : stat(stat), velo(velo) { }
+    public: rhs_xy(const SD_stat &stat, const SD_velo &velo) : stat(stat), velo(velo) {}
 
     // overloaded () operator invoked by odeint
     public: void operator()(
-      const state_type &x, state_type &dxdt, const value_type t
+      const state_type &xy, state_type &dxy_dt, const value_type
     )
     {
+      // TODO use positions to interpolate velocities! (as an option?)
       {
         thrust::counting_iterator<int> iter(0);
         thrust::transform(
           iter, iter + stat.n_part, 
-          dxdt.begin(), 
+          dxy_dt.begin(), 
           interpol<1,0>(velo.x_nx, velo.x, stat)
         );
       }
@@ -180,10 +182,33 @@ class eqs_todo_sdm : public eqs_todo<real_t>
         thrust::counting_iterator<int> iter(0);
         thrust::transform(
           iter, iter + stat.n_part, 
-          dxdt.begin() + stat.n_part, 
+          dxy_dt.begin() + stat.n_part, 
           interpol<0,1>(velo.y_nx, velo.y, stat)
         );
       }
+    }
+  };
+
+  // nested class: RHS of the ODE to be solved to update super-droplet sizes
+  private: class rhs_rw
+  { 
+    // private fields
+    private: const SD_stat &stat;
+
+    // ctor
+    public: rhs_rw(const SD_stat &stat) : stat(stat) {}
+  
+    // overloaded () operator invoked by odeint
+    public: void operator()(
+      const state_type &rw, state_type &drw_dt, const value_type 
+    )
+    {
+      thrust::counting_iterator<int> iter(0);
+      thrust::transform(
+        iter, iter + stat.n_part, 
+        drw_dt.begin() + stat.n_part, 
+        drop_growth_equation(stat)
+      );
     }
   };
 
@@ -286,14 +311,6 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     thrust::fill(stat.n.begin(), stat.n.end(), 1); // TEMP
   }
 
-  // (x) -> (x % nx*dx) transformation
-  private: void sd_periodic()
-  {
-    // in-place transforms
-    thrust::transform(stat.x_begin, stat.x_end, stat.x_begin, modulo(grid.nx() * (grid.dx() / si::metres)));
-    thrust::transform(stat.y_begin, stat.y_end, stat.y_begin, modulo(grid.ny() * (grid.dy() / si::metres)));
-  }
-
   // sorting out which particle belongs to which grid cell
   private: void sd_sync()
   {
@@ -337,6 +354,34 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       diag.M_0.begin()
     );
   }
+
+  private: void sd_advection(
+    const mtx::arr<real_t> &Cx,
+    const mtx::arr<real_t> &Cy,
+    const quantity<si::time, real_t> dt
+  )
+  {
+    // getting velocities from the Eulerian model (TODO: if constant_velocity -> only once!)
+    {
+      thrust::counting_iterator<int> iter(0);
+      thrust::for_each(iter, iter + velo.x.size(), copy_to_device(
+        grid.nx() + 1, Cx, velo.x, (grid.dx() / si::metres) / (dt / si::seconds)
+      ));
+    }
+    {
+      thrust::counting_iterator<int> iter(0);
+      thrust::for_each(iter, iter + velo.y.size(), copy_to_device(
+        grid.nx(), Cy, velo.y, (grid.dx() / si::metres) / (dt / si::seconds)
+      ));
+    }
+
+    // performing advection using odeint // TODO sedimentation
+    S.do_step(boost::ref(F_xy), stat.xy, 0, dt / si::seconds);
+
+    // in-place transforms
+    thrust::transform(stat.x_begin, stat.x_end, stat.x_begin, modulo(grid.nx() * (grid.dx() / si::metres)));
+    thrust::transform(stat.y_begin, stat.y_end, stat.y_begin, modulo(grid.ny() * (grid.dy() / si::metres)));
+  }
   
 
   // private fields of eqs_todo_sdm
@@ -348,6 +393,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   // private fields for ODE machinery
   private: stepper S; 
   private: rhs_xy F_xy;
+  private: rhs_rw F_rw;
 
   // private fields with super droplet structures
   private: SD_stat stat;
@@ -368,7 +414,8 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     stat(grid.nx(), grid.ny(), sd_conc_mean),
     velo(grid.nx(), grid.ny()),
     diag(grid.nx(), grid.ny()),
-    F_xy(stat, velo)
+    F_xy(stat, velo),
+    F_rw(stat)
   {
     // TODO: assert that we use no paralellisation or allow some parallelism!
     // TODO: random seed as an option
@@ -403,10 +450,10 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       //&rhod_rr = psi[this->par.idx_rhod_rr][n],
       &sd_conc = aux[this->par.idx_sd_conc];
 
-    // 
-    sd_sync();
-
     assert(sd_conc.lbound(mtx::k) == sd_conc.ubound(mtx::k)); // 2D
+
+    sd_sync();
+    sd_advection(C[0], C[1], dt);
 
     // foreach below traverses only the grid cells containing super-droplets
     {
@@ -417,25 +464,6 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       ));
     }
 
-    // velocities (TODO: if constant_velocity -> only once!)
-    {
-      thrust::counting_iterator<int> iter(0);
-      thrust::for_each(iter, iter + velo.x.size(), copy_to_device(
-        grid.nx() + 1, C[0], velo.x, (grid.dx() / si::metres) / (dt / si::seconds)
-      ));
-    }
-    {
-      thrust::counting_iterator<int> iter(0);
-      thrust::for_each(iter, iter + velo.y.size(), copy_to_device(
-        grid.nx(), C[1], velo.y, (grid.dx() / si::metres) / (dt / si::seconds)
-      ));
-    }
-
-    // transfer info on thermodynamics to the RHS...
-
-    // advection + sedimentation (using odeint)
-    S.do_step(boost::ref(F_xy), stat.xy, 0, dt / si::seconds);
-    sd_periodic();
 
   }
 
