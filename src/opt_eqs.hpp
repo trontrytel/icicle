@@ -40,6 +40,15 @@ inline void opt_eqs_desc(po::options_description &desc)
     ("eqs.todo_sdm.coal", po::value<bool>()->default_value(true), "coalescence [on/off]")
     ("eqs.todo_sdm.sedi", po::value<bool>()->default_value(true), "sedimentation [on/off]")
     ("eqs.todo_sdm.sd_conc_mean", po::value<string>()->default_value("64"), "mean super-droplet density per cell") // TODO: why 64? :)
+    ("eqs.todo_sdm.min_rd", po::value<string>(), "minimum possible dry aerosol radius [m]") 
+    ("eqs.todo_sdm.max_rd", po::value<string>(), "maximum posiible dry aerosol radius [m]")
+    // parameters for dry aerosol two-mode lognormal distribution
+    ("eqs.todo_sdm.mean_rd1", po::value<string>(), "first mode dry aerosol mean radii [m]") 
+    ("eqs.todo_sdm.mean_rd2", po::value<string>(), "second mode dry aerosol mean radii[m]")
+    ("eqs.todo_sdm.sdev_rd1", po::value<string>(), "first mode geometric standard deviation") 
+    ("eqs.todo_sdm.sdev_rd2", po::value<string>(), "second mode geometric standard deviation")
+    ("eqs.todo_sdm.n1_tot", po::value<string>(), "first mode total concentration [m-3]") 
+    ("eqs.todo_sdm.n2_tot", po::value<string>(), "second mode total concentration[m-3]")
     ;
 }
 
@@ -95,7 +104,15 @@ eqs<real_t> *opt_eqs(
         {eqs_todo_sdm<real_t>::sedi, vm["eqs.todo_sdm.sedi"].as<bool>()},
         {eqs_todo_sdm<real_t>::coal, vm["eqs.todo_sdm.coal"].as<bool>()},
       }),
-      real_cast<real_t>(vm, "eqs.todo_sdm.sd_conc_mean")
+      real_cast<real_t>(vm, "eqs.todo_sdm.sd_conc_mean"),
+      real_cast<real_t>(vm, "eqs.todo_sdm.min_rd"),
+      real_cast<real_t>(vm, "eqs.todo_sdm.max_rd"),
+      real_cast<real_t>(vm, "eqs.todo_sdm.mean_rd1"), 
+      real_cast<real_t>(vm, "eqs.todo_sdm.mean_rd2"),
+      real_cast<real_t>(vm, "eqs.todo_sdm.sdev_rd1"), 
+      real_cast<real_t>(vm, "eqs.todo_sdm.sdev_rd2"),
+      real_cast<real_t>(vm, "eqs.todo_sdm.n1_tot"), 
+      real_cast<real_t>(vm, "eqs.todo_sdm.n2_tot")
     );
   else 
   error_macro("unsupported equation system: " << initype)

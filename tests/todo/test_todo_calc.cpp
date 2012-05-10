@@ -35,6 +35,7 @@ using boost::units::quantity;
 using boost::units::divide_typeof_helper;
 using boost::units::detail::get_value;
 
+#include "../../src/cmn.hpp"
 #include "../../src/phc.hpp"
 
 typedef float real_t;
@@ -42,8 +43,8 @@ typedef float real_t;
 // simulation parameteters (the 8th WMO Cloud Modelling Workshop: Case 1    
 // by W.W.Grabowski: http://rap.ucar.edu/~gthompsn/workshop2012/case1/case1.pdf  
 const size_t 
-  nx = 75,                   // 75 
-  ny = 75;                    // 75 
+  nx = 5,                   // 75 
+  ny = 5;                    // 75 
 const quantity<si::length,real_t> 
   dx = 20 * si::metres,       // 20 m
   dy = 20 * si::metres;       // 20 m
@@ -66,7 +67,7 @@ const quantity<si::time, real_t>
 //  dt_out = real_t(5) * si::seconds; // 300
 //  t_max = 1800 * si::seconds, // 4 * 3600
 //  dt_out = real_t(10) * si::seconds; // 300
-  t_max = 1000 * si::seconds, // 4 * 3600
+  t_max = 10 * si::seconds, // 4 * 3600
   dt_out = real_t(10) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = real_t(.6) * si::metres / si::second; // .6 TODO: check it!
@@ -85,7 +86,15 @@ bool
   blk_sedi = true,
   blk_revp = true;
 real_t 
-  sd_conc_mean = .5;
+  sd_conc_mean = 1,
+  mean_rd1 = .04*1e-6,
+  mean_rd2 = .15*1e-6,
+  sdev_rd1 = 1.4,
+  sdev_rd2 = 1.6,
+  n1_tot = 60*1e6,
+  n2_tot = 40*1e6,
+  min_rd = 0.001*1e-6,
+  max_rd = 1e-6;
 
 // pressure profile derived by integrating the hydrostatic eq.
 // assuming constant theta, constant rv and R=R(rv) 
@@ -227,7 +236,16 @@ int main()
       << " --eqs.todo_bulk.revp " << blk_revp
     ;
     else if (micro == "sdm") cmd << " --eqs todo_sdm"
-      << " --eqs.todo_sdm.sd_conc_mean " << sd_conc_mean;
+      << " --eqs.todo_sdm.sd_conc_mean " << sd_conc_mean
+      << " --eqs.todo_sdm.min_rd " << min_rd
+      << " --eqs.todo_sdm.max_rd " << max_rd
+      << " --eqs.todo_sdm.mean_rd1 " << mean_rd1
+      << " --eqs.todo_sdm.mean_rd2 " << mean_rd2
+      << " --eqs.todo_sdm.sdev_rd1 " << sdev_rd1
+      << " --eqs.todo_sdm.sdev_rd2 " << sdev_rd2
+      << " --eqs.todo_sdm.n1_tot " << n1_tot
+      << " --eqs.todo_sdm.n2_tot " << n2_tot
+    ;
     else assert(false);
     
   if (EXIT_SUCCESS != system(cmd.str().c_str()))

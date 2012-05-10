@@ -266,8 +266,45 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     }
   };
 
+  // nested functor
+  private: class lognormal
+  {
+    private: quantity<si::length, value_type> mean_rd1;
+    private: quantity<si::dimensionless, value_type> sdev_rd1;
+    private: quantity<power_typeof_helper<si::length, static_rational<-3>>::type, value_type> n1_tot;
+    private: quantity<si::length, value_type> mean_rd2;
+    private: quantity<si::dimensionless, value_type> sdev_rd2;
+    private: quantity<power_typeof_helper<si::length, static_rational<-3>>::type, value_type> n2_tot;
+    
+    public: lognormal(
+      const quantity<si::length, value_type> mean_rd1,
+      const quantity<si::dimensionless, value_type> sdev_rd1,
+      const quantity<power_typeof_helper<si::length, static_rational<-3>>::type, value_type> n1_tot,
+      const quantity<si::length, value_type> mean_rd2,
+      const quantity<si::dimensionless, value_type> sdev_rd2,
+      const quantity<power_typeof_helper<si::length, static_rational<-3>>::type, value_type> n2_tot
+    ) : mean_rd1(mean_rd1), sdev_rd1(sdev_rd1), n1_tot(n1_tot), mean_rd2(mean_rd2), sdev_rd2(sdev_rd2), n2_tot(n2_tot) {}
+
+    public: value_type operator()(value_type rd)
+    {
+      return ( //TODO allow more modes of distribution
+       phc::log_norm_n<value_type>(mean_rd1, sdev_rd1, n1_tot, rd * si::metres)+ 
+       phc::log_norm_n<value_type>(mean_rd2, sdev_rd2, n2_tot, rd * si::metres) 
+      ) * si::metres
+        * si::metres
+        * si::metres
+        * si::metres
+      ;
+    }
+  };
+
   // initialising particle sizes and positions
-  private: void sd_init()
+  private: void sd_init(
+    real_t min_rd, real_t max_rd,
+    real_t mean_rd1, real_t mean_rd2,
+    real_t sdev_rd1, real_t sdev_rd2,
+    real_t n1_tot, real_t n2_tot, 
+    real_t sd_conc_mean)
   {
     // initialise particle x coordinates
     thrust::generate(
@@ -279,11 +316,31 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       stat.y_begin, stat.y_end,
       rng(0, grid.ny() * (grid.dy() / si::metres))
     ); 
-    // initialise particle dry sizes
-    // TODO-AJ
-    // initialise particle numbers
-    // TODO-AJ
-    thrust::fill(stat.n.begin(), stat.n.end(), 1); // TEMP
+    // initialise particle dry sizes 
+
+thrust::fill(stat.rd.begin(), stat.rd.end(), 1.3);
+
+//    thrust::generate(
+//      stat.rd.begin(), stat.rd.end(), 
+//      rng(min_rd, max_rd)
+//    ); 
+
+cout<<"rd "<<endl;
+thrust::copy(stat.rd.begin(), stat.rd.end(), std::ostream_iterator<int>(std::cout, "\n"));
+
+    // initialise particle numbers  
+    // TODO check max_rd/min_rd
+//    value_type multi = log(max_rd/min_rd) / sd_conc_mean /  
+//      (grid.dx()/si::metres) /(grid.dy()/si::metres) / (grid.dz()/si::metres); 
+    thrust::transform(
+      stat.rd.begin(), stat.rd.end(), 
+      stat.n.begin(), 
+      lognormal(mean_rd1 * si::metres, sdev_rd1, /*multi * */n1_tot / si::cubic_metres, 
+                mean_rd2 * si::metres, sdev_rd2, /*multi * */n2_tot / si::cubic_metres) 
+    );
+cout<<"n "<<endl;
+thrust::copy(stat.n.begin(), stat.n.end(), std::ostream_iterator<int>(std::cout, "\n"));
+
   }
 
   // (x) -> (x % nx*dx) transformation
@@ -344,6 +401,15 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   private: map<enum processes, bool> opts;
   private: bool constant_velocity;
   private: const grd<real_t> &grid;
+  private: real_t min_rd;
+  private: real_t max_rd;
+  private: real_t mean_rd1;  // dry aerosol initial distribution parameters
+  private: real_t mean_rd2;
+  private: real_t sdev_rd1;
+  private: real_t sdev_rd2;
+  private: real_t n1_tot;
+  private: real_t n2_tot;
+  private: real_t sd_conc_mean;
 
   // private fields for ODE machinery
   private: stepper S; 
@@ -359,8 +425,16 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     const grd<real_t> &grid, 
     const vel<real_t> &velocity,
     map<enum processes, bool> opts,
-    real_t sd_conc_mean
-  ) : 
+    real_t sd_conc_mean,
+    real_t min_rd,
+    real_t max_rd, 
+    real_t mean_rd1, // dry aerosol initial distribution parameters
+    real_t mean_rd2,
+    real_t sdev_rd1,
+    real_t sdev_rd2,
+    real_t n1_tot,
+    real_t n2_tot
+  ) :
     eqs_todo<real_t>(grid, &par), 
     opts(opts), 
     grid(grid), 
@@ -368,7 +442,12 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     stat(grid.nx(), grid.ny(), sd_conc_mean),
     velo(grid.nx(), grid.ny()),
     diag(grid.nx(), grid.ny()),
-    F_xy(stat, velo)
+    F_xy(stat, velo), 
+    min_rd(min_rd), max_rd(max_rd),
+    mean_rd1(mean_rd1), mean_rd2(mean_rd2),
+    sdev_rd1(sdev_rd1), sdev_rd2(sdev_rd2),
+    n1_tot(n1_tot), n2_tot(n2_tot),
+    sd_conc_mean(sd_conc_mean)
   {
     // TODO: assert that we use no paralellisation or allow some parallelism!
     // TODO: random seed as an option
@@ -383,7 +462,8 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     par.idx_sd_conc = this->aux.size() - 1;
 
     // initialising super-droplets
-    sd_init();
+    sd_init(min_rd, max_rd, mean_rd1, mean_rd2, sdev_rd1, sdev_rd2, n1_tot, n2_tot, sd_conc_mean);
+
   }
 
   public: void adjustments(

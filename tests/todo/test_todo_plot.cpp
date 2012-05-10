@@ -37,6 +37,7 @@ using blitz::Range;
 #define GNUPLOT_ENABLE_BLITZ
 #include <gnuplot-iostream/gnuplot-iostream.h>
 
+#include "../../src/cmn.hpp"
 #include "../../src/phc.hpp"
 
 #define notice_macro(msg) { cerr << msg << endl; }
@@ -173,7 +174,7 @@ int main()
 */
 
     gp << "set title 'super-droplet conc. [1/dx/dy]'" << endl;
-    gp << "set cbrange [0:5]" << endl;
+    gp << "set cbrange [0:2e19]" << endl;
     nf.getVar("sd_conc").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp.data()); 
     gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " using 1 with image notitle";
     //gp << ",'-' binary" << gp.binfmt(tmp) << dxdy << " ps 0 notitle";
