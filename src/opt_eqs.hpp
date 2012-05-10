@@ -39,6 +39,7 @@ inline void opt_eqs_desc(po::options_description &desc)
     ("eqs.todo_sdm.cond", po::value<bool>()->default_value(true), "condensation/evaporation [on/off]")
     ("eqs.todo_sdm.coal", po::value<bool>()->default_value(true), "coalescence [on/off]")
     ("eqs.todo_sdm.sedi", po::value<bool>()->default_value(true), "sedimentation [on/off]")
+    ("eqs.todo_sdm.xi", po::value<string>()->default_value("ln"), "definition of xi (id, ln, p2, p3)")
     ("eqs.todo_sdm.ode_algo_xy", po::value<string>()->default_value("rk4"), "advection ODE solver type (euler, rk4)")
     ("eqs.todo_sdm.ode_algo_xi", po::value<string>()->default_value("rk4"), "drop-growth ODE solver type (euler, rk4)")
     ("eqs.todo_sdm.sd_conc_mean", po::value<string>()->default_value("64"), "mean super-droplet density per cell") // TODO: why 64? :)
@@ -101,9 +102,15 @@ eqs<real_t> *opt_eqs(
   else 
   if (initype == "todo_sdm")
   {
-    map<string, enum eqs_todo_sdm<real_t>::ode_algos> mp({
+    map<string, enum eqs_todo_sdm<real_t>::ode_algos> map_algo({
       {"euler", eqs_todo_sdm<real_t>::euler},
       {"rk4", eqs_todo_sdm<real_t>::rk4}
+    });
+    map<string, enum eqs_todo_sdm<real_t>::xi_dfntns> map_xid({
+      {"id", eqs_todo_sdm<real_t>::id},
+      {"ln", eqs_todo_sdm<real_t>::ln},
+      {"p2", eqs_todo_sdm<real_t>::p2},
+      {"p3", eqs_todo_sdm<real_t>::p3}
     });
     return new eqs_todo_sdm<real_t>(grid, velocity,
       map<enum eqs_todo_sdm<real_t>::processes, bool>({
@@ -111,8 +118,9 @@ eqs<real_t> *opt_eqs(
         {eqs_todo_sdm<real_t>::sedi, vm["eqs.todo_sdm.sedi"].as<bool>()},
         {eqs_todo_sdm<real_t>::coal, vm["eqs.todo_sdm.coal"].as<bool>()},
       }),
-      mp[vm["eqs.todo_sdm.ode_algo_xy"].as<string>()],
-      mp[vm["eqs.todo_sdm.ode_algo_xi"].as<string>()],
+      map_xid[vm["eqs.todo_sdm.xi"].as<string>()],
+      map_algo[vm["eqs.todo_sdm.ode_algo_xy"].as<string>()],
+      map_algo[vm["eqs.todo_sdm.ode_algo_xi"].as<string>()],
       real_cast<real_t>(vm, "eqs.todo_sdm.sd_conc_mean"),
       real_cast<real_t>(vm, "eqs.todo_sdm.min_rd"),
       real_cast<real_t>(vm, "eqs.todo_sdm.max_rd"),

@@ -44,6 +44,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   // a container for storing options (i.e. which processes ar on/off)
   public: enum processes {cond, sedi, coal};
   public: enum ode_algos {euler, rk4};
+  public: enum xi_dfntns {id, ln, p2, p3};
 
   typedef double thrust_real_t; // TODO: option / check if the device supports it
 
@@ -260,6 +261,22 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     T xi(const T &rw) { return log(rw / T(1e-9)); }
     T rw(const T &xi) { return T(1e-9) * exp(xi); } 
     T dxidrw(const T &rw) { return T(1) / rw; }
+  };
+
+  // xi = pow(rw, 2) 
+  private: template <typename T = thrust_real_t> struct xi_p2
+  { 
+    T xi(const T &rw) { return rw * rw; }
+    T rw(const T &xi) { return sqrt(xi); } 
+    T dxidrw(const T &rw) { return T(2) * rw; }
+  };
+
+  // xi = pow(rw, 3) 
+  private: template <typename T = thrust_real_t> struct xi_p3
+  { 
+    T xi(const T &rw) { return rw * rw * rw; }
+    T rw(const T &xi) { return pow(xi, T(1)/T(3)); } 
+    T dxidrw(const T &rw) { return T(3) * rw * rw; }
   };
 
   // nested class: the ODE system to be solved to update super-droplet sizes
@@ -565,6 +582,7 @@ filestr1.close();
     const grd<real_t> &grid, 
     const vel<real_t> &velocity,
     map<enum processes, bool> opts,
+    enum xi_dfntns xi_dfntn,
     enum ode_algos xy_algo,
     enum ode_algos xi_algo,
     real_t sd_conc_mean,
@@ -610,8 +628,22 @@ filestr1.close();
     }
     switch (xy_algo)
     {
-      case euler: F_xi.reset(new ode_xi<algo_euler, xi_id<>>(stat)); break;
-      case rk4  : F_xi.reset(new ode_xi<algo_rk4,   xi_id<>>(stat)); break;
+      case euler: switch (xi_dfntn)
+      {
+        case id : F_xi.reset(new ode_xi<algo_euler, xi_id<>>(stat)); break;
+        case ln : F_xi.reset(new ode_xi<algo_euler, xi_ln<>>(stat)); break;
+        case p2 : F_xi.reset(new ode_xi<algo_euler, xi_p2<>>(stat)); break;
+        case p3 : F_xi.reset(new ode_xi<algo_euler, xi_p3<>>(stat)); break;
+        default: assert(false);
+      }
+      case rk4  : switch (xi_dfntn) 
+      {
+        case id : F_xi.reset(new ode_xi<algo_rk4,   xi_id<>>(stat)); break;
+        case ln : F_xi.reset(new ode_xi<algo_rk4,   xi_ln<>>(stat)); break;
+        case p2 : F_xi.reset(new ode_xi<algo_rk4,   xi_p2<>>(stat)); break;
+        case p3 : F_xi.reset(new ode_xi<algo_rk4,   xi_p3<>>(stat)); break;
+        default: assert(false);
+      }
       default: assert(false);
     } 
 
