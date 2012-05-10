@@ -83,7 +83,10 @@ bool
   blk_sedi = true,
   blk_revp = true;
 real_t 
-  sd_conc_mean = .5;
+  sdm_sd_conc_mean = .5;
+std::string
+  sdm_ode_algo_xy = "euler",
+  sdm_ode_algo_xi = "rk4";
 
 // pressure profile derived by integrating the hydrostatic eq.
 // assuming constant theta, constant rv and R=R(rv) 
@@ -225,7 +228,10 @@ int main()
       << " --eqs.todo_bulk.revp " << blk_revp
     ;
     else if (micro == "sdm") cmd << " --eqs todo_sdm"
-      << " --eqs.todo_sdm.sd_conc_mean " << sd_conc_mean;
+      << " --eqs.todo_sdm.sd_conc_mean " << sdm_sd_conc_mean
+      << " --eqs.todo_sdm.ode_algo_xy " << sdm_ode_algo_xy
+      << " --eqs.todo_sdm.ode_algo_xi " << sdm_ode_algo_xi
+    ;
     else assert(false);
     
   if (EXIT_SUCCESS != system(cmd.str().c_str()))

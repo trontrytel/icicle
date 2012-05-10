@@ -12,7 +12,7 @@
 // TODO: something like: #  if !defined(USE_BOOST_ODEINT) error_macro("eqs_todo_sdm requires icicle to be compiled with Boost.odeint");
 // TODO: substepping with timesteps as an option
 // TODO: units in SD_stat, SD_diag, SD_velo... should be possible as odeint supports Boost.units!
-// TODO: check why it fails with g++ -O2!!!
+// TODO: check why random number generation fails with g++ -O2!!!
 
 #  include "eqs_todo.hpp"
 #  if defined(USE_BOOST_ODEINT)
@@ -39,6 +39,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
 
   // a container for storing options (i.e. which processes ar on/off)
   public: enum processes {cond, sedi, coal};
+  public: enum ode_algos {euler, rk4};
 
   typedef double thrust_real_t; // TODO: option / check if the device supports it
 
@@ -94,9 +95,9 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     // SD parameters that are constant from the ODE point of view (n,rd,i,j)
     thrust::device_vector<thrust_real_t> rd3; // rd3 -> dry radius to the third power 
     thrust::device_vector<thrust_size_type> id, n; // n -> number of real droplets in a super-droplet
-    thrust::device_vector<int> i, j, ij;
+    thrust::device_vector<int> i, j, ij; // location of super-droplet within the grid
 
-    // ctor
+    // SD_stat ctor
     SD_stat(int nx, int ny, real_t sd_conc_mean)
     {
       n_part = thrust_size_type(real_t(nx * ny) * sd_conc_mean);
@@ -142,10 +143,19 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     odeint::thrust_operations
   > algo_rk4;
 
-  // nested class::
+  // nested class: 
+  private: class ode 
+  {
+    public: virtual void advance(
+      thrust::device_vector<thrust_real_t> &x, 
+      const quantity<si::time, real_t> &dt
+    ) = 0;
+  };
+
+  // nested class: 
   private: 
   template <class algo> 
-  class ode
+  class ode_algo : public ode
   {
     private: algo stepper;
 
@@ -168,7 +178,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   // nested class: the ODE system to be solved to update super-droplet positions
   private: 
   template <class algo>
-  class ode_xy : public ode<algo>
+  class ode_xy : public ode_algo<algo>
   { 
     // nested functor 
     private: 
@@ -251,7 +261,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   // nested class: the ODE system to be solved to update super-droplet sizes
   private: 
   template <class algo, class xi>
-  class ode_xi : public ode<algo>
+  class ode_xi : public ode_algo<algo>
   { 
     // nested functor
     private: 
@@ -456,7 +466,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     }
 
     // performing advection using odeint // TODO sedimentation
-    F_xy.advance(stat.xy, dt);
+    F_xy->advance(stat.xy, dt);
 
     // in-place transforms
     thrust::transform(stat.x_begin, stat.x_end, stat.x_begin, modulo(grid.nx() * (grid.dx() / si::metres)));
@@ -467,7 +477,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     const quantity<si::time, real_t> dt
   )
   {
-    F_xi.advance(stat.xi, dt);
+    F_xi->advance(stat.xi, dt);
   }
 
   // private fields of eqs_todo_sdm
@@ -477,8 +487,8 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   private: const grd<real_t> &grid;
 
   // private fields for ODE machinery
-  private: ode_xy<algo_rk4> F_xy;
-  private: ode_xi<algo_rk4, xi_id<>> F_xi;
+  private: unique_ptr<ode> F_xy;
+  private: unique_ptr<ode> F_xi; 
 
   // private fields with super droplet structures
   private: SD_stat stat;
@@ -490,6 +500,8 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     const grd<real_t> &grid, 
     const vel<real_t> &velocity,
     map<enum processes, bool> opts,
+    enum ode_algos xy_algo,
+    enum ode_algos xi_algo,
     real_t sd_conc_mean
   ) : 
     eqs_todo<real_t>(grid, &par), 
@@ -498,9 +510,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     constant_velocity(velocity.is_constant()),
     stat(grid.nx(), grid.ny(), sd_conc_mean),
     velo(grid.nx(), grid.ny()),
-    diag(grid.nx(), grid.ny()),
-    F_xy(stat, velo),
-    F_xi(stat)
+    diag(grid.nx(), grid.ny())
   {
     // TODO: assert that we use no paralellisation or allow some parallelism!
     // TODO: random seed as an option
@@ -513,6 +523,19 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       vector<int>({0, 0, 0})
     }));
     par.idx_sd_conc = this->aux.size() - 1;
+
+    switch (xy_algo)
+    {
+      case euler: F_xy.reset(new ode_xy<algo_euler>(stat, velo)); break;
+      case rk4  : F_xy.reset(new ode_xy<algo_rk4  >(stat, velo)); break;
+      default: assert(false);
+    }
+    switch (xy_algo)
+    {
+      case euler: F_xi.reset(new ode_xi<algo_euler, xi_id<>>(stat)); break;
+      case rk4  : F_xi.reset(new ode_xi<algo_rk4,   xi_id<>>(stat)); break;
+      default: assert(false);
+    } 
 
     // initialising super-droplets
     sd_init();
