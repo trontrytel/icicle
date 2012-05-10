@@ -63,10 +63,6 @@ const int
   toa = 0,
   iord = 2;  
 const quantity<si::time, real_t> 
-//  t_max = 200 * si::seconds, // 4 * 3600
-//  dt_out = real_t(5) * si::seconds; // 300
-//  t_max = 1800 * si::seconds, // 4 * 3600
-//  dt_out = real_t(10) * si::seconds; // 300
   t_max = 10 * si::seconds, // 4 * 3600
   dt_out = real_t(10) * si::seconds; // 300
 const quantity<si::velocity, real_t>
@@ -86,7 +82,7 @@ bool
   blk_sedi = true,
   blk_revp = true;
 real_t 
-  sd_conc_mean = 1,
+  sd_conc_mean = 1.,
   mean_rd1 = .04*1e-6,
   mean_rd2 = .15*1e-6,
   sdev_rd1 = 1.4,

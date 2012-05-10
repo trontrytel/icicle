@@ -138,6 +138,16 @@ int main()
     gp.sendBinary(rv);
     //gp.sendBinary(rv);
 
+    gp << "set title 'potential temperature [K]'" << endl;
+    gp << "set cbrange [288:293]" << endl;
+    nf.getVar("rhod_th").getVar(start({t,0,0,0}), count({1,nx,ny,1}), th.data()); 
+    th /= rhod;
+    gp << "splot '-' binary" << gp.binfmt(th) << dxdy << " with image notitle";
+    //gp << ",'-' binary" << gp.binfmt(th) << dxdy << " ps 0 notitle";
+    gp << endl;
+    gp.sendBinary(th);
+    //gp.sendBinary(th);
+
 /*
     gp << "set title 'liquid water mixing ratio [g/kg]'" << endl;
     gp << "set cbrange [0:1]" << endl;
@@ -159,19 +169,9 @@ int main()
     gp.sendBinary(tmp);
     //gp.sendBinary(tmp);
 
-    gp << "set title 'potential temperature [K]'" << endl;
-    gp << "set cbrange [288:293]" << endl;
-    nf.getVar("rhod_th").getVar(start({t,0,0,0}), count({1,nx,ny,1}), th.data()); 
-    th /= rhod;
-    gp << "splot '-' binary" << gp.binfmt(th) << dxdy << " with image notitle";
-    //gp << ",'-' binary" << gp.binfmt(th) << dxdy << " ps 0 notitle";
-    gp << endl;
-    gp.sendBinary(th);
-    //gp.sendBinary(th);
-
-    gp << "set label 'results obtained with icicle - a GPL-ed C++ MPDATA-based solver from University of Warsaw' at screen .98,.02 right" << endl;
-    gp << "set label '8th International Cloud Modeling Workshop 2012: Case 1' at screen .02,.02 left" << endl;
 */
+    //gp << "set label 'results obtained with icicle - a GPL-ed C++ MPDATA-based solver from University of Warsaw' at screen .98,.02 right" << endl;
+    gp << "set label '8th International Cloud Modeling Workshop 2012: Case 1 (work in progress!)' at screen .02,.02 left" << endl;
 
     gp << "set title 'super-droplet conc. [1/dx/dy]'" << endl;
     gp << "set cbrange [0:2e19]" << endl;
