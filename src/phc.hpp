@@ -132,6 +132,28 @@ namespace phc
 // TODO: separate version for rhod=rhod(z)...
     return vterm_A<real_t>() * real_t(pow(rho_r * vterm_B<real_t>(), .1346) * sqrt(rho_d0 / rho_d));
   }
+
+  // lognormal distribution (Seinfeld & Pandis 1997 eq 7.33)
+  declare_funct_macro quantity<power_typeof_helper<si::length,static_rational<-3>>::type, real_t> log_norm_n_e(
+    quantity<si::length, real_t> mean_r,
+    quantity<si::dimensionless, real_t> stdev, 
+    quantity<power_typeof_helper<si::length,static_rational<-3>>::type, real_t> n_tot, 
+    quantity<si::dimensionless, real_t> lnr
+  )
+  {
+    return n_tot / sqrt(2*M_PI) / log(stdev) * exp(-pow((lnr - log(mean_r/si::metres)), 2) / 2 / pow(log(stdev),2));
+  }
+
+  // lognormal distribution (Seinfeld & Pandis 1997 eq 7.34)
+  declare_funct_macro quantity<power_typeof_helper<si::length,static_rational<-4>>::type, real_t> log_norm_n(
+    quantity<si::length, real_t> mean_r,
+    quantity<si::dimensionless, real_t> stdev, 
+    quantity<power_typeof_helper<si::length,static_rational<-3>>::type, real_t> n_tot, 
+    quantity<si::length, real_t> r
+  )
+  {
+    return n_tot / sqrt(2*M_PI) / log(stdev) * exp(-pow((log(r/mean_r)), 2) / 2 / pow(log(stdev),2)) / r;
+  }
 };
 
 #  undef decltype_return

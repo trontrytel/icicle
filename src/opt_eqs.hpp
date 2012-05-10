@@ -42,6 +42,15 @@ inline void opt_eqs_desc(po::options_description &desc)
     ("eqs.todo_sdm.ode_algo_xy", po::value<string>()->default_value("rk4"), "advection ODE solver type (euler, rk4)")
     ("eqs.todo_sdm.ode_algo_xi", po::value<string>()->default_value("rk4"), "drop-growth ODE solver type (euler, rk4)")
     ("eqs.todo_sdm.sd_conc_mean", po::value<string>()->default_value("64"), "mean super-droplet density per cell") // TODO: why 64? :)
+    ("eqs.todo_sdm.min_rd", po::value<string>(), "minimum possible dry aerosol radius [m]") 
+    ("eqs.todo_sdm.max_rd", po::value<string>(), "maximum posiible dry aerosol radius [m]")
+    // parameters for dry aerosol two-mode lognormal distribution
+    ("eqs.todo_sdm.mean_rd1", po::value<string>(), "first mode dry aerosol mean radii [m]") 
+    ("eqs.todo_sdm.mean_rd2", po::value<string>(), "second mode dry aerosol mean radii[m]")
+    ("eqs.todo_sdm.sdev_rd1", po::value<string>(), "first mode geometric standard deviation") 
+    ("eqs.todo_sdm.sdev_rd2", po::value<string>(), "second mode geometric standard deviation")
+    ("eqs.todo_sdm.n1_tot", po::value<string>(), "first mode total concentration [m-3]") 
+    ("eqs.todo_sdm.n2_tot", po::value<string>(), "second mode total concentration[m-3]")
     ;
 }
 
@@ -104,7 +113,15 @@ eqs<real_t> *opt_eqs(
       }),
       mp[vm["eqs.todo_sdm.ode_algo_xy"].as<string>()],
       mp[vm["eqs.todo_sdm.ode_algo_xi"].as<string>()],
-      real_cast<real_t>(vm, "eqs.todo_sdm.sd_conc_mean")
+      real_cast<real_t>(vm, "eqs.todo_sdm.sd_conc_mean"),
+      real_cast<real_t>(vm, "eqs.todo_sdm.min_rd"),
+      real_cast<real_t>(vm, "eqs.todo_sdm.max_rd"),
+      real_cast<real_t>(vm, "eqs.todo_sdm.mean_rd1"), 
+      real_cast<real_t>(vm, "eqs.todo_sdm.mean_rd2"),
+      real_cast<real_t>(vm, "eqs.todo_sdm.sdev_rd1"), 
+      real_cast<real_t>(vm, "eqs.todo_sdm.sdev_rd2"),
+      real_cast<real_t>(vm, "eqs.todo_sdm.n1_tot"), 
+      real_cast<real_t>(vm, "eqs.todo_sdm.n2_tot")
     );
   }
   else 

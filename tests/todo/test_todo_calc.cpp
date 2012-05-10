@@ -35,6 +35,7 @@ using boost::units::quantity;
 using boost::units::divide_typeof_helper;
 using boost::units::detail::get_value;
 
+#include "../../src/cmn.hpp"
 #include "../../src/phc.hpp"
 
 typedef float real_t;
@@ -62,9 +63,7 @@ const int
   toa = 0,
   iord = 2;  
 const quantity<si::time, real_t> 
-//  t_max = 200 * si::seconds, // 4 * 3600
-//  dt_out = real_t(5) * si::seconds; // 300
-  t_max = 180 * si::seconds, // 4 * 3600
+  t_max = 10 * si::seconds, // 4 * 3600
   dt_out = real_t(10) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = real_t(.6) * si::metres / si::second; // .6 TODO: check it!
@@ -82,11 +81,19 @@ bool
   blk_clct = true,
   blk_sedi = true,
   blk_revp = true;
-real_t 
-  sdm_sd_conc_mean = .5;
 std::string
   sdm_ode_algo_xy = "euler",
   sdm_ode_algo_xi = "rk4";
+real_t 
+  sd_conc_mean = 10.,
+  mean_rd1 = .04*1e-6,
+  mean_rd2 = .15*1e-6,
+  sdev_rd1 = 1.4,
+  sdev_rd2 = 1.6,
+  n1_tot = 60*1e6,
+  n2_tot = 40*1e6,
+  min_rd = 0.001*1e-6,
+  max_rd = 1e-6;
 
 // pressure profile derived by integrating the hydrostatic eq.
 // assuming constant theta, constant rv and R=R(rv) 
@@ -228,9 +235,17 @@ int main()
       << " --eqs.todo_bulk.revp " << blk_revp
     ;
     else if (micro == "sdm") cmd << " --eqs todo_sdm"
-      << " --eqs.todo_sdm.sd_conc_mean " << sdm_sd_conc_mean
       << " --eqs.todo_sdm.ode_algo_xy " << sdm_ode_algo_xy
       << " --eqs.todo_sdm.ode_algo_xi " << sdm_ode_algo_xi
+      << " --eqs.todo_sdm.sd_conc_mean " << sd_conc_mean
+      << " --eqs.todo_sdm.min_rd " << min_rd
+      << " --eqs.todo_sdm.max_rd " << max_rd
+      << " --eqs.todo_sdm.mean_rd1 " << mean_rd1
+      << " --eqs.todo_sdm.mean_rd2 " << mean_rd2
+      << " --eqs.todo_sdm.sdev_rd1 " << sdev_rd1
+      << " --eqs.todo_sdm.sdev_rd2 " << sdev_rd2
+      << " --eqs.todo_sdm.n1_tot " << n1_tot
+      << " --eqs.todo_sdm.n2_tot " << n2_tot
     ;
     else assert(false);
     

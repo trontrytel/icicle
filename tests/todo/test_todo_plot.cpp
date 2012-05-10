@@ -37,6 +37,7 @@ using blitz::Range;
 #define GNUPLOT_ENABLE_BLITZ
 #include <gnuplot-iostream/gnuplot-iostream.h>
 
+#include "../../src/cmn.hpp"
 #include "../../src/phc.hpp"
 
 #define notice_macro(msg) { cerr << msg << endl; }
@@ -172,9 +173,11 @@ int main()
     //gp << "set label 'results obtained with icicle - a GPL-ed C++ MPDATA-based solver from University of Warsaw' at screen .98,.02 right" << endl;
     gp << "set label '8th International Cloud Modeling Workshop 2012: Case 1 (work in progress!)' at screen .02,.02 left" << endl;
 
-    gp << "set title 'super-droplet conc. [1/dx/dy]'" << endl;
-    gp << "set cbrange [0:5]" << endl;
+    gp << "set title 'particle conc. [1/cm^3]'" << endl;
+    gp << "set cbrange [1e-5:1e2]" << endl;
+    gp << "set logscale cb" << endl;
     nf.getVar("sd_conc").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp.data()); 
+    tmp /= dx * dy * 1e6;
     gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " using 1 with image notitle";
     //gp << ",'-' binary" << gp.binfmt(tmp) << dxdy << " ps 0 notitle";
     gp << endl;

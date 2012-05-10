@@ -11,7 +11,7 @@ cmake_minimum_required(VERSION 2.6) # for simplified if-constructs
 
 # TODO: -fprofile-use, -fprofile-generate
 set(TMP "-std=c++0x ") # C++11 (name understandable for pre-2011 compilers)
-set(TMP "${TMP} -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_OMP") # TODO: CUDA as an option
+set(TMP "${TMP} -DTHRUST_DEVICE_BACKEND=THRUST_DEVICE_BACKEND_OMP") # TODO: CUDA as an option
 #set(TMP "${TMP} -Wfatal-errors") # stop on first error
 #set(CMAKE_CXX_FLAGS_RELEASE "${TMP} -Ofast -DNDEBUG" CACHE STRING "Release options." FORCE)
 set(CMAKE_CXX_FLAGS_RELEASE "${TMP} -O1 -ffast-math -DNDEBUG" CACHE STRING "Release options." FORCE)
