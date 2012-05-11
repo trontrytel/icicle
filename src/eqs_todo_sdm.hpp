@@ -14,9 +14,6 @@
 // TODO: units in SD_stat, SD_diag, SD_velo... should be possible as odeint supports Boost.units!
 // TODO: check why it fails with g++ -O2!!!
 
-#include <fstream> // TODO remove it
-#include <iostream>
-
 #  include "eqs_todo.hpp"
 #  if defined(USE_BOOST_ODEINT)
 #    include <boost/numeric/odeint.hpp>
@@ -393,7 +390,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     public: thrust_real_t operator()(thrust_real_t rd)
     {
       return ( //TODO allow more modes of distribution
-// TODO: logarith or not: as an option
+       // TODO: logarith or not: as an option
        phc::log_norm_n_e<thrust_real_t>(mean_rd1, sdev_rd1, n1_tot, rd)+ 
        phc::log_norm_n_e<thrust_real_t>(mean_rd2, sdev_rd2, n2_tot, rd) 
       ) * si::metres
@@ -426,9 +423,10 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       stat.rd.begin(), stat.rd.end(), 
       rng(log(min_rd), log(max_rd))
     ); 
-    // initialise particle numbers  
-    thrust_real_t multi = log(max_rd/min_rd) / sd_conc_mean /  
-      (grid.dx()/si::metres) /(grid.dy()/si::metres) / (grid.dz()/si::metres); 
+    // initialise particle numbers 
+    //TODO error macros for too big min_rd and too small  max _rd 
+    thrust_real_t multi = log(max_rd/min_rd) / sd_conc_mean *  
+      (grid.dx()/si::metres) * (grid.dy()/si::metres) * (grid.dz()/si::metres); 
     thrust::transform(
       stat.rd.begin(), stat.rd.end(), 
       stat.n.begin(), 
@@ -436,14 +434,6 @@ class eqs_todo_sdm : public eqs_todo<real_t>
                    mean_rd2 * si::metres, sdev_rd2, multi * n2_tot / si::cubic_metres) 
     );
     // TODO: convert rd back from logarihms: rd = exp(rd)!
-
-// temporary check of initial condition
-std::fstream filestr("rd.txt");
-thrust::copy(stat.rd.begin(), stat.rd.end(), std::ostream_iterator<thrust_real_t>(filestr, "\n"));
-filestr.close();
-std::fstream filestr1 ("n.txt");
-thrust::copy(stat.n.begin(), stat.n.end(), std::ostream_iterator<thrust_real_t>(filestr1, "\n"));
-filestr1.close();
   }
 
   // sorting out which particle belongs to which grid cell

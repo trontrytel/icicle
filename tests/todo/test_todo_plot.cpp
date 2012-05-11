@@ -174,7 +174,7 @@ int main()
     gp << "set label '8th International Cloud Modeling Workshop 2012: Case 1 (work in progress!)' at screen .02,.02 left" << endl;
 
     gp << "set title 'super-droplet conc. [1/dx/dy]'" << endl;
-    gp << "set cbrange [0:2e19]" << endl;
+    gp << "set cbrange [0:1e7]" << endl;
     nf.getVar("sd_conc").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp.data()); 
     gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " using 1 with image notitle";
     //gp << ",'-' binary" << gp.binfmt(tmp) << dxdy << " ps 0 notitle";

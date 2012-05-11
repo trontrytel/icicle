@@ -43,8 +43,8 @@ typedef float real_t;
 // simulation parameteters (the 8th WMO Cloud Modelling Workshop: Case 1    
 // by W.W.Grabowski: http://rap.ucar.edu/~gthompsn/workshop2012/case1/case1.pdf  
 const size_t 
-  nx = 5,                   // 75 
-  ny = 5;                    // 75 
+  nx = 75,                   // 75 
+  ny = 75;                    // 75 
 const quantity<si::length,real_t> 
   dx = 20 * si::metres,       // 20 m
   dy = 20 * si::metres;       // 20 m
@@ -63,7 +63,7 @@ const int
   toa = 0,
   iord = 2;  
 const quantity<si::time, real_t> 
-  t_max = 10 * si::seconds, // 4 * 3600
+  t_max = 100 * si::seconds, // 4 * 3600
   dt_out = real_t(10) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = real_t(.6) * si::metres / si::second; // .6 TODO: check it!
@@ -82,7 +82,7 @@ bool
   blk_sedi = true,
   blk_revp = true;
 real_t 
-  sd_conc_mean = 1.,
+  sd_conc_mean = 20.,
   mean_rd1 = .04*1e-6,
   mean_rd2 = .15*1e-6,
   sdev_rd1 = 1.4,
