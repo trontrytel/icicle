@@ -106,6 +106,7 @@
     [-DOPENMP=NO]
     [-DMPI=NO]
     [-DTIMER=NO]
+    [-DODEINT=NO]
     [-DFLOAT=NO]
     [-DDOUBLE=NO]
     [-DLDOUBLE=NO]
