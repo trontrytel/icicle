@@ -177,7 +177,7 @@ int main()
     gp << "set cbrange [1:1e3]" << endl;
     gp << "set logscale cb" << endl;
     nf.getVar("sd_conc").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp.data()); 
-    tmp /= dx * dy * 1e6;
+    tmp /= 1e6;
     gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " using 1 with image notitle";
     //gp << ",'-' binary" << gp.binfmt(tmp) << dxdy << " ps 0 notitle";
     gp << endl;
