@@ -377,14 +377,19 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     private: const thrust::device_vector<int> &idx2ij;
     private: const thrust::device_vector<thrust_size_type> &from;
     private: mtx::arr<real_t> &to;
+    private: real_t scl;
+
+    // ctor
     public: copy_from_device(int n, 
       const thrust::device_vector<int> &idx2ij,
       const thrust::device_vector<thrust_size_type> &from,
-      mtx::arr<real_t> &to
-    ) : n(n), idx2ij(idx2ij), from(from), to(to) {}
+      mtx::arr<real_t> &to,
+      real_t scl = real_t(1)
+    ) : n(n), idx2ij(idx2ij), from(from), to(to), scl(scl) {}
+
     public: void operator()(int idx) 
     { 
-      to(idx2ij[idx] % n, idx2ij[idx] / n, 0) = from[idx]; 
+      to(idx2ij[idx] % n, idx2ij[idx] / n, 0) = scl * from[idx]; 
     }
   };
 
@@ -395,14 +400,16 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     private: const mtx::arr<real_t> &from;
     private: thrust::device_vector<thrust_real_t> &to;
     private: thrust_real_t scl;
+
+    // ctor
     public: copy_to_device(int n,
       const mtx::arr<real_t> &from,
       thrust::device_vector<thrust_real_t> &to,
       thrust_real_t scl = thrust_real_t(1)
     ) : n(n), from(from), to(to), scl(scl) {}
+
     public: void operator()(int ij)
     {
-//cerr << "to[" << ij << "] = scl * from[" << ij%n << "," << ij/n << ",0]" << endl;
       to[ij] = scl * from(ij % n, ij / n, 0);
     }
   };
@@ -617,7 +624,7 @@ filestr1.close();
 
     // auxliary variable for super-droplet conc
     this->aux.push_back(new struct eqs<real_t>::axv({
-      "sd_conc", "particle cencentration", this->quan2str(real_t(1.)/grid.dx()/grid.dy()/grid.dz()),
+      "sd_conc", "particle cencentration", this->quan2str(real_t(1)/si::cubic_metres),
       typename eqs<real_t>::constant(false),
       vector<int>({0, 0, 0})
     }));
@@ -681,12 +688,14 @@ filestr1.close();
 //    sd_coalescence(dt);
 //    sd_breakup(dt);
 
+    // TODO: this needs to be done only during record steps... how to handle it?
     // foreach below traverses only the grid cells containing super-droplets
     {
       sd_conc(sd_conc.ijk) = real_t(0); // as some grid cells could be void of particles
       thrust::counting_iterator<int> iter(0);
       thrust::for_each(iter, iter + diag.M_ij.size(), copy_from_device(
-        grid.nx(), diag.M_ij, diag.M_0, sd_conc // TODO: this is not valid for parallel runs!
+        grid.nx(), diag.M_ij, diag.M_0, sd_conc, 
+        real_t(1) / grid.dx() / grid.dy() / grid.dz() * si::cubic_metres // TODO: this is not valid for parallel runs!
       ));
     }
 
