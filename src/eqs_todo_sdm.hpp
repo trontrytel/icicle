@@ -410,29 +410,27 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   // nested functor
   private: class lognormal
   {
-    private: quantity<si::length, thrust_real_t> mean_rd1, mean_rd2;
-    private: quantity<si::dimensionless, thrust_real_t> sdev_rd1, sdev_rd2;
-    private: quantity<power_typeof_helper<si::length, static_rational<-3>>::type, thrust_real_t> n1_tot, n2_tot;
+    private: quantity<si::length, real_t> mean_rd1, mean_rd2;
+    private: quantity<si::dimensionless, real_t> sdev_rd1, sdev_rd2;
+    private: quantity<power_typeof_helper<si::length, static_rational<-3>>::type, real_t> n1_tot, n2_tot;
     
     public: lognormal(
-      const quantity<si::length, thrust_real_t> mean_rd1,
-      const quantity<si::dimensionless, thrust_real_t> sdev_rd1,
-      const quantity<power_typeof_helper<si::length, static_rational<-3>>::type, thrust_real_t> n1_tot,
-      const quantity<si::length, thrust_real_t> mean_rd2,
-      const quantity<si::dimensionless, thrust_real_t> sdev_rd2,
-      const quantity<power_typeof_helper<si::length, static_rational<-3>>::type, thrust_real_t> n2_tot
+      const quantity<si::length, real_t> mean_rd1,
+      const quantity<si::dimensionless, real_t> sdev_rd1,
+      const quantity<power_typeof_helper<si::length, static_rational<-3>>::type, real_t> n1_tot,
+      const quantity<si::length, real_t> mean_rd2,
+      const quantity<si::dimensionless, real_t> sdev_rd2,
+      const quantity<power_typeof_helper<si::length, static_rational<-3>>::type, real_t> n2_tot
     ) : mean_rd1(mean_rd1), sdev_rd1(sdev_rd1), n1_tot(n1_tot), mean_rd2(mean_rd2), sdev_rd2(sdev_rd2), n2_tot(n2_tot) {}
 
-    public: thrust_real_t operator()(thrust_real_t rd)
+    public: thrust_real_t operator()(real_t rd)
     {
-      return ( //TODO allow more modes of distribution
+      return thrust_real_t(( //TODO allow more modes of distribution
 // TODO: logarith or not: as an option
-       phc::log_norm_n_e<thrust_real_t>(mean_rd1, sdev_rd1, n1_tot, rd)+ 
-       phc::log_norm_n_e<thrust_real_t>(mean_rd2, sdev_rd2, n2_tot, rd) 
-      ) * si::metres
-        * si::metres
-        * si::metres
-      ;
+          phc::log_norm_n_e<real_t>(mean_rd1, sdev_rd1, n1_tot, rd) + 
+          phc::log_norm_n_e<real_t>(mean_rd2, sdev_rd2, n2_tot, rd) 
+        ) * si::cubic_metres
+      );
     }
   };
 
@@ -460,7 +458,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       rng(log(min_rd), log(max_rd))
     ); 
     // initialise particle numbers  
-    thrust_real_t multi = log(max_rd/min_rd) / sd_conc_mean 
+    real_t multi = log(max_rd/min_rd) / sd_conc_mean 
       * (grid.dx() * grid.dy() * grid.dz() / si::cubic_metres); 
     thrust::transform(
       stat.rd.begin(), stat.rd.end(), 
@@ -619,7 +617,7 @@ filestr1.close();
 
     // auxliary variable for super-droplet conc
     this->aux.push_back(new struct eqs<real_t>::axv({
-      "sd_conc", "particle cencentration", this->quan2str(1./grid.dx()/grid.dy()/grid.dz()),
+      "sd_conc", "particle cencentration", this->quan2str(real_t(1.)/grid.dx()/grid.dy()/grid.dz()),
       typename eqs<real_t>::constant(false),
       vector<int>({0, 0, 0})
     }));

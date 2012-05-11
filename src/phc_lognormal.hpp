@@ -18,7 +18,11 @@ namespace phc
     quantity<si::dimensionless, real_t> lnr
   )
   {
-    return n_tot / sqrt(2*M_PI) / log(stdev) * exp(-pow((lnr - log(mean_r/si::metres)), 2) / 2 / pow(log(stdev),2));
+    return n_tot 
+      * real_t(exp(-pow((lnr - log(mean_r/si::metres)), 2) / real_t(2) / pow(log(stdev),2)))
+      / real_t(log(stdev))
+      / real_t(sqrt(2*M_PI))
+    ;
   }
 
   // lognormal distribution as a function of r (Seinfeld & Pandis 1997 eq 7.34)
@@ -29,7 +33,11 @@ namespace phc
     quantity<si::length, real_t> r
   )
   {
-    return n_tot / sqrt(2*M_PI) / log(stdev) * exp(-pow((log(r/mean_r)), 2) / 2 / pow(log(stdev),2)) / r;
+    return n_tot / r
+      * real_t(exp(-pow((log(r/mean_r)), 2) / real_t(2) / pow(log(stdev),2)))
+      / real_t(log(stdev))
+      / real_t(sqrt(2*M_PI))
+    ;
   }
 };
 
