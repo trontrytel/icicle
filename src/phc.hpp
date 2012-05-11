@@ -10,15 +10,15 @@
 #ifndef PHC_HPP
 #  define PHC_HPP
 
-#  define decltype_return(expr) -> decltype(expr) { return expr; }
+#  define phc_decltype_return(expr) -> decltype(expr) { return expr; }
 
-#  define declare_const_macro(name, value, unit) template <typename real_t> \
-  static constexpr auto name() decltype_return(real_t(value) * unit)
+#  define phc_declare_const_macro(name, value, unit) template <typename real_t> \
+  static constexpr auto name() phc_decltype_return(real_t(value) * unit)
 
-#  define derived_const_macro(name, value) template <typename real_t> \
-  static constexpr auto name() decltype_return(value)
+#  define phc_derived_const_macro(name, value) template <typename real_t> \
+  static constexpr auto name() phc_decltype_return(value)
 
-#  define declare_funct_macro template <typename real_t> constexpr 
+#  define phc_declare_funct_macro template <typename real_t> constexpr 
 
 // TODO: the same functions with Blitz arguments - how to automate???
 
@@ -29,52 +29,52 @@ namespace phc
   typedef si::dimensionless mixing_ratio;
 
   // acceleration due to gravity
-  declare_const_macro(g, 9.81, si::metres_per_second_squared)
+  phc_declare_const_macro(g, 9.81, si::metres_per_second_squared)
 
   // specific heat capacities
-  declare_const_macro(c_pd, 1005, si::joules / si::kilograms / si::kelvins) // dry air
-  declare_const_macro(c_pv, 1850, si::joules / si::kilograms / si::kelvins) // water vapour
-  declare_const_macro(c_pw, 4218, si::joules / si::kilograms / si::kelvins) // liquid water
+  phc_declare_const_macro(c_pd, 1005, si::joules / si::kilograms / si::kelvins) // dry air
+  phc_declare_const_macro(c_pv, 1850, si::joules / si::kilograms / si::kelvins) // water vapour
+  phc_declare_const_macro(c_pw, 4218, si::joules / si::kilograms / si::kelvins) // liquid water
 
   // pressure in the definition of potential temperature
-  declare_const_macro(p_1000, 100000, si::pascals)
+  phc_declare_const_macro(p_1000, 100000, si::pascals)
 
   // molar masses
-  declare_const_macro(M_d, 0.02896, si::kilograms / si::moles) // dry air
-  declare_const_macro(M_v, 0.01802, si::kilograms / si::moles) // water vapour
-  derived_const_macro(eps, M_v<real_t>() / M_d<real_t>()) // aka epsilon
-  derived_const_macro(ups, c_pd<real_t>() / c_pv<real_t>()) // aka upsilon
+  phc_declare_const_macro(M_d, 0.02896, si::kilograms / si::moles) // dry air
+  phc_declare_const_macro(M_v, 0.01802, si::kilograms / si::moles) // water vapour
+  phc_derived_const_macro(eps, M_v<real_t>() / M_d<real_t>()) // aka epsilon
+  phc_derived_const_macro(ups, c_pd<real_t>() / c_pv<real_t>()) // aka upsilon
 
   // universal gas constant (i.e. the Boltzmann times the Avogadro constants)
-  declare_const_macro(kaBoNA, 8.314472, si::joules / si::kelvins / si::moles)
+  phc_declare_const_macro(kaBoNA, 8.314472, si::joules / si::kelvins / si::moles)
 
   // gas constants
-  derived_const_macro(R_d, kaBoNA<real_t>() / M_d<real_t>()) // dry air
-  derived_const_macro(R_v, kaBoNA<real_t>() / M_v<real_t>()) // water vapour
+  phc_derived_const_macro(R_d, kaBoNA<real_t>() / M_d<real_t>()) // dry air
+  phc_derived_const_macro(R_v, kaBoNA<real_t>() / M_v<real_t>()) // water vapour
 
   // Exner function exponent
-  derived_const_macro(R_d_over_c_pd, R_d<real_t>() / c_pd<real_t>())
+  phc_derived_const_macro(R_d_over_c_pd, R_d<real_t>() / c_pd<real_t>())
 
   // water triple point parameters
-  declare_const_macro(p_tri, 611.73, si::pascals) // pressure
-  declare_const_macro(T_tri, 273.16, si::kelvins) // temperature
-  declare_const_macro(l_tri, 2.5e6, si::joules / si::kilograms) // latent heat of evaporation
+  phc_declare_const_macro(p_tri, 611.73, si::pascals) // pressure
+  phc_declare_const_macro(T_tri, 273.16, si::kelvins) // temperature
+  phc_declare_const_macro(l_tri, 2.5e6, si::joules / si::kilograms) // latent heat of evaporation
 
   // mixing rule for extensive quantitites (i.e. using mass mixing ratio)
   template <typename real_t, typename quant>
   auto constexpr mix(quant dry, quant vap, quantity<mixing_ratio, real_t> r)
-    decltype_return((dry + r * vap) / (1 + r))
+    phc_decltype_return((dry + r * vap) / (1 + r))
 
   // gas constant for moist air
-  declare_funct_macro auto R(quantity<mixing_ratio, real_t> r)
-    decltype_return(mix(R_d<real_t>(), R_v<real_t>(), r))
+  phc_declare_funct_macro auto R(quantity<mixing_ratio, real_t> r)
+    phc_decltype_return(mix(R_d<real_t>(), R_v<real_t>(), r))
  
   // specific heat capacity of moist air
-  declare_funct_macro auto c_p(quantity<mixing_ratio, real_t> r)
-    decltype_return(mix(c_pd<real_t>(), c_pv<real_t>(), r))
+  phc_declare_funct_macro auto c_p(quantity<mixing_ratio, real_t> r)
+    phc_decltype_return(mix(c_pd<real_t>(), c_pv<real_t>(), r))
 
   // latent heat for constant c_p
-  declare_funct_macro quantity<divide_typeof_helper<si::energy, si::mass>::type , real_t> l_v(quantity<si::temperature, real_t> T)
+  phc_declare_funct_macro quantity<divide_typeof_helper<si::energy, si::mass>::type , real_t> l_v(quantity<si::temperature, real_t> T)
   {
     return l_tri<real_t>() + (c_pv<real_t>() - c_pw<real_t>()) * (T - T_tri<real_t>());
   }
@@ -82,7 +82,7 @@ namespace phc
   // saturation vapour pressure for water assuming constant c_p_v and c_p_w 
   // with constants taken at triple point
   // (solution to the Clausius-Clapeyron equation assuming rho_vapour << rho_liquid)
-  declare_funct_macro quantity<si::pressure, real_t> p_vs(quantity<si::temperature, real_t> T)
+  phc_declare_funct_macro quantity<si::pressure, real_t> p_vs(quantity<si::temperature, real_t> T)
   {
     return p_tri<real_t>() * exp(
       (l_tri<real_t>() + (c_pw<real_t>() - c_pv<real_t>()) * T_tri<real_t>()) / R_v<real_t>() * (real_t(1) / T_tri<real_t>() - real_t(1) / T)
@@ -91,73 +91,34 @@ namespace phc
   }
 
   // saturation vapour mixing ratio for water
-  declare_funct_macro quantity<mixing_ratio, real_t> r_vs(quantity<si::temperature, real_t> T, quantity<si::pressure, real_t> p)
+  phc_declare_funct_macro quantity<mixing_ratio, real_t> r_vs(quantity<si::temperature, real_t> T, quantity<si::pressure, real_t> p)
   {
     return eps<real_t>() / (p / p_vs<real_t>(T) - 1);
   }
 
   // Exner function for dry air
-  declare_funct_macro quantity<si::dimensionless, real_t> exner(quantity<si::pressure, real_t> p)
+  phc_declare_funct_macro quantity<si::dimensionless, real_t> exner(quantity<si::pressure, real_t> p)
   {
     return pow(p / p_1000<real_t>(), R_d_over_c_pd<real_t>());
   }
 
   // Exner function exponent for moist air
-  declare_funct_macro quantity<si::dimensionless, real_t> R_over_c_p(quantity<mixing_ratio, real_t> r)
+  phc_declare_funct_macro quantity<si::dimensionless, real_t> R_over_c_p(quantity<mixing_ratio, real_t> r)
   {
     return R<real_t>(r) / c_p<real_t>(r);
   }
 
   // Exner function for moist air
-  declare_funct_macro quantity<si::dimensionless, real_t> exner(quantity<si::pressure, real_t> p, quantity<mixing_ratio, real_t> r)
+  phc_declare_funct_macro quantity<si::dimensionless, real_t> exner(quantity<si::pressure, real_t> p, quantity<mixing_ratio, real_t> r)
   {
     return pow(p / p_1000<real_t>(), R_over_c_p<real_t>(r));
   }
 
   // water vapour partial pressure as a function of mixing ratio
-  declare_funct_macro quantity<si::pressure, real_t> p_v(quantity<si::pressure, real_t> p, quantity<mixing_ratio, real_t> r)
+  phc_declare_funct_macro quantity<si::pressure, real_t> p_v(quantity<si::pressure, real_t> p, quantity<mixing_ratio, real_t> r)
   {
     return p * r / (r + eps<real_t>());
   }
-
-  // Kessler/Beard terminal velocity
-  declare_const_macro(vterm_A, 36.34, si::metre_per_second) 
-  declare_const_macro(vterm_B, 1e-3, si::cubic_metres / si::kilograms) 
-  declare_funct_macro quantity<si::velocity, real_t> vterm(
-    quantity<si::mass_density, real_t> rho_r, 
-    quantity<si::mass_density, real_t> rho_d,
-    quantity<si::mass_density, real_t> rho_d0
-  )
-  {
-// TODO: separate version for rhod=rhod(z)...
-    return vterm_A<real_t>() * real_t(pow(rho_r * vterm_B<real_t>(), .1346) * sqrt(rho_d0 / rho_d));
-  }
-
-  // lognormal distribution (Seinfeld & Pandis 1997 eq 7.33)
-  declare_funct_macro quantity<power_typeof_helper<si::length,static_rational<-3>>::type, real_t> log_norm_n_e(
-    quantity<si::length, real_t> mean_r,
-    quantity<si::dimensionless, real_t> stdev, 
-    quantity<power_typeof_helper<si::length,static_rational<-3>>::type, real_t> n_tot, 
-    quantity<si::dimensionless, real_t> lnr
-  )
-  {
-    return n_tot / sqrt(2*M_PI) / log(stdev) * exp(-pow((lnr - log(mean_r/si::metres)), 2) / 2 / pow(log(stdev),2));
-  }
-
-  // lognormal distribution (Seinfeld & Pandis 1997 eq 7.34)
-  declare_funct_macro quantity<power_typeof_helper<si::length,static_rational<-4>>::type, real_t> log_norm_n(
-    quantity<si::length, real_t> mean_r,
-    quantity<si::dimensionless, real_t> stdev, 
-    quantity<power_typeof_helper<si::length,static_rational<-3>>::type, real_t> n_tot, 
-    quantity<si::length, real_t> r
-  )
-  {
-    return n_tot / sqrt(2*M_PI) / log(stdev) * exp(-pow((log(r/mean_r)), 2) / 2 / pow(log(stdev),2)) / r;
-  }
 };
 
-#  undef decltype_return
-#  undef declare_funct_macro
-#  undef declare_const_macro
-#  undef derived_const_macro
 #endif

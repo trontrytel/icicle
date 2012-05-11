@@ -12,7 +12,6 @@
 #  include "eqs.hpp"
 #  include "rhs_explicit.hpp"
 #  include "grd.hpp"
-#  include "phc.hpp"
 
 template <typename real_t>
 class eqs_todo : public eqs<real_t> 

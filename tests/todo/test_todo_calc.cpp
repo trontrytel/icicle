@@ -63,7 +63,7 @@ const int
   toa = 0,
   iord = 2;  
 const quantity<si::time, real_t> 
-  t_max = 10 * si::seconds, // 4 * 3600
+  t_max = 100 * si::seconds, // 4 * 3600
   dt_out = real_t(10) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = real_t(.6) * si::metres / si::second; // .6 TODO: check it!

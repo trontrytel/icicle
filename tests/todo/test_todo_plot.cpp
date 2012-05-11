@@ -174,7 +174,7 @@ int main()
     gp << "set label '8th International Cloud Modeling Workshop 2012: Case 1 (work in progress!)' at screen .02,.02 left" << endl;
 
     gp << "set title 'particle conc. [1/cm^3]'" << endl;
-    gp << "set cbrange [1e-5:1e2]" << endl;
+    gp << "set cbrange [1:1e3]" << endl;
     gp << "set logscale cb" << endl;
     nf.getVar("sd_conc").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp.data()); 
     tmp /= dx * dy * 1e6;

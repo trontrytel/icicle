@@ -19,6 +19,8 @@
 #include <iostream>
 
 #  include "eqs_todo.hpp"
+#  include "phc_lognormal.hpp"
+
 #  if defined(USE_BOOST_ODEINT)
 #    include <boost/numeric/odeint.hpp>
 #    include <boost/numeric/odeint/external/thrust/thrust_algebra.hpp>
@@ -180,6 +182,40 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     }
   };
 
+
+  // identity: xi = rw
+  private: template <typename T = thrust_real_t> struct xi_id 
+  { 
+    T xi(const T &rw) { return rw; }
+    T rw(const T &xi) { return xi; } 
+    T dxidrw(const T &xi) { return 1; }
+  };
+
+  // xi = ln(rw / nm)
+  private: template <typename T = thrust_real_t> struct xi_ln
+  { 
+    T xi(const T &rw) { return log(rw / T(1e-9)); }
+    T rw(const T &xi) { return T(1e-9) * exp(xi); } 
+    T dxidrw(const T &rw) { return T(1) / rw; }
+  };
+
+  // xi = pow(rw, 2) 
+  private: template <typename T = thrust_real_t> struct xi_p2
+  { 
+    T xi(const T &rw) { return rw * rw; }
+    T rw(const T &xi) { return sqrt(xi); } 
+    T dxidrw(const T &rw) { return T(2) * rw; }
+  };
+
+  // xi = pow(rw, 3) 
+  private: template <typename T = thrust_real_t> struct xi_p3
+  { 
+    T xi(const T &rw) { return rw * rw * rw; }
+    T rw(const T &xi) { return pow(xi, T(1)/T(3)); } 
+    T dxidrw(const T &rw) { return T(3) * rw * rw; }
+  };
+
+
   // nested class: the ODE system to be solved to update super-droplet positions
   private: 
   template <class algo>
@@ -247,38 +283,6 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     }
   };
 
-  // identity: xi = rw
-  private: template <typename T = thrust_real_t> struct xi_id 
-  { 
-    T xi(const T &rw) { return rw; }
-    T rw(const T &xi) { return xi; } 
-    T dxidrw(const T &xi) { return 1; }
-  };
-
-  // xi = ln(rw / nm)
-  private: template <typename T = thrust_real_t> struct xi_ln
-  { 
-    T xi(const T &rw) { return log(rw / T(1e-9)); }
-    T rw(const T &xi) { return T(1e-9) * exp(xi); } 
-    T dxidrw(const T &rw) { return T(1) / rw; }
-  };
-
-  // xi = pow(rw, 2) 
-  private: template <typename T = thrust_real_t> struct xi_p2
-  { 
-    T xi(const T &rw) { return rw * rw; }
-    T rw(const T &xi) { return sqrt(xi); } 
-    T dxidrw(const T &rw) { return T(2) * rw; }
-  };
-
-  // xi = pow(rw, 3) 
-  private: template <typename T = thrust_real_t> struct xi_p3
-  { 
-    T xi(const T &rw) { return rw * rw * rw; }
-    T rw(const T &xi) { return pow(xi, T(1)/T(3)); } 
-    T dxidrw(const T &rw) { return T(3) * rw * rw; }
-  };
-
   // nested class: the ODE system to be solved to update super-droplet sizes
   private: 
   template <class algo, class xi>
@@ -297,6 +301,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       // overloaded () operator invoked by thrust::transform()
       public: thrust_real_t operator()(thrust_size_type id)
       {
+        
         return this->dxidrw(this->rw(stat.xi[id]));
         //  * Maxwell-Mason;
       }
@@ -455,8 +460,8 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       rng(log(min_rd), log(max_rd))
     ); 
     // initialise particle numbers  
-    thrust_real_t multi = log(max_rd/min_rd) / sd_conc_mean /  
-      (grid.dx()/si::metres) /(grid.dy()/si::metres) / (grid.dz()/si::metres); 
+    thrust_real_t multi = log(max_rd/min_rd) / sd_conc_mean 
+      * (grid.dx() * grid.dy() * grid.dz() / si::cubic_metres); 
     thrust::transform(
       stat.rd.begin(), stat.rd.end(), 
       stat.n.begin(), 
