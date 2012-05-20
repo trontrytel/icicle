@@ -15,6 +15,8 @@
 namespace odeint = boost::numeric::odeint;
 #  endif
 
+#  include "phc_const_cp.hpp"
+
 template <typename real_t>
 class eqs_todo_bulk_ode : public eqs_todo_bulk<real_t> 
 {
@@ -51,15 +53,8 @@ class eqs_todo_bulk_ode : public eqs_todo_bulk<real_t>
     )
     {
       r = rhod_rv / rhod; 
-
-      p = phc::p_1000<real_t>() * real_t(pow(
-        (rhod_th * phc::R_d<real_t>()) 
-          / phc::p_1000<real_t>() * (real_t(1) + r / phc::eps<real_t>()),
-        1 / (1 - phc::R_over_c_p(r))
-      ));
-
-      T = rhod_th / rhod * phc::exner<real_t>(p, r);
-
+      p = phc::p<real_t>(rhod_th, r);
+      T = phc::T<real_t>(rhod_th / rhod, p, r);
       rs = phc::r_vs<real_t>(T, p);
     }
 

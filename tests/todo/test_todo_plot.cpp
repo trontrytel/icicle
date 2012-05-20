@@ -104,8 +104,6 @@ int main()
 
   notice_macro("setting-up plot parameters")
   Gnuplot gp;
-//  gp << "set term png enhanced size 800,800" << endl;
-  gp << "set term postscript size 24cm,24cm solid enhanced color" << endl;
   gp << "set view map" << endl;
   gp << "set xlabel 'X [km]'" << endl;
   gp << "set xrange [" << 0 << ":" << nx * dx/1000 << "]" << endl;
@@ -126,10 +124,14 @@ int main()
   {
     notice_macro("generating frame at t=" << t)
     gp << "set label 't = " << int(real_t(t) * dt_out / si::seconds) << " s' at screen .48,.96 left" << endl;
+
+//  gp << "set term png enhanced size 800,800" << endl;
+  gp << "set term postscript size 24cm,12cm solid enhanced color" << endl;
 //    gp << "set output 'tmp/test_" << zeropad(t) << ".png'" << endl;
     gp << "set output 'tmp/test_" << zeropad(t) << ".ps'" << endl;
-    gp << "set multiplot layout 2,2" << endl;
+    gp << "set multiplot layout 1,2" << endl;
 
+/*
     gp << "set title 'water vapour mixing ratio [g/kg]'" << endl;
     gp << "set cbrange [6:8]" << endl;
     nf.getVar("rhod_rv").getVar(start({t,0,0,0}), count({1,nx,ny,1}), rv.data()); 
@@ -175,18 +177,29 @@ int main()
 
     //gp << "set label 'results obtained with icicle - a GPL-ed C++ MPDATA-based solver from University of Warsaw' at screen .98,.02 right" << endl;
     gp << "set label '8th International Cloud Modeling Workshop 2012: Case 1 (work in progress!)' at screen .02,.02 left" << endl;
-/*
-    gp << "set title 'particle conc. [1/cm^3]'" << endl;
+*/
+
+    gp << "set title 'super-droplet conc. [1/dx/dy/dz]'" << endl;
     gp << "set cbrange [1:1e3]" << endl;
     gp << "set logscale cb" << endl;
     nf.getVar("sd_conc").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp.data()); 
+    gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " using 1 with image notitle";
+    //gp << ",'-' binary" << gp.binfmt(tmp) << dxdy << " ps 0 notitle";
+    gp << endl;
+    gp.sendBinary(tmp);
+    //gp.sendBinary(tmp);
+
+    gp << "set title 'particle conc. [1/cm^3]'" << endl;
+    gp << "set cbrange [1:1e3]" << endl;
+    gp << "set logscale cb" << endl;
+    nf.getVar("n_tot").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp.data()); 
     tmp /= 1e6;
     gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " using 1 with image notitle";
     //gp << ",'-' binary" << gp.binfmt(tmp) << dxdy << " ps 0 notitle";
     gp << endl;
     gp.sendBinary(tmp);
     //gp.sendBinary(tmp);
-*/
+
     gp << "unset label" << endl;
     gp << "unset multiplot" << endl;
   }

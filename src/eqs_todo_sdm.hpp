@@ -29,6 +29,7 @@ namespace odeint = boost::numeric::odeint;
 #  include <thrust/random.h>
 #  include <thrust/sequence.h>
 #  include <thrust/sort.h>
+#  include <thrust/iterator/constant_iterator.h>
 
 // @brief implementation of the Super-Droplet Method by Shima et al. 2009 (QJRMS, 135)
 template <typename real_t>
@@ -37,7 +38,9 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   // nested class (well... struct)
   protected: struct params : eqs_todo<real_t>::params
   {
-    int idx_sd_conc; // auxiliary variables indices
+    // auxiliary variables indices
+    int idx_sd_conc; 
+    int idx_n_tot;
   };
 
   // a container for storing options (i.e. which processes ar on/off)
@@ -47,7 +50,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
 
   typedef double thrust_real_t; // TODO: option / check if the device supports it
 
-  typedef thrust::device_vector<int>::size_type thrust_size_type;
+  typedef thrust::device_vector<int>::size_type thrust_size_t;
 
   // nested structure: super-droplet environment (velocity, temperature and moisture field)
   struct SD_envi
@@ -79,14 +82,16 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   {
     // spectrum moments and corresponding grid cell ids
     thrust::device_vector<int> M_ij;
-    thrust::device_vector<thrust_size_type> M_0;
+    thrust::device_vector<thrust_size_t> tmp_long; // e.g. for particle concentrations
+    thrust::device_vector<thrust_real_t> tmp_real; // e.g. for mean radii
     
     // ctor
     SD_diag(int nx, int ny)
     {
       int n_cell = nx * ny;
       M_ij.resize(n_cell);
-      M_0.resize(n_cell);
+      tmp_long.resize(n_cell);
+      tmp_real.resize(n_cell);
     }
   };
 
@@ -94,7 +99,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   struct SD_stat
   {
     // number of particles (i.e. super-droplets)
-    thrust_size_type n_part;
+    thrust_size_t n_part;
 
     // SD parameters that are variable from the ODE point of view (x,y,rw,...)
     thrust::device_vector<thrust_real_t> xy, xi; 
@@ -104,13 +109,13 @@ class eqs_todo_sdm : public eqs_todo<real_t>
 
     // SD parameters that are constant from the ODE point of view (n,rd3,i,j)
     thrust::device_vector<thrust_real_t> rd3; // rd3 -> dry radius to the third power 
-    thrust::device_vector<thrust_size_type> id, n; // n -> number of real droplets in a super-droplet
+    thrust::device_vector<thrust_size_t> id, n; // n -> number of real droplets in a super-droplet
     thrust::device_vector<int> i, j, ij; // location of super-droplet within the grid
 
     // SD_stat ctor
     SD_stat(int nx, int ny, real_t sd_conc_mean)
     {
-      n_part = thrust_size_type(real_t(nx * ny) * sd_conc_mean);
+      n_part = thrust_size_t(real_t(nx * ny) * sd_conc_mean);
       xy.resize(2 * n_part);
       xi.resize(n_part);
       rd3.resize(n_part);
@@ -242,7 +247,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       ) : n(n), vel(vel), stat(stat) {}
 
       //  overloaded () operator invoked by thrust::transform()
-      public: thrust_real_t operator()(thrust_size_type id)
+      public: thrust_real_t operator()(thrust_size_t id)
       {
         // TODO weighting by position!
         return .5 * (
@@ -302,7 +307,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       public: drop_growth_equation(const SD_stat &stat) : stat(stat) {}
 
       // overloaded () operator invoked by thrust::transform()
-      public: thrust_real_t operator()(thrust_size_type id)
+      public: thrust_real_t operator()(thrust_size_t id)
       {
         return 0;
         //return this->dxidrw(this->rw(stat.xi[id]));
@@ -378,14 +383,14 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   {
     private: int n;
     private: const thrust::device_vector<int> &idx2ij;
-    private: const thrust::device_vector<thrust_size_type> &from;
+    private: const thrust::device_vector<thrust_size_t> &from;
     private: mtx::arr<real_t> &to;
     private: real_t scl;
 
     // ctor
     public: copy_from_device(int n, 
       const thrust::device_vector<int> &idx2ij,
-      const thrust::device_vector<thrust_size_type> &from,
+      const thrust::device_vector<thrust_size_t> &from,
       mtx::arr<real_t> &to,
       real_t scl = real_t(1)
     ) : n(n), idx2ij(idx2ij), from(from), to(to), scl(scl) {}
@@ -489,7 +494,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   }
 
   // sorting out which particle belongs to which grid cell
-  private: void sd_sync()
+  private: void sd_sort()
   {
     // computing stat.i 
     thrust::transform(
@@ -517,19 +522,56 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       stat.ij.begin(), stat.ij.end(),
       stat.id.begin()
     );
-    // calculating M0
-    thrust::pair<
-      thrust::device_vector<int>::iterator, 
-      thrust::device_vector<thrust_size_type>::iterator
-    > n = thrust::reduce_by_key(
-      stat.ij.begin(), stat.ij.end(),
-      thrust::permutation_iterator<
-        thrust::device_vector<thrust_size_type>::iterator,
-        thrust::device_vector<thrust_size_type>::iterator
-      >(stat.n.begin(), stat.id.begin()), 
-      diag.M_ij.begin(),
-      diag.M_0.begin()
-    );
+  }
+
+  // computing diagnostics
+  private: void sd_diag(ptr_vector<mtx::arr<real_t>> &aux)
+  {
+    // calculating super-droplet concentration (per grid cell)
+    {
+      // doing the reduction
+      thrust::pair<
+        thrust::device_vector<int>::iterator, 
+        thrust::device_vector<thrust_size_t>::iterator
+      > n = thrust::reduce_by_key(
+        stat.ij.begin(), stat.ij.end(),
+        thrust::make_constant_iterator(1),
+        diag.M_ij.begin(),
+        diag.tmp_long.begin()
+      );
+      // writing to aux
+      mtx::arr<real_t> &sd_conc = aux[this->par.idx_sd_conc];
+      sd_conc(sd_conc.ijk) = real_t(0); // as some grid cells could be void of particles
+      thrust::counting_iterator<int> iter(0);
+      thrust::for_each(iter, iter + diag.M_ij.size(), copy_from_device(
+        grid.nx(), diag.M_ij, diag.tmp_long, sd_conc
+      ));
+    }
+
+    // calculating the zero-th moment (i.e. total particle concentration per unit volume)
+    {
+      // doint the reduction
+      thrust::pair<
+        thrust::device_vector<int>::iterator, 
+        thrust::device_vector<thrust_size_t>::iterator
+      > n = thrust::reduce_by_key(
+        stat.ij.begin(), stat.ij.end(),
+        thrust::permutation_iterator<
+          thrust::device_vector<thrust_size_t>::iterator,
+          thrust::device_vector<thrust_size_t>::iterator
+        >(stat.n.begin(), stat.id.begin()), 
+        diag.M_ij.begin(),
+        diag.tmp_long.begin()
+      );
+      // writing to aux
+      mtx::arr<real_t> &n_tot = aux[this->par.idx_n_tot];
+      n_tot(n_tot.ijk) = real_t(0); // as some grid cells could be void of particles
+      thrust::counting_iterator<int> iter(0);
+      thrust::for_each(iter, iter + diag.M_ij.size(), copy_from_device(
+        grid.nx(), diag.M_ij, diag.tmp_long, n_tot, 
+        real_t(1) / grid.dx() / grid.dy() / grid.dz() * si::cubic_metres
+      ));
+    }
   }
 
   private: void sd_advection(
@@ -645,11 +687,19 @@ class eqs_todo_sdm : public eqs_todo<real_t>
 
     // auxliary variable for super-droplet conc
     this->aux.push_back(new struct eqs<real_t>::axv({
-      "sd_conc", "particle cencentration", this->quan2str(real_t(1)/si::cubic_metres),
+      "sd_conc", "super-droplet cencentration", this->quan2str(real_t(1)/grid.dx()/grid.dy()/grid.dz()),
       typename eqs<real_t>::constant(false),
       vector<int>({0, 0, 0})
     }));
     par.idx_sd_conc = this->aux.size() - 1;
+
+    // auxliary variable for total particle concentration
+    this->aux.push_back(new struct eqs<real_t>::axv({
+      "n_tot", "total particle cencentration", this->quan2str(real_t(1)/si::cubic_metres),
+      typename eqs<real_t>::constant(false),
+      vector<int>({0, 0, 0})
+    }));
+    par.idx_n_tot = this->aux.size() - 1;
 
     switch (xy_algo)
     {
@@ -695,32 +745,19 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       &rhod = aux[this->par.idx_rhod];
     mtx::arr<real_t>
       &rhod_th = psi[this->par.idx_rhod_th][n],
-      &rhod_rv = psi[this->par.idx_rhod_rv][n],
+      &rhod_rv = psi[this->par.idx_rhod_rv][n];
       //&rhod_rl = psi[this->par.idx_rhod_rl][n],
       //&rhod_rr = psi[this->par.idx_rhod_rr][n],
-      &sd_conc = aux[this->par.idx_sd_conc];
 
     assert(sd_conc.lbound(mtx::k) == sd_conc.ubound(mtx::k)); // 2D
 
 // TODO: which order would be best?
-    sd_sync();
+    sd_sort();
     sd_advection(C[0], C[1], dt); // TODO: sedimentation
     sd_condevap(rhod_th, rhod_rv, dt);
 //    sd_coalescence(dt);
 //    sd_breakup(dt);
-
-    // TODO: this needs to be done only during record steps... how to handle it?
-    // foreach below traverses only the grid cells containing super-droplets
-    {
-      sd_conc(sd_conc.ijk) = real_t(0); // as some grid cells could be void of particles
-      thrust::counting_iterator<int> iter(0);
-      thrust::for_each(iter, iter + diag.M_ij.size(), copy_from_device(
-        grid.nx(), diag.M_ij, diag.M_0, sd_conc, 
-        real_t(1) / grid.dx() / grid.dy() / grid.dz() * si::cubic_metres // TODO: this is not valid for parallel runs!
-      ));
-    }
-
-
+    sd_diag(aux); 
   }
 
 };

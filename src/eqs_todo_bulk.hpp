@@ -11,6 +11,7 @@
 
 #  include "eqs_todo.hpp"
 #  include "phc_kessler.hpp"
+#  include "phc_theta.hpp"
 
 template <typename real_t>
 class eqs_todo_bulk : public eqs_todo<real_t> 

@@ -11,6 +11,7 @@ coding conventions in icicle:
   - use references instead of pointers if possible
   - all variable, class and method named are lowercase
     optionally with underscores
+  - all preprocessor macro names should end with _macro suffix
 
 - code organisation:
   - one class per one header file (CERN C05)

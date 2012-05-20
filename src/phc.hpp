@@ -52,9 +52,6 @@ namespace phc
   phc_derived_const_macro(R_d, kaBoNA<real_t>() / M_d<real_t>()) // dry air
   phc_derived_const_macro(R_v, kaBoNA<real_t>() / M_v<real_t>()) // water vapour
 
-  // Exner function exponent
-  phc_derived_const_macro(R_d_over_c_pd, R_d<real_t>() / c_pd<real_t>())
-
   // water triple point parameters
   phc_declare_const_macro(p_tri, 611.73, si::pascals) // pressure
   phc_declare_const_macro(T_tri, 273.16, si::kelvins) // temperature
@@ -73,49 +70,11 @@ namespace phc
   phc_declare_funct_macro auto c_p(quantity<mixing_ratio, real_t> r)
     phc_decltype_return(mix(c_pd<real_t>(), c_pv<real_t>(), r))
 
-  // latent heat for constant c_p
-  phc_declare_funct_macro quantity<divide_typeof_helper<si::energy, si::mass>::type , real_t> l_v(quantity<si::temperature, real_t> T)
-  {
-    return l_tri<real_t>() + (c_pv<real_t>() - c_pw<real_t>()) * (T - T_tri<real_t>());
-  }
-
-  // saturation vapour pressure for water assuming constant c_p_v and c_p_w 
-  // with constants taken at triple point
-  // (solution to the Clausius-Clapeyron equation assuming rho_vapour << rho_liquid)
-  phc_declare_funct_macro quantity<si::pressure, real_t> p_vs(quantity<si::temperature, real_t> T)
-  {
-    return p_tri<real_t>() * exp(
-      (l_tri<real_t>() + (c_pw<real_t>() - c_pv<real_t>()) * T_tri<real_t>()) / R_v<real_t>() * (real_t(1) / T_tri<real_t>() - real_t(1) / T)
-      - (c_pw<real_t>() - c_pv<real_t>()) / R_v<real_t>() * log(T / T_tri<real_t>())
-    );
-  }
-
-  // saturation vapour mixing ratio for water
-  phc_declare_funct_macro quantity<mixing_ratio, real_t> r_vs(quantity<si::temperature, real_t> T, quantity<si::pressure, real_t> p)
-  {
-    return eps<real_t>() / (p / p_vs<real_t>(T) - 1);
-  }
-
-  // Exner function for dry air
-  phc_declare_funct_macro quantity<si::dimensionless, real_t> exner(quantity<si::pressure, real_t> p)
-  {
-    return pow(p / p_1000<real_t>(), R_d_over_c_pd<real_t>());
-  }
-
-  // Exner function exponent for moist air
-  phc_declare_funct_macro quantity<si::dimensionless, real_t> R_over_c_p(quantity<mixing_ratio, real_t> r)
-  {
-    return R<real_t>(r) / c_p<real_t>(r);
-  }
-
-  // Exner function for moist air
-  phc_declare_funct_macro quantity<si::dimensionless, real_t> exner(quantity<si::pressure, real_t> p, quantity<mixing_ratio, real_t> r)
-  {
-    return pow(p / p_1000<real_t>(), R_over_c_p<real_t>(r));
-  }
-
   // water vapour partial pressure as a function of mixing ratio
-  phc_declare_funct_macro quantity<si::pressure, real_t> p_v(quantity<si::pressure, real_t> p, quantity<mixing_ratio, real_t> r)
+  phc_declare_funct_macro quantity<si::pressure, real_t> p_v(
+    quantity<si::pressure, real_t> p, 
+    quantity<mixing_ratio, real_t> r
+  )
   {
     return p * r / (r + eps<real_t>());
   }
