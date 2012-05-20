@@ -54,6 +54,8 @@ const quantity<phc::mixing_ratio, real_t>
   rt_0 = 7.5e-3;              // 7.5e-3 kg/kg
 const quantity<si::pressure, real_t> 
   p_0 = 101500 * si::pascals; // 1015 hPa
+const quantity<si::dimensionless, real_t>
+  kappa = .61; // ammonium sulphate
 
 // other parameters deduced from the Fortran code published at:
 // http://www.rap.ucar.edu/~gthompsn/workshop2012/case1/kinematic_wrain.vocals.v3.for
@@ -63,7 +65,7 @@ const int
   toa = 0,
   iord = 2;  
 const quantity<si::time, real_t> 
-  t_max = 0 * si::seconds, // 4 * 3600
+  t_max = 10 * si::seconds, // 4 * 3600
   dt_out = real_t(10) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = real_t(.6) * si::metres / si::second; // .6 TODO: check it!
@@ -246,6 +248,7 @@ int main()
       << " --eqs.todo_sdm.sdev_rd2 " << sdev_rd2
       << " --eqs.todo_sdm.n1_tot " << n1_tot
       << " --eqs.todo_sdm.n2_tot " << n2_tot
+      << " --eqs.todo_sdm.kappa " << kappa
     ;
     else assert(false);
     

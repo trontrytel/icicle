@@ -48,10 +48,11 @@ inline void opt_eqs_desc(po::options_description &desc)
     // parameters for dry aerosol two-mode lognormal distribution
     ("eqs.todo_sdm.mean_rd1", po::value<string>(), "first mode dry aerosol mean radii [m]") 
     ("eqs.todo_sdm.mean_rd2", po::value<string>(), "second mode dry aerosol mean radii[m]")
-    ("eqs.todo_sdm.sdev_rd1", po::value<string>(), "first mode geometric standard deviation") 
-    ("eqs.todo_sdm.sdev_rd2", po::value<string>(), "second mode geometric standard deviation")
+    ("eqs.todo_sdm.sdev_rd1", po::value<string>(), "first mode geometric standard deviation [1]") 
+    ("eqs.todo_sdm.sdev_rd2", po::value<string>(), "second mode geometric standard deviation [1]")
     ("eqs.todo_sdm.n1_tot", po::value<string>(), "first mode total concentration [m-3]") 
-    ("eqs.todo_sdm.n2_tot", po::value<string>(), "second mode total concentration[m-3]")
+    ("eqs.todo_sdm.n2_tot", po::value<string>(), "second mode total concentration [m-3]")
+    ("eqs.todo_sdm.kappa", po::value<string>(), "dolubility parameter kappa [1]")
     ;
 }
 
@@ -129,7 +130,8 @@ eqs<real_t> *opt_eqs(
       real_cast<real_t>(vm, "eqs.todo_sdm.sdev_rd1"), 
       real_cast<real_t>(vm, "eqs.todo_sdm.sdev_rd2"),
       real_cast<real_t>(vm, "eqs.todo_sdm.n1_tot"), 
-      real_cast<real_t>(vm, "eqs.todo_sdm.n2_tot")
+      real_cast<real_t>(vm, "eqs.todo_sdm.n2_tot"),
+      real_cast<real_t>(vm, "eqs.todo_sdm.kappa")
     );
   }
   else 

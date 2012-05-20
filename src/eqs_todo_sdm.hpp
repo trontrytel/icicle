@@ -17,6 +17,7 @@
 
 #  include "eqs_todo.hpp"
 #  include "phc_lognormal.hpp"
+#  include "phc_kappa_koehler.hpp"
 
 #  if defined(USE_BOOST_ODEINT)
 #    include <boost/numeric/odeint.hpp>
@@ -31,7 +32,10 @@ namespace odeint = boost::numeric::odeint;
 #  include <thrust/sort.h>
 #  include <thrust/iterator/constant_iterator.h>
 
-// @brief implementation of the Super-Droplet Method by Shima et al. 2009 (QJRMS, 135)
+// @brief 
+//   implementation of the Super-Droplet Method (Shima et al. 2009, QJRMS, 135)
+//   with kappa-Koehler parameterisation of aerosol solubility (Patters and Kreidenweis 2007, ACP, 7)
+//   and ...
 template <typename real_t>
 class eqs_todo_sdm : public eqs_todo<real_t> 
 {
@@ -57,10 +61,10 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   {
     // velocity field (copied from an Arakawa-C grid)
     thrust::device_vector<thrust_real_t> vx, vy;
-    int vx_nx, vx_ny, vy_nx, vy_ny; 
+    int vx_nx, vx_ny, vy_nx, vy_ny, n_cell; 
 
     // temperature and water vapour density fields (copied from an Arakawa-C grid)
-    thrust::device_vector<thrust_real_t> thta, rhov;
+    thrust::device_vector<thrust_real_t> rhod, rhod_th, rhod_rv;
 
     // ctor
     SD_envi(int nx, int ny) 
@@ -72,26 +76,24 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       vx.resize(vx_nx * vx_ny);
       vy.resize(vy_nx * vy_ny);
 
-      thta.resize(nx * ny); // TODO + 2 x halo if interpolating 
-      rhov.resize(nx * ny); // TODO + 2 x halo if interpolating
+      n_cell = nx * ny;
+      // TODO + 2 x halo if interpolating?
+      rhod.resize(n_cell); 
+      rhod_th.resize(n_cell); 
+      rhod_rv.resize(n_cell);
     }
   };
 
   // nested structure: super-droplet diagnosed variables
   struct SD_diag
   {
-    // spectrum moments and corresponding grid cell ids
+    // TODO: document it
     thrust::device_vector<int> M_ij;
-    thrust::device_vector<thrust_size_t> tmp_long; // e.g. for particle concentrations
-    thrust::device_vector<thrust_real_t> tmp_real; // e.g. for mean radii
     
     // ctor
     SD_diag(int nx, int ny)
     {
-      int n_cell = nx * ny;
-      M_ij.resize(n_cell);
-      tmp_long.resize(n_cell);
-      tmp_real.resize(n_cell);
+      M_ij.resize(nx * ny);
     }
   };
 
@@ -108,7 +110,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     thrust::device_vector<thrust_real_t>::iterator x_begin, x_end, y_begin, y_end;
 
     // SD parameters that are constant from the ODE point of view (n,rd3,i,j)
-    thrust::device_vector<thrust_real_t> rd3; // rd3 -> dry radius to the third power 
+    thrust::device_vector<thrust_real_t> rd3, kpa; // rd3 -> dry radius to the third power 
     thrust::device_vector<thrust_size_t> id, n; // n -> number of real droplets in a super-droplet
     thrust::device_vector<int> i, j, ij; // location of super-droplet within the grid
 
@@ -119,6 +121,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       xy.resize(2 * n_part);
       xi.resize(n_part);
       rd3.resize(n_part);
+      kpa.resize(n_part);
       i.resize(n_part);
       j.resize(n_part);
       ij.resize(n_part);
@@ -273,7 +276,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     {
       // TODO use positions to interpolate velocities! (as an option?)
       {
-        thrust::counting_iterator<int> iter(0);
+        thrust::counting_iterator<thrust_size_t> iter(0);
         thrust::transform(
           iter, iter + stat.n_part, 
           dxy_dt.begin(), 
@@ -281,13 +284,65 @@ class eqs_todo_sdm : public eqs_todo<real_t>
         );
       }
       {
-        thrust::counting_iterator<int> iter(0);
+        thrust::counting_iterator<thrust_size_t> iter(0);
         thrust::transform(
           iter, iter + stat.n_part, 
           dxy_dt.begin() + stat.n_part, 
           interpol<0,1>(envi.vy_nx, envi.vy, stat)
         );
       }
+    }
+  };
+
+  // nested functor
+  template <class xi> struct equil : xi
+  { 
+    const SD_stat &stat;
+    const SD_envi &envi;
+    thrust::device_vector<thrust_real_t> &tmp;
+
+    // ctor
+    equil(
+      const SD_stat &stat, 
+      const SD_envi &envi, 
+      thrust::device_vector<thrust_real_t> &tmp
+    ) : stat(stat), envi(envi), tmp(tmp) 
+    {
+      // nested functor
+      struct init_tmp
+      {
+        const SD_envi &envi;
+        thrust::device_vector<thrust_real_t> &tmp;
+            
+        // ctor
+        init_tmp(const SD_envi &envi, thrust::device_vector<thrust_real_t> &tmp) 
+          : envi(envi), tmp(tmp) 
+        {}
+
+        // overloded operator invoked by for_each below
+        thrust_real_t operator()(thrust_size_t idx)
+        {
+          quantity<phc::mixing_ratio, thrust_real_t> 
+            r = envi.rhod_rv[idx] / envi.rhod[idx];
+          quantity<si::pressure, thrust_real_t> 
+            p = phc::p<thrust_real_t>(envi.rhod_th[idx] * si::kelvins * si::kilograms / si::cubic_metres, r);
+          quantity<si::temperature, thrust_real_t> 
+            T = phc::T<thrust_real_t>((envi.rhod_th[idx] / envi.rhod[idx]) * si::kelvins, p, r);
+          tmp[idx] = phc::R_v<thrust_real_t>() * T * (envi.rhod_rv[idx] * si::kilograms / si::cubic_metres) / phc::p_vs<thrust_real_t>(T);
+        } 
+      };
+
+      thrust::counting_iterator<thrust_size_t> iter(0);
+      thrust::for_each(iter, iter + envi.n_cell, init_tmp(envi, tmp));
+    }
+
+    thrust_real_t operator()(thrust_size_t idx) 
+    { 
+      return this->xi(pow(phc::rw3_eq<thrust_real_t>(
+        stat.rd3[idx] * si::cubic_metres, 
+        0 + stat.kpa[idx],    // it fails to compile without the zero!
+        0 + tmp[stat.ij[idx]] // ditto
+      ) / si::cubic_metres, thrust_real_t(1)/thrust_real_t(3))); 
     }
   };
 
@@ -319,7 +374,16 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     private: const SD_stat &stat;
 
     // ctor
-    public: ode_xi(const SD_stat &stat) : stat(stat) {}
+    public: ode_xi(
+      const SD_stat &stat,
+      const SD_envi &envi,
+      thrust::device_vector<thrust_real_t> &tmp
+    ) : stat(stat)
+    {
+      // initialising the wet radii (xi variable) to equilibrium values
+      thrust::counting_iterator<thrust_size_t> iter(0);
+      thrust::for_each(iter, iter + stat.n_part, equil<xi>(stat, envi, tmp));
+    }
   
     // overloaded () operator invoked by odeint
     public: void operator()(
@@ -328,7 +392,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       const thrust_real_t 
     )
     {
-      thrust::counting_iterator<int> iter(0);
+      thrust::counting_iterator<thrust_size_t> iter(0);
       thrust::transform(
         iter, iter + stat.n_part, 
         dxi_dt.begin(), 
@@ -449,53 +513,61 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     }
   };
 
-  // initialising particle sizes and positions
+  // initialising particle positions, numbers and dry radii
   private: void sd_init(
-    real_t min_rd, real_t max_rd,
-    real_t mean_rd1, real_t mean_rd2,
-    real_t sdev_rd1, real_t sdev_rd2,
-    real_t n1_tot, real_t n2_tot, 
-    real_t sd_conc_mean)
+    const real_t min_rd, const real_t max_rd,
+    const real_t mean_rd1, const real_t mean_rd2,
+    const real_t sdev_rd1, const real_t sdev_rd2,
+    const real_t n1_tot, const real_t n2_tot, 
+    const real_t sd_conc_mean,
+    const real_t kappa
+  )
   {
-    // initialise particle x coordinates
-    thrust::generate(
+    // initialise particle coordinates
+    thrust::generate( // x
       stat.x_begin, stat.x_end, 
       rng(0, grid.nx() * (grid.dx() / si::metres))
     ); 
-    // initialise particle y coordinates
-    thrust::generate(
+    thrust::generate( // y
       stat.y_begin, stat.y_end,
       rng(0, grid.ny() * (grid.dy() / si::metres))
     ); 
-    // initialise particle dry sizes (temporarily with logarithms of radius!)
-    thrust::generate(
+
+
+    // initialise particle dry size spectrum 
+    // TODO: assert that the distribution is < epsilon at rd_min and rd_max
+    thrust::generate( // rd3 temporarily means logarithms of radius!
       stat.rd3.begin(), stat.rd3.end(), 
       rng(log(min_rd), log(max_rd))
     ); 
-    // initialise particle numbers  
-    // TODO: assert that the distribution is < epsilon at rd_min and rd_max
-    real_t multi = log(max_rd/min_rd) / sd_conc_mean 
-      * (grid.dx() * grid.dy() * grid.dz() / si::cubic_metres); 
-    thrust::transform(
-      stat.rd3.begin(), stat.rd3.end(), 
-      stat.n.begin(), 
-      lognormal(
-        mean_rd1 * si::metres, sdev_rd1, multi * n1_tot / si::cubic_metres, 
-        mean_rd2 * si::metres, sdev_rd2, multi * n2_tot / si::cubic_metres
-      ) 
-    );
-    // converting rd back from logarihms to rd3 
     {
+      real_t multi = log(max_rd/min_rd) / sd_conc_mean 
+        * (grid.dx() * grid.dy() * grid.dz() / si::cubic_metres); 
+      thrust::transform(
+        stat.rd3.begin(), stat.rd3.end(), 
+        stat.n.begin(), 
+        lognormal(
+          mean_rd1 * si::metres, sdev_rd1, multi * n1_tot / si::cubic_metres, 
+          mean_rd2 * si::metres, sdev_rd2, multi * n2_tot / si::cubic_metres
+        ) 
+      );
+      // converting rd back from logarihms to rd3 
       struct exp3x { thrust_real_t operator()(thrust_real_t x) { return exp(3*x); } };
       thrust::transform(stat.rd3.begin(), stat.rd3.end(), stat.rd3.begin(), exp3x());
     }
-    // initialise particle wet radii (the xi variable)
-    // TODO!
+
+    // initialise kappas
+    thrust::fill(stat.kpa.begin(), stat.kpa.end(), kappa);
   }
 
   // sorting out which particle belongs to which grid cell
-  private: void sd_sort()
+  private: void sd_sync(
+    const mtx::arr<real_t> &rhod,
+    const mtx::arr<real_t> &rhod_th,
+    const mtx::arr<real_t> &rhod_rv
+  )
   {
+    // sorting the particles
     // computing stat.i 
     thrust::transform(
       stat.x_begin, stat.x_end,
@@ -522,6 +594,26 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       stat.ij.begin(), stat.ij.end(),
       stat.id.begin()
     );
+
+    // getting thermodynamic fields from the Eulerian model 
+    {
+      thrust::counting_iterator<thrust_size_t> iter(0);
+      thrust::for_each(iter, iter + envi.rhod.size(), copy_to_device(
+        grid.nx(), rhod, envi.rhod
+      )); // TODO: this could be done just once in the kinematic model!
+    }
+    {
+      thrust::counting_iterator<thrust_size_t> iter(0);
+      thrust::for_each(iter, iter + envi.rhod_th.size(), copy_to_device(
+        grid.nx(), rhod_th, envi.rhod_th
+      ));
+    }
+    {
+      thrust::counting_iterator<thrust_size_t> iter(0);
+      thrust::for_each(iter, iter + envi.rhod_rv.size(), copy_to_device(
+        grid.nx(), rhod_rv, envi.rhod_rv
+      ));
+    }
   }
 
   // computing diagnostics
@@ -537,20 +629,20 @@ class eqs_todo_sdm : public eqs_todo<real_t>
         stat.ij.begin(), stat.ij.end(),
         thrust::make_constant_iterator(1),
         diag.M_ij.begin(),
-        diag.tmp_long.begin()
+        tmp_long.begin()
       );
       // writing to aux
       mtx::arr<real_t> &sd_conc = aux[this->par.idx_sd_conc];
       sd_conc(sd_conc.ijk) = real_t(0); // as some grid cells could be void of particles
-      thrust::counting_iterator<int> iter(0);
+      thrust::counting_iterator<thrust_size_t> iter(0);
       thrust::for_each(iter, iter + diag.M_ij.size(), copy_from_device(
-        grid.nx(), diag.M_ij, diag.tmp_long, sd_conc
+        grid.nx(), diag.M_ij, tmp_long, sd_conc
       ));
     }
 
     // calculating the zero-th moment (i.e. total particle concentration per unit volume)
     {
-      // doint the reduction
+      // doing the reduction
       thrust::pair<
         thrust::device_vector<int>::iterator, 
         thrust::device_vector<thrust_size_t>::iterator
@@ -561,34 +653,39 @@ class eqs_todo_sdm : public eqs_todo<real_t>
           thrust::device_vector<thrust_size_t>::iterator
         >(stat.n.begin(), stat.id.begin()), 
         diag.M_ij.begin(),
-        diag.tmp_long.begin()
+        tmp_long.begin()
       );
       // writing to aux
       mtx::arr<real_t> &n_tot = aux[this->par.idx_n_tot];
       n_tot(n_tot.ijk) = real_t(0); // as some grid cells could be void of particles
-      thrust::counting_iterator<int> iter(0);
+      thrust::counting_iterator<thrust_size_t> iter(0);
       thrust::for_each(iter, iter + diag.M_ij.size(), copy_from_device(
-        grid.nx(), diag.M_ij, diag.tmp_long, n_tot, 
+        grid.nx(), diag.M_ij, tmp_long, n_tot, 
         real_t(1) / grid.dx() / grid.dy() / grid.dz() * si::cubic_metres
       ));
+    }
+
+    // calculating number of particles with radius greater than a given threshold
+    {
+      // !!! used ode->rw() to get true radii!
     }
   }
 
   private: void sd_advection(
+    const quantity<si::time, real_t> dt,
     const mtx::arr<real_t> &Cx,
-    const mtx::arr<real_t> &Cy,
-    const quantity<si::time, real_t> dt
+    const mtx::arr<real_t> &Cy
   )
   {
     // getting velocities from the Eulerian model (TODO: if constant_velocity -> only once!)
     {
-      thrust::counting_iterator<int> iter(0);
+      thrust::counting_iterator<thrust_size_t> iter(0);
       thrust::for_each(iter, iter + envi.vx.size(), copy_to_device(
         grid.nx() + 1, Cx, envi.vx, (grid.dx() / si::metres) / (dt / si::seconds)
       ));
     }
     {
-      thrust::counting_iterator<int> iter(0);
+      thrust::counting_iterator<thrust_size_t> iter(0);
       thrust::for_each(iter, iter + envi.vy.size(), copy_to_device(
         grid.nx(), Cy, envi.vy, (grid.dx() / si::metres) / (dt / si::seconds)
       ));
@@ -603,25 +700,9 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   }
   
   private: void sd_condevap(
-    const mtx::arr<real_t> &thta,
-    const mtx::arr<real_t> &rhov,
     const quantity<si::time, real_t> dt
   )
   {
-    // getting thermodynamic fields from the Eulerian model 
-    {
-      thrust::counting_iterator<int> iter(0);
-      thrust::for_each(iter, iter + envi.thta.size(), copy_to_device(
-        grid.nx(), thta, envi.thta
-      ));
-    }
-    {
-      thrust::counting_iterator<int> iter(0);
-      thrust::for_each(iter, iter + envi.rhov.size(), copy_to_device(
-        grid.nx(), rhov, envi.rhov
-      ));
-    }
-
     // growing/shrinking the droplets
     F_xi->advance(stat.xi, dt);
   }
@@ -631,15 +712,6 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   private: map<enum processes, bool> opts;
   private: bool constant_velocity;
   private: const grd<real_t> &grid;
-  private: real_t min_rd;
-  private: real_t max_rd;
-  private: real_t mean_rd1;  // dry aerosol initial distribution parameters
-  private: real_t mean_rd2;
-  private: real_t sdev_rd1;
-  private: real_t sdev_rd2;
-  private: real_t n1_tot;
-  private: real_t n2_tot;
-  private: real_t sd_conc_mean;
 
   // private fields for ODE machinery
   private: unique_ptr<ode> F_xy;
@@ -649,6 +721,10 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   private: SD_stat stat;
   private: SD_envi envi;
   private: SD_diag diag;
+
+  // private field with temporary space
+  thrust::device_vector<thrust_size_t> tmp_long; // e.g. for particle concentrations
+  thrust::device_vector<thrust_real_t> tmp_real; // e.g. for mean radii
 
   // ctor of eqs_todo_sdm
   public: eqs_todo_sdm(
@@ -666,7 +742,8 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     real_t sdev_rd1,
     real_t sdev_rd2,
     real_t n1_tot,
-    real_t n2_tot
+    real_t n2_tot,
+    real_t kappa
   ) :
     eqs_todo<real_t>(grid, &par), 
     opts(opts), 
@@ -674,16 +751,15 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     constant_velocity(velocity.is_constant()),
     stat(grid.nx(), grid.ny(), sd_conc_mean),
     envi(grid.nx(), grid.ny()),
-    diag(grid.nx(), grid.ny()),
-    min_rd(min_rd), max_rd(max_rd),
-    mean_rd1(mean_rd1), mean_rd2(mean_rd2),
-    sdev_rd1(sdev_rd1), sdev_rd2(sdev_rd2),
-    n1_tot(n1_tot), n2_tot(n2_tot),
-    sd_conc_mean(sd_conc_mean)
+    diag(grid.nx(), grid.ny()) 
   {
     // TODO: assert that we use no paralellisation or allow some parallelism!
     // TODO: random seed as an option
     // TODO: option: number of cores to use (via Thrust)
+
+    // TODO: union?
+    tmp_long.resize(grid.nx() * grid.ny());
+    tmp_real.resize(grid.nx() * grid.ny());
 
     // auxliary variable for super-droplet conc
     this->aux.push_back(new struct eqs<real_t>::axv({
@@ -711,26 +787,25 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     {
       case euler: switch (xi_dfntn)
       {
-        case id : F_xi.reset(new ode_xi<algo_euler, xi_id<>>(stat)); break;
-        case ln : F_xi.reset(new ode_xi<algo_euler, xi_ln<>>(stat)); break;
-        case p2 : F_xi.reset(new ode_xi<algo_euler, xi_p2<>>(stat)); break;
-        case p3 : F_xi.reset(new ode_xi<algo_euler, xi_p3<>>(stat)); break;
+        case id : F_xi.reset(new ode_xi<algo_euler, xi_id<>>(stat, envi, tmp_real)); break;
+        case ln : F_xi.reset(new ode_xi<algo_euler, xi_ln<>>(stat, envi, tmp_real)); break;
+        case p2 : F_xi.reset(new ode_xi<algo_euler, xi_p2<>>(stat, envi, tmp_real)); break;
+        case p3 : F_xi.reset(new ode_xi<algo_euler, xi_p3<>>(stat, envi, tmp_real)); break;
         default: assert(false);
       }
       case rk4  : switch (xi_dfntn) 
       {
-        case id : F_xi.reset(new ode_xi<algo_rk4,   xi_id<>>(stat)); break;
-        case ln : F_xi.reset(new ode_xi<algo_rk4,   xi_ln<>>(stat)); break;
-        case p2 : F_xi.reset(new ode_xi<algo_rk4,   xi_p2<>>(stat)); break;
-        case p3 : F_xi.reset(new ode_xi<algo_rk4,   xi_p3<>>(stat)); break;
+        case id : F_xi.reset(new ode_xi<algo_rk4,   xi_id<>>(stat, envi, tmp_real)); break;
+        case ln : F_xi.reset(new ode_xi<algo_rk4,   xi_ln<>>(stat, envi, tmp_real)); break;
+        case p2 : F_xi.reset(new ode_xi<algo_rk4,   xi_p2<>>(stat, envi, tmp_real)); break;
+        case p3 : F_xi.reset(new ode_xi<algo_rk4,   xi_p3<>>(stat, envi, tmp_real)); break;
         default: assert(false);
       }
       default: assert(false);
     } 
 
     // initialising super-droplets
-    sd_init(min_rd, max_rd, mean_rd1, mean_rd2, sdev_rd1, sdev_rd2, n1_tot, n2_tot, sd_conc_mean);
-
+    sd_init(min_rd, max_rd, mean_rd1, mean_rd2, sdev_rd1, sdev_rd2, n1_tot, n2_tot, sd_conc_mean, kappa);
   }
 
   public: void adjustments(
@@ -752,9 +827,9 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     assert(sd_conc.lbound(mtx::k) == sd_conc.ubound(mtx::k)); // 2D
 
 // TODO: which order would be best?
-    sd_sort();
-    sd_advection(C[0], C[1], dt); // TODO: sedimentation
-    sd_condevap(rhod_th, rhod_rv, dt);
+    sd_sync(rhod, rhod_th, rhod_rv);
+    sd_advection(dt, C[0], C[1]); // TODO: sedimentation
+    sd_condevap(dt);
 //    sd_coalescence(dt);
 //    sd_breakup(dt);
     sd_diag(aux); 
