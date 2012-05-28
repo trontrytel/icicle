@@ -13,6 +13,7 @@
 // TODO: something like: #  if !defined(USE_BOOST_ODEINT) error_macro("eqs_todo_sdm requires icicle to be compiled with Boost.odeint");
 // TODO: substepping with timesteps as an option
 // TODO: units in SD_stat, SD_diag, SD_envi... should be possible as odeint supports Boost.units!
+// TODO: sabe base class for all functors... perhaps containing stat and envi?
 // TODO: check why random number generation fails with g++ -O2!!!
 
 #  include "eqs_todo.hpp"
@@ -42,9 +43,10 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   // nested class (well... struct)
   protected: struct params : eqs_todo<real_t>::params
   {
-    // auxiliary variables indices
+    // auxiliary variables indices // TODO: to be removed when aux will become a map!
     int idx_sd_conc; 
     int idx_n_tot;
+    int idx_n_ccn;
   };
 
   // a container for storing options (i.e. which processes ar on/off)
@@ -84,6 +86,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     }
   };
 
+  // TODO: is this one really needed???
   // nested structure: super-droplet diagnosed variables
   struct SD_diag
   {
@@ -164,6 +167,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   // nested class: 
   private: class ode 
   {
+    public: virtual void init() {}
     public: virtual void advance(
       thrust::device_vector<thrust_real_t> &x, 
       const quantity<si::time, real_t> &dt
@@ -294,16 +298,17 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     }
   };
 
-  // nested functor
+  // nested functor: setting wet radii to equilibrium values
+  // TODO: no need for template! - could be placed within a block and ose F_xi->xi()
   template <class xi> struct equil : xi
   { 
-    const SD_stat &stat;
+    SD_stat &stat;
     const SD_envi &envi;
     thrust::device_vector<thrust_real_t> &tmp;
 
     // ctor
     equil(
-      const SD_stat &stat, 
+      SD_stat &stat, 
       const SD_envi &envi, 
       thrust::device_vector<thrust_real_t> &tmp
     ) : stat(stat), envi(envi), tmp(tmp) 
@@ -320,15 +325,25 @@ class eqs_todo_sdm : public eqs_todo<real_t>
         {}
 
         // overloded operator invoked by for_each below
-        thrust_real_t operator()(thrust_size_t idx)
+        void operator()(thrust_size_t ij)
         {
           quantity<phc::mixing_ratio, thrust_real_t> 
-            r = envi.rhod_rv[idx] / envi.rhod[idx];
+            r = envi.rhod_rv[ij] / envi.rhod[ij];
           quantity<si::pressure, thrust_real_t> 
-            p = phc::p<thrust_real_t>(envi.rhod_th[idx] * si::kelvins * si::kilograms / si::cubic_metres, r);
+            p = phc::p<thrust_real_t>(envi.rhod_th[ij] * si::kelvins * si::kilograms / si::cubic_metres, r);
           quantity<si::temperature, thrust_real_t> 
-            T = phc::T<thrust_real_t>((envi.rhod_th[idx] / envi.rhod[idx]) * si::kelvins, p, r);
-          tmp[idx] = phc::R_v<thrust_real_t>() * T * (envi.rhod_rv[idx] * si::kilograms / si::cubic_metres) / phc::p_vs<thrust_real_t>(T);
+            T = phc::T<thrust_real_t>((envi.rhod_th[ij] / envi.rhod[ij]) * si::kelvins, p, r);
+
+          // - assuption of dr/dt = 0 => consistent only under subsaturation!
+          // - initial values for vapour pressure field de facto assume aerosol at equilibrium
+          // => using min(p/ps, .99) // TODO 99 as an option!
+          tmp[ij] = thrust::min(
+            thrust_real_t(.99),
+            thrust_real_t(
+              phc::R_v<thrust_real_t>() * T * (envi.rhod_rv[ij] * si::kilograms / si::cubic_metres) 
+              / phc::p_vs<thrust_real_t>(T)
+            )
+          );
         } 
       };
 
@@ -336,11 +351,12 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       thrust::for_each(iter, iter + envi.n_cell, init_tmp(envi, tmp));
     }
 
-    thrust_real_t operator()(thrust_size_t idx) 
+    void operator()(thrust_size_t idx) 
     { 
-      return this->xi(pow(phc::rw3_eq<thrust_real_t>(
-        stat.rd3[idx] * si::cubic_metres, 
-        0 + stat.kpa[idx],    // it fails to compile without the zero!
+      // ij and already sorted here!!!
+      stat.xi[stat.id[idx]] = this->xi(pow(phc::rw3_eq<thrust_real_t>(
+        stat.rd3[stat.id[idx]] * si::cubic_metres, 
+        0 + stat.kpa[stat.id[idx]],    // it fails to compile without the zero!
         0 + tmp[stat.ij[idx]] // ditto
       ) / si::cubic_metres, thrust_real_t(1)/thrust_real_t(3))); 
     }
@@ -371,14 +387,20 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     };
 
     // private fields
-    private: const SD_stat &stat;
+    private: SD_stat &stat;
+    private: const SD_envi &envi;
+    thrust::device_vector<thrust_real_t> &tmp;
 
     // ctor
     public: ode_xi(
-      const SD_stat &stat,
+      SD_stat &stat,
       const SD_envi &envi,
       thrust::device_vector<thrust_real_t> &tmp
-    ) : stat(stat)
+    ) : stat(stat), envi(envi), tmp(tmp)
+    {}
+
+    // cannot be placed in the constructor as at that time the initial values were not loaded yet to psi
+    void init()
     {
       // initialising the wet radii (xi variable) to equilibrium values
       thrust::counting_iterator<thrust_size_t> iter(0);
@@ -621,6 +643,8 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   {
     // calculating super-droplet concentration (per grid cell)
     {
+      // zeroing the temporary var
+      thrust::fill(tmp_long.begin(), tmp_long.end(), 0); // TODO: is it needed?
       // doing the reduction
       thrust::pair<
         thrust::device_vector<int>::iterator, 
@@ -635,13 +659,15 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       mtx::arr<real_t> &sd_conc = aux[this->par.idx_sd_conc];
       sd_conc(sd_conc.ijk) = real_t(0); // as some grid cells could be void of particles
       thrust::counting_iterator<thrust_size_t> iter(0);
-      thrust::for_each(iter, iter + diag.M_ij.size(), copy_from_device(
-        grid.nx(), diag.M_ij, tmp_long, sd_conc
+      thrust::for_each(iter, iter + (n.first - diag.M_ij.begin()), copy_from_device(
+        grid.nx(), diag.M_ij, tmp_long, sd_conc 
       ));
     }
 
     // calculating the zero-th moment (i.e. total particle concentration per unit volume)
     {
+      // zeroing the temporary var
+      thrust::fill(tmp_long.begin(), tmp_long.end(), 0); // TODO: is it needed?
       // doing the reduction
       thrust::pair<
         thrust::device_vector<int>::iterator, 
@@ -659,7 +685,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       mtx::arr<real_t> &n_tot = aux[this->par.idx_n_tot];
       n_tot(n_tot.ijk) = real_t(0); // as some grid cells could be void of particles
       thrust::counting_iterator<thrust_size_t> iter(0);
-      thrust::for_each(iter, iter + diag.M_ij.size(), copy_from_device(
+      thrust::for_each(iter, iter + (n.first - diag.M_ij.begin()), copy_from_device( 
         grid.nx(), diag.M_ij, tmp_long, n_tot, 
         real_t(1) / grid.dx() / grid.dy() / grid.dz() * si::cubic_metres
       ));
@@ -667,7 +693,42 @@ class eqs_todo_sdm : public eqs_todo<real_t>
 
     // calculating number of particles with radius greater than a given threshold
     {
-      // !!! used ode->rw() to get true radii!
+      // nested functor
+      class n_ccn_iterator
+      {
+        private: const SD_stat &stat;
+        public: n_ccn_iterator(const SD_stat &stat) : stat(stat) {}
+        public: thrust_size_t operator()(const thrust_size_t id) const
+        {
+          return stat.xi[id] > 500e-9  // TEMP!!!! temporarily it works only for xi_id!!
+            ? stat.n[id]
+            : 0;
+        }
+      };
+      // zeroing the temporary var
+      thrust::fill(tmp_long.begin(), tmp_long.end(), 0); // TODO: is it needed
+      // doing the reduction
+      thrust::pair<
+        thrust::device_vector<int>::iterator, 
+        thrust::device_vector<thrust_size_t>::iterator
+      > n = thrust::reduce_by_key(
+        stat.ij.begin(), stat.ij.end(),
+        thrust::transform_iterator<
+          n_ccn_iterator, 
+          thrust::device_vector<thrust_size_t>::iterator,
+          thrust_size_t
+        >(stat.id.begin(), n_ccn_iterator(stat)),
+        diag.M_ij.begin(),
+        tmp_long.begin()
+      );
+      // writing to aux
+      mtx::arr<real_t> &n_ccn = aux[this->par.idx_n_ccn];
+      n_ccn(n_ccn.ijk) = real_t(0); // as some grid cells could be void of particles
+      thrust::counting_iterator<thrust_size_t> iter(0);
+      thrust::for_each(iter, iter + (n.first - diag.M_ij.begin()), copy_from_device( 
+        grid.nx(), diag.M_ij, tmp_long, n_ccn, 
+        real_t(1) / grid.dx() / grid.dy() / grid.dz() * si::cubic_metres
+      ));
     }
   }
 
@@ -777,6 +838,18 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     }));
     par.idx_n_tot = this->aux.size() - 1;
 
+    // auxliary variable for CCN concentration (temporary kludge)
+    this->aux.push_back(new struct eqs<real_t>::axv({
+      "n_ccn", "CCN cencentration", this->quan2str(real_t(1)/si::cubic_metres),
+      typename eqs<real_t>::constant(false),
+      vector<int>({0, 0, 0})
+    }));
+    par.idx_n_ccn = this->aux.size() - 1;
+
+    // initialising super-droplets
+    sd_init(min_rd, max_rd, mean_rd1, mean_rd2, sdev_rd1, sdev_rd2, n1_tot, n2_tot, sd_conc_mean, kappa);
+
+    // initialising ODE right-hand-sides
     switch (xy_algo)
     {
       case euler: F_xy.reset(new ode_xy<algo_euler>(stat, envi)); break;
@@ -788,24 +861,21 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       case euler: switch (xi_dfntn)
       {
         case id : F_xi.reset(new ode_xi<algo_euler, xi_id<>>(stat, envi, tmp_real)); break;
-        case ln : F_xi.reset(new ode_xi<algo_euler, xi_ln<>>(stat, envi, tmp_real)); break;
-        case p2 : F_xi.reset(new ode_xi<algo_euler, xi_p2<>>(stat, envi, tmp_real)); break;
-        case p3 : F_xi.reset(new ode_xi<algo_euler, xi_p3<>>(stat, envi, tmp_real)); break;
+        //case ln : F_xi.reset(new ode_xi<algo_euler, xi_ln<>>(stat, envi, tmp_real)); break;
+        //case p2 : F_xi.reset(new ode_xi<algo_euler, xi_p2<>>(stat, envi, tmp_real)); break;
+        //case p3 : F_xi.reset(new ode_xi<algo_euler, xi_p3<>>(stat, envi, tmp_real)); break;
         default: assert(false);
       }
       case rk4  : switch (xi_dfntn) 
       {
         case id : F_xi.reset(new ode_xi<algo_rk4,   xi_id<>>(stat, envi, tmp_real)); break;
-        case ln : F_xi.reset(new ode_xi<algo_rk4,   xi_ln<>>(stat, envi, tmp_real)); break;
-        case p2 : F_xi.reset(new ode_xi<algo_rk4,   xi_p2<>>(stat, envi, tmp_real)); break;
-        case p3 : F_xi.reset(new ode_xi<algo_rk4,   xi_p3<>>(stat, envi, tmp_real)); break;
+        //case ln : F_xi.reset(new ode_xi<algo_rk4,   xi_ln<>>(stat, envi, tmp_real)); break;
+        //case p2 : F_xi.reset(new ode_xi<algo_rk4,   xi_p2<>>(stat, envi, tmp_real)); break;
+        //case p3 : F_xi.reset(new ode_xi<algo_rk4,   xi_p3<>>(stat, envi, tmp_real)); break;
         default: assert(false);
       }
       default: assert(false);
     } 
-
-    // initialising super-droplets
-    sd_init(min_rd, max_rd, mean_rd1, mean_rd2, sdev_rd1, sdev_rd2, n1_tot, n2_tot, sd_conc_mean, kappa);
   }
 
   public: void adjustments(
@@ -828,6 +898,9 @@ class eqs_todo_sdm : public eqs_todo<real_t>
 
 // TODO: which order would be best?
     sd_sync(rhod, rhod_th, rhod_rv);
+// !!!!!
+F_xi->init(); // should be done only once!
+// !!!!!
     sd_advection(dt, C[0], C[1]); // TODO: sedimentation
     sd_condevap(dt);
 //    sd_coalescence(dt);

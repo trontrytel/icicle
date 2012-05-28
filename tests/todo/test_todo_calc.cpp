@@ -55,7 +55,8 @@ const quantity<phc::mixing_ratio, real_t>
 const quantity<si::pressure, real_t> 
   p_0 = 101500 * si::pascals; // 1015 hPa
 const quantity<si::dimensionless, real_t>
-  kappa = .61; // ammonium sulphate
+  //kappa = 0.61; // ammonium sulphate
+  kappa = 1.28; // sodium chloride
 
 // other parameters deduced from the Fortran code published at:
 // http://www.rap.ucar.edu/~gthompsn/workshop2012/case1/kinematic_wrain.vocals.v3.for
@@ -65,8 +66,8 @@ const int
   toa = 0,
   iord = 2;  
 const quantity<si::time, real_t> 
-  t_max = 10 * si::seconds, // 4 * 3600
-  dt_out = real_t(10) * si::seconds; // 300
+  t_max = 1000 * si::seconds, // 4 * 3600
+  dt_out = real_t(100) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = real_t(.6) * si::metres / si::second; // .6 TODO: check it!
 const quantity<si::mass_density, real_t>
@@ -75,7 +76,7 @@ const quantity<divide_typeof_helper<si::momentum, si::area>::type, real_t>
   ampl = rho_0 * w_max * (real_t(nx) * dx) / real_t(4*atan(1));
 
 // options for microphysics
-std::string micro = "sdm"; // sdm | bulk
+std::string micro = "bulk"; // sdm | bulk
 bool 
   blk_cond = true,
   blk_cevp = true,
@@ -84,17 +85,18 @@ bool
   blk_sedi = true,
   blk_revp = true;
 std::string
+  sdm_xi = "id", 
   sdm_ode_algo_xy = "euler",
   sdm_ode_algo_xi = "rk4";
 real_t 
-  sd_conc_mean = 8.,
-  mean_rd1 = .04*1e-6,
-  mean_rd2 = .15*1e-6,
+  sd_conc_mean = 64,
+  mean_rd1 = .04e-6,
+  mean_rd2 = .15e-6,
   sdev_rd1 = 1.4,
   sdev_rd2 = 1.6,
-  n1_tot = 60*1e6,
-  n2_tot = 40*1e6,
-  min_rd = 0.001*1e-6,
+  n1_tot = 60e6,
+  n2_tot = 40e6,
+  min_rd = 1e-9,
   max_rd = 1e-6;
 
 // pressure profile derived by integrating the hydrostatic eq.
@@ -237,6 +239,7 @@ int main()
       << " --eqs.todo_bulk.revp " << blk_revp
     ;
     else if (micro == "sdm") cmd << " --eqs todo_sdm"
+      << " --eqs.todo_sdm.xi " << sdm_xi
       << " --eqs.todo_sdm.ode_algo_xy " << sdm_ode_algo_xy
       << " --eqs.todo_sdm.ode_algo_xi " << sdm_ode_algo_xi
       << " --eqs.todo_sdm.sd_conc_mean " << sd_conc_mean

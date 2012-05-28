@@ -38,7 +38,7 @@ class slv_parallel : public slv<real_t>
     if (nxs == 1 && nsd != 1)
       error_macro("subdomains of 1-element length not supported")
 
-    // serial solver allocation
+    // serial solver allocation (includes loading of initial condition)
     for (int sd=0; sd < nsd; ++sd) 
       slvs.push_back(new slv_serial<real_t>(setup, output,
         i_min + sd * nxs, i_min + (sd + 1) * nxs - 1,

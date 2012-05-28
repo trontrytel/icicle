@@ -53,7 +53,7 @@
   - Boost Sandbox libs: http://boost.org/community/sandbox.html
     - Boost.odeint (headers only) 
 
-  - Thrust .......................... http://thrust.github.com/
+  - Thrust (ver >= 1.6) ............. http://thrust.github.com/
 
 * MPI requirements:
 
