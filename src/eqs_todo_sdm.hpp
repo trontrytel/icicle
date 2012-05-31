@@ -9,8 +9,6 @@
 #ifndef EQS_TODO_SDM_HPP
 #  define EQS_TODO_SDM_HPP
 
-// TODO: check if Thrust available
-// TODO: something like: #  if !defined(USE_BOOST_ODEINT) error_macro("eqs_todo_sdm requires icicle to be compiled with Boost.odeint");
 // TODO: substepping with timesteps as an option
 // TODO: units in SD_stat, SD_diag, SD_envi... should be possible as odeint supports Boost.units!
 // TODO: sabe base class for all functors... perhaps containing stat and envi?
@@ -20,18 +18,17 @@
 #  include "phc_lognormal.hpp"
 #  include "phc_kappa_koehler.hpp"
 
-#  if defined(USE_BOOST_ODEINT)
+#  if defined(USE_THRUST) && defined(USE_BOOST_ODEINT)
+#    include <thrust/random.h>
+#    include <thrust/sequence.h>
+#    include <thrust/sort.h>
+#    include <thrust/iterator/constant_iterator.h>
 #    include <boost/numeric/odeint.hpp>
 #    include <boost/numeric/odeint/external/thrust/thrust_algebra.hpp>
 #    include <boost/numeric/odeint/external/thrust/thrust_operations.hpp>
 #    include <boost/numeric/odeint/external/thrust/thrust_resize.hpp>
 namespace odeint = boost::numeric::odeint;
 #  endif
-
-#  include <thrust/random.h>
-#  include <thrust/sequence.h>
-#  include <thrust/sort.h>
-#  include <thrust/iterator/constant_iterator.h>
 
 // @brief 
 //   implementation of the Super-Droplet Method (Shima et al. 2009, QJRMS, 135)
@@ -40,6 +37,109 @@ namespace odeint = boost::numeric::odeint;
 template <typename real_t>
 class eqs_todo_sdm : public eqs_todo<real_t> 
 {
+  // a container for storing options (i.e. which processes ar on/off)
+  public: enum processes {cond, sedi, coal};
+  public: enum ode_algos {euler, rk4};
+  public: enum xi_dfntns {id, ln, p2, p3};
+
+  // ctor of eqs_todo_sdm
+  public: eqs_todo_sdm(
+    const grd<real_t> &grid, 
+    const vel<real_t> &velocity,
+    map<enum processes, bool> opts,
+    enum xi_dfntns xi_dfntn,
+    enum ode_algos xy_algo,
+    enum ode_algos xi_algo,
+    real_t sd_conc_mean,
+    real_t min_rd,
+    real_t max_rd, 
+    real_t mean_rd1, // dry aerosol initial distribution parameters
+    real_t mean_rd2,
+    real_t sdev_rd1,
+    real_t sdev_rd2,
+    real_t n1_tot,
+    real_t n2_tot,
+    real_t kappa
+  ) 
+#  if !defined(USE_BOOST_ODEINT) || !defined(USE_THRUST)
+  : eqs_todo<real_t>(grid, &par)
+  {
+    error_macro("eqs_todo_sdm requires icicle to be compiled with wupport for Boost.odeint and Thrust");
+  }
+#  else
+  : eqs_todo<real_t>(grid, &par), 
+    opts(opts), 
+    grid(grid), 
+    constant_velocity(velocity.is_constant()),
+    stat(grid.nx(), grid.ny(), sd_conc_mean),
+    envi(grid.nx(), grid.ny()),
+    diag(grid.nx(), grid.ny()) 
+  {
+    // TODO: assert that we use no paralellisation or allow some parallelism!
+    // TODO: random seed as an option
+    // TODO: option: number of cores to use (via Thrust)
+
+    // TODO: union?
+    tmp_long.resize(grid.nx() * grid.ny());
+    tmp_real.resize(grid.nx() * grid.ny());
+
+    // auxliary variable for super-droplet conc
+    this->aux.push_back(new struct eqs<real_t>::axv({
+      "sd_conc", "super-droplet cencentration", this->quan2str(real_t(1)/grid.dx()/grid.dy()/grid.dz()),
+      typename eqs<real_t>::invariable(false),
+      vector<int>({0, 0, 0})
+    }));
+    par.idx_sd_conc = this->aux.size() - 1;
+
+    // auxliary variable for total particle concentration
+    this->aux.push_back(new struct eqs<real_t>::axv({
+      "n_tot", "total particle cencentration", this->quan2str(real_t(1)/si::cubic_metres),
+      typename eqs<real_t>::invariable(false),
+      vector<int>({0, 0, 0})
+    }));
+    par.idx_n_tot = this->aux.size() - 1;
+
+    // auxliary variable for CCN concentration (temporary kludge)
+    this->aux.push_back(new struct eqs<real_t>::axv({
+      "n_ccn", "CCN cencentration", this->quan2str(real_t(1)/si::cubic_metres),
+      typename eqs<real_t>::invariable(false),
+      vector<int>({0, 0, 0})
+    }));
+    par.idx_n_ccn = this->aux.size() - 1;
+
+    // initialising super-droplets
+    sd_init(min_rd, max_rd, mean_rd1, mean_rd2, sdev_rd1, sdev_rd2, n1_tot, n2_tot, sd_conc_mean, kappa);
+
+    // initialising ODE right-hand-sides
+    switch (xy_algo)
+    {
+      case euler: F_xy.reset(new ode_xy<algo_euler>(stat, envi)); break;
+      case rk4  : F_xy.reset(new ode_xy<algo_rk4  >(stat, envi)); break;
+      default: assert(false);
+    }
+    switch (xy_algo)
+    {
+      case euler: switch (xi_dfntn)
+      {
+        case id : F_xi.reset(new ode_xi<algo_euler, xi_id<>>(stat, envi, tmp_real)); break;
+        //case ln : F_xi.reset(new ode_xi<algo_euler, xi_ln<>>(stat, envi, tmp_real)); break;
+        //case p2 : F_xi.reset(new ode_xi<algo_euler, xi_p2<>>(stat, envi, tmp_real)); break;
+        //case p3 : F_xi.reset(new ode_xi<algo_euler, xi_p3<>>(stat, envi, tmp_real)); break;
+        default: assert(false);
+      }
+      case rk4  : switch (xi_dfntn) 
+      {
+        case id : F_xi.reset(new ode_xi<algo_rk4,   xi_id<>>(stat, envi, tmp_real)); break;
+        //case ln : F_xi.reset(new ode_xi<algo_rk4,   xi_ln<>>(stat, envi, tmp_real)); break;
+        //case p2 : F_xi.reset(new ode_xi<algo_rk4,   xi_p2<>>(stat, envi, tmp_real)); break;
+        //case p3 : F_xi.reset(new ode_xi<algo_rk4,   xi_p3<>>(stat, envi, tmp_real)); break;
+        default: assert(false);
+      }
+      default: assert(false);
+    } 
+  }
+#  endif
+
   // nested class (well... struct)
   protected: struct params : eqs_todo<real_t>::params
   {
@@ -49,10 +149,9 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     int idx_n_ccn;
   };
 
-  // a container for storing options (i.e. which processes ar on/off)
-  public: enum processes {cond, sedi, coal};
-  public: enum ode_algos {euler, rk4};
-  public: enum xi_dfntns {id, ln, p2, p3};
+  private: params par;
+
+#  if defined(USE_BOOST_ODEINT) && defined(USE_THRUST)
 
   typedef double thrust_real_t; // TODO: option / check if the device supports it
 
@@ -769,7 +868,6 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   }
 
   // private fields of eqs_todo_sdm
-  private: params par;
   private: map<enum processes, bool> opts;
   private: bool constant_velocity;
   private: const grd<real_t> &grid;
@@ -787,97 +885,6 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   thrust::device_vector<thrust_size_t> tmp_long; // e.g. for particle concentrations
   thrust::device_vector<thrust_real_t> tmp_real; // e.g. for mean radii
 
-  // ctor of eqs_todo_sdm
-  public: eqs_todo_sdm(
-    const grd<real_t> &grid, 
-    const vel<real_t> &velocity,
-    map<enum processes, bool> opts,
-    enum xi_dfntns xi_dfntn,
-    enum ode_algos xy_algo,
-    enum ode_algos xi_algo,
-    real_t sd_conc_mean,
-    real_t min_rd,
-    real_t max_rd, 
-    real_t mean_rd1, // dry aerosol initial distribution parameters
-    real_t mean_rd2,
-    real_t sdev_rd1,
-    real_t sdev_rd2,
-    real_t n1_tot,
-    real_t n2_tot,
-    real_t kappa
-  ) :
-    eqs_todo<real_t>(grid, &par), 
-    opts(opts), 
-    grid(grid), 
-    constant_velocity(velocity.is_constant()),
-    stat(grid.nx(), grid.ny(), sd_conc_mean),
-    envi(grid.nx(), grid.ny()),
-    diag(grid.nx(), grid.ny()) 
-  {
-    // TODO: assert that we use no paralellisation or allow some parallelism!
-    // TODO: random seed as an option
-    // TODO: option: number of cores to use (via Thrust)
-
-    // TODO: union?
-    tmp_long.resize(grid.nx() * grid.ny());
-    tmp_real.resize(grid.nx() * grid.ny());
-
-    // auxliary variable for super-droplet conc
-    this->aux.push_back(new struct eqs<real_t>::axv({
-      "sd_conc", "super-droplet cencentration", this->quan2str(real_t(1)/grid.dx()/grid.dy()/grid.dz()),
-      typename eqs<real_t>::constant(false),
-      vector<int>({0, 0, 0})
-    }));
-    par.idx_sd_conc = this->aux.size() - 1;
-
-    // auxliary variable for total particle concentration
-    this->aux.push_back(new struct eqs<real_t>::axv({
-      "n_tot", "total particle cencentration", this->quan2str(real_t(1)/si::cubic_metres),
-      typename eqs<real_t>::constant(false),
-      vector<int>({0, 0, 0})
-    }));
-    par.idx_n_tot = this->aux.size() - 1;
-
-    // auxliary variable for CCN concentration (temporary kludge)
-    this->aux.push_back(new struct eqs<real_t>::axv({
-      "n_ccn", "CCN cencentration", this->quan2str(real_t(1)/si::cubic_metres),
-      typename eqs<real_t>::constant(false),
-      vector<int>({0, 0, 0})
-    }));
-    par.idx_n_ccn = this->aux.size() - 1;
-
-    // initialising super-droplets
-    sd_init(min_rd, max_rd, mean_rd1, mean_rd2, sdev_rd1, sdev_rd2, n1_tot, n2_tot, sd_conc_mean, kappa);
-
-    // initialising ODE right-hand-sides
-    switch (xy_algo)
-    {
-      case euler: F_xy.reset(new ode_xy<algo_euler>(stat, envi)); break;
-      case rk4  : F_xy.reset(new ode_xy<algo_rk4  >(stat, envi)); break;
-      default: assert(false);
-    }
-    switch (xy_algo)
-    {
-      case euler: switch (xi_dfntn)
-      {
-        case id : F_xi.reset(new ode_xi<algo_euler, xi_id<>>(stat, envi, tmp_real)); break;
-        //case ln : F_xi.reset(new ode_xi<algo_euler, xi_ln<>>(stat, envi, tmp_real)); break;
-        //case p2 : F_xi.reset(new ode_xi<algo_euler, xi_p2<>>(stat, envi, tmp_real)); break;
-        //case p3 : F_xi.reset(new ode_xi<algo_euler, xi_p3<>>(stat, envi, tmp_real)); break;
-        default: assert(false);
-      }
-      case rk4  : switch (xi_dfntn) 
-      {
-        case id : F_xi.reset(new ode_xi<algo_rk4,   xi_id<>>(stat, envi, tmp_real)); break;
-        //case ln : F_xi.reset(new ode_xi<algo_rk4,   xi_ln<>>(stat, envi, tmp_real)); break;
-        //case p2 : F_xi.reset(new ode_xi<algo_rk4,   xi_p2<>>(stat, envi, tmp_real)); break;
-        //case p3 : F_xi.reset(new ode_xi<algo_rk4,   xi_p3<>>(stat, envi, tmp_real)); break;
-        default: assert(false);
-      }
-      default: assert(false);
-    } 
-  }
-
   public: void adjustments(
     int n, // TODO: mo¿e jednak bez n...
     vector<ptr_vector<mtx::arr<real_t>>> &psi,
@@ -894,7 +901,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       //&rhod_rl = psi[this->par.idx_rhod_rl][n],
       //&rhod_rr = psi[this->par.idx_rhod_rr][n],
 
-    assert(sd_conc.lbound(mtx::k) == sd_conc.ubound(mtx::k)); // 2D
+    //assert(sd_conc.lbound(mtx::k) == sd_conc.ubound(mtx::k)); // 2D
 
 // TODO: which order would be best?
     sd_sync(rhod, rhod_th, rhod_rv);
@@ -907,6 +914,6 @@ F_xi->init(); // should be done only once!
 //    sd_breakup(dt);
     sd_diag(aux); 
   }
-
+#  endif
 };
 #endif

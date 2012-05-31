@@ -11,8 +11,7 @@ cmake_minimum_required(VERSION 2.6) # for simplified if-constructs
 
 # TODO: -fprofile-use, -fprofile-generate
 set(TMP "-std=c++0x ") # C++11 (name understandable for pre-2011 compilers)
-set(TMP "${TMP} -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_OMP") # TODO: CUDA as an option
-#set(TMP "${TMP} -Wfatal-errors") # stop on first error
+set(TMP "${TMP} -Wfatal-errors") # stop on first error
 #set(CMAKE_CXX_FLAGS_RELEASE "${TMP} -Ofast -DNDEBUG" CACHE STRING "Release options." FORCE)
 set(CMAKE_CXX_FLAGS_RELEASE "${TMP} -O1 -ffast-math -DNDEBUG" CACHE STRING "Release options." FORCE)
 set(CMAKE_CXX_FLAGS_DEBUG "${TMP} -DBZ_DEBUG" CACHE STRING "Debug options." FORCE)
@@ -36,313 +35,222 @@ foreach(d .;doc;tests;src)
 endforeach()
 set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${TMP}")
 
-# we use CheckCXXSource* macros only not to require a C compiler
+# CMake includes
+include(FeatureSummary)
 include(CheckCXXSourceCompiles) 
 include(CheckCXXSourceRuns)
+include(CMakePushCheckState)
 
 # describing available options
-include(FeatureSummary)
-macro(icicle_option var desc onoff)
+function(icicle_option var desc onoff) # functions use local scope (macros use global)
   option(${var} ${desc} ${onoff})
   add_feature_info(${var} ${var} ${desc})
-endmacro()
+endfunction()
 
-#### <-DFLOAT=NO, -DDOUBLE=NO, -DLDOUBLE=NO> ###########################
-#TODO: check if __float128 is actually supported by the compiler...
+# checking if a given piece of C++ code works
+function(icicle_check stat what bhvr msg code) # functions use local scope (macros use global)
+  # we use CheckCXXSource* macros not to require a C compiler
+  check_cxx_source_compiles(${code} "icicle_${what}") # ${what} is printed
+  if(NOT icicle_${what}) 
+    if(NOT "${bhvr}" STREQUAL "HIDDEN")
+      set(bar "**************************************************************************")
+      set(msg "${bar} Test ${what} failed. ${msg}")
+      set(msg "${msg} Consult CMakeFiles/CMakeError.log for details.")
+      set(msg "${msg} After fixing the problem, delete CMakeCache.txt and rerun cmake)")
+      set(msg "${msg} ${bar}")
+      message(${bhvr} ${msg})
+    endif()
+    set(${stat} FALSE PARENT_SCOPE)
+  else()
+    set(${stat} TRUE PARENT_SCOPE)
+  endif() 
+endfunction()
+
+# checking for a Boost library
+function(icicle_check_boost_lib stat libname bhvr msg code)
+  cmake_push_check_state()
+  foreach(sfx "-mt" "") # tagged installation layout issue
+    set(libs "-l${libname}${sfx}")
+    if(ARGC EQUAL 6) 
+      set(libs "${libs} -l${ARGV5}${sfx}")
+    endif()
+    set(CMAKE_REQUIRED_LIBRARIES "${libs}")
+    if("${sfx}" STREQUAL "-mt")
+      icicle_check(status "${libname}" "HIDDEN" "${msg}" "${code}")
+      if(status)
+        break()
+      endif()
+    else()
+      message(STATUS "Retrying without the -mt suffix...")
+      unset("icicle_{$libname}" CACHE)
+      icicle_check(status "${libname}" ${bhvr} "${msg}" "${code}")
+    endif()
+  endforeach()
+  if(status)
+    target_link_libraries(icicle ${CMAKE_REQUIRED_LIBRARIES})
+  endif()
+  cmake_pop_check_state()
+  set(${stat} ${status} PARENT_SCOPE)
+endfunction()
+
+# FLOAT, DOUBLE, LDOUBLE and FLOAT128
 icicle_option(FLOAT "'float' type support (i.e. single precision, 32 bits)" ON)
 icicle_option(DOUBLE "'double' type support (i.e. double precision, 64 bits)" ON)
 icicle_option(LDOUBLE "'long double' type support (compiler-dependent, 80 bits for GCC on x86_64)" ON)
-#icicle_option(FLOAT128 "'__float128' type support (GNU extension, 128 bits)" ON)
-if(NOT "${FLOAT}" STREQUAL "NO")                                       
+#icicle_option(FLOAT128 "'__float128' type support (GNU extension, 128 bits)" ON) #TODO: check if __float128 is actually supported by the compiler...
+set(tmp "src/icicle.cpp")
+if(NOT FLOAT)
+  message(STATUS "Building without float support (-DFLOAT=NO specified)")
   set(USE_FLOAT TRUE)
-  if(NOT "${DOUBLE}" STREQUAL "NO")
-    set(USE_DOUBLE TRUE)
-    if(NOT "${LDOUBLE}" STREQUAL "NO")
-      set(USE_LDOUBLE TRUE)
+  set(tmp "${tmp};src/mdl_flt.cpp")
+endif()
+if(NOT DOUBLE)
+  message(STATUS "Building without double support (-DDOUBLE=NO specified)")
+  set(USE_DOUBLE TRUE)
+  set(tmp "${tmp};src/mdl_dbl.cpp")
+endif()    
+if(NOT LDOUBLE)
+  message(STATUS "Building without long double support (-DLDOUBLE=NO specified)")
+  set(USE_LDOUBLE TRUE)
+  set(tmp "${tmp};src/mdl_ldb.cpp")
+endif()
 #      if(NOT "${FLOAT128}" STREQUAL "NO")
 #        set(USE_FLOAT128 TRUE)
-#        add_executable(icicle src/icicle.cpp src/mdl_flt.cpp src/mdl_dbl.cpp src/mdl_ldb.cpp src/mdl_128.cpp)
-#      else()
-        add_executable(icicle src/icicle.cpp src/mdl_flt.cpp src/mdl_dbl.cpp src/mdl_ldb.cpp)
+#        set(tmp "${tmp} src/mdl_128.cpp")
 #      endif()
-    else()
-      add_executable(icicle src/icicle.cpp src/mdl_flt.cpp src/mdl_dbl.cpp)
-    endif()
-  else()
-    add_executable(icicle src/icicle.cpp src/mdl_flt.cpp)
-  endif()
-elseif(NOT "${DOUBLE}" STREQUAL "NO")
-  set(USE_DOUBLE TRUE)
-  if(NOT "${LDOUBLE}" STREQUAL "NO")
-    set(USE_LDOUBLE TRUE)
-#    if(NOT "${FLOAT128}" STREQUAL "NO")
-#      add_executable(icicle src/icicle.cpp src/mdl_dbl.cpp src/mdl_ldb.cpp src/mdl_128.cpp)
-#    else()
-      add_executable(icicle src/icicle.cpp src/mdl_dbl.cpp src/mdl_ldb.cpp)
-#    endif()
-  else()
-    add_executable(icicle src/icicle.cpp src/mdl_dbl.cpp)
-  endif()
-elseif(NOT "${LDOUBLE}" STREQUAL "NO")
-  set(USE_LDOUBLE TRUE)
-#  if(NOT "${FLOAT128}" STREQUAL "NO")
-#    add_executable(icicle src/mdl_ldb.cpp src/mdl_128.cpp)
-#  else()
-    add_executable(icicle src/mdl_ldb.cpp)
-#  endif()
-#elseif(NOT "${FLOAT128}" STREQUAL "NO")
-#  add_executable(icicle src/mdl_128.cpp)
-else()
+if("${tmp}" STREQUAL "src/icicle.cpp")
   message(FATAL_ERROR "-DFLOAD=NO -DDOUBLE=NO -DLDBOULBE=NO and -DFLOAT128=NO may not be specified all at once!")
 endif() 
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug") 
-  target_link_libraries(icicle "-lblitz") # TODO: could be done with the "debug" keyword to target_link_libraries()
-  # TODO: check if debugging actually works, if not suggest recompiling blitz with --enable-shared
-endif()
-########################################################################
+add_executable(icicle ${tmp})
 
-#### <Boost.units> (mandatory) #########################################
-check_cxx_source_compiles(
-  "#include <boost/units/systems/si.hpp>\n int main() {}" 
-  Find_Boost_Units
-)
-if(NOT Find_Boost_Units) 
-  message(FATAL_ERROR "Boost.Units not found! 
-    (cf. CMakeFiles/CMakeError.log, fix, rm CMakeCache.txt and rerun)"
-  )
-endif() 
-#### </Boost.units> ####################################################
-
-#### <Boost.lexical_cast> (mandatory) ##################################
-check_cxx_source_compiles(
-  "#include <boost/lexical_cast.hpp>\n int main() {}" 
-  Find_Boost_Lexical_Cast
-)
-if(NOT Find_Boost_Lexical_Cast) 
-  message(FATAL_ERROR "Boost.lexical_cast not found! 
-    (cf. CMakeFiles/CMakeError.log, fix, rm CMakeCache.txt and rerun)"
-  )
-endif() 
-#### </Boost.lexical_cast> #############################################
-
-#### <Blitz> (mandatory) ###############################################
-check_cxx_source_compiles( 
+# Blitz++ (mandatory)
+target_link_libraries(icicle debug "-lblitz") # TODO: check if debugging actually works, if not suggest recompiling blitz with --enable-shared
+icicle_check(status "blitz" FATAL_ERROR ""
   "#include <blitz/array.h>\n int main() {}"
-  Find_Blitz
 )
-if(NOT Find_Blitz) 
-  message(FATAL_ERROR "Blitz++ not found!
-    (cf. CMakeFiles/CMakeError.log, fix, rm CMakeCache.txt and rerun)"
-  )
-endif()                                                                
-check_cxx_source_runs("
-  #include <blitz/array.h>
-  int main() { 
-    assert(std::string(BZ__compiler_name) == std::string(\"${CMAKE_CXX_COMPILER}\"));
-  }
-  " Blitz_Configured_With_The_Same_Compiler
-)
-if (NOT Blitz_Configured_With_The_Same_Compiler)
-  message(WARNING "Blitz++ seem not to have been configured with the same compiler!
-    Consider reconfiguring Blitz++ with CXX=${CMAKE_CXX_COMPILER} 
-    (cf. CMakeFiles/CMakeError.log, fix, rm CMakeCache.txt and rerun)"
-  )
-endif() 
-#### </Blitz> ##########################################################
+icicle_check(status "blitz_compiler" WARNING 
+  "Blitz++ seem not to have been configured with the same compiler. Consider reconfiguring Blitz++ with CXX=${CMAKE_CXX_COMPILER}"
+  "#include <blitz/array.h>\n int main() {assert(std::string(BZ__compiler_name)==std::string(\"${CMAKE_CXX_COMPILER}\"))\;}"
+) 
 
-#### <Boost.program_options> (mandatory) ###############################
-# TODO: could it just be set(CMAKE_REQUIRED_LIBRARIES "-laqq-mt -laqq") ???
-foreach(sfx "-mt" "") # tagged installation layout issue               
-  set(CMAKE_REQUIRED_LIBRARIES "-lboost_program_options${sfx}")  # TODO? should we use CMAKE_PUSH_CHECK_STATE() and CMAKE_POP_CHECK_STATE() ??
-  check_cxx_source_compiles(
-    "#include <boost/program_options.hpp>\n int main() { 
-      boost::program_options::options_description d; 
-    }" 
-    Find_Boost_Program_Options
+# Boost.lexical_cast (mandatory)
+icicle_check(status "boost_lexical_cast" FATAL_ERROR ""
+  "#include <boost/lexical_cast.hpp>\n int main() {}"
+)
+
+# Boost.Units (mandatory)
+icicle_check(status "boost_units" FATAL_ERROR ""
+  "#include <boost/units/systems/si.hpp>\n int main() {}"
+)
+
+# Boost.program_options (mandatory)
+icicle_check_boost_lib(
+  status "boost_program_options" FATAL_ERROR ""
+  "#include <boost/program_options.hpp>\n int main() {boost::program_options::options_description d\;}"
+)
+
+# Boost.Thread (optional)
+if (DEFINED THREADS AND NOT THREADS)
+  message(STATUS "Building without Boost.Thread support (-DTHREADS=NO specified)")
+else()
+  icicle_check_boost_lib(
+    status "boost_thread" WARNING "Threads parallelisation will not be available."
+    "#include <boost/thread.hpp>\n int main() { boost::thread th\; }"
   )
-  if (Find_Boost_Program_Options) 
-    break()
-  else()
-    message(STATUS "Retrying without the -mt suffix...")
-    unset(Find_Boost_Program_Options CACHE)
+  set(USE_BOOST_THREAD ${status})
+  if(status)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
   endif()
-endforeach()
-if(NOT Find_Boost_Program_Options) 
-  message(FATAL_ERROR "Boost.Program_Options not found! 
-    (cf. CMakeFiles/CMakeError.log, fix, rm CMakeCache.txt and rerun)"
-  )
 endif()
-target_link_libraries(icicle ${CMAKE_REQUIRED_LIBRARIES})
-#### </Boost.program_options> ##########################################
+icicle_option(THREADS "threads paralellisation using Boost.Thread" "${status}")
 
-#### <OpenMP> (optional) ###############################################
-# Not using FIND_PACKAGE(OpenMP) as it relies on C compiler rather than C++ one (TODO: support other options for other compilers?)
-if ("${OPENMP}" STREQUAL "NO")   
-  message(STATUS "Building without OpenMP (-DOPENMP=NO specified)")
+# Boost.Timer (optional) 
+if (DEFINED TIMER AND NOT TIMER)
+  message(STATUS "Building without Boost.Timer support (-DTIMER=NO specified)")
+else()
+  icicle_check_boost_lib(
+    status "boost_timer" WARNING "Simulation timing will not be available."
+    "#include <boost/timer/timer.hpp>\n int main() { boost::timer::auto_cpu_timer t\; }" 
+    "boost_system"
+  )
+  set(USE_BOOST_TIMER ${status}) # TODO: the same name as for -DTIMER=NO ?
+endif()                                                                
+icicle_option(TIMER "Simulation timing using Boost.Timer" "${status}")
+
+# Boost.MPI (optional)
+if (DEFINED MPI AND NOT MPI)
+  message(STATUS "Building without Boost.MPI support (-DMPI=NO specified)")
+else()
+  icicle_check_boost_lib(
+    status "boost_mpi" WARNING 
+    "MPI parallelisation will not be available. Have you used a proper MPI compiler wrapper? (e.g. -DCMAKE_CXX_COMPILER=mpic++)"
+    "#include <boost/mpi.hpp>\n int main() {boost::mpi::communicator().send(1,0,0.)\;}"
+  )
+  set(USE_BOOST_MPI ${status})
+endif()
+icicle_option(MPI "MPI paralellisation using Boost.MPI" "${status}")
+
+# Boost.odeint (optional)
+if (DEFINED ODEINT AND NOT ODEINT) 
+  message(STATUS "Building without Boost.odeint support (-DODEINT=NO specified)")
+else()
+  icicle_check(status "boost_odeint" WARNING 
+    "Features relying on ODE integration will not be available."
+    "#include <boost/numeric/odeint.hpp>\n int main() {}" 
+  )
+  set(USE_BOOST_ODEINT ${status})
+endif()
+icicle_option(ODEINT "ODE integration with Boost.odeint" "${status}")
+
+# OpenMP (optional, not using FIND_PACKAGE(OpenMP) as it relies on a C compiler)
+if (DEFINED OPENMP AND NOT OPENMP)   
+  message(STATUS "Building without OpenMP support (-DOPENMP=NO specified)")
 else()
   set(TMP ${CMAKE_CXX_FLAGS}) 
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
-  check_cxx_source_compiles(
-    "#include <omp.h>\n int main() { omp_set_num_threads(2); }" 
-    Find_OpenMP
+  icicle_check(status "openmp" WARNING 
+    "OpenMP parallelisation will not be available." 
+    "#include <omp.h>\n int main() { omp_set_num_threads(2)\;}"
   )
-  if(NOT Find_OpenMP)
-    message(WARNING "OpenMP not found (cf. CMakeFiles/CMakeError.log) 
-      OpenMP parallelisation will not be available.")
+  if(NOT status) 
     set(CMAKE_CXX_FLAGS ${TMP}) 
   endif()   
 endif()
-icicle_option(OPENMP "OpenMP paralellisation" "${Find_OpenMP}")
-#### </OpenMP> #########################################################
+icicle_option(OPENMP "OpenMP paralellisation" "${status}")
 
-#### <NetCDF> (optional) ###############################################
-if("${NETCDF}" STREQUAL "NO") 
-  message(STATUS "Building without netCDF (-DNETCDF=NO specified)")
+# NetCDF (optional)
+if(DEFINED NETCDF AND NOT NETCDF) 
+  message(STATUS "Building without netCDF support (-DNETCDF=NO specified)")
 else()
+  cmake_push_check_state()
   set(CMAKE_REQUIRED_LIBRARIES "-lnetcdf_c++4")
-  check_cxx_source_compiles(
-    "#include <netcdf>\n int main() { netCDF::NcFile *f; }" 
-    Find_NetCDF
+  icicle_check(status "netcdf_cxx4" WARNING 
+    "NetCDF input/output will not be available."
+    "#include <netcdf>\n int main() { netCDF::NcFile *f\; }" 
   )
-  if(NOT Find_NetCDF) 
-    message(WARNING "
-      NetCDF >=4.1.1 not found! (cf. CMakeFiles/CMakeError.log)
-      Without it the NetCDF output will not be available.
-      After installing it erase the CMakeCache.txt before re-running cmake
-    ")
-  else()
-    set(USE_NETCDF ${Find_NetCDF})
+  set(USE_NETCDF ${status})
+  if(status) 
     target_link_libraries(icicle ${CMAKE_REQUIRED_LIBRARIES})
   endif()
+  cmake_pop_check_state()
 endif() 
-icicle_option(NETCDF "netCDF output" "${Find_NetCDF}")
-#### </NetCDF> #########################################################
+icicle_option(NETCDF "netCDF input/output" "${status}")
 
-#### <Boost.Thread> (optional) #########################################
-if ("${THREADS}" STREQUAL "NO") 
-  message(STATUS "Building without Boost.Thread (-DTHREADS=NO specified)")
+# Thrust (optional)
+if(DEFINED THRUST AND NOT THRUST) 
+  message(STATUS "Building without Thrust support (-DTHRUST=NO specified)")
 else()
-  foreach(sfx "-mt" "") # tagged installation layout issue  
-    set(CMAKE_REQUIRED_LIBRARIES "-lboost_thread${sfx}")
-    check_cxx_source_compiles(
-      "#include <boost/thread.hpp>\n int main() { boost::thread th; }" 
-      Find_Boost_Thread
-    )
-    if (Find_Boost_Thread) 
-      break()
-    else()
-      message(STATUS "Retrying without the -mt suffix...")
-      unset(Find_Boost_Thread CACHE)
-    endif()
-  endforeach()
-  if(NOT Find_Boost_Thread) 
-    message(WARNING "
-      Boost.Thread not found! (cf. CMakeFiles/CMakeError.log) 
-      Threads parallelisation will not be available.
-      After installing it erase the CMakeCache.txt before re-running cmake
-    ")
-  else()
-    set(USE_BOOST_THREAD ${Find_Boost_Thread})
-    target_link_libraries(icicle ${CMAKE_REQUIRED_LIBRARIES})
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
-  endif()
-endif()                                                                
-icicle_option(THREADS "threads paralellisation using Boost.Thread" "${Find_Boost_Thread}")
-#### </Boost.Thread> ###################################################
+  icicle_check(status "thrust" WARNING "Features relying on Thrust will not be available." "
+    #define THRUST_DEVICE_SYSTEM THRUST_DEVICE_SYSTEM_OMP
+    #include <thrust/device_vector.h>
+    int main() { thrust::device_vector<int> v\; }
+  ")
+  set(USE_THRUST ${status})
+  set(THRUST_DEVICE_SYSTEM THRUST_DEVICE_SYSTEM_OMP) #TODO: use somehow the information on OpenMP availability!
+endif() 
+icicle_option(THRUST "Thrust (OpenMP/CUDA parallelisation)" "${status}")
 
-#### <Boost.MPI> (optional) ############################################
-if ("${MPI}" STREQUAL "NO")
-  message(STATUS "Building without Boost.MPI (-DMPI=NO specified)")
-else()
-  foreach(sfx "-mt" "") # tagged installation layout issue 
-    set(CMAKE_REQUIRED_LIBRARIES "-lboost_mpi${sfx}")
-    check_cxx_source_compiles(
-      "#include <boost/mpi.hpp>
-       int main() {boost::mpi::communicator().send(1,0,0.);}"
-      Find_Boost_MPI
-    )
-    if (Find_Boost_MPI) 
-      break()
-    else()
-      message(STATUS "Retrying without the -mt suffix...")
-      unset(Find_Boost_MPI CACHE)
-    endif()
-  endforeach()
-  if(NOT Find_Boost_MPI)
-    message(WARNING "
-      Boost.MPI not found! (cf. CMakeFiles/CMakeError.log)
-      MPI parallelisation will not be available.
-      Possible reasons:
-      - a wrapper like mpic++ needs to be used (e.g. export CXX=mpic++)
-      - Boost.MPI needs to be installed:
-        (after installation delete CMakeCache.txt before running cmake)
-    ")
-  else()
-    set(USE_BOOST_MPI ${Find_Boost_MPI})
-    target_link_libraries(icicle ${CMAKE_REQUIRED_LIBRARIES})
-  endif()
-endif()
-icicle_option(MPI "MPI paralellisation using Boost.MPI" "${Find_Boost_MPI}")
-#### </Boost.MPI> ######################################################
-
-#### <Boost.Timer> (optional) ##########################################
-if ("${TIMER}" STREQUAL "NO")
-  message(STATUS "Building without Boost.Timer (-DTIMER=NO specified)")
-else()
-  foreach(sfx "-mt" "") # tagged installation layout issue     
-    set(CMAKE_REQUIRED_LIBRARIES "-lboost_timer${sfx} -lboost_system${sfx}")
-    check_cxx_source_compiles(
-      "#include <boost/timer/timer.hpp>
-       int main() { boost::timer::auto_cpu_timer t; }" 
-      Find_Boost_Timer
-    )
-    if (Find_Boost_Timer) 
-      break()
-    else()
-      message(STATUS "Retrying without the -mt suffix...")
-      unset(Find_Boost_Timer CACHE)
-    endif()
-  endforeach()
-  if(NOT Find_Boost_Timer) 
-    message(WARNING "
-      Boost.Timer (or Boost.System) not found! (cf. CMakeFiles/CMakeError.log) 
-      Simulation timing will not be available.
-      (after installation delete CMakeCache.txt before running cmake)
-    ")
-  else()
-    set(USE_BOOST_TIMER ${Find_Boost_Timer})
-    target_link_libraries(icicle ${CMAKE_REQUIRED_LIBRARIES})
-  endif()
-endif()                                                                
-icicle_option(TIMER "Simulation timing using Boost.Timer" "${Find_Boost_Timer}")
-#### </Boost.Timer> ####################################################
-
-#### <Boost.odeint> ####################################################
-if ("${ODEINT}" STREQUAL "NO") 
-  message(STATUS "Building without Boost.odeint (-DODEINT=NO specified)")
-else()
-  check_cxx_source_compiles(
-    "#include <boost/numeric/odeint.hpp>\n int main() {}" 
-    Find_Boost_odeint
-  )
-  if(NOT Find_Boost_odeint) 
-    message(WARNING "
-      Boost.odeint not found! (cf. CMakeFiles/CMakeError.log) 
-      ODE integration will not be available.
-      (after installation delete CMakeCache.txt before running cmake)
-    ")
-  else()
-    set(USE_BOOST_ODEINT ${Find_Boost_odeint})
-  endif() 
-endif()
-icicle_option(ODEINT "ODE integration with Boost.odeint" "${Find_Boost_odeint}")
-#### </Boost.odeint> ###################################################
-
-#### icicle options ####################################################
-# TODO!
-# icicle_option(EQS_ISENTROPIC "..." "${???}")
-########################################################################
-
+# TODO: document
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug") 
   set(INFO_CXX_FLAGS "${CMAKE_CXX_FLAGS_DEBUG} ${CMAKE_CXX_FLAGS}")
 elseif("${CMAKE_BUILD_TYPE}" STREQUAL "Release")

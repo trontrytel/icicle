@@ -56,8 +56,6 @@ int main(int ac, char* av[])
     po::store(po::parse_command_line(ac, av, desc), vm);
     po::notify(vm);
 
-    cerr << "-- init: parsing command-line options" << endl;
-
     // --help or no argument case
     if (vm.count("help") || ac == 1)
     {

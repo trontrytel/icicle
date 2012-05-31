@@ -17,6 +17,8 @@ using std::sin;
 using std::log;
 using std::isfinite;
 using std::copysign;
+#  include <vector>
+using std::vector;
 #  include <iostream>
 using std::cout;
 using std::cerr;
@@ -24,8 +26,6 @@ using std::endl;
 #  include <string>
 using std::string;
 using std::ostringstream; // TODO: header?
-#  include <vector>
-using std::vector;
 #  include <map>
 using std::map;
 using std::pair;

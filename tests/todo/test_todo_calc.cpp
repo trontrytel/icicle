@@ -234,8 +234,8 @@ int main()
     << " --dt_out " << real_t(dt_out / si::seconds)
     << " --out netcdf" 
     << " --out.netcdf.file out.nc"
-    //<< " --slv serial"
-    << " --slv openmp --nsd 1"
+    << " --slv serial"
+    //<< " --slv openmp --nsd 1"
     ;
     if (micro == "bulk") cmd << " --eqs todo_bulk"
       << " --eqs.todo_bulk.cond " << blk_cond

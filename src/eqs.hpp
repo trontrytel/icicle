@@ -16,29 +16,31 @@
 template <typename real_t>
 class eqs 
 {
-  protected: class groupid 
+  protected: struct groupid 
   {
-    public: int id;
-    public: groupid(int id=0) : id(id) {}
+    int id;
+    groupid(int id=0) : id(id) {}
   };
   
-  protected: class positive_definite 
+  protected: struct nonnegative
   {
-    public: bool is;
-    public: positive_definite(bool is=false) : is(is) {}
+    bool is;
+    nonnegative(bool is=false) : is(is) {}
   };
 
   /// @brief representation of a generalised transport equation 
   /// (e.g. eq. 19 in Smolarkiewicz & Margolin 1998)
   protected: struct gte {
     string name, desc, unit;
-    positive_definite posdef;
+    nonnegative posdef;
     vector<int> pow_uvw; 
     groupid group;
     ptr_vector<rhs<real_t>> rhs_terms;
   };
 
-  public: bool is_homogeneous(int e) {
+  public: bool is_homogeneous(int e) 
+  {
+    assert(system().size() > e);
     if (system().at(e).rhs_terms.size() > 0) return false;
     return true;
   }
@@ -48,11 +50,13 @@ class eqs
 
   public: int group(int e)
   {
+    assert(system().size() > e);
     return system().at(e).group.id;
   }
 
   public: bool positive_definite(int e)
   {
+    assert(system().size() > e);
     return system().at(e).posdef.is;
   }
 
@@ -63,16 +67,19 @@ class eqs
 
   public: int var_n_rhs_terms(int e)
   {
+    assert(system().size() > e);
     return system().at(e).rhs_terms.size();
   }
 
   public: rhs<real_t> &var_rhs_term(int e, int i)
   {
+    assert(system().size() > e);
     return system().at(e).rhs_terms[i];
   }
 
   public: bool var_dynamic(int e) // i.e. involved in calculation of velocities
   {
+    assert(system().size() > e);
     if (system().at(e).pow_uvw.size() == 0) return false;
     assert(system().at(e).pow_uvw.size() == 3);
     return 
@@ -83,7 +90,7 @@ class eqs
  
   public: string var_name(int i)
   {
-    // TODO try/catch if i within range
+    assert(system().size() > i);
     return system().at(i).name;
   }
 
@@ -146,13 +153,13 @@ class eqs
  
   public: string var_desc(int i)
   {
-    // TODO try/catch if i within range
+    assert(system().size() > i);
     return system().at(i).desc;
   }
 
   public: string var_unit(int i)
   {
-    // TODO try/catch if i within range
+    assert(system().size() > i);
     return system().at(i).unit;
   }
 
@@ -169,15 +176,15 @@ class eqs
   /// auxiliary variables //
   //////////////////////////
 
-  protected: class constant
+  protected: struct invariable
   {
-    public: bool is; 
-    public: constant(bool is=true) : is(is) {}
+    bool is; 
+    invariable(bool is=true) : is(is) {}
   };  
 
   protected: struct axv {
     string name, desc, unit;
-    constant invariable;
+    invariable constant;
     vector<int> dimspan; // TODO: document the meaning of the fourth dimenions
     vector<int> halo; // TODO: ditto
     static const int span = 0;
@@ -211,11 +218,13 @@ class eqs
 
   public: bool aux_const(int v)
   {
-    return auxvars().at(v).invariable.is;
+    assert(auxvars().size() > v);
+    return auxvars().at(v).constant.is;
   } 
 
   public: bool aux_tobeoutput(int v)
   {
+    assert(auxvars().size() > v);
     return (!aux_const(v) 
       && auxvars().at(v).dimspan[0] == axv::span
       && auxvars().at(v).dimspan[0] == axv::span
@@ -224,18 +233,19 @@ class eqs
 
   public: string aux_name(int v)
   {
+    assert(auxvars().size() > v);
     return auxvars().at(v).name;
   } 
 
   public: string aux_desc(int i)
   {
-    // TODO try/catch if i within range
+    assert(auxvars().size() > i);
     return auxvars().at(i).desc;
   }
 
   public: string aux_unit(int i)
   {
-    // TODO try/catch if i within range
+    assert(auxvars().size() > i);
     return auxvars().at(i).unit;
   }
 

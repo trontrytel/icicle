@@ -156,7 +156,7 @@ class eqs_todo_bulk : public eqs_todo<real_t>
     this->sys.push_back(new struct eqs<real_t>::gte({
       "rhod_rl", "dry air density times liquid water mixing ratio (i.e. liquid water mass density)",
       this->quan2str(this->par.rho_unit),
-      typename eqs<real_t>::positive_definite(true),
+      eqs<real_t>::positive_definite(true),
     }));
     if (opts[clct]) this->sys.back().rhs_terms.push_back(new collection(-1, par)); 
     if (opts[conv]) this->sys.back().rhs_terms.push_back(new autoconversion(-1, par)); 
@@ -165,7 +165,7 @@ class eqs_todo_bulk : public eqs_todo<real_t>
     this->sys.push_back(new struct eqs<real_t>::gte({
       "rhod_rr", "dry air density times rain water mixing ratio (i.e. rain water mass density)",
       this->quan2str(par.rho_unit),
-      typename eqs<real_t>::positive_definite(true),
+      eqs<real_t>::positive_definite(true),
     }));
     //TODO should not be calculated twice
     if (opts[clct]) this->sys.back().rhs_terms.push_back(new collection(+1, par));
