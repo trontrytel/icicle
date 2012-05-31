@@ -115,8 +115,8 @@
   $ make clean 
 
   To chose a non-defalt compiler or library path:
-  $ export CXX=openmpic++
-  $ export CMAKE_PREFIX_PATH=/usr/local/
+   -DCMAKE_CXX_COMPILER=openmpic++
+   -DCMAKE_PREFIX_PATH=/usr/local/
 
 --------------------------------------------------------------
 * usage:

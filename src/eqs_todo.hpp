@@ -31,7 +31,7 @@ class eqs_todo : public eqs<real_t>
     // auxiliary variable
     this->aux.push_back(new struct eqs<real_t>::axv({
       "rhod", "dry air density", this->quan2str(par->rho_unit),
-      typename eqs<real_t>::constant(true),
+      typename eqs<real_t>::invariable(true),
       vector<int>({0, 0, 0})
     }));
     par->idx_rhod = this->aux.size() - 1;
@@ -41,7 +41,7 @@ class eqs_todo : public eqs<real_t>
     this->sys.push_back(new struct eqs<real_t>::gte({
       "rhod_rv", "dry air density times water vapour mixing ratio (i.e. water vapour mass density or absolute humidity)",
       this->quan2str(par->rho_unit), 
-      typename eqs<real_t>::positive_definite(true),
+      typename eqs<real_t>::nonnegative(true),
     }));
     par->idx_rhod_rv = this->sys.size() - 1;
 
@@ -50,7 +50,7 @@ class eqs_todo : public eqs<real_t>
     this->sys.push_back(new struct eqs<real_t>::gte({
       "rhod_th", "dry air density times potential temperature (i.e. energy mass density over specific heat capacity)",
       this->quan2str(par->rho_unit * si::kelvins), 
-      typename eqs<real_t>::positive_definite(true),
+      typename eqs<real_t>::nonnegative(true),
     }));
     par->idx_rhod_th = this->sys.size() - 1;
   }

@@ -164,7 +164,7 @@ class eqs_isentropic : public eqs<real_t>
     // potential temperature profile
     this->aux.push_back(new struct eqs<real_t>::axv({
       "dtheta", "mid-layer potential temperature increment", this->quan2str(par.theta_unit),
-      typename eqs<real_t>::constant(true),
+      typename eqs<real_t>::invariable(true),
       vector<int>({nlev - 1, 1, 1})
     }));
     par.idx_dtheta = this->aux.size() - 1;
@@ -176,7 +176,7 @@ class eqs_isentropic : public eqs<real_t>
       {
         this->aux.push_back(new struct eqs<real_t>::axv({
           "dHdx", "spatial derivative of the topography (X)", this->quan2str(par.dHdxy_unit),
-          typename eqs<real_t>::constant(true),
+          typename eqs<real_t>::invariable(true),
           vector<int>({0, 0, 1}) // dimspan
         }));
         idx_dHdx = this->aux.size() - 1;
@@ -185,7 +185,7 @@ class eqs_isentropic : public eqs<real_t>
       {
         this->aux.push_back(new struct eqs<real_t>::axv({
           "dHdy", "spatial derivative of the topograpy (Y)", this->quan2str(par.dHdxy_unit),
-          typename eqs<real_t>::constant(true),
+          typename eqs<real_t>::invariable(true),
           vector<int>({0, 0, 1}) // dimspan
         }));
 	idx_dHdy = this->aux.size() - 1;
@@ -195,7 +195,7 @@ class eqs_isentropic : public eqs<real_t>
     // pressure 
     this->aux.push_back(new struct eqs<real_t>::axv({
       "p", "pressure", this->quan2str(par.p_unit),
-      typename eqs<real_t>::constant(false),
+      typename eqs<real_t>::invariable(false),
       vector<int>({0, 0, nlev+1 }), // dimspan
       vector<int>({1, 1, 0}) // halo extent
     }));
@@ -204,7 +204,7 @@ class eqs_isentropic : public eqs<real_t>
     // the Montgomery potential
     this->aux.push_back(new struct eqs<real_t>::axv({
       "M", "Montgomery potential", this->quan2str(par.M_unit),
-      typename eqs<real_t>::constant(false),
+      typename eqs<real_t>::invariable(false),
       vector<int>({0, 0, 1}), // dimspan
       vector<int>({1, 1, 0}) // halo extent
     }));
@@ -221,7 +221,7 @@ class eqs_isentropic : public eqs<real_t>
       this->sys.push_back(new struct eqs<real_t>::gte({
         "dp_" + lstr, "pressure thickness of fluid layer " + lstr,
         this->quan2str(par.p_unit), 
-        typename eqs<real_t>::positive_definite(true),
+        eqs<real_t>::positive_definite(true),
         vector<int>({-1, -1, 0}),
         typename eqs<real_t>::groupid(lint)
       }));
@@ -232,7 +232,7 @@ class eqs_isentropic : public eqs<real_t>
         this->sys.push_back(new struct eqs<real_t>::gte({
           "qx_" + lstr, "layer-integrated specific momentum (x) of fluid layer " + lstr, 
           this->quan2str(par.q_unit), 
-          typename eqs<real_t>::positive_definite(false),
+          eqs<real_t>::positive_definite(false),
           vector<int>({1, 0, 0}),
           typename eqs<real_t>::groupid(lint)
         }));
@@ -252,7 +252,7 @@ class eqs_isentropic : public eqs<real_t>
         this->sys.push_back(new struct eqs<real_t>::gte({
           "qy_" + lstr, "layer-integrated specific momentum (y) of fluid layer " + lstr, 
           this->quan2str(par.q_unit), 
-          typename eqs<real_t>::positive_definite(false),
+          eqs<real_t>::positive_definite(false),
           vector<int>({0, 1, 0}),
           typename eqs<real_t>::groupid(lint)
         }));

@@ -61,7 +61,7 @@ const quantity<si::dimensionless, real_t>
 // other parameters deduced from the Fortran code published at:
 // http://www.rap.ucar.edu/~gthompsn/workshop2012/case1/kinematic_wrain.vocals.v3.for
 const int 
-  bits = 64,
+  bits = 32,
   fct = 1,  
   toa = 0,
   iord = 2;  
@@ -227,8 +227,8 @@ int main()
     << " --dt_out " << real_t(dt_out / si::seconds)
     << " --out netcdf" 
     << " --out.netcdf.file out.nc"
-    //<< " --slv serial"
-    << " --slv openmp --nsd 1"
+    << " --slv serial"
+    //<< " --slv openmp --nsd 1"
     ;
     if (micro == "bulk") cmd << " --eqs todo_bulk"
       << " --eqs.todo_bulk.cond " << blk_cond

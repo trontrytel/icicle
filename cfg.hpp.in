@@ -27,9 +27,12 @@
 #cmakedefine USE_FLOAT128 1
 
 #cmakedefine USE_NETCDF 1
+#cmakedefine USE_THRUST 1
 #cmakedefine USE_BOOST_THREAD 1
 #cmakedefine USE_BOOST_MPI 1
 #cmakedefine USE_BOOST_TIMER 1
 #cmakedefine USE_BOOST_ODEINT 1
+
+#cmakedefine THRUST_DEVICE_SYSTEM THRUST_DEVICE_SYSTEM_OMP
 
 #endif
