@@ -37,6 +37,7 @@ using boost::units::detail::get_value;
 
 #include "../../src/cmn.hpp"
 #include "../../src/phc_theta.hpp"
+#include "../../src/phc_terminal_vel.hpp"
 
 typedef float real_t;
 
@@ -61,13 +62,13 @@ const quantity<si::dimensionless, real_t>
 // other parameters deduced from the Fortran code published at:
 // http://www.rap.ucar.edu/~gthompsn/workshop2012/case1/kinematic_wrain.vocals.v3.for
 const int 
-  bits = 64,
+  bits = 32,
   fct = 1,  
   toa = 0,
   iord = 2;  
 const quantity<si::time, real_t> 
-  t_max = 1000 * si::seconds, // 4 * 3600
-  dt_out = real_t(100) * si::seconds; // 300
+  t_max = 300 * si::seconds, // 4 * 3600
+  dt_out = real_t(50) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = real_t(.6) * si::metres / si::second; // .6 TODO: check it!
 const quantity<si::mass_density, real_t>
@@ -76,7 +77,7 @@ const quantity<divide_typeof_helper<si::momentum, si::area>::type, real_t>
   ampl = rho_0 * w_max * (real_t(nx) * dx) / real_t(4*atan(1));
 
 // options for microphysics
-std::string micro = "bulk"; // sdm | bulk
+std::string micro = "sdm"; // sdm | bulk
 bool 
   blk_cond = true,
   blk_cevp = true,
@@ -129,6 +130,12 @@ quantity<si::mass_density, real_t> rhod_todo(
 
 int main()
 {
+  //tmp test for terminal velocity
+  quantity<si::length, real_t> r=real_t(1.*10e-6)*si::metres;
+  quantity<si::temperature, real_t> T=real_t(293.)*si::kelvin;
+  quantity<si::mass_density, real_t> rhoa=real_t(1.)*si::kilograms/si::cubic_metres;
+  cout<< "terminal velocity " << phc::vt(r,T, rhoa)<<endl;
+
   {
     notice_macro("creating rho.nc ...")
     NcFile nf("rho.nc", NcFile::newFile, NcFile::classic);
