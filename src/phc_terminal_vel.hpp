@@ -9,24 +9,16 @@
 #  define PHC_TERMINAL_VELOCITY_HPP
 
 #  include "phc.hpp"
-
 namespace phc
 {
-  // density of water in the droplet [kg/m3]
-  // TODO parametrisation based on temperature and size of droplet
-  // phc_declare_const_macro(rhow, 1000., si::kilograms / si::cubic_metres)  
-  
-  // dynamic viscosity of air Rogers and Yau (third edition page 102) 
+  // dynamic viscosity of air (Rogers and Yau third edition page 102) 
   // temp in K and rhoa in kg/m3
   phc_declare_funct_macro quantity<si::dynamic_viscosity, real_t> visc(
     quantity<si::temperature, real_t> T)
   {  
-    return real_t(1.72 * 10e-5) 
-      * (real_t(393) / ( (T / si::kelvins) + real_t(120)) ) 
-      * real_t(pow(T/si::kelvins/273, 3./2))   
-      * si::kilograms / si::metres / si::seconds ;
+    return real_t(1.72 * 1e-5) * (real_t(393) / ( (T / si::kelvins) + real_t(120)) ) 
+      * real_t(pow(T/si::kelvins/273, 3./2)) * si::kilograms / si::metres / si::seconds ;
   }
-  
   // terminal fall velocity of spherical droplets 
   // TODO add another parametrisation for larger (nonspherical) drops
 
@@ -37,31 +29,29 @@ namespace phc
     quantity<si::mass_density, real_t> rhoa //density of air
   )
   {
-    quantity<si::mass_density, real_t> rhow = real_t(1000) * si::kilograms / si::cubic_metres ;
+    quantity<si::mass_density, real_t> rhow = real_t(999) * si::kilograms / si::cubic_metres ;
   
     //Best number (eq 2.7 in Khvorostyanov and Curry 2002 J. Atmos. Sci) 
     //with maximum projected cross-sectional area parametrised as for spherical droplets (A=pi/4*D^2)
     quantity<si::dimensionless, real_t> X = real_t(32./3) * (rhow-rhoa)/rhoa * phc::g<real_t>() 
-      * r * r * r / visc(T) / visc(T) * rhoa * rhoa;
+      * r * r * r / visc(T) / visc(T) * rhoa * rhoa; //TODO use pow<>() 
 
     //terminal velocity parametrisation coeffs 
     // eqs 2.12, 2.13 in Khvorostyanov and Curry 2002 J. Atmos. Sci 
-    quantity<si::dimensionless, real_t> b = 
-      real_t(.0902/2) * sqrt(X) 
+    quantity<si::dimensionless, real_t> b = real_t(.0902/2) * sqrt(X) 
       * pow(sqrt(real_t(1)+real_t(.0902)*sqrt(X))-real_t(1), -1) 
       * pow(sqrt(real_t(1)+real_t(.0902)*sqrt(X)), -1) ;
-    quantity<si::dimensionless, real_t> a = 
-      real_t(9.06/4) 
-      * pow(sqrt(real_t(1)+real_t(.0902)*sqrt(X))-real_t(1), real_t(2)) / pow(X,b) ;
+    quantity<si::dimensionless, real_t> a = real_t(9.06 * 9.06 / 4) 
+      * pow(sqrt(real_t(1)+real_t(.0902)*sqrt(X))-real_t(1), 2) / pow(X,b) ;
   
     // eq 3.1 in Khvorostyanov and Curry 2002 J. Atmos. Sci 
-    quantity<si::dimensionless, real_t> Av = 
-      a * pow( visc(T) / rhoa * si::seconds / si::square_metres, real_t(1)-real_t(2)*b) 
-      * pow(real_t(4./3) * rhow / rhoa * phc::g<real_t>() * si::seconds * si::seconds / si::metres, b) ;
+    quantity<si::dimensionless, real_t> Av = a  
+      * pow(visc(T) / rhoa * real_t(1e4) * si::seconds / si::square_metres, real_t(1)-real_t(2)*b) 
+      * pow(real_t(4./3) * rhow / rhoa * phc::g<real_t>() *real_t(1e2)* si::seconds * si::seconds / si::metres, b) ;
     quantity<si::dimensionless, real_t> Bv = real_t(3)*b - real_t(1) ;
 
-    return Av * real_t(pow(real_t(2) * r/si::metres, Bv)) * si::metres_per_second  ;
-  ;}
+    return (Av * real_t(pow(real_t(2*1e2) * r/si::metres, Bv)))/real_t(1e2) * si::metres_per_second  ;
+  }
 };
 
 #endif

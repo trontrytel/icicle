@@ -11,3 +11,5 @@ add_subdirectory(eqs_shallow_water)
 add_subdirectory(eqs_isentropic)
 add_subdirectory(eqs_isentropic_halny)
 add_subdirectory(mayavi)
+add_subdirectory(phc_terminal_vel)
+

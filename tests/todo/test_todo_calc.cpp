@@ -62,7 +62,7 @@ const quantity<si::dimensionless, real_t>
 // other parameters deduced from the Fortran code published at:
 // http://www.rap.ucar.edu/~gthompsn/workshop2012/case1/kinematic_wrain.vocals.v3.for
 const int 
-  bits = 32,
+  bits = 64,
   fct = 1,  
   toa = 0,
   iord = 2;  
@@ -130,12 +130,6 @@ quantity<si::mass_density, real_t> rhod_todo(
 
 int main()
 {
-  //tmp test for terminal velocity
-  quantity<si::length, real_t> r=real_t(1.*10e-6)*si::metres;
-  quantity<si::temperature, real_t> T=real_t(293.)*si::kelvin;
-  quantity<si::mass_density, real_t> rhoa=real_t(1.)*si::kilograms/si::cubic_metres;
-  cout<< "terminal velocity " << phc::vt(r,T, rhoa)<<endl;
-
   {
     notice_macro("creating rho.nc ...")
     NcFile nf("rho.nc", NcFile::newFile, NcFile::classic);
