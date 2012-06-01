@@ -30,7 +30,6 @@ class eqs_isentropic : public eqs<real_t>
     quantity<specific_energy, real_t> M_unit; 
     quantity<si::dimensionless, real_t> dHdxy_unit; 
     vector<int> idx_dp;
-    int idx_dtheta, idx_p, idx_M; // auxiliary variable indices
   };
 
   // nested class
@@ -58,12 +57,13 @@ class eqs_isentropic : public eqs<real_t>
     // members
     private: struct params *par;
     private: quantity<si::length, real_t> dxy;
-    private: int idx_dHdxy, lev, nlev;
+    private: int lev, nlev;
+    private: string idx_dHdxy;
     private: bool calc_p, calc_M;
 
     // ctor
     public: montgomery_grad(params &par, quantity<si::length, real_t> dxy, 
-      int idx_dHdxy, int lev, bool calc_p, bool calc_M
+      const string &idx_dHdxy, int lev, bool calc_p, bool calc_M
     ) :
       par(&par), dxy(dxy), idx_dHdxy(idx_dHdxy), lev(lev), 
       nlev(par.idx_dp.size()), calc_p(calc_p), calc_M(calc_M) 
@@ -74,13 +74,13 @@ class eqs_isentropic : public eqs<real_t>
     // method
     public: void explicit_part(
       mtx::arr<real_t> &R, 
-      const ptr_vector<mtx::arr<real_t>> &aux,
+      const ptr_map<string, mtx::arr<real_t>> &aux,
       const mtx::arr<real_t> * const * const psi,
       const quantity<si::time, real_t> t
     )
     {
-      const mtx::arr<real_t> &p = aux[par->idx_p]; 
-      const mtx::arr<real_t> &M = aux[par->idx_M];
+      const mtx::arr<real_t> &p = *(aux.find("p")->second); 
+      const mtx::arr<real_t> &M = *(aux.find("M")->second);
       const mtx::rng &ii = p.ijk.i, &jj = p.ijk.j;
 
       // calculating pressures at the surfaces (done once per timestep)
@@ -110,25 +110,29 @@ class eqs_isentropic : public eqs<real_t>
                pow(p(mtx::idx_ijk(ii, jj, 1)), phc::R_d_over_c_pd<real_t>())
             );
         else 
+        {
+          const mtx::arr<real_t> &dtheta(*(aux.find("dtheta")->second));
           M(M.ijk) += phc::c_pd<real_t>() * real_t(phc::exner<real_t>(par->p_unit))
             / par->M_unit * si::kelvins * // to make it dimensionless
-            (aux[par->idx_dtheta](mtx::idx_ijk(lev - 1)))(0,0,0) * // TODO: nicer syntax needed!
+            (dtheta(mtx::idx_ijk(lev - 1)))(0,0,0) * // TODO: nicer syntax needed!
              real_t(.5) * // Exner function within a layer as an average of surface Ex-fun values
              ( 
                pow(p(mtx::idx_ijk(ii, jj, lev  )), phc::R_d_over_c_pd<real_t>()) +
                pow(p(mtx::idx_ijk(ii, jj, lev+1)), phc::R_d_over_c_pd<real_t>())
              );
+        }
         assert(isfinite(sum(M)));
       }
 
       // eq. (6) in Szmelter & Smolarkiewicz 2011, Computers & Fluids
+      const mtx::arr<real_t> &dHdxy(*(aux.find(idx_dHdxy)->second));
       R(R.ijk) -= 
         par->M_unit * par->p_unit / si::metres * // real units of the rhs
         si::seconds / par->q_unit * // inv. unit of R (to get a dimensionless forcing)
         ((*psi[par->idx_dp[lev]])(R.ijk)) * 
         ( 
           phc::g<real_t>() / si::metres_per_second_squared *
-          aux[idx_dHdxy](mtx::idx_ijk(R.ijk.i, R.ijk.j, 0)) 
+          dHdxy(mtx::idx_ijk(R.ijk.i, R.ijk.j, 0)) 
           +
           ( // spatial derivative
             (M(mtx::idx_ijk(R.ijk.i + di, R.ijk.j + dj, 0))) - 
@@ -162,53 +166,56 @@ class eqs_isentropic : public eqs<real_t>
     par.dHdxy_unit = 1;
 
     // potential temperature profile
-    this->aux.push_back(new struct eqs<real_t>::axv({
+    struct eqs<real_t>::axv *tmp = new struct eqs<real_t>::axv({
       "dtheta", "mid-layer potential temperature increment", this->quan2str(par.theta_unit),
       typename eqs<real_t>::invariable(true),
       vector<int>({nlev - 1, 1, 1})
-    }));
-    par.idx_dtheta = this->aux.size() - 1;
+    });
+    this->aux["dtheta"] = *tmp; // TODO: rewrite with ptr_map_insert!
 
     // topography
-    int idx_dHdx = -1, idx_dHdy = -1;
     {
       if (grid.nx() != 1)
       {
-        this->aux.push_back(new struct eqs<real_t>::axv({
+        struct eqs<real_t>::axv *tmp = new struct eqs<real_t>::axv({
           "dHdx", "spatial derivative of the topography (X)", this->quan2str(par.dHdxy_unit),
           typename eqs<real_t>::invariable(true),
           vector<int>({0, 0, 1}) // dimspan
-        }));
-        idx_dHdx = this->aux.size() - 1;
+        });
+        this->aux["dHdx"] = *tmp; // TODO: rewrite with ptr_map_insert!
       }
       if (grid.ny() != 1)
       {
-        this->aux.push_back(new struct eqs<real_t>::axv({
+        struct eqs<real_t>::axv *tmp = new struct eqs<real_t>::axv({
           "dHdy", "spatial derivative of the topograpy (Y)", this->quan2str(par.dHdxy_unit),
           typename eqs<real_t>::invariable(true),
           vector<int>({0, 0, 1}) // dimspan
-        }));
-	idx_dHdy = this->aux.size() - 1;
+        });
+        this->aux["dHdy"] = *tmp; // TODO: rewrite with ptr_map_insert!
       }
     }
 
     // pressure 
-    this->aux.push_back(new struct eqs<real_t>::axv({
-      "p", "pressure", this->quan2str(par.p_unit),
-      typename eqs<real_t>::invariable(false),
-      vector<int>({0, 0, nlev+1 }), // dimspan
-      vector<int>({1, 1, 0}) // halo extent
-    }));
-    par.idx_p = this->aux.size() - 1;
+    {
+      struct eqs<real_t>::axv *tmp = new struct eqs<real_t>::axv({
+        "p", "pressure", this->quan2str(par.p_unit),
+        typename eqs<real_t>::invariable(false),
+        vector<int>({0, 0, nlev+1 }), // dimspan
+        vector<int>({1, 1, 0}) // halo extent
+      });
+      this->aux["p"] = *tmp; // TODO: rewrite with ptr_map_insert!
+    }
 
     // the Montgomery potential
-    this->aux.push_back(new struct eqs<real_t>::axv({
-      "M", "Montgomery potential", this->quan2str(par.M_unit),
-      typename eqs<real_t>::invariable(false),
-      vector<int>({0, 0, 1}), // dimspan
-      vector<int>({1, 1, 0}) // halo extent
-    }));
-    par.idx_M = this->aux.size() - 1;
+    {
+      struct eqs<real_t>::axv *tmp = new struct eqs<real_t>::axv({
+        "M", "Montgomery potential", this->quan2str(par.M_unit),
+        typename eqs<real_t>::invariable(false),
+        vector<int>({0, 0, 1}), // dimspan
+        vector<int>({1, 1, 0}) // halo extent
+      });
+      this->aux["M"] = *tmp; // TODO: rewrite with ptr_map_insert!
+    }
     
     // dp var indices (to be filled in in the loop below)
     par.idx_dp.resize(nlev);
@@ -237,7 +244,7 @@ class eqs_isentropic : public eqs<real_t>
           typename eqs<real_t>::groupid(lint)
         }));
         this->sys.back().rhs_terms.push_back(
-          new montgomery_grad<1,0>(par, grid.dx(), idx_dHdx, lint, lint==0, true)
+          new montgomery_grad<1,0>(par, grid.dx(), "dHdx", lint, lint==0, true)
         ); 
         if (lint > abslev)
         {
@@ -257,7 +264,7 @@ class eqs_isentropic : public eqs<real_t>
           typename eqs<real_t>::groupid(lint)
         }));
         this->sys.back().rhs_terms.push_back(
-          new montgomery_grad<0,1>(par, grid.dy(), idx_dHdy, lint, false, false)
+          new montgomery_grad<0,1>(par, grid.dy(), "dHdy", lint, false, false)
         ); 
         if (lint > abslev)
         {

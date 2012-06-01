@@ -11,24 +11,15 @@
 
 // TODO: substepping with timesteps as an option
 // TODO: units in SD_stat, SD_diag, SD_envi... should be possible as odeint supports Boost.units!
-// TODO: sabe base class for all functors... perhaps containing stat and envi?
+// TODO: a base class for all functors... perhaps containing stat and envi?
 // TODO: check why random number generation fails with g++ -O2!!!
 
-#  include "eqs_todo.hpp"
-#  include "phc_lognormal.hpp"
-#  include "phc_kappa_koehler.hpp"
+#  include "eqs_todo.hpp" 
+#  include "phc_lognormal.hpp" // TODO: not here?
+#  include "phc_kappa_koehler.hpp" // TODO: not here?
 
-#  if defined(USE_THRUST) && defined(USE_BOOST_ODEINT)
-#    include <thrust/random.h>
-#    include <thrust/sequence.h>
-#    include <thrust/sort.h>
-#    include <thrust/iterator/constant_iterator.h>
-#    include <boost/numeric/odeint.hpp>
-#    include <boost/numeric/odeint/external/thrust/thrust_algebra.hpp>
-#    include <boost/numeric/odeint/external/thrust/thrust_operations.hpp>
-#    include <boost/numeric/odeint/external/thrust/thrust_resize.hpp>
-namespace odeint = boost::numeric::odeint;
-#  endif
+#  include "sdm_ode_xi.hpp"
+#  include "sdm_ode_xy.hpp"
 
 // @brief 
 //   implementation of the Super-Droplet Method (Shima et al. 2009, QJRMS, 135)
@@ -41,6 +32,8 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   public: enum processes {cond, sedi, coal};
   public: enum ode_algos {euler, rk4};
   public: enum xi_dfntns {id, ln, p2, p3};
+
+  private: typename eqs_todo<real_t>::params par;
 
   // ctor of eqs_todo_sdm
   public: eqs_todo_sdm(
@@ -62,12 +55,12 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     real_t kappa
   ) 
 #  if !defined(USE_BOOST_ODEINT) || !defined(USE_THRUST)
-  : eqs_todo<real_t>(grid, &par)
+  : eqs_todo<real_t>(grid, &this->par)
   {
     error_macro("eqs_todo_sdm requires icicle to be compiled with wupport for Boost.odeint and Thrust");
   }
 #  else
-  : eqs_todo<real_t>(grid, &par), 
+  : eqs_todo<real_t>(grid, &this->par), 
     opts(opts), 
     grid(grid), 
     constant_velocity(velocity.is_constant()),
@@ -84,28 +77,34 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     tmp_real.resize(grid.nx() * grid.ny());
 
     // auxliary variable for super-droplet conc
-    this->aux.push_back(new struct eqs<real_t>::axv({
-      "sd_conc", "super-droplet cencentration", this->quan2str(real_t(1)/grid.dx()/grid.dy()/grid.dz()),
-      typename eqs<real_t>::invariable(false),
-      vector<int>({0, 0, 0})
-    }));
-    par.idx_sd_conc = this->aux.size() - 1;
+    {
+      struct eqs<real_t>::axv *tmp = new struct eqs<real_t>::axv({
+        "sd_conc", "super-droplet cencentration", this->quan2str(real_t(1)/grid.dx()/grid.dy()/grid.dz()),
+        typename eqs<real_t>::invariable(false),
+        vector<int>({0, 0, 0})
+      });
+      this->aux["sd_conc"] = *tmp; // TODO: rewrite with ptr_map_insert!
+    }
 
     // auxliary variable for total particle concentration
-    this->aux.push_back(new struct eqs<real_t>::axv({
-      "n_tot", "total particle cencentration", this->quan2str(real_t(1)/si::cubic_metres),
-      typename eqs<real_t>::invariable(false),
-      vector<int>({0, 0, 0})
-    }));
-    par.idx_n_tot = this->aux.size() - 1;
+    {
+      struct eqs<real_t>::axv *tmp = new struct eqs<real_t>::axv({
+        "n_tot", "total particle cencentration", this->quan2str(real_t(1)/si::cubic_metres),
+        typename eqs<real_t>::invariable(false),
+        vector<int>({0, 0, 0})
+      });
+      this->aux["n_tot"] = *tmp; // TODO: rewrite with ptr_map_insert!
+    }
 
     // auxliary variable for CCN concentration (temporary kludge)
-    this->aux.push_back(new struct eqs<real_t>::axv({
-      "n_ccn", "CCN cencentration", this->quan2str(real_t(1)/si::cubic_metres),
-      typename eqs<real_t>::invariable(false),
-      vector<int>({0, 0, 0})
-    }));
-    par.idx_n_ccn = this->aux.size() - 1;
+    {
+      struct eqs<real_t>::axv *tmp = new struct eqs<real_t>::axv({
+        "n_ccn", "CCN cencentration", this->quan2str(real_t(1)/si::cubic_metres),
+        typename eqs<real_t>::invariable(false),
+        vector<int>({0, 0, 0})
+      });
+      this->aux["n_ccn"] = *tmp; // TODO: rewrite with ptr_map_insert!
+    }
 
     // initialising super-droplets
     sd_init(min_rd, max_rd, mean_rd1, mean_rd2, sdev_rd1, sdev_rd2, n1_tot, n2_tot, sd_conc_mean, kappa);
@@ -113,414 +112,39 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     // initialising ODE right-hand-sides
     switch (xy_algo)
     {
-      case euler: F_xy.reset(new ode_xy<algo_euler>(stat, envi)); break;
-      case rk4  : F_xy.reset(new ode_xy<algo_rk4  >(stat, envi)); break;
+      case euler: F_xy.reset(new sdm::ode_xy<real_t, sdm::algo_euler>(stat, envi)); break;
+      case rk4  : F_xy.reset(new sdm::ode_xy<real_t, sdm::algo_rk4  >(stat, envi)); break;
       default: assert(false);
     }
     switch (xy_algo)
     {
       case euler: switch (xi_dfntn)
       {
-        case id : F_xi.reset(new ode_xi<algo_euler, xi_id<>>(stat, envi, tmp_real)); break;
-        //case ln : F_xi.reset(new ode_xi<algo_euler, xi_ln<>>(stat, envi, tmp_real)); break;
-        //case p2 : F_xi.reset(new ode_xi<algo_euler, xi_p2<>>(stat, envi, tmp_real)); break;
-        //case p3 : F_xi.reset(new ode_xi<algo_euler, xi_p3<>>(stat, envi, tmp_real)); break;
+        case id : F_xi.reset(new sdm::ode_xi<real_t, sdm::algo_euler, sdm::xi_id<>>(stat, envi, tmp_real)); break;
+        case ln : F_xi.reset(new sdm::ode_xi<real_t, sdm::algo_euler, sdm::xi_ln<>>(stat, envi, tmp_real)); break;
+        case p2 : F_xi.reset(new sdm::ode_xi<real_t, sdm::algo_euler, sdm::xi_p2<>>(stat, envi, tmp_real)); break;
+        case p3 : F_xi.reset(new sdm::ode_xi<real_t, sdm::algo_euler, sdm::xi_p3<>>(stat, envi, tmp_real)); break;
         default: assert(false);
-      }
+      } 
+      break;
       case rk4  : switch (xi_dfntn) 
       {
-        case id : F_xi.reset(new ode_xi<algo_rk4,   xi_id<>>(stat, envi, tmp_real)); break;
-        //case ln : F_xi.reset(new ode_xi<algo_rk4,   xi_ln<>>(stat, envi, tmp_real)); break;
-        //case p2 : F_xi.reset(new ode_xi<algo_rk4,   xi_p2<>>(stat, envi, tmp_real)); break;
-        //case p3 : F_xi.reset(new ode_xi<algo_rk4,   xi_p3<>>(stat, envi, tmp_real)); break;
+        case id : F_xi.reset(new sdm::ode_xi<real_t, sdm::algo_rk4,   sdm::xi_id<>>(stat, envi, tmp_real)); break;
+        case ln : F_xi.reset(new sdm::ode_xi<real_t, sdm::algo_rk4,   sdm::xi_ln<>>(stat, envi, tmp_real)); break;
+        case p2 : F_xi.reset(new sdm::ode_xi<real_t, sdm::algo_rk4,   sdm::xi_p2<>>(stat, envi, tmp_real)); break;
+        case p3 : F_xi.reset(new sdm::ode_xi<real_t, sdm::algo_rk4,   sdm::xi_p3<>>(stat, envi, tmp_real)); break;
         default: assert(false);
       }
+      break;
       default: assert(false);
     } 
   }
 #  endif
 
-  // nested class (well... struct)
-  protected: struct params : eqs_todo<real_t>::params
-  {
-    // auxiliary variables indices // TODO: to be removed when aux will become a map!
-    int idx_sd_conc; 
-    int idx_n_tot;
-    int idx_n_ccn;
-  };
-
-  private: params par;
-
 #  if defined(USE_BOOST_ODEINT) && defined(USE_THRUST)
 
   typedef double thrust_real_t; // TODO: option / check if the device supports it
-
   typedef thrust::device_vector<int>::size_type thrust_size_t;
-
-  // nested structure: super-droplet environment (velocity, temperature and moisture field)
-  struct SD_envi
-  {
-    // velocity field (copied from an Arakawa-C grid)
-    thrust::device_vector<thrust_real_t> vx, vy;
-    int vx_nx, vx_ny, vy_nx, vy_ny, n_cell; 
-
-    // temperature and water vapour density fields (copied from an Arakawa-C grid)
-    thrust::device_vector<thrust_real_t> rhod, rhod_th, rhod_rv;
-
-    // ctor
-    SD_envi(int nx, int ny) 
-    {
-      vx_nx = nx + 1;
-      vx_ny = ny;
-      vy_nx = nx;
-      vy_ny = ny + 1;
-      vx.resize(vx_nx * vx_ny);
-      vy.resize(vy_nx * vy_ny);
-
-      n_cell = nx * ny;
-      // TODO + 2 x halo if interpolating?
-      rhod.resize(n_cell); 
-      rhod_th.resize(n_cell); 
-      rhod_rv.resize(n_cell);
-    }
-  };
-
-  // TODO: is this one really needed???
-  // nested structure: super-droplet diagnosed variables
-  struct SD_diag
-  {
-    // TODO: document it
-    thrust::device_vector<int> M_ij;
-    
-    // ctor
-    SD_diag(int nx, int ny)
-    {
-      M_ij.resize(nx * ny);
-    }
-  };
-
-  // nested structure: super-droplet state info
-  struct SD_stat
-  {
-    // number of particles (i.e. super-droplets)
-    thrust_size_t n_part;
-
-    // SD parameters that are variable from the ODE point of view (x,y,rw,...)
-    thrust::device_vector<thrust_real_t> xy, xi; 
-
-    // ... and since x and y are hidden in one SD.xy, we declare helper iterators
-    thrust::device_vector<thrust_real_t>::iterator x_begin, x_end, y_begin, y_end;
-
-    // SD parameters that are constant from the ODE point of view (n,rd3,i,j)
-    thrust::device_vector<thrust_real_t> rd3, kpa; // rd3 -> dry radius to the third power 
-    thrust::device_vector<thrust_size_t> id, n; // n -> number of real droplets in a super-droplet
-    thrust::device_vector<int> i, j, ij; // location of super-droplet within the grid
-
-    // SD_stat ctor
-    SD_stat(int nx, int ny, real_t sd_conc_mean)
-    {
-      n_part = thrust_size_t(real_t(nx * ny) * sd_conc_mean);
-      xy.resize(2 * n_part);
-      xi.resize(n_part);
-      rd3.resize(n_part);
-      kpa.resize(n_part);
-      i.resize(n_part);
-      j.resize(n_part);
-      ij.resize(n_part);
-      n.resize(n_part);
-      id.resize(n_part);
-
-      x_begin = xy.begin(); 
-      x_end   = x_begin + n_part;
-      y_begin = x_end;
-      y_end   = y_begin + n_part;
-    }
-  };
-
-/*
-  On May 9, 2012, at 7:44 PM, Karsten Ahnert wrote:
-  > ... unfortunately the Rosenbrock method cannot be used with any other state type than ublas.matrix.
-  > ... I think, the best steppers for stiff systems and thrust are the
-  > runge_kutta_fehlberg78 or the bulirsch_stoer with a very high order. But
-  > should benchmark both steppers and choose the faster one.
-*/
-
-  typedef odeint::euler<
-    thrust::device_vector<thrust_real_t>, // state type
-    thrust_real_t, // value_type
-    thrust::device_vector<thrust_real_t>, // deriv type
-    thrust_real_t, // time type
-    odeint::thrust_algebra, 
-    odeint::thrust_operations
-  > algo_euler;
-
-  typedef odeint::runge_kutta4<
-    thrust::device_vector<thrust_real_t>, // state type
-    thrust_real_t, // value_type
-    thrust::device_vector<thrust_real_t>, // deriv type
-    thrust_real_t, // time type
-    odeint::thrust_algebra, 
-    odeint::thrust_operations
-  > algo_rk4;
-
-  // nested class: 
-  private: class ode 
-  {
-    public: virtual void init() {}
-    public: virtual void advance(
-      thrust::device_vector<thrust_real_t> &x, 
-      const quantity<si::time, real_t> &dt
-    ) = 0;
-  };
-
-  // nested class: 
-  private: 
-  template <class algo> 
-  class ode_algo : public ode
-  {
-    private: algo stepper;
-
-    // pure virtual method
-    public: virtual void operator()(
-      const thrust::device_vector<thrust_real_t> &xy, 
-      thrust::device_vector<thrust_real_t> &dxy_dt, 
-      const thrust_real_t
-    ) = 0;
-
-    public: void advance(
-      thrust::device_vector<thrust_real_t> &x, 
-      const quantity<si::time, real_t> &dt
-    )
-    {
-      stepper.do_step(boost::ref(*this), x, 0, dt / si::seconds);
-    }
-  };
-
-
-  // identity: xi = rw
-  private: template <typename T = thrust_real_t> struct xi_id 
-  { 
-    T xi(const T &rw) { return rw; }
-    T rw(const T &xi) { return xi; } 
-    T dxidrw(const T &xi) { return 1; }
-  };
-
-  // xi = ln(rw / nm)
-  private: template <typename T = thrust_real_t> struct xi_ln
-  { 
-    T xi(const T &rw) { return log(rw / T(1e-9)); }
-    T rw(const T &xi) { return T(1e-9) * exp(xi); } 
-    T dxidrw(const T &rw) { return T(1) / rw; }
-  };
-
-  // xi = pow(rw, 2) 
-  private: template <typename T = thrust_real_t> struct xi_p2
-  { 
-    T xi(const T &rw) { return rw * rw; }
-    T rw(const T &xi) { return sqrt(xi); } 
-    T dxidrw(const T &rw) { return T(2) * rw; }
-  };
-
-  // xi = pow(rw, 3) 
-  private: template <typename T = thrust_real_t> struct xi_p3
-  { 
-    T xi(const T &rw) { return rw * rw * rw; }
-    T rw(const T &xi) { return pow(xi, T(1)/T(3)); } 
-    T dxidrw(const T &rw) { return T(3) * rw * rw; }
-  };
-
-
-  // nested class: the ODE system to be solved to update super-droplet positions
-  private: 
-  template <class algo>
-  class ode_xy : public ode_algo<algo>
-  { 
-    // nested functor 
-    private: 
-    template <int di, int dj>
-    class interpol
-    {
-      // private fields
-      private: const int n;
-      private: const thrust::device_vector<thrust_real_t> &vel;
-      private: const SD_stat &stat;
-
-      // ctor
-      public: interpol(
-        const int n,
-        const thrust::device_vector<thrust_real_t> &vel,
-        const SD_stat &stat
-      ) : n(n), vel(vel), stat(stat) {}
-
-      //  overloaded () operator invoked by thrust::transform()
-      public: thrust_real_t operator()(thrust_size_t id)
-      {
-        // TODO weighting by position!
-        return .5 * (
-          vel[(stat.i[id]     ) + (stat.j[id]     ) * n] + 
-          vel[(stat.i[id] + di) + (stat.j[id] + dj) * n]
-        );
-      }
-    };
-
-    // private fields
-    private: const SD_stat &stat;
-    private: const SD_envi &envi;
- 
-    // ctor 
-    public: ode_xy(const SD_stat &stat, const SD_envi &envi) : stat(stat), envi(envi) {}
-
-    // overloaded () operator invoked by odeint
-    public: void operator()(
-      const thrust::device_vector<thrust_real_t>&, 
-      thrust::device_vector<thrust_real_t> &dxy_dt, 
-      const thrust_real_t
-    )
-    {
-      // TODO use positions to interpolate velocities! (as an option?)
-      {
-        thrust::counting_iterator<thrust_size_t> iter(0);
-        thrust::transform(
-          iter, iter + stat.n_part, 
-          dxy_dt.begin(), 
-          interpol<1,0>(envi.vx_nx, envi.vx, stat)
-        );
-      }
-      {
-        thrust::counting_iterator<thrust_size_t> iter(0);
-        thrust::transform(
-          iter, iter + stat.n_part, 
-          dxy_dt.begin() + stat.n_part, 
-          interpol<0,1>(envi.vy_nx, envi.vy, stat)
-        );
-      }
-    }
-  };
-
-  // nested functor: setting wet radii to equilibrium values
-  // TODO: no need for template! - could be placed within a block and ose F_xi->xi()
-  template <class xi> struct equil : xi
-  { 
-    SD_stat &stat;
-    const SD_envi &envi;
-    thrust::device_vector<thrust_real_t> &tmp;
-
-    // ctor
-    equil(
-      SD_stat &stat, 
-      const SD_envi &envi, 
-      thrust::device_vector<thrust_real_t> &tmp
-    ) : stat(stat), envi(envi), tmp(tmp) 
-    {
-      // nested functor
-      struct init_tmp
-      {
-        const SD_envi &envi;
-        thrust::device_vector<thrust_real_t> &tmp;
-            
-        // ctor
-        init_tmp(const SD_envi &envi, thrust::device_vector<thrust_real_t> &tmp) 
-          : envi(envi), tmp(tmp) 
-        {}
-
-        // overloded operator invoked by for_each below
-        void operator()(thrust_size_t ij)
-        {
-          quantity<phc::mixing_ratio, thrust_real_t> 
-            r = envi.rhod_rv[ij] / envi.rhod[ij];
-          quantity<si::pressure, thrust_real_t> 
-            p = phc::p<thrust_real_t>(envi.rhod_th[ij] * si::kelvins * si::kilograms / si::cubic_metres, r);
-          quantity<si::temperature, thrust_real_t> 
-            T = phc::T<thrust_real_t>((envi.rhod_th[ij] / envi.rhod[ij]) * si::kelvins, p, r);
-
-          // - assuption of dr/dt = 0 => consistent only under subsaturation!
-          // - initial values for vapour pressure field de facto assume aerosol at equilibrium
-          // => using min(p/ps, .99) // TODO 99 as an option!
-          tmp[ij] = thrust::min(
-            thrust_real_t(.99),
-            thrust_real_t(
-              phc::R_v<thrust_real_t>() * T * (envi.rhod_rv[ij] * si::kilograms / si::cubic_metres) 
-              / phc::p_vs<thrust_real_t>(T)
-            )
-          );
-        } 
-      };
-
-      thrust::counting_iterator<thrust_size_t> iter(0);
-      thrust::for_each(iter, iter + envi.n_cell, init_tmp(envi, tmp));
-    }
-
-    void operator()(thrust_size_t idx) 
-    { 
-      // ij and already sorted here!!!
-      stat.xi[stat.id[idx]] = this->xi(pow(phc::rw3_eq<thrust_real_t>(
-        stat.rd3[stat.id[idx]] * si::cubic_metres, 
-        0 + stat.kpa[stat.id[idx]],    // it fails to compile without the zero!
-        0 + tmp[stat.ij[idx]] // ditto
-      ) / si::cubic_metres, thrust_real_t(1)/thrust_real_t(3))); 
-    }
-  };
-
-  // nested class: the ODE system to be solved to update super-droplet sizes
-  private: 
-  template <class algo, class xi>
-  class ode_xi : public ode_algo<algo>
-  { 
-    // nested functor
-    private: 
-    class drop_growth_equation : public xi
-    {
-      // private fields
-      private: const SD_stat &stat;
-
-      // ctor
-      public: drop_growth_equation(const SD_stat &stat) : stat(stat) {}
-
-      // overloaded () operator invoked by thrust::transform()
-      public: thrust_real_t operator()(thrust_size_t id)
-      {
-        return 0;
-        //return this->dxidrw(this->rw(stat.xi[id]));
-        //  * Maxwell-Mason;
-      }
-    };
-
-    // private fields
-    private: SD_stat &stat;
-    private: const SD_envi &envi;
-    thrust::device_vector<thrust_real_t> &tmp;
-
-    // ctor
-    public: ode_xi(
-      SD_stat &stat,
-      const SD_envi &envi,
-      thrust::device_vector<thrust_real_t> &tmp
-    ) : stat(stat), envi(envi), tmp(tmp)
-    {}
-
-    // cannot be placed in the constructor as at that time the initial values were not loaded yet to psi
-    void init()
-    {
-      // initialising the wet radii (xi variable) to equilibrium values
-      thrust::counting_iterator<thrust_size_t> iter(0);
-      thrust::for_each(iter, iter + stat.n_part, equil<xi>(stat, envi, tmp));
-    }
-  
-    // overloaded () operator invoked by odeint
-    public: void operator()(
-      const thrust::device_vector<thrust_real_t>&, 
-      thrust::device_vector<thrust_real_t> &dxi_dt, 
-      const thrust_real_t 
-    )
-    {
-      thrust::counting_iterator<thrust_size_t> iter(0);
-      thrust::transform(
-        iter, iter + stat.n_part, 
-        dxi_dt.begin(), 
-        drop_growth_equation(stat)
-      );
-    }
-  };
 
   // nested functor: RNG
   private: class rng {
@@ -738,7 +362,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   }
 
   // computing diagnostics
-  private: void sd_diag(ptr_vector<mtx::arr<real_t>> &aux)
+  private: void sd_diag(ptr_map<string, mtx::arr<real_t>> &aux)
   {
     // calculating super-droplet concentration (per grid cell)
     {
@@ -755,7 +379,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
         tmp_long.begin()
       );
       // writing to aux
-      mtx::arr<real_t> &sd_conc = aux[this->par.idx_sd_conc];
+      mtx::arr<real_t> &sd_conc = *(aux.find("sd_conc")->second);
       sd_conc(sd_conc.ijk) = real_t(0); // as some grid cells could be void of particles
       thrust::counting_iterator<thrust_size_t> iter(0);
       thrust::for_each(iter, iter + (n.first - diag.M_ij.begin()), copy_from_device(
@@ -781,7 +405,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
         tmp_long.begin()
       );
       // writing to aux
-      mtx::arr<real_t> &n_tot = aux[this->par.idx_n_tot];
+      mtx::arr<real_t> &n_tot = *(aux.find("n_tot")->second);
       n_tot(n_tot.ijk) = real_t(0); // as some grid cells could be void of particles
       thrust::counting_iterator<thrust_size_t> iter(0);
       thrust::for_each(iter, iter + (n.first - diag.M_ij.begin()), copy_from_device( 
@@ -795,8 +419,8 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       // nested functor
       class n_ccn_iterator
       {
-        private: const SD_stat &stat;
-        public: n_ccn_iterator(const SD_stat &stat) : stat(stat) {}
+        private: const sdm::stat_t<real_t> &stat;
+        public: n_ccn_iterator(const sdm::stat_t<real_t> &stat) : stat(stat) {}
         public: thrust_size_t operator()(const thrust_size_t id) const
         {
           return stat.xi[id] > 500e-9  // TEMP!!!! temporarily it works only for xi_id!!
@@ -821,7 +445,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
         tmp_long.begin()
       );
       // writing to aux
-      mtx::arr<real_t> &n_ccn = aux[this->par.idx_n_ccn];
+      mtx::arr<real_t> &n_ccn = *(aux.find("n_ccn")->second);
       n_ccn(n_ccn.ijk) = real_t(0); // as some grid cells could be void of particles
       thrust::counting_iterator<thrust_size_t> iter(0);
       thrust::for_each(iter, iter + (n.first - diag.M_ij.begin()), copy_from_device( 
@@ -873,13 +497,13 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   private: const grd<real_t> &grid;
 
   // private fields for ODE machinery
-  private: unique_ptr<ode> F_xy;
-  private: unique_ptr<ode> F_xi; 
+  private: unique_ptr<sdm::ode<real_t>> F_xy;
+  private: unique_ptr<sdm::ode<real_t>> F_xi; 
 
   // private fields with super droplet structures
-  private: SD_stat stat;
-  private: SD_envi envi;
-  private: SD_diag diag;
+  private: sdm::stat_t<real_t> stat;
+  private: sdm::envi_t<real_t> envi;
+  private: sdm::diag_t<real_t> diag;
 
   // private field with temporary space
   thrust::device_vector<thrust_size_t> tmp_long; // e.g. for particle concentrations
@@ -888,18 +512,16 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   public: void adjustments(
     int n, // TODO: mo¿e jednak bez n...
     vector<ptr_vector<mtx::arr<real_t>>> &psi,
-    ptr_vector<mtx::arr<real_t>> &aux, 
+    ptr_map<string, mtx::arr<real_t>> &aux, 
     const ptr_vector<mtx::arr<real_t>> C,
     const quantity<si::time, real_t> dt
   ) 
   {
     const mtx::arr<real_t>
-      &rhod = aux[this->par.idx_rhod];
+      &rhod = *(aux.find("rhod")->second);
     mtx::arr<real_t>
       &rhod_th = psi[this->par.idx_rhod_th][n],
       &rhod_rv = psi[this->par.idx_rhod_rv][n];
-      //&rhod_rl = psi[this->par.idx_rhod_rl][n],
-      //&rhod_rr = psi[this->par.idx_rhod_rr][n],
 
     //assert(sd_conc.lbound(mtx::k) == sd_conc.ubound(mtx::k)); // 2D
 

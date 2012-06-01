@@ -52,10 +52,10 @@ class eqs_shallow_water : public eqs<real_t>
   { 
     private: struct params *par;
     private: quantity<si::length, real_t> dxy;
-    private: int idx_dHdxy;
+    private: string idx_dHdxy;
 
     // ctor
-    public: forcings(params &par, quantity<si::length, real_t> dxy, int idx_dHdxy) : 
+    public: forcings(params &par, quantity<si::length, real_t> dxy, string idx_dHdxy) : 
       par(&par), dxy(dxy), idx_dHdxy(idx_dHdxy) 
     {
       assert((di == 0 && dj == 1) || (di == 1 && dj == 0));
@@ -63,7 +63,7 @@ class eqs_shallow_water : public eqs<real_t>
 
     public: void explicit_part(
       mtx::arr<real_t> &R, 
-      const ptr_vector<mtx::arr<real_t>> &aux,
+      const ptr_map<string, mtx::arr<real_t>> &aux,
       const mtx::arr<real_t> * const * const psi,
       const quantity<si::time, real_t> 
     ) 
@@ -79,6 +79,7 @@ class eqs_shallow_water : public eqs<real_t>
       ///
       /// momentum eq. plus u times mass continuity equation:
       /// \f$ \partial_t (uh)  + \nabla_z (uh) = -g h \nabla_z \eta \f$
+      const mtx::arr<real_t> &dHdxy(*(aux.find(idx_dHdxy)->second));
       R(R.ijk) -= 
         phc::g<real_t>() * par->h_unit * par->h_unit * si::seconds / par->q_unit / si::metres *
         ((*psi[par->idx_h])(R.ijk)) *
@@ -88,7 +89,7 @@ class eqs_shallow_water : public eqs<real_t>
             ((*psi[par->idx_h])(mtx::idx_ijk(R.ijk.i - di, R.ijk.j - dj, 0)))
           ) / (real_t(2) * dxy / si::metres)
           + 
-          aux[idx_dHdxy](mtx::idx_ijk(R.ijk.i, R.ijk.j, 0)) 
+          dHdxy(mtx::idx_ijk(R.ijk.i, R.ijk.j, 0)) 
         );
     };
   };
@@ -105,25 +106,26 @@ class eqs_shallow_water : public eqs<real_t>
     par.dHdxy_unit = 1;
 
     // topography derivatives
-    int idx_dHdx = -1, idx_dHdy = -1; 
     {   
       if (grid.nx() != 1)
       {   
-        this->aux.push_back(new struct eqs<real_t>::axv({
+        struct eqs<real_t>::axv* tmp = 
+          new struct eqs<real_t>::axv({
           "dHdx", "spatial derivative of the topography (X)", this->quan2str(par.dHdxy_unit),
           typename eqs<real_t>::invariable(true),
           vector<int>({0, 0, 1}) // dimspan
-        }));
-        idx_dHdx = this->aux.size() - 1;
+        });
+        this->aux["dHdx"] = *tmp; // TODO: rewrite with ptr_map_insert!
       }   
       if (grid.ny() != 1)
       {   
-        this->aux.push_back(new struct eqs<real_t>::axv({
+        struct eqs<real_t>::axv* tmp = 
+          new struct eqs<real_t>::axv({
           "dHdy", "spatial derivative of the topograpy (Y)", this->quan2str(par.dHdxy_unit),
           typename eqs<real_t>::invariable(true),
           vector<int>({0, 0, 1}) // dimspan
-        }));
-        idx_dHdy = this->aux.size() - 1;
+        });
+        this->aux["dHdy"] = *tmp; // TODO: rewrite with ptr_map_insert!
       }
     }
 
@@ -136,7 +138,7 @@ class eqs_shallow_water : public eqs<real_t>
         eqs<real_t>::positive_definite(false),
         vector<int>({1, 0, 0})
       }));
-      this->sys.back().rhs_terms.push_back(new forcings<1,0>(par, grid.dx(), idx_dHdx)); 
+      this->sys.back().rhs_terms.push_back(new forcings<1,0>(par, grid.dx(), "dHdx")); 
     }
 
     /// momentum equation for y
@@ -148,7 +150,7 @@ class eqs_shallow_water : public eqs<real_t>
         eqs<real_t>::positive_definite(false),
         vector<int>({0, 1, 0})
       }));
-      this->sys.back().rhs_terms.push_back(new forcings<0,1>(par, grid.dy(), idx_dHdy)); 
+      this->sys.back().rhs_terms.push_back(new forcings<0,1>(par, grid.dy(), "dHdy")); 
     }
 
     /// The mass continuity equation for a column of height \f$ h = \eta - \eta_0 \f$ of a constant-density fluid:

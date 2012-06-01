@@ -14,13 +14,13 @@
 #  include "grd.hpp"
 
 template <typename real_t>
-class eqs_todo : public eqs<real_t> 
+class eqs_todo : public eqs<real_t>  // TODO: rename to moist?
 {
   // nested class (well... struct)
   protected: struct params
   {
     quantity<si::mass_density, real_t> rho_unit;
-    int idx_rhod, idx_rhod_rv, idx_rhod_th;
+    int idx_rhod_rv, idx_rhod_th;
   };
 
   // ctor
@@ -29,12 +29,14 @@ class eqs_todo : public eqs<real_t>
     par->rho_unit = 1 * si::kilograms / si::cubic_metres;
 
     // auxiliary variable
-    this->aux.push_back(new struct eqs<real_t>::axv({
-      "rhod", "dry air density", this->quan2str(par->rho_unit),
-      typename eqs<real_t>::invariable(true),
-      vector<int>({0, 0, 0})
-    }));
-    par->idx_rhod = this->aux.size() - 1;
+    {
+      struct eqs<real_t>::axv *tmp = new struct eqs<real_t>::axv({
+        "rhod", "dry air density", this->quan2str(par->rho_unit),
+        typename eqs<real_t>::invariable(true),
+        vector<int>({0, 0, 0})
+      });
+      this->aux["rhod"] = *tmp; // TODO: rewrite with ptr_map_insert!
+    }
 
     // eg. eqn 1b in Szumowski, Grabowski & Ochs 1998, Atmos. Res.
     // cf. eqn 3.55 in the Jacobson's Fundamentals of Atmos. Modelling (2nd edn, 2005)

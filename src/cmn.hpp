@@ -94,5 +94,9 @@ typedef multiply_typeof_helper<
 #  include <boost/ptr_container/ptr_vector.hpp>
 using boost::ptr_vector;
 using boost::nullable;
+#  include <boost/ptr_container/ptr_map.hpp>
+using boost::ptr_map;
+#  include <boost/assign/ptr_map_inserter.hpp>
+using boost::assign::ptr_map_insert;
 
 #endif

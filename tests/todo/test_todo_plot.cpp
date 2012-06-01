@@ -128,10 +128,10 @@ int main()
 
 //  gp << "set term png enhanced size 800,800" << endl;
 //  gp << "set term postscript size 36cm,12cm solid enhanced color" << endl;
-  gp << "set term postscript size 24cm,24cm solid enhanced color" << endl;
+  gp << "set term postscript size 36cm,24cm solid enhanced color" << endl;
 //    gp << "set output 'tmp/test_" << zeropad(t) << ".png'" << endl;
     gp << "set output 'tmp/test_" << zeropad(t) << ".ps'" << endl;
-    gp << "set multiplot layout 2,2" << endl;
+    gp << "set multiplot layout 3,2" << endl;
 //    gp << "set multiplot layout 1,3" << endl;
 
     gp << "set title 'water vapour mixing ratio [g/kg]'" << endl;
@@ -155,6 +155,7 @@ int main()
     //gp.sendBinary(th);
 
 
+/*
     gp << "set title 'liquid water mixing ratio [g/kg]'" << endl;
     gp << "set cbrange [0:1]" << endl;
     nf.getVar("rhod_rl").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
@@ -175,11 +176,11 @@ int main()
     gp << endl;
     gp.sendBinary(tmp0);
     //gp.sendBinary(tmp0);
+*/
 
 
-/*
     //gp << "set label 'results obtained with icicle - a GPL-ed C++ MPDATA-based solver from University of Warsaw' at screen .98,.02 right" << endl;
-    gp << "set label '8th International Cloud Modeling Workshop 2012: Case 1 (work in progress!)' at screen .02,.02 left" << endl;
+    //gp << "set label '8th International Cloud Modeling Workshop 2012: Case 1 (work in progress!)' at screen .02,.02 left" << endl;
 
     gp << "set title 'super-droplet conc. [1/dx/dy/dz]'" << endl;
     gp << "set cbrange [0:150]" << endl;
@@ -209,7 +210,6 @@ int main()
     gp << endl;
     gp.sendBinary(tmp0);
     //gp.sendBinary(tmp0);
-*/
 
     gp << "unset label" << endl;
     gp << "unset multiplot" << endl;

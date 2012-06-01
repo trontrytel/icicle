@@ -100,15 +100,16 @@ class out_netcdf : public out<real_t>
         }
 
         // auxiliary fields
-        for (int a = 0; a < setup->eqsys->n_auxv(); ++a)
+        typename ptr_map<string, struct eqs<real_t>::axv>::iterator it;
+        for (it=setup->eqsys->auxvars().begin(); it != setup->eqsys->auxvars().end(); it++ )
         {
-          if (setup->eqsys->aux_tobeoutput(a)) 
+          string name = it->first;
+          if (setup->eqsys->aux_tobeoutput(name)) 
           {
             // TODO: assert unique!
-            string name = setup->eqsys->aux_name(a);
             vars[name] = f->addVar(name, ncFloat, sdims); 
-            vars[name].putAtt("unit", setup->eqsys->aux_unit(a));
-            vars[name].putAtt("description", setup->eqsys->aux_desc(a));
+            vars[name].putAtt("unit", setup->eqsys->aux_unit(name));
+            vars[name].putAtt("description", setup->eqsys->aux_desc(name));
           }
         }
 

@@ -40,13 +40,13 @@ class eqs_todo_bulk : public eqs_todo<real_t>
 
     public: void explicit_part(
       mtx::arr<real_t> &Ra,
-      const ptr_vector<mtx::arr<real_t>> &aux,
+      const ptr_map<string, mtx::arr<real_t>> &aux,
       const mtx::arr<real_t> * const * const psi,
       const quantity<si::time, real_t>
       )
     {
       const mtx::arr<real_t>
-        &rhod = aux[par.idx_rhod],
+        &rhod = *(aux.find("rhod")->second),
         &rhod_rl = (*psi[par.idx_rhod_rl]);
 
       assert(min(rhod_rl) >=0);
@@ -70,13 +70,13 @@ class eqs_todo_bulk : public eqs_todo<real_t>
 
     public: void explicit_part(
       mtx::arr<real_t> &Rc,
-      const ptr_vector<mtx::arr<real_t>> &aux,
+      const ptr_map<string, mtx::arr<real_t>> &aux,
       const mtx::arr<real_t> * const * const psi,
       const quantity<si::time, real_t> dt
     )
     {
       const mtx::arr<real_t>
-        &rhod = aux[par.idx_rhod],
+        &rhod = *(aux.find("rhod")->second),
         &rhod_rl = (*psi[par.idx_rhod_rl]),
         &rhod_rr = (*psi[par.idx_rhod_rr]);
 
@@ -101,13 +101,13 @@ class eqs_todo_bulk : public eqs_todo<real_t>
 
     public: void explicit_part(
       mtx::arr<real_t> &Rt,
-      const ptr_vector<mtx::arr<real_t>> &aux,
+      const ptr_map<string, mtx::arr<real_t>> &aux,
       const mtx::arr<real_t> * const * const psi,
       const quantity<si::time, real_t>
     )
     {
       const mtx::arr<real_t>
-        &rhod = aux[par.idx_rhod],
+        &rhod = *(aux.find("rhod")->second),
         &rhod_rr = (*psi[par.idx_rhod_rr]);
 
       assert(min(rhod_rr) >=0);
@@ -178,13 +178,13 @@ class eqs_todo_bulk : public eqs_todo<real_t>
   public: void adjustments(
     int n, // TODO: mo¿e jednak bez n...
     vector<ptr_vector<mtx::arr<real_t>>> &psi,
-    ptr_vector<mtx::arr<real_t>> &aux, 
+    ptr_map<string, mtx::arr<real_t>> &aux, 
     const ptr_vector<mtx::arr<real_t>> C,
     const quantity<si::time, real_t> dt
   ) 
   {
     const mtx::arr<real_t>
-      &rhod = aux[this->par.idx_rhod];
+      &rhod = *(aux.find("rhod")->second);
     mtx::arr<real_t>
       &rhod_th = psi[this->par.idx_rhod_th][n],
       &rhod_rv = psi[this->par.idx_rhod_rv][n],

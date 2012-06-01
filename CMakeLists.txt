@@ -11,9 +11,8 @@ cmake_minimum_required(VERSION 2.6) # for simplified if-constructs
 
 # TODO: -fprofile-use, -fprofile-generate
 set(TMP "-std=c++0x ") # C++11 (name understandable for pre-2011 compilers)
-set(TMP "${TMP} -Wfatal-errors") # stop on first error
 #set(CMAKE_CXX_FLAGS_RELEASE "${TMP} -Ofast -DNDEBUG" CACHE STRING "Release options." FORCE)
-set(CMAKE_CXX_FLAGS_RELEASE "${TMP} -O1 -ffast-math -DNDEBUG" CACHE STRING "Release options." FORCE)
+set(CMAKE_CXX_FLAGS_RELEASE "${TMP} -O1 -ffast-math -DNDEBUG -Wfatal-errors" CACHE STRING "Release options." FORCE)
 set(CMAKE_CXX_FLAGS_DEBUG "${TMP} -DBZ_DEBUG" CACHE STRING "Debug options." FORCE)
 unset(TMP)
 
@@ -101,16 +100,19 @@ icicle_option(LDOUBLE "'long double' type support (compiler-dependent, 80 bits f
 set(tmp "src/icicle.cpp")
 if(NOT FLOAT)
   message(STATUS "Building without float support (-DFLOAT=NO specified)")
+else()
   set(USE_FLOAT TRUE)
   set(tmp "${tmp};src/mdl_flt.cpp")
 endif()
 if(NOT DOUBLE)
   message(STATUS "Building without double support (-DDOUBLE=NO specified)")
+else()
   set(USE_DOUBLE TRUE)
   set(tmp "${tmp};src/mdl_dbl.cpp")
 endif()    
 if(NOT LDOUBLE)
   message(STATUS "Building without long double support (-DLDOUBLE=NO specified)")
+else()
   set(USE_LDOUBLE TRUE)
   set(tmp "${tmp};src/mdl_ldb.cpp")
 endif()

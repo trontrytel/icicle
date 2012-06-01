@@ -182,73 +182,73 @@ class eqs
     invariable(bool is=true) : is(is) {}
   };  
 
-  protected: struct axv {
-    string name, desc, unit;
+  public: struct axv { // TODO: should be private...
+    string name, desc, unit; // TODO: name is already the key
     invariable constant;
     vector<int> dimspan; // TODO: document the meaning of the fourth dimenions
     vector<int> halo; // TODO: ditto
     static const int span = 0;
   };  
   
-  protected: ptr_vector<struct eqs<real_t>::axv> aux;
-  public: ptr_vector<struct eqs<real_t>::axv> &auxvars() { return aux; }
+  protected: ptr_map<string, struct eqs<real_t>::axv> aux;
+  public: ptr_map<string, struct eqs<real_t>::axv> &auxvars() { return aux; } // TODO: should be private!
 
-  public: int n_auxv() { return auxvars().size(); }
+  public: int n_auxv() { return auxvars().size(); } // TODO: is it needed anymore???
 
-  public: mtx::idx aux_shape(int v, const mtx::idx &ijk) 
+  public: mtx::idx aux_shape(const string &v, const mtx::idx &ijk) 
   {
     // sanity checks
-    assert(auxvars().at(v).dimspan.size() >= 3);
-    assert(auxvars().at(v).dimspan.size() >= auxvars().at(v).halo.size());
+    assert(auxvars()[v].dimspan.size() >= 3);
+    assert(auxvars()[v].dimspan.size() >= auxvars()[v].halo.size());
 
     // computing the dimensions
     vector<mtx::rng> xyz(3);
     for (int d = 0; d < 3; ++d) 
     {
-      int halo = auxvars().at(v).halo.size() > d 
-        ? auxvars().at(v).halo[d] 
+      int halo = auxvars()[v].halo.size() > d 
+        ? auxvars()[v].halo[d] 
         : 0;
-      xyz[d] = (auxvars().at(v).dimspan[d] == axv::span) 
+      xyz[d] = (auxvars()[v].dimspan[d] == axv::span) 
         ? mtx::rng(ijk[d].first() - halo, ijk[d].last() + halo)  
-        : mtx::rng(0, auxvars().at(v).dimspan[d] - 1);
+        : mtx::rng(0, auxvars()[v].dimspan[d] - 1);
     }
 
     return mtx::idx_ijk(xyz[0], xyz[1], xyz[2]);
   }
 
-  public: bool aux_const(int v)
+  public: vector<string> aux_names()
   {
-    assert(auxvars().size() > v);
-    return auxvars().at(v).constant.is;
+    vector<string> names;
+    for (const typename ptr_map<string, struct eqs<real_t>::axv>::value_type &axv : aux) names.push_back(axv.first);
+    return names;
+  }
+
+  public: bool aux_const(const string &v)
+  {
+    assert(auxvars().count(v));
+    return auxvars()[v].constant.is;
   } 
 
-  public: bool aux_tobeoutput(int v)
+  public: bool aux_tobeoutput(const string &v)
   {
-    assert(auxvars().size() > v);
+    assert(auxvars().count(v));
     return (!aux_const(v) 
-      && auxvars().at(v).dimspan[0] == axv::span
-      && auxvars().at(v).dimspan[0] == axv::span
-      && auxvars().at(v).dimspan[0] == axv::span);
+      && auxvars()[v].dimspan[0] == axv::span
+      && auxvars()[v].dimspan[0] == axv::span
+      && auxvars()[v].dimspan[0] == axv::span);
   }
 
-  public: string aux_name(int v)
+  public: string aux_desc(const string &v)
   {
-    assert(auxvars().size() > v);
-    return auxvars().at(v).name;
-  } 
-
-  public: string aux_desc(int i)
-  {
-    assert(auxvars().size() > i);
-    return auxvars().at(i).desc;
+    assert(auxvars().count(v));
+    return auxvars()[v].desc;
   }
 
-  public: string aux_unit(int i)
+  public: string aux_unit(const string &v)
   {
-    assert(auxvars().size() > i);
-    return auxvars().at(i).unit;
+    assert(auxvars().count(v));
+    return auxvars()[v].unit;
   }
-
 
   /// @brief allows for post-advection and post-rhs adjustments to the state vector
   ///        (e.g. saturation adjustment in the ,,bulk'' cloud parameterisation
@@ -256,7 +256,7 @@ class eqs
   virtual void adjustments(
     int n,
     vector<ptr_vector<mtx::arr<real_t>>> &psi, // advected fields
-    ptr_vector<mtx::arr<real_t>> &aux, // auxiliary variables
+    ptr_map<string, mtx::arr<real_t>> &aux, // auxiliary variables
     const ptr_vector<mtx::arr<real_t>> C, // Courant number fields
     const quantity<si::time, real_t> dt
   ) {} // no default adjustments

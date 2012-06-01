@@ -62,7 +62,7 @@ class rhs : root
 
   public: virtual void explicit_part(
     mtx::arr<real_t> &R, 
-    const ptr_vector<mtx::arr<real_t>> &aux,
+    const ptr_map<string, mtx::arr<real_t>> &aux,
     const mtx::arr<real_t> * const * const psi, 
     const quantity<si::time, real_t> t
   ) 

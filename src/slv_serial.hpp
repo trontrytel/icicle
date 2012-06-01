@@ -30,7 +30,7 @@ class slv_serial : public slv<real_t>
   private: vector<ptr_vector<mtx::arr<real_t>>> psi;
 
   // auxiliary variables 
-  private: ptr_vector<mtx::arr<real_t>> aux;
+  private: ptr_map<string, mtx::arr<real_t>> aux;
 
   // RHS representations (implicit and explicit parts)
   private: ptr_vector<nullable<mtx::arr<real_t>>> rhs_R, rhs_C;
@@ -107,11 +107,11 @@ class slv_serial : public slv<real_t>
     }
 
     // aux - helper fields
-    for (int a = 0; a < setup->eqsys->n_auxv(); ++a)
+    for (string &name : setup->eqsys->aux_names())
     {
-      aux.push_back(new mtx::arr<real_t>(setup->eqsys->aux_shape(a, ijk)));
-      if (setup->eqsys->aux_const(a)) 
-        setup->intcond->populate_scalar_field(setup->eqsys->aux_name(a), aux[a].ijk, aux[a]);
+      ptr_map_insert<mtx::arr<real_t>>(aux)(name, setup->eqsys->aux_shape(name, ijk));
+      if (setup->eqsys->aux_const(name)) 
+        setup->intcond->populate_scalar_field(name, aux.find(name)->second->ijk, *(aux.find(name)->second));
     }
 
     // helper vars for calculating velocities
@@ -199,9 +199,9 @@ class slv_serial : public slv<real_t>
   {
     for (int e = 0; e < setup->eqsys->n_vars(); ++e)
       output->record(setup->eqsys->var_name(e), psi[e][n], ijk, t);
-    for (int a = 0; a < setup->eqsys->n_auxv(); ++a) 
-      if (setup->eqsys->aux_tobeoutput(a))
-        output->record(setup->eqsys->aux_name(a), aux[a], ijk, t);
+    for (string &name : setup->eqsys->aux_names())
+      if (setup->eqsys->aux_tobeoutput(name))
+        output->record(name, *(aux.find(name)->second), ijk, t);
   }
 
   public: typename mtx::arr<real_t>::type data(int e, int n, const mtx::idx &idx)
