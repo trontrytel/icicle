@@ -18,7 +18,9 @@ class slv_parallel_threads : public slv_parallel<real_t>
   private: unique_ptr<boost::barrier> b; 
   private: int nsd;
 
-  public: slv_parallel_threads(stp<real_t> *setup, out<real_t> *output,
+  public: slv_parallel_threads(
+    const stp<real_t> &setup,
+    out<real_t> &output,
     int i_min, int i_max,  
     int j_min, int j_max,  
     int k_min, int k_max,  

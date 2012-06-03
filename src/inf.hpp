@@ -20,7 +20,7 @@
 #  include <unistd.h> // getlogin
 
 /// @brief a facility for gathering simulation info - timing, compiler configurration, etc
-class inf : root
+class inf 
 {
 #  ifdef USE_BOOST_TIMER
   private: boost::timer::cpu_timer tmr;

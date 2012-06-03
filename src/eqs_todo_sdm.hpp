@@ -362,7 +362,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   }
 
   // computing diagnostics
-  private: void sd_diag(ptr_map<string, mtx::arr<real_t>> &aux)
+  private: void sd_diag(ptr_unordered_map<string, mtx::arr<real_t>> &aux)
   {
     // calculating super-droplet concentration (per grid cell)
     {
@@ -379,7 +379,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
         tmp_long.begin()
       );
       // writing to aux
-      mtx::arr<real_t> &sd_conc = *(aux.find("sd_conc")->second);
+      mtx::arr<real_t> &sd_conc = aux.at("sd_conc");
       sd_conc(sd_conc.ijk) = real_t(0); // as some grid cells could be void of particles
       thrust::counting_iterator<thrust_size_t> iter(0);
       thrust::for_each(iter, iter + (n.first - diag.M_ij.begin()), copy_from_device(
@@ -405,7 +405,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
         tmp_long.begin()
       );
       // writing to aux
-      mtx::arr<real_t> &n_tot = *(aux.find("n_tot")->second);
+      mtx::arr<real_t> &n_tot = aux.at("n_tot");
       n_tot(n_tot.ijk) = real_t(0); // as some grid cells could be void of particles
       thrust::counting_iterator<thrust_size_t> iter(0);
       thrust::for_each(iter, iter + (n.first - diag.M_ij.begin()), copy_from_device( 
@@ -445,7 +445,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
         tmp_long.begin()
       );
       // writing to aux
-      mtx::arr<real_t> &n_ccn = *(aux.find("n_ccn")->second);
+      mtx::arr<real_t> &n_ccn = aux.at("n_ccn");
       n_ccn(n_ccn.ijk) = real_t(0); // as some grid cells could be void of particles
       thrust::counting_iterator<thrust_size_t> iter(0);
       thrust::for_each(iter, iter + (n.first - diag.M_ij.begin()), copy_from_device( 
@@ -512,13 +512,13 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   public: void adjustments(
     int n, // TODO: mo¿e jednak bez n...
     vector<ptr_vector<mtx::arr<real_t>>> &psi,
-    ptr_map<string, mtx::arr<real_t>> &aux, 
+    ptr_unordered_map<string, mtx::arr<real_t>> &aux, 
     const ptr_vector<mtx::arr<real_t>> C,
     const quantity<si::time, real_t> dt
   ) 
   {
     const mtx::arr<real_t>
-      &rhod = *(aux.find("rhod")->second);
+      &rhod = aux.at("rhod");
     mtx::arr<real_t>
       &rhod_th = psi[this->par.idx_rhod_th][n],
       &rhod_rv = psi[this->par.idx_rhod_rv][n];

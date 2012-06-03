@@ -190,8 +190,8 @@ class eqs
     static const int span = 0;
   };  
   
-  protected: ptr_map<string, struct eqs<real_t>::axv> aux;
-  public: ptr_map<string, struct eqs<real_t>::axv> &auxvars() { return aux; } // TODO: should be private!
+  protected: ptr_unordered_map<string, struct eqs<real_t>::axv> aux;
+  public: ptr_unordered_map<string, struct eqs<real_t>::axv> &auxvars() { return aux; } // TODO: should be private!
 
   public: int n_auxv() { return auxvars().size(); } // TODO: is it needed anymore???
 
@@ -219,7 +219,7 @@ class eqs
   public: vector<string> aux_names()
   {
     vector<string> names;
-    for (const typename ptr_map<string, struct eqs<real_t>::axv>::value_type &axv : aux) names.push_back(axv.first);
+    for (const typename ptr_unordered_map<string, struct eqs<real_t>::axv>::value_type &axv : aux) names.push_back(axv.first);
     return names;
   }
 
@@ -256,7 +256,7 @@ class eqs
   virtual void adjustments(
     int n,
     vector<ptr_vector<mtx::arr<real_t>>> &psi, // advected fields
-    ptr_map<string, mtx::arr<real_t>> &aux, // auxiliary variables
+    ptr_unordered_map<string, mtx::arr<real_t>> &aux, // auxiliary variables
     const ptr_vector<mtx::arr<real_t>> C, // Courant number fields
     const quantity<si::time, real_t> dt
   ) {} // no default adjustments

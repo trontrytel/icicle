@@ -19,7 +19,7 @@
 /// @brief A simple container for storing simulation set-up elements, i.e.
 ///        advection scheme, velocity field, initial condition, grid, equation system, etc
 template <typename real_t>
-struct stp : root
+struct stp 
 {
   adv<real_t> *advsch;
   vel<real_t> *velocity;

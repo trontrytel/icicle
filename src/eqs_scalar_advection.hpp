@@ -9,7 +9,7 @@
 #ifndef EQS_SCALAR_ADVECTION_HPP
 #  define EQS_SCALAR_ADVECTION_HPP
 
-#  include "cmn.hpp" // root class, error reporting
+#  include "cmn.hpp" 
 #  include "eqs.hpp"
 
 /// @brief the simplest equation system consisting of a single homogeneous transport equation

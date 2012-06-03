@@ -23,14 +23,17 @@ inline void opt_slv_desc(po::options_description &desc)
 }
 
 template <typename real_t>
-slv<real_t> *opt_slv(const po::variables_map& vm, stp<real_t> *setup, out<real_t> *output)
+slv<real_t> *opt_slv(
+  const po::variables_map &vm, 
+  const stp<real_t> &setup, 
+  out<real_t> &output)
 {
   string slvtype = vm.count("slv") ? vm["slv"].as<string>() : "<unspecified>";
   if (slvtype == "serial")
     return new slv_parallel_serial<real_t>(setup, output,
-      0, setup->grid->nx() - 1, 
-      0, setup->grid->ny() - 1, 
-      0, setup->grid->nz() - 1
+      0, setup.grid->nx() - 1, 
+      0, setup.grid->ny() - 1, 
+      0, setup.grid->nz() - 1
     );
   else if (slvtype != "<unspecified>")
   {
@@ -39,9 +42,9 @@ slv<real_t> *opt_slv(const po::variables_map& vm, stp<real_t> *setup, out<real_t
 #  ifdef _OPENMP
     if (slvtype == "openmp")
       return new slv_parallel_openmp<real_t>(setup, output,
-        0, setup->grid->nx() - 1,  
-        0, setup->grid->ny() - 1, 
-        0, setup->grid->nz() - 1,  
+        0, setup.grid->nx() - 1,  
+        0, setup.grid->ny() - 1, 
+        0, setup.grid->nz() - 1,  
         nsd
       );
     else
@@ -49,9 +52,9 @@ slv<real_t> *opt_slv(const po::variables_map& vm, stp<real_t> *setup, out<real_t
 #  ifdef USE_BOOST_THREAD
     if (slvtype == "threads")
       return new slv_parallel_threads<real_t>(setup, output,
-        0, setup->grid->nx() - 1, 
-        0, setup->grid->ny() - 1, 
-        0, setup->grid->nz() - 1, 
+        0, setup.grid->nx() - 1, 
+        0, setup.grid->ny() - 1, 
+        0, setup.grid->nz() - 1, 
         nsd
       );
     else

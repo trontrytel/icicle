@@ -26,7 +26,7 @@ void mdl(const po::variables_map &vm, const string &cmdline)
 
   // advection scheme choice
   cerr << "-- init: parsing options: adv..." << endl;
-  unique_ptr<adv<real_t>> advsch(opt_adv<real_t>(vm, grid.get()));
+  unique_ptr<adv<real_t>> advsch(opt_adv<real_t>(vm));
 
   // velocity field choice
   cerr << "-- init: parsing options: vel..." << endl;
@@ -52,11 +52,11 @@ void mdl(const po::variables_map &vm, const string &cmdline)
 
   // output choice
   cerr << "-- init: parsing options: out..." << endl;
-  unique_ptr<out<real_t>> output(opt_out<real_t>(vm, setup.get(), cmdline));
+  unique_ptr<out<real_t>> output(opt_out<real_t>(vm, *setup, cmdline));
 
   // solver choice
   cerr << "-- init: parsing options: slv..." << endl;
-  unique_ptr<slv<real_t>> solver(opt_slv(vm, setup.get(), output.get()));
+  unique_ptr<slv<real_t>> solver(opt_slv(vm, *setup, *output));
 
   // integration
   cerr << "-- init: parsing options: done." << endl;

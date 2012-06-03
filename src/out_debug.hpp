@@ -22,7 +22,7 @@ class out_debug : public out<real_t>
     const mtx::arr<real_t> &psi,
     const mtx::idx &ijk, 
     const unsigned long t
-  ) 
+  )
   {
     assert(name == "psi"); // TODO
     std::ostringstream tmp;

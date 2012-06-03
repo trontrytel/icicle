@@ -39,10 +39,9 @@ class adv_mpdata : public adv_upstream<real_t>
 
   private: int iord;
   private: bool cross_terms, third_order;
-  private: grd_arakawa_c_lorenz<real_t> *grid;
 
-  public: adv_mpdata(grd_arakawa_c_lorenz<real_t> *grid, int iord, bool cross_terms, bool third_order) // TODO: enums?
-    : iord(iord), cross_terms(cross_terms), third_order(third_order), grid(grid), adv_upstream<real_t>(grid)
+  public: adv_mpdata(int iord, bool cross_terms, bool third_order) // TODO: enums?
+    : iord(iord), cross_terms(cross_terms), third_order(third_order), adv_upstream<real_t>()
   {
     if (iord <= 0) error_macro("iord (the number of iterations) must be > 0")
     if (iord < 3 && third_order) warning_macro("third-order accuracy needs iord >= 3")
@@ -70,7 +69,6 @@ class adv_mpdata : public adv_upstream<real_t>
         const mtx::rng &i, 
         const mtx::rng &j, 
         const mtx::rng &k, 
-        const grd_arakawa_c_lorenz<real_t> &grid,
         int cross_terms,
         int iord, int step
       ) :
@@ -83,10 +81,10 @@ class adv_mpdata : public adv_upstream<real_t>
         jm(j.first() - iord_halo_yz, j.last() + iord_halo_yz), 
         km(k.first() - iord_halo_yz, k.last() + iord_halo_yz),
         ir(im + 1),           // right
-        ic(im + grid.p_half), // center
+        ic(im + static_rational<1,2>()), // center
         il(im),               // left
         adfidx(
-          mtx::rng(i.first() - grid.m_half - iord_halo_x, i.last() + grid.p_half + iord_halo_x),
+          mtx::rng((i - static_rational<1,2>()).first() - iord_halo_x, (i + static_rational<1,2>()).last() + iord_halo_x),
           jm, 
           km
         ),
@@ -98,14 +96,14 @@ class adv_mpdata : public adv_upstream<real_t>
         im_jm_km(im, jm, km),
         imp1_jm_km(im+1, jm, km),
         imp2_jm_km(im+2, jm, km),
-        il_jm_kmmh(il, jm, km - grid.m_half),
-        ir_jm_kmmh(ir, jm, km - grid.m_half),
-        il_jm_kmph(il, jm, km + grid.p_half),
-        ir_jm_kmph(ir, jm, km + grid.p_half),
-        il_jmmh_km(il, jm - grid.m_half, km),
-        ir_jmmh_km(ir, jm - grid.m_half, km),
-        il_jmph_km(il, jm + grid.p_half, km),
-        ir_jmph_km(ir, jm + grid.p_half, km),
+        il_jm_kmmh(il, jm, km - static_rational<1,2>()),
+        ir_jm_kmmh(ir, jm, km - static_rational<1,2>()),
+        il_jm_kmph(il, jm, km + static_rational<1,2>()),
+        ir_jm_kmph(ir, jm, km + static_rational<1,2>()),
+        il_jmmh_km(il, jm - static_rational<1,2>(), km),
+        ir_jmmh_km(ir, jm - static_rational<1,2>(), km),
+        il_jmph_km(il, jm + static_rational<1,2>(), km),
+        ir_jmph_km(ir, jm + static_rational<1,2>(), km),
         imp1_jmm1_kmm1(im + 1, jm - 1, km - 1),
         imp1_jmp1_kmm1(im + 1, jm + 1, km - 1),
         im_jmm1_kmm1(im, jm - 1, km - 1),
@@ -143,20 +141,19 @@ class adv_mpdata : public adv_upstream<real_t>
     // ctor
     public: op3D(
       const mtx::idx &ijk, 
-      const grd_arakawa_c_lorenz<real_t> &grid, 
       mtx::arr<real_t> **tmp_s,
       mtx::arr<real_t> **tmp_v,
       int cross_terms, int iord, int third_order
     ) :
       adv<real_t>::op3D(ijk),
-      upstream(ijk, grid),
+      upstream(ijk),
       tmp_s(tmp_s), tmp_v(tmp_v), iord(iord), cross_terms(cross_terms), third_order(third_order)
     { 
       for (int step = 1; step <= iord; ++step)
       {
-        indcs_x.push_back(new indices<mtx::idx_ijk>(ijk.i, ijk.j, ijk.k, grid, cross_terms, iord, step));
-        indcs_y.push_back(new indices<mtx::idx_jki>(ijk.j, ijk.k, ijk.i, grid, cross_terms, iord, step)); 
-        indcs_z.push_back(new indices<mtx::idx_kij>(ijk.k, ijk.i, ijk.j, grid, cross_terms, iord, step));
+        indcs_x.push_back(new indices<mtx::idx_ijk>(ijk.i, ijk.j, ijk.k, cross_terms, iord, step));
+        indcs_y.push_back(new indices<mtx::idx_jki>(ijk.j, ijk.k, ijk.i, cross_terms, iord, step)); 
+        indcs_z.push_back(new indices<mtx::idx_kij>(ijk.k, ijk.i, ijk.j, cross_terms, iord, step));
       }
     } 
 
@@ -391,9 +388,9 @@ class adv_mpdata : public adv_upstream<real_t>
   )
   {
     if (positive_definite)
-      return new op3D<aon_nil>(ijk, *grid, tmp_s, tmp_v, cross_terms, iord, third_order);
+      return new op3D<aon_nil>(ijk, tmp_s, tmp_v, cross_terms, iord, third_order);
     else
-      return new op3D<aon_abs>(ijk, *grid, tmp_s, tmp_v, cross_terms, iord, third_order);
+      return new op3D<aon_abs>(ijk, tmp_s, tmp_v, cross_terms, iord, third_order);
   }
     // TODO: make it an option for the constructor (and recode with functors)
 #    ifdef MPDATA_FRAC_EPSILON

@@ -14,7 +14,7 @@
 
 /// @brief base class for grids
 template<typename real_t>
-class grd : root
+class grd
 {
   public: virtual const quantity<si::length, real_t> dx() const = 0;
   public: virtual const quantity<si::length, real_t> dy() const = 0;

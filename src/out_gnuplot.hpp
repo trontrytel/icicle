@@ -23,9 +23,10 @@ class out_gnuplot : public out<real_t>
   private: unsigned long t_last;
   private: int i_last;
   private: bool steps;
-  private: grd<real_t> *grid;
+  private: const grd<real_t> &grid;
 
-  public: out_gnuplot(grd<real_t> *grid, string usng) 
+  // ctor
+  public: out_gnuplot(const grd<real_t> &grid, string usng) 
     : t_last(-1), i_last(-1), grid(grid)
   { 
     if (usng == "1:-2:2") steps = true;
@@ -67,11 +68,11 @@ class out_gnuplot : public out<real_t>
     {
       if (steps)
         std::cout 
-          << real_t((grid->x(ii,0,0) - real_t(.5) * grid->dx()) / si::metres) // TODO: this assumes x 
+          << real_t((grid.x(ii,0,0) - real_t(.5) * grid.dx()) / si::metres) // TODO: this assumes x 
           << "\t"
           << *(psi)(idx(mtx::rng(ii,ii), mtx::rng(0,0), mtx::rng(0,0))).dataFirst() 
           << std::endl
-          << real_t((grid->x(ii,0,0) + real_t(.5) * grid->dx()) / si::metres) // TODO: this assumes x
+          << real_t((grid.x(ii,0,0) + real_t(.5) * grid.dx()) / si::metres) // TODO: this assumes x
           << "\t"
           << *(psi)(idx(mtx::rng(ii,ii), mtx::rng(0,0), mtx::rng(0,0))).dataFirst() 
           << std::endl;

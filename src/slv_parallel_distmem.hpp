@@ -56,12 +56,17 @@ class slv_parallel_distmem : public shrdmem_class
   private: int i_min(int nx, int rank, int size) { return (rank + 0) * nx / size; }
   private: int i_max(int nx, int rank, int size) { return i_min(nx, rank + 1, size) - 1; }
 
-  public: slv_parallel_distmem(stp<real_t> *setup, out<real_t> *output,
-    int size, int rank)
+  // ctor
+  public: slv_parallel_distmem(
+    const stp<real_t> &setup, 
+    out<real_t> &output,
+    int size, 
+    int rank
+  )
     : shrdmem_class(setup, output,
-      i_min(setup->grid->nx(), rank, size), i_max(setup->grid->nx(), rank, size), 
-      0, setup->grid->ny() - 1,
-      0, setup->grid->nz() - 1,
+      i_min(setup.grid->nx(), rank, size), i_max(setup.grid->nx(), rank, size), 
+      0, setup.grid->ny() - 1,
+      0, setup.grid->nz() - 1,
       1 // FIXME: MPI+OpenMP and MPI+threads 
     ), size(size), rank(rank)
   {
@@ -69,35 +74,35 @@ class slv_parallel_distmem : public shrdmem_class
     if (size <= 2) error_macro("at least three subdomains are needed for distmem parallelisations")
 
     // subdomain length
-    int nxs = setup->grid->nx() / size;
-    if (nxs != ((1.*setup->grid->nx()) / (1.*size))) 
-      error_macro("nx/nk must be an integer value (" << setup->grid->nx() << "/" << size << " given)")
+    int nxs = setup.grid->nx() / size;
+    if (nxs != ((1.*setup.grid->nx()) / (1.*size))) 
+      error_macro("nx/nk must be an integer value (" << setup.grid->nx() << "/" << size << " given)")
 
     // halo containers for halo domain (TODO: use some clever Blitz constructor to save memory)
     {
-      int halo = (setup->advsch->stencil_extent() - 1) / 2;
+      int halo = (setup.advsch->stencil_extent() - 1) / 2;
       int peer_left = (size + rank - 1) % size;
       int peer_rght = (size + rank + 1) % size;
 
-      mtx::rng ixr, oxr, yr(0, setup->grid->ny() - 1), zr(setup->grid->nz() - 1);
+      mtx::rng ixr, oxr, yr(0, setup.grid->ny() - 1), zr(setup.grid->nz() - 1);
 
       ixr = mtx::rng( // input xr (halo)
-        (i_min(setup->grid->nx(), rank, size) - halo + setup->grid->nx()) % setup->grid->nx(), 
-        (i_min(setup->grid->nx(), rank, size) - 1    + setup->grid->nx()) % setup->grid->nx()  
+        (i_min(setup.grid->nx(), rank, size) - halo + setup.grid->nx()) % setup.grid->nx(), 
+        (i_min(setup.grid->nx(), rank, size) - 1    + setup.grid->nx()) % setup.grid->nx()  
       );
       oxr = mtx::rng( // output xr (edge)
-        i_min(setup->grid->nx(), rank, size), 
-        i_min(setup->grid->nx(), rank, size) + halo - 1
+        i_min(setup.grid->nx(), rank, size), 
+        i_min(setup.grid->nx(), rank, size) + halo - 1
       );
       lhalo.reset(new slv_halo(this, peer_left, ixr, oxr, yr, zr));
 
       ixr = mtx::rng( // input xr (halo)
-        (i_max(setup->grid->nx(), rank, size) + 1    + setup->grid->nx()) % setup->grid->nx(), 
-        (i_max(setup->grid->nx(), rank, size) + halo + setup->grid->nx()) % setup->grid->nx()
+        (i_max(setup.grid->nx(), rank, size) + 1    + setup.grid->nx()) % setup.grid->nx(), 
+        (i_max(setup.grid->nx(), rank, size) + halo + setup.grid->nx()) % setup.grid->nx()
       );
       oxr = mtx::rng( // output xr (edge)
-        i_max(setup->grid->nx(), rank, size) - halo + 1,
-        i_max(setup->grid->nx(), rank, size)  
+        i_max(setup.grid->nx(), rank, size) - halo + 1,
+        i_max(setup.grid->nx(), rank, size)  
       );
       rhalo.reset(new slv_halo(this, peer_rght, ixr, oxr, yr, zr));
     }

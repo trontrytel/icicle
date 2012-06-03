@@ -13,7 +13,7 @@
 #  include "grd.hpp"
 
 template <typename real_t>
-class tmp : root
+class tmp 
 {
   private: unique_ptr<mtx::arr<real_t> > *sclr_guard;
   public: mtx::arr<real_t> **sclr;

@@ -74,13 +74,13 @@ class eqs_isentropic : public eqs<real_t>
     // method
     public: void explicit_part(
       mtx::arr<real_t> &R, 
-      const ptr_map<string, mtx::arr<real_t>> &aux,
+      const ptr_unordered_map<string, mtx::arr<real_t>> &aux,
       const mtx::arr<real_t> * const * const psi,
       const quantity<si::time, real_t> t
     )
     {
-      const mtx::arr<real_t> &p = *(aux.find("p")->second); 
-      const mtx::arr<real_t> &M = *(aux.find("M")->second);
+      const mtx::arr<real_t> &p = aux.at("p"); 
+      const mtx::arr<real_t> &M = aux.at("M");
       const mtx::rng &ii = p.ijk.i, &jj = p.ijk.j;
 
       // calculating pressures at the surfaces (done once per timestep)
@@ -111,7 +111,7 @@ class eqs_isentropic : public eqs<real_t>
             );
         else 
         {
-          const mtx::arr<real_t> &dtheta(*(aux.find("dtheta")->second));
+          const mtx::arr<real_t> &dtheta(aux.at("dtheta"));
           M(M.ijk) += phc::c_pd<real_t>() * real_t(phc::exner<real_t>(par->p_unit))
             / par->M_unit * si::kelvins * // to make it dimensionless
             (dtheta(mtx::idx_ijk(lev - 1)))(0,0,0) * // TODO: nicer syntax needed!
@@ -125,7 +125,7 @@ class eqs_isentropic : public eqs<real_t>
       }
 
       // eq. (6) in Szmelter & Smolarkiewicz 2011, Computers & Fluids
-      const mtx::arr<real_t> &dHdxy(*(aux.find(idx_dHdxy)->second));
+      const mtx::arr<real_t> &dHdxy(aux.at(idx_dHdxy));
       R(R.ijk) -= 
         par->M_unit * par->p_unit / si::metres * // real units of the rhs
         si::seconds / par->q_unit * // inv. unit of R (to get a dimensionless forcing)

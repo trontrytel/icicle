@@ -1,7 +1,7 @@
 /** @file
  *  @author Sylwester Arabas <slayoo@igf.fuw.edu.pl>
  *  @copyright University of Warsaw
- *  @date November 2011
+ *  @date November 2011 - June 2012
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
@@ -96,8 +96,6 @@ using blitz::where;
     assert(isfinite(sum(a11))); \
     return blitz::safeToReturn(expr); \
   }
-
-#  undef guard
 
 namespace mtx
 {
@@ -228,4 +226,9 @@ namespace mtx
     }
   };
 };
+
+// Arakawa-C staggered grid helpers
+inline mtx::rng operator+(const mtx::rng &i, const static_rational<1,2>&) { return i + 1; }
+inline mtx::rng operator-(const mtx::rng &i, const static_rational<1,2>&) { return i; }
+
 #endif

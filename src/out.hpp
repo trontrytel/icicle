@@ -12,7 +12,7 @@
 #  include "mtx.hpp" 
 
 template <typename real_t>
-class out : root
+class out 
 {
   public: virtual void record( 
     const string &name,

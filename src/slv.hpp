@@ -8,11 +8,11 @@
 #ifndef SLV_HPP
 #  define SLV_HPP
 
-#  include "cmn.hpp" // root class, error reporting
+#  include "cmn.hpp" 
 #  include "adv.hpp"
 
 template <typename real_t>
-class slv : root
+class slv 
 {
   // left->i_min, rght->i_max, fore->j_min, hind->j_max, base->k_min, apex->k_max (enums may not be ++)
   // TODO: would using C++11 enum functionalities help in anyway??

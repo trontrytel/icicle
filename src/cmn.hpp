@@ -48,9 +48,6 @@ using netCDF::NcDim;
 using netCDF::ncFloat;
 using netCDF::exceptions::NcException;
 
-// overloading the default d-tor with a virtual one (enforces execution of child d-tors)
-class root { public: virtual ~root() {} }; // TODO: should not be needed!
-
 // error reporting
 #  define error_macro(msg) \
 { \
@@ -74,18 +71,12 @@ using boost::units::divide_typeof_helper;
 using boost::units::power_typeof_helper;
 using boost::units::static_rational;
 
-// TODO: remove all this...
-//typedef boost::units::multiply_typeof_helper<
-//    si::velocity,
-//    si::length
-//  >::type velocity_times_length;
-
-typedef multiply_typeof_helper<
+typedef multiply_typeof_helper< // TODO: get rid of it
     si::velocity,
     si::pressure
   >::type velocity_times_pressure;
 
-typedef multiply_typeof_helper<
+typedef multiply_typeof_helper< // TODO: get rid of it
     si::acceleration,
     si::length
   >::type specific_energy;
@@ -94,8 +85,8 @@ typedef multiply_typeof_helper<
 #  include <boost/ptr_container/ptr_vector.hpp>
 using boost::ptr_vector;
 using boost::nullable;
-#  include <boost/ptr_container/ptr_map.hpp>
-using boost::ptr_map;
+#  include <boost/ptr_container/ptr_unordered_map.hpp>
+using boost::ptr_unordered_map;
 #  include <boost/assign/ptr_map_inserter.hpp>
 using boost::assign::ptr_map_insert;
 

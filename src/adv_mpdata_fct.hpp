@@ -35,10 +35,9 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
 
   private: int iord;
   private: bool cross_terms, third_order;
-  private: grd_arakawa_c_lorenz<real_t> *grid;
-  public: adv_mpdata_fct(grd_arakawa_c_lorenz<real_t> *grid, int iord, bool cross_terms, bool third_order) : 
-    adv_mpdata<real_t>(grid, iord, cross_terms, third_order), 
-    iord(iord), cross_terms(cross_terms), third_order(third_order), grid(grid)
+  public: adv_mpdata_fct(int iord, bool cross_terms, bool third_order) : 
+    adv_mpdata<real_t>(iord, cross_terms, third_order), 
+    iord(iord), cross_terms(cross_terms), third_order(third_order)
   {
     warning_macro("enabling FCT corrections reduces the order of the scheme")
   }
@@ -56,11 +55,11 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
         public: const idx i_j_k, 
           imh_j_k, iph_j_k, i_jmh_k, i_jph_k, i_j_kmh, i_j_kph, 
           im1_j_k, ip1_j_k, i_jm1_k, i_jp1_k, i_j_km1, i_j_kp1;
-        public: beta_up(const mtx::rng &i, const mtx::rng &j, const mtx::rng &k, const grd_arakawa_c_lorenz<real_t> &grid) :
+        public: beta_up(const mtx::rng &i, const mtx::rng &j, const mtx::rng &k) :
           i_j_k(i, j, k),
-          imh_j_k(i - grid.m_half, j, k), iph_j_k(i + grid.p_half, j, k), 
-          i_jmh_k(i, j - grid.m_half, k), i_jph_k(i, j + grid.p_half, k), 
-          i_j_kmh(i, j, k - grid.m_half), i_j_kph(i, j, k + grid.p_half),
+          imh_j_k(i - static_rational<1,2>(), j, k), iph_j_k(i + static_rational<1,2>(), j, k), 
+          i_jmh_k(i, j - static_rational<1,2>(), k), i_jph_k(i, j + static_rational<1,2>(), k), 
+          i_j_kmh(i, j, k - static_rational<1,2>()), i_j_kph(i, j, k + static_rational<1,2>()),
           im1_j_k(i-1, j, k), ip1_j_k(i+1, j, k), 
           i_jm1_k(i, j-1, k), i_jp1_k(i, j+1, k), 
           i_j_km1(i, j, k-1), i_j_kp1(i, j, k+1)
@@ -71,11 +70,11 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
       {
         public: const idx i_j_k,
           iph_j_k, imh_j_k, i_jph_k, i_jmh_k, i_j_kph, i_j_kmh;
-        public: beta_dn(const mtx::rng &i, const mtx::rng &j, const mtx::rng &k, const grd_arakawa_c_lorenz<real_t> &grid) :
+        public: beta_dn(const mtx::rng &i, const mtx::rng &j, const mtx::rng &k) :
           i_j_k(i, j, k),
-          iph_j_k(i + grid.p_half, j, k), imh_j_k(i - grid.m_half, j, k), 
-          i_jph_k(i, j + grid.p_half, k), i_jmh_k(i, j - grid.m_half, k), 
-          i_j_kph(i, j, k + grid.p_half), i_j_kmh(i, j, k - grid.m_half)
+          iph_j_k(i + static_rational<1,2>(), j, k), imh_j_k(i - static_rational<1,2>(), j, k), 
+          i_jph_k(i, j + static_rational<1,2>(), k), i_jmh_k(i, j - static_rational<1,2>(), k), 
+          i_j_kph(i, j, k + static_rational<1,2>()), i_j_kmh(i, j, k - static_rational<1,2>())
         { }
       };
 
@@ -88,7 +87,6 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
         const mtx::rng &i, 
         const mtx::rng &j, 
         const mtx::rng &k, 
-        const grd_arakawa_c_lorenz<real_t> &grid,
         int cross_terms,
         int iord
       ) : 
@@ -106,11 +104,11 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
 
         iv(i.first()-1, i.last()), // as in mpdata_U, we compute u_{i+1/2} for iv=(i-1, ... i) instead of u_{i+1/2} and u_{i-1/2} for all i
 
-        bu_ivp1_j_k(iv+1, j, k, grid), bu_iv_j_k(iv, j, k, grid), 
-        bd_ivp1_j_k(iv+1, j, k, grid), bd_iv_j_k(iv, j, k, grid),
+        bu_ivp1_j_k(iv+1, j, k), bu_iv_j_k(iv, j, k), 
+        bd_ivp1_j_k(iv+1, j, k), bd_iv_j_k(iv, j, k),
         iv_j_k(iv, j, k), 
-        ivph_j_k(iv + grid.p_half, j, k), 
-        ivmh_j_k(iv - grid.m_half, j, k),
+        ivph_j_k(iv + static_rational<1,2>(), j, k), 
+        ivmh_j_k(iv - static_rational<1,2>(), j, k),
         ivp1_j_k(iv + 1, j, k),
         ivm1_j_k(iv - 1, j, k)
       { }
@@ -131,7 +129,6 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
     // ctor
     public: op3D(
       const mtx::idx &ijk,
-      const grd_arakawa_c_lorenz<real_t> &grid,
       mtx::arr<real_t> **tmp_s,
       mtx::arr<real_t> **tmp_v,
       int cross_terms, int iord, int third_order, bool positive_definite
@@ -141,12 +138,12 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
         mtx::rng(ijk.i.first() - 1, ijk.i.last() + 1),
         mtx::rng(ijk.j.first() - 1, ijk.j.last() + 1),
         mtx::rng(ijk.k.first() - 1, ijk.k.last() + 1)
-      ), grid, tmp_s, tmp_v, cross_terms, iord, third_order),
-      upstream(ijk, grid),
+      ), tmp_s, tmp_v, cross_terms, iord, third_order),
+      upstream(ijk),
       tmp_s(tmp_s), tmp_v(tmp_v), iord(iord), positive_definite(positive_definite),
-      idxx(ijk.i, ijk.j, ijk.k, grid, cross_terms, iord),
-      idxy(ijk.j, ijk.k, ijk.i, grid, cross_terms, iord),
-      idxz(ijk.k, ijk.i, ijk.j, grid, cross_terms, iord)
+      idxx(ijk.i, ijk.j, ijk.k, cross_terms, iord),
+      idxy(ijk.j, ijk.k, ijk.i, cross_terms, iord),
+      idxz(ijk.k, ijk.i, ijk.j, cross_terms, iord)
     { }
 
     public: virtual void operator()(
@@ -252,33 +249,35 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
     /// { \sum\limits_{I} \frac{\Delta t}{\Delta x^{I}} \left( [u^{I}_{i-1/2}]^{+} \psi^{*}_{i-1} - 
     /// [u^{I}_{i+1/2}]^{-} \psi^{*}_{i+1} \right)  } \f$ \n
     /// eq.(19a) in Smolarkiewicz & Grabowski 1990 (J.Comp.Phys.,86,355-375)
-    private: mtx_expr_6arg_macro_noasserts(fct_beta_up, aaa, psimax, psi, C_adf_x, C_adf_y, C_adf_z,
-      adv_mpdata<real_t>::frac( 
-        psimax(aaa.i_j_k) - (psi)(aaa.i_j_k), 
-        adv<real_t>::pospart(C_adf_x(aaa.imh_j_k)) * (psi)(aaa.im1_j_k) - 
-        adv<real_t>::negpart(C_adf_x(aaa.iph_j_k)) * (psi)(aaa.ip1_j_k) + 
-        adv<real_t>::pospart(C_adf_y(aaa.i_jmh_k)) * (psi)(aaa.i_jm1_k) - 
-        adv<real_t>::negpart(C_adf_y(aaa.i_jph_k)) * (psi)(aaa.i_jp1_k) + 
-        adv<real_t>::pospart(C_adf_z(aaa.i_j_kmh)) * (psi)(aaa.i_j_km1) - 
-        adv<real_t>::negpart(C_adf_z(aaa.i_j_kph)) * (psi)(aaa.i_j_kp1)   
-      )
-    )
+    //private: mtx_expr_6arg_macro(fct_beta_up, aaa, psimax, psi, C_adf_x, C_adf_y, C_adf_z,
+# define fct_beta_up(aaa, psimax, psi, C_adf_x, C_adf_y, C_adf_z) \
+      adv_mpdata<real_t>::frac( \
+        psimax(aaa.i_j_k) - (psi)(aaa.i_j_k), \
+        adv<real_t>::pospart(C_adf_x(aaa.imh_j_k)) * (psi)(aaa.im1_j_k) - \
+        adv<real_t>::negpart(C_adf_x(aaa.iph_j_k)) * (psi)(aaa.ip1_j_k) + \
+        adv<real_t>::pospart(C_adf_y(aaa.i_jmh_k)) * (psi)(aaa.i_jm1_k) - \
+        adv<real_t>::negpart(C_adf_y(aaa.i_jph_k)) * (psi)(aaa.i_jp1_k) + \
+        adv<real_t>::pospart(C_adf_z(aaa.i_j_kmh)) * (psi)(aaa.i_j_km1) - \
+        adv<real_t>::negpart(C_adf_z(aaa.i_j_kph)) * (psi)(aaa.i_j_kp1)   \
+      ) 
+    //)
 
     /// \f$ \beta^{\downarrow}_{i} = \frac { \psi^{*}_{i}- \psi^{min}_{i} }
     /// { \sum\limits_{I} \frac{\Delta t}{\Delta x^{I}} \left( [u^{I}_{i+1/2}]^{+} \psi^{*}_{i} - 
     /// [u^{I}_{i-1/2}]^{-} \psi^{*}_{i} \right)  } \f$ \n
     /// eq.(19b) in Smolarkiewicz & Grabowski 1990 (J.Comp.Phys.,86,355-375)
-    private: mtx_expr_6arg_macro_noasserts(fct_beta_dn, aaa, psimin, psi, C_adf_x, C_adf_y, C_adf_z,
-      adv_mpdata<real_t>::frac( 
-        (psi)(aaa.i_j_k) - psimin(aaa.i_j_k), 
-        adv<real_t>::pospart(C_adf_x(aaa.iph_j_k)) * (psi)(aaa.i_j_k) - 
-        adv<real_t>::negpart(C_adf_x(aaa.imh_j_k)) * (psi)(aaa.i_j_k) + 
-        adv<real_t>::pospart(C_adf_y(aaa.i_jph_k)) * (psi)(aaa.i_j_k) - 
-        adv<real_t>::negpart(C_adf_y(aaa.i_jmh_k)) * (psi)(aaa.i_j_k) + 
-        adv<real_t>::pospart(C_adf_z(aaa.i_j_kph)) * (psi)(aaa.i_j_k) - 
-        adv<real_t>::negpart(C_adf_z(aaa.i_j_kmh)) * (psi)(aaa.i_j_k)   
+    //private: mtx_expr_6arg_macro(fct_beta_dn, aaa, psimin, psi, C_adf_x, C_adf_y, C_adf_z,
+#  define fct_beta_dn(aaa, psimin, psi, C_adf_x, C_adf_y, C_adf_z) \
+      adv_mpdata<real_t>::frac( \
+        (psi)(aaa.i_j_k) - psimin(aaa.i_j_k), \
+        adv<real_t>::pospart(C_adf_x(aaa.iph_j_k)) * (psi)(aaa.i_j_k) - \
+        adv<real_t>::negpart(C_adf_x(aaa.imh_j_k)) * (psi)(aaa.i_j_k) + \
+        adv<real_t>::pospart(C_adf_y(aaa.i_jph_k)) * (psi)(aaa.i_j_k) - \
+        adv<real_t>::negpart(C_adf_y(aaa.i_jmh_k)) * (psi)(aaa.i_j_k) + \
+        adv<real_t>::pospart(C_adf_z(aaa.i_j_kph)) * (psi)(aaa.i_j_k) - \
+        adv<real_t>::negpart(C_adf_z(aaa.i_j_kmh)) * (psi)(aaa.i_j_k)   \
       )
-    )
+    //)
 
     /// nonoscillatory antidiffusive velocity: \n
     /// \f$ U^{MON}_{i+1/2}=min(1,\beta ^{\downarrow}_i,\beta ^{\uparrow} _{i+1})[U_{i+1/2}]^{+} 
@@ -346,11 +345,11 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
   {
     if (positive_definite)
       return new op3D<typename adv_mpdata<real_t>::template op3D<typename adv_mpdata<real_t>::aon_nil>>(
-        ijk, *grid, tmp_s, tmp_v, cross_terms, iord, third_order, positive_definite
+        ijk, tmp_s, tmp_v, cross_terms, iord, third_order, positive_definite
       );
     else
       return new op3D<typename adv_mpdata<real_t>::template op3D<typename adv_mpdata<real_t>::aon_abs>>(
-        ijk, *grid, tmp_s, tmp_v, cross_terms, iord, third_order, positive_definite
+        ijk, tmp_s, tmp_v, cross_terms, iord, third_order, positive_definite
       );
   }
 };

@@ -13,7 +13,7 @@
 
 /// @brief the Arakawa-C/Lorenz staggered grid
 template<typename real_t>
-class grd_arakawa_c_lorenz : public grd<real_t>
+class grd_arakawa_c_lorenz : public grd<real_t> // TODO: rmerge it with grid... KISS!
 {
   public: static const int m_half = 0;
   public: static const int p_half = 1;

@@ -14,7 +14,7 @@
 
 /// @brief base class for initial conditions
 template <typename real_t>
-class ini : root
+class ini 
 {
   public: virtual void populate_scalar_field(
     const string &varname,

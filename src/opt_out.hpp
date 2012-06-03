@@ -25,13 +25,14 @@ inline void opt_out_desc(po::options_description &desc)
 }
 
 template <typename real_t>
-out<real_t> *opt_out(const po::variables_map &vm, 
-  stp<real_t> *setup,  
+out<real_t> *opt_out(
+  const po::variables_map &vm, 
+  const stp<real_t> &setup,  
   const string &cmdline)
 {
   string outtype = vm.count("out") ? vm["out"].as<string>() : "<unspecified>";
   if (outtype == "gnuplot")
-    return new out_gnuplot<real_t>(setup->grid, vm["out.gnuplot.using"].as<string>());
+    return new out_gnuplot<real_t>(*setup.grid, vm["out.gnuplot.using"].as<string>());
   else
   if (outtype == "debug")
     return new out_debug<real_t>();

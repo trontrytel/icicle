@@ -11,7 +11,7 @@
 #  include "opt.hpp"
 #  include "adv_upstream.hpp"
 #  include "adv_mpdata.hpp"
-//#  include "adv_mpdata_fct.hpp"
+#  include "adv_mpdata_fct.hpp"
 #  include "adv_leapfrog.hpp"
 
 inline void opt_adv_desc(po::options_description &desc)
@@ -25,27 +25,24 @@ inline void opt_adv_desc(po::options_description &desc)
 }
 
 template <typename real_t>
-adv<real_t> *opt_adv(const po::variables_map& vm, grd<real_t> *grid)
+adv<real_t> *opt_adv(const po::variables_map& vm)
 {
-  grd_arakawa_c_lorenz<real_t> *g = dynamic_cast<grd_arakawa_c_lorenz<real_t>*>(grid);
-  if (g == NULL) error_macro("all advection schemes are compatible with the Arakawa-C grid only!")
-
   string advscheme = vm.count("adv") ? vm["adv"].as<string>() : "<unspecified>";
 
   if (advscheme == "leapfrog")
-    return new adv_leapfrog<real_t>(g);
+    return new adv_leapfrog<real_t>();
   else if (advscheme == "upstream")
-    return new adv_upstream<real_t>(g);
+    return new adv_upstream<real_t>();
   else if (advscheme == "mpdata")
   {
- //   if (vm["adv.mpdata.fct"].as<bool>())
- //     return new adv_mpdata_fct<real_t>(g, 
- //       vm["adv.mpdata.iord"].as<int>(),
- //       vm["adv.mpdata.cross_terms"].as<bool>(),
- //       vm["adv.mpdata.third_order"].as<bool>()
- //     );
- //   else
-      return new adv_mpdata<real_t>(g, 
+    if (vm["adv.mpdata.fct"].as<bool>())
+      return new adv_mpdata_fct<real_t>(
+        vm["adv.mpdata.iord"].as<int>(),
+        vm["adv.mpdata.cross_terms"].as<bool>(),
+        vm["adv.mpdata.third_order"].as<bool>()
+      );
+    else
+      return new adv_mpdata<real_t>(
         vm["adv.mpdata.iord"].as<int>(),
         vm["adv.mpdata.cross_terms"].as<bool>(),
         vm["adv.mpdata.third_order"].as<bool>()

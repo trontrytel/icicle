@@ -14,7 +14,7 @@
 
 /// @brief a base class for advection operators
 template <typename real_t>
-class adv : root
+class adv 
 {
   public: virtual const int stencil_extent() = 0;
   public: virtual const int time_levels() = 0;

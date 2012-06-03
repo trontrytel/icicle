@@ -22,11 +22,10 @@ class adv_leapfrog : public adv<real_t>
   public: const real_t courant_max() { return 1.; }
   public: const real_t courant_min() { return .5; } ; //TODO Wicker Skamarock 2002 
  
-  private: grd_arakawa_c_lorenz<real_t> *grid;
   private: unique_ptr<adv_upstream<real_t>> fallback;
 
-  public: adv_leapfrog(grd_arakawa_c_lorenz<real_t> *grid)
-    : grid(grid), fallback(new adv_upstream<real_t>(grid))
+  public: adv_leapfrog()
+    : fallback(new adv_upstream<real_t>())
   { 
     assert(this->stencil_extent() >= fallback->stencil_extent());
     assert(this->num_sclr_caches() == fallback->num_sclr_caches());
@@ -45,12 +44,11 @@ class adv_leapfrog : public adv<real_t>
       public: indices(
         const mtx::rng &i, 
         const mtx::rng &j, 
-        const mtx::rng &k, 
-        const grd_arakawa_c_lorenz<real_t> &grid
+        const mtx::rng &k
       ) :
         i_j_k(  idx(i,               j, k)),
-        iph_j_k(idx(i + grid.m_half, j, k)),
-        imh_j_k(idx(i - grid.p_half, j, k)),
+        iph_j_k(idx(i + static_rational<1,2>(), j, k)),
+        imh_j_k(idx(i - static_rational<1,2>(), j, k)),
         ip1_j_k(idx(i + 1,           j, k)),
         im1_j_k(idx(i - 1,           j, k))
       { }
@@ -65,13 +63,12 @@ class adv_leapfrog : public adv<real_t>
     // ctor (initialisation of the indices)
     public: op3D(
       const mtx::idx &ijk, 
-      const grd_arakawa_c_lorenz<real_t> &grid, 
       typename adv<real_t>::op3D *fallback
     ) : 
       adv<real_t>::op3D(ijk),
-      idxx(ijk.i, ijk.j, ijk.k, grid), 
-      idxy(ijk.j, ijk.k, ijk.i, grid), 
-      idxz(ijk.k, ijk.i, ijk.j, grid)
+      idxx(ijk.i, ijk.j, ijk.k), 
+      idxy(ijk.j, ijk.k, ijk.i), 
+      idxz(ijk.k, ijk.i, ijk.j)
     { 
       flbkop.reset(fallback);
     }
@@ -140,7 +137,7 @@ class adv_leapfrog : public adv<real_t>
     bool 
   ) 
   {
-    return new op3D(ijk, *grid, fallback->factory(ijk, NULL, NULL, false));
+    return new op3D(ijk, fallback->factory(ijk, NULL, NULL, false));
   }
 };
 #endif

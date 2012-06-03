@@ -13,7 +13,7 @@
 #  include "grd.hpp" 
 
 template <typename real_t>
-class vel : root
+class vel
 {
   public: virtual bool is_constant() const = 0;
 

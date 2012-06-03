@@ -14,8 +14,7 @@
 #  include "grd_arakawa-c-lorenz.hpp"
 
 /** @brief
- *  C++ implementation of the upstream/upwind/donor-cell scheme 
- *  for the Arakawa-C grid
+ *  implementation of the upstream/upwind/donor-cell scheme 
  */
 template <typename real_t> 
 class adv_upstream : public adv<real_t> 
@@ -28,12 +27,6 @@ class adv_upstream : public adv<real_t>
   public: const real_t courant_max() { return 1.; }
   public: const real_t courant_min() { return .5; }
 
-  private: grd_arakawa_c_lorenz<real_t> *grid;
-
-  public: adv_upstream(grd_arakawa_c_lorenz<real_t> *grid) 
-    : grid(grid)
-  { }
-
   public: class op3D : public adv<real_t>::op3D
   {
     // private nested class for storing indices
@@ -45,12 +38,11 @@ class adv_upstream : public adv<real_t>
       public: indices(
         const mtx::rng &i,
         const mtx::rng &j,
-        const mtx::rng &k, 
-        const grd_arakawa_c_lorenz<real_t> &grid
+        const mtx::rng &k
       ) :
         i_j_k(  idx(i,               j, k)),
-        iph_j_k(idx(i + grid.p_half, j, k)),
-        imh_j_k(idx(i - grid.m_half, j, k)),
+        iph_j_k(idx(i + static_rational<1,2>(), j, k)),
+        imh_j_k(idx(i - static_rational<1,2>(), j, k)),
         ip1_j_k(idx(i + 1,           j, k)),
         im1_j_k(idx(i - 1,           j, k))
       { }
@@ -62,11 +54,11 @@ class adv_upstream : public adv<real_t>
     public: const indices<mtx::idx_kij> indcs_z;
 
     // ctor
-    public: op3D(const mtx::idx &ijk, const grd_arakawa_c_lorenz<real_t> &grid) :
+    public: op3D(const mtx::idx &ijk) :
       adv<real_t>::op3D(ijk),
-      indcs_x(ijk.i, ijk.j, ijk.k, grid),
-      indcs_y(ijk.j, ijk.k, ijk.i, grid), 
-      indcs_z(ijk.k, ijk.i, ijk.j, grid)
+      indcs_x(ijk.i, ijk.j, ijk.k),
+      indcs_y(ijk.j, ijk.k, ijk.i), 
+      indcs_z(ijk.k, ijk.i, ijk.j)
     { }
 
     // () operator
@@ -130,7 +122,7 @@ class adv_upstream : public adv<real_t>
     bool
   )
   {
-    return new op3D(ijk, *grid);
+    return new op3D(ijk);
   }
 };
 #endif

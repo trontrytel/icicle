@@ -63,7 +63,7 @@ class eqs_shallow_water : public eqs<real_t>
 
     public: void explicit_part(
       mtx::arr<real_t> &R, 
-      const ptr_map<string, mtx::arr<real_t>> &aux,
+      const ptr_unordered_map<string, mtx::arr<real_t>> &aux,
       const mtx::arr<real_t> * const * const psi,
       const quantity<si::time, real_t> 
     ) 
@@ -79,7 +79,7 @@ class eqs_shallow_water : public eqs<real_t>
       ///
       /// momentum eq. plus u times mass continuity equation:
       /// \f$ \partial_t (uh)  + \nabla_z (uh) = -g h \nabla_z \eta \f$
-      const mtx::arr<real_t> &dHdxy(*(aux.find(idx_dHdxy)->second));
+      const mtx::arr<real_t> &dHdxy(aux.at(idx_dHdxy));
       R(R.ijk) -= 
         phc::g<real_t>() * par->h_unit * par->h_unit * si::seconds / par->q_unit / si::metres *
         ((*psi[par->idx_h])(R.ijk)) *

@@ -28,14 +28,14 @@ class out_netcdf : public out<real_t>
 
   public: out_netcdf(
     const string &file, 
-    stp<real_t> *setup, 
+    const stp<real_t> &setup, 
     int ver, 
     const string &cmdline
   ) 
     : info(cmdline)
   { 
     // TODO: that's about cartesian/spherical/etc, not about Arakawa-C
-    grd_arakawa_c_lorenz<real_t> *grid = dynamic_cast<grd_arakawa_c_lorenz<real_t>*>(setup->grid);
+    grd_arakawa_c_lorenz<real_t> *grid = dynamic_cast<grd_arakawa_c_lorenz<real_t>*>(setup.grid);
     if (grid == NULL) error_macro("netCDF output supports only the Arakawa-C grid")
     try
     {
@@ -91,25 +91,25 @@ class out_netcdf : public out<real_t>
         }
 
         // scalar fields
-        for (int v = 0; v < setup->eqsys->n_vars(); ++v)
+        for (int v = 0; v < setup.eqsys->n_vars(); ++v)
         {
-          string name = setup->eqsys->var_name(v);
+          string name = setup.eqsys->var_name(v);
           vars[name] = f->addVar(name, ncFloat, sdims); 
-          vars[name].putAtt("unit", setup->eqsys->var_unit(v));
-          vars[name].putAtt("description", setup->eqsys->var_desc(v));
+          vars[name].putAtt("unit", setup.eqsys->var_unit(v));
+          vars[name].putAtt("description", setup.eqsys->var_desc(v));
         }
 
         // auxiliary fields
-        typename ptr_map<string, struct eqs<real_t>::axv>::iterator it;
-        for (it=setup->eqsys->auxvars().begin(); it != setup->eqsys->auxvars().end(); it++ )
+        typename ptr_unordered_map<string, struct eqs<real_t>::axv>::iterator it;
+        for (it=setup.eqsys->auxvars().begin(); it != setup.eqsys->auxvars().end(); it++ )
         {
           string name = it->first;
-          if (setup->eqsys->aux_tobeoutput(name)) 
+          if (setup.eqsys->aux_tobeoutput(name)) 
           {
             // TODO: assert unique!
             vars[name] = f->addVar(name, ncFloat, sdims); 
-            vars[name].putAtt("unit", setup->eqsys->aux_unit(name));
-            vars[name].putAtt("description", setup->eqsys->aux_desc(name));
+            vars[name].putAtt("unit", setup.eqsys->aux_unit(name));
+            vars[name].putAtt("description", setup.eqsys->aux_desc(name));
           }
         }
 
@@ -122,11 +122,11 @@ class out_netcdf : public out<real_t>
         v_dtadv.putAtt("unit", "seconds");
         v_dtout.putAtt("unit", "seconds");
         {
-          real_t tmp = setup->dt / si::seconds;
+          real_t tmp = setup.dt / si::seconds;
           v_dtadv.putVar(&tmp);
         }
         { 
-          real_t tmp = setup->dt * real_t(setup->nout) / si::seconds;
+          real_t tmp = setup.dt * real_t(setup.nout) / si::seconds;
           v_dtout.putVar(&tmp);
         }
       }

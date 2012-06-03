@@ -13,7 +13,9 @@
 template <typename real_t>
 class slv_parallel_serial : public slv_parallel<real_t>
 {
-  public: slv_parallel_serial(stp<real_t> *setup, out<real_t> *output,
+  public: slv_parallel_serial(
+    const stp<real_t> &setup, 
+    out<real_t> &output,
     int i_min, int i_max, 
     int j_min, int j_max, 
     int k_min, int k_max, 
