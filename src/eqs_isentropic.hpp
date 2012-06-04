@@ -166,56 +166,47 @@ class eqs_isentropic : public eqs<real_t>
     par.dHdxy_unit = 1;
 
     // potential temperature profile
-    struct eqs<real_t>::axv *tmp = new struct eqs<real_t>::axv({
+    ptr_map_insert(this->aux)("dtheta", typename eqs<real_t>::axv({
       "dtheta", "mid-layer potential temperature increment", this->quan2str(par.theta_unit),
       typename eqs<real_t>::invariable(true),
       vector<int>({nlev - 1, 1, 1})
-    });
-    this->aux["dtheta"] = *tmp; // TODO: rewrite with ptr_map_insert!
+    }));
 
     // topography
     {
       if (grid.nx() != 1)
       {
-        struct eqs<real_t>::axv *tmp = new struct eqs<real_t>::axv({
+        ptr_map_insert(this->aux)("dHdx", typename eqs<real_t>::axv({
           "dHdx", "spatial derivative of the topography (X)", this->quan2str(par.dHdxy_unit),
           typename eqs<real_t>::invariable(true),
           vector<int>({0, 0, 1}) // dimspan
-        });
-        this->aux["dHdx"] = *tmp; // TODO: rewrite with ptr_map_insert!
+        }));
       }
       if (grid.ny() != 1)
       {
-        struct eqs<real_t>::axv *tmp = new struct eqs<real_t>::axv({
+        ptr_map_insert(this->aux)("dHdy", typename eqs<real_t>::axv({
           "dHdy", "spatial derivative of the topograpy (Y)", this->quan2str(par.dHdxy_unit),
           typename eqs<real_t>::invariable(true),
           vector<int>({0, 0, 1}) // dimspan
-        });
-        this->aux["dHdy"] = *tmp; // TODO: rewrite with ptr_map_insert!
+        }));
       }
     }
 
     // pressure 
-    {
-      struct eqs<real_t>::axv *tmp = new struct eqs<real_t>::axv({
-        "p", "pressure", this->quan2str(par.p_unit),
-        typename eqs<real_t>::invariable(false),
-        vector<int>({0, 0, nlev+1 }), // dimspan
-        vector<int>({1, 1, 0}) // halo extent
-      });
-      this->aux["p"] = *tmp; // TODO: rewrite with ptr_map_insert!
-    }
+    ptr_map_insert(this->aux)("p", typename eqs<real_t>::axv({
+      "p", "pressure", this->quan2str(par.p_unit),
+      typename eqs<real_t>::invariable(false),
+      vector<int>({0, 0, nlev+1 }), // dimspan
+      vector<int>({1, 1, 0}) // halo extent
+    }));
 
     // the Montgomery potential
-    {
-      struct eqs<real_t>::axv *tmp = new struct eqs<real_t>::axv({
-        "M", "Montgomery potential", this->quan2str(par.M_unit),
-        typename eqs<real_t>::invariable(false),
-        vector<int>({0, 0, 1}), // dimspan
-        vector<int>({1, 1, 0}) // halo extent
-      });
-      this->aux["M"] = *tmp; // TODO: rewrite with ptr_map_insert!
-    }
+    ptr_map_insert(this->aux)("M", typename eqs<real_t>::axv({
+      "M", "Montgomery potential", this->quan2str(par.M_unit),
+      typename eqs<real_t>::invariable(false),
+      vector<int>({0, 0, 1}), // dimspan
+      vector<int>({1, 1, 0}) // halo extent
+    }));
     
     // dp var indices (to be filled in in the loop below)
     par.idx_dp.resize(nlev);

@@ -77,34 +77,25 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     tmp_real.resize(grid.nx() * grid.ny());
 
     // auxliary variable for super-droplet conc
-    {
-      struct eqs<real_t>::axv *tmp = new struct eqs<real_t>::axv({
-        "sd_conc", "super-droplet cencentration", this->quan2str(real_t(1)/grid.dx()/grid.dy()/grid.dz()),
-        typename eqs<real_t>::invariable(false),
-        vector<int>({0, 0, 0})
-      });
-      this->aux["sd_conc"] = *tmp; // TODO: rewrite with ptr_map_insert!
-    }
+    ptr_map_insert(this->aux)("sd_conc", typename eqs<real_t>::axv({
+      "sd_conc", "super-droplet cencentration", this->quan2str(real_t(1)/grid.dx()/grid.dy()/grid.dz()),
+      typename eqs<real_t>::invariable(false),
+      vector<int>({0, 0, 0})
+    }));
 
     // auxliary variable for total particle concentration
-    {
-      struct eqs<real_t>::axv *tmp = new struct eqs<real_t>::axv({
-        "n_tot", "total particle cencentration", this->quan2str(real_t(1)/si::cubic_metres),
-        typename eqs<real_t>::invariable(false),
-        vector<int>({0, 0, 0})
-      });
-      this->aux["n_tot"] = *tmp; // TODO: rewrite with ptr_map_insert!
-    }
+    ptr_map_insert(this->aux)("n_tot", typename eqs<real_t>::axv({
+      "n_tot", "total particle cencentration", this->quan2str(real_t(1)/si::cubic_metres),
+      typename eqs<real_t>::invariable(false),
+      vector<int>({0, 0, 0})
+    }));
 
     // auxliary variable for CCN concentration (temporary kludge)
-    {
-      struct eqs<real_t>::axv *tmp = new struct eqs<real_t>::axv({
-        "n_ccn", "CCN cencentration", this->quan2str(real_t(1)/si::cubic_metres),
-        typename eqs<real_t>::invariable(false),
-        vector<int>({0, 0, 0})
-      });
-      this->aux["n_ccn"] = *tmp; // TODO: rewrite with ptr_map_insert!
-    }
+    ptr_map_insert(this->aux)("n_ccn", typename eqs<real_t>::axv({
+      "n_ccn", "CCN cencentration", this->quan2str(real_t(1)/si::cubic_metres),
+      typename eqs<real_t>::invariable(false),
+      vector<int>({0, 0, 0})
+    }));
 
     // initialising super-droplets
     sd_init(min_rd, max_rd, mean_rd1, mean_rd2, sdev_rd1, sdev_rd2, n1_tot, n2_tot, sd_conc_mean, kappa);

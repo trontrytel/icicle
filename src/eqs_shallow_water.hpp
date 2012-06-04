@@ -109,23 +109,19 @@ class eqs_shallow_water : public eqs<real_t>
     {   
       if (grid.nx() != 1)
       {   
-        struct eqs<real_t>::axv* tmp = 
-          new struct eqs<real_t>::axv({
+        ptr_map_insert(this->aux)("dHdx", typename eqs<real_t>::axv({
           "dHdx", "spatial derivative of the topography (X)", this->quan2str(par.dHdxy_unit),
           typename eqs<real_t>::invariable(true),
           vector<int>({0, 0, 1}) // dimspan
-        });
-        this->aux["dHdx"] = *tmp; // TODO: rewrite with ptr_map_insert!
+        }));
       }   
       if (grid.ny() != 1)
       {   
-        struct eqs<real_t>::axv* tmp = 
-          new struct eqs<real_t>::axv({
+        ptr_map_insert(this->aux)("dHdy", typename eqs<real_t>::axv({
           "dHdy", "spatial derivative of the topograpy (Y)", this->quan2str(par.dHdxy_unit),
           typename eqs<real_t>::invariable(true),
           vector<int>({0, 0, 1}) // dimspan
-        });
-        this->aux["dHdy"] = *tmp; // TODO: rewrite with ptr_map_insert!
+        }));
       }
     }
 

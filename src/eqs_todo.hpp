@@ -29,14 +29,11 @@ class eqs_todo : public eqs<real_t>  // TODO: rename to moist?
     par->rho_unit = 1 * si::kilograms / si::cubic_metres;
 
     // auxiliary variable
-    {
-      struct eqs<real_t>::axv *tmp = new struct eqs<real_t>::axv({
-        "rhod", "dry air density", this->quan2str(par->rho_unit),
-        typename eqs<real_t>::invariable(true),
-        vector<int>({0, 0, 0})
-      });
-      this->aux["rhod"] = *tmp; // TODO: rewrite with ptr_map_insert!
-    }
+    ptr_map_insert(this->aux)("rhod", typename eqs<real_t>::axv({
+      "rhod", "dry air density", this->quan2str(par->rho_unit),
+      typename eqs<real_t>::invariable(true),
+      vector<int>({0, 0, 0})
+    }));
 
     // eg. eqn 1b in Szumowski, Grabowski & Ochs 1998, Atmos. Res.
     // cf. eqn 3.55 in the Jacobson's Fundamentals of Atmos. Modelling (2nd edn, 2005)
