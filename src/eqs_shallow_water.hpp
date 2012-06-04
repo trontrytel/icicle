@@ -66,7 +66,7 @@ class eqs_shallow_water : public eqs<real_t>
       const ptr_unordered_map<string, mtx::arr<real_t>> &aux,
       const mtx::arr<real_t> * const * const psi,
       const quantity<si::time, real_t> 
-    ) 
+    ) const
     { 
       /// momentum equation:
       /// \f$ \partial_t u + u \cdot \nabla_z u = - \frac{1}{\rho} \nabla_z p \f$ 

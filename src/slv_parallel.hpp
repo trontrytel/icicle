@@ -75,21 +75,21 @@ class slv_parallel : public slv<real_t>
 
   private: void advect(int sd, int e, int n)
   {
-    for (int s = 1; s <= setup.advsch->num_steps(); ++s)
+    for (int s = 1; s <= setup.advsch.num_steps(); ++s)
     {   
       if (s != 1) fill_halos(sd, e, n);
       slvs[sd].advect(e, n, s); 
-      if (s != setup.advsch->num_steps()) slvs[sd].cycle_arrays(e, n); 
+      if (s != setup.advsch.num_steps()) slvs[sd].cycle_arrays(e, n); 
     }
   }
 
   public: void integ_loop_sd(int sd) 
   {
-    vector<bool> homo(setup.eqsys->n_vars());
+    vector<bool> homo(setup.eqsys.n_vars());
     bool allhomo = true;
-    for (int e = 0; e < setup.eqsys->n_vars(); ++e)
+    for (int e = 0; e < setup.eqsys.n_vars(); ++e)
     {
-      homo[e] = setup.eqsys->is_homogeneous(e);
+      homo[e] = setup.eqsys.is_homogeneous(e);
       if (!homo[e]) allhomo = false;
     }
     int n = 0;
@@ -97,11 +97,11 @@ class slv_parallel : public slv<real_t>
     // adjustments for the initial condition
     slvs[sd].apply_adjustments(n, setup.dt);
 
-    for (int e = 0; e < setup.eqsys->n_vars(); ++e) 
+    for (int e = 0; e < setup.eqsys.n_vars(); ++e) 
       fill_halos(sd, e, n); 
 
     // first guess for velocity fields assuming constant momenta
-    if (!setup.velocity->is_constant())
+    if (!setup.velocity.is_constant())
       slvs[sd].copy(n, n + 1); // TODO: only "dynamic" variables
 
     // first guess for forcing terms at t=0
@@ -112,23 +112,23 @@ class slv_parallel : public slv<real_t>
     {   
       if (sd == 0) cerr << "t/dt=" << t << " (t=" << real_t(t) * setup.dt << ")" << endl;
 
-      assert(setup.advsch->time_levels() <= 3); // TODO: support for other values
-      bool fallback = (t == 0 && setup.advsch->time_levels() == 3);
-      n = fallback ? 0 : setup.advsch->time_levels() - 2;
+      assert(setup.advsch.time_levels() <= 3); // TODO: support for other values
+      bool fallback = (t == 0 && setup.advsch.time_levels() == 3);
+      n = fallback ? 0 : setup.advsch.time_levels() - 2;
 
       if (t % setup.nout == 0) record(sd, n, t / setup.nout);
 
       int last_group = -1;
-      for (int e = 0; e < setup.eqsys->n_vars(); ++e)
+      for (int e = 0; e < setup.eqsys.n_vars(); ++e)
       {
         // filling halos
-        for (int e = 0; e < setup.eqsys->n_vars(); ++e) 
+        for (int e = 0; e < setup.eqsys.n_vars(); ++e) 
           fill_halos(sd, e, n); 
 
         // updating velocity field
         {
-          int group = setup.eqsys->group(e);
-          if (!setup.velocity->is_constant() && group != last_group)
+          int group = setup.eqsys.group(e);
+          if (!setup.velocity.is_constant() && group != last_group)
           {
             slvs[sd].update_courants(group, n + 1, n); // TODO: vector of n-s
             last_group = group;
@@ -136,8 +136,8 @@ class slv_parallel : public slv<real_t>
         }
 
         // TODO: dependance on adv->time_leves... (does it work for leapfrog???)
-        bool stash = (setup.advsch->num_steps() > 1 && setup.eqsys->var_dynamic(e))
-          || (!setup.velocity->is_constant() && !homo[e]);
+        bool stash = (setup.advsch.num_steps() > 1 && setup.eqsys.var_dynamic(e))
+          || (!setup.velocity.is_constant() && !homo[e]);
 
         slvs[sd].fill_with_nans(e, n + 1); // TODO: fill caches with NaNs?
         if (stash) slvs[sd].stash_cycle(e, n); 
@@ -152,15 +152,15 @@ class slv_parallel : public slv<real_t>
       // assuming that computation of forcings relies on the outcome of advection of ALL variables
       if (!allhomo)
       {
-        for (int e = 0; e < setup.eqsys->n_vars(); ++e) 
+        for (int e = 0; e < setup.eqsys.n_vars(); ++e) 
           fill_halos(sd, e, n + 1); 
         slvs[sd].update_forcings(n + 1, real_t(t + .5) * setup.dt);
-        for (int e = 0; e < setup.eqsys->n_vars(); ++e)
+        for (int e = 0; e < setup.eqsys.n_vars(); ++e)
           if (!homo[e]) slvs[sd].apply_forcings(e, n + 1, real_t(.5) * setup.dt);
       } 
 
       if (!fallback) 
-        for (int e = 0; e < setup.eqsys->n_vars(); ++e)
+        for (int e = 0; e < setup.eqsys.n_vars(); ++e)
           slvs[sd].cycle_arrays(e, n);
     } // t - time
     record(sd, n, setup.nt / setup.nout);

@@ -19,17 +19,17 @@
 template <typename real_t> 
 class adv_mpdata_fct : public adv_mpdata<real_t> 
 {
-  public: const int stencil_extent() 
+  public: const int stencil_extent() const
   {
     int halo = (adv_mpdata<real_t>::stencil_extent() - 1) / 2; 
     halo += 1; // cf. ii, jj & kk below
     return 1 + 2 * halo;
   }
-  public: const int num_vctr_caches() 
+  public: const int num_vctr_caches() const
   { 
     return 1 + (iord < 3 ? 3 : 6); 
   }
-  public: const int num_sclr_caches() { return 2; } 
+  public: const int num_sclr_caches() const { return 2; } 
 #  define psi_min (*tmp_s[0])
 #  define psi_max (*tmp_s[1])
 
@@ -341,7 +341,7 @@ class adv_mpdata_fct : public adv_mpdata<real_t>
     mtx::arr<real_t> **tmp_s,
     mtx::arr<real_t> **tmp_v,
     bool positive_definite
-  )
+  ) const
   {
     if (positive_definite)
       return new op3D<typename adv_mpdata<real_t>::template op3D<typename adv_mpdata<real_t>::aon_nil>>(

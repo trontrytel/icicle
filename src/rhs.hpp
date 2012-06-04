@@ -65,14 +65,14 @@ class rhs
     const ptr_unordered_map<string, mtx::arr<real_t>> &aux,
     const mtx::arr<real_t> * const * const psi, 
     const quantity<si::time, real_t> t
-  ) 
+  ) const
   {
     assert(false);
   }
 
   public: virtual real_t implicit_part(
     const quantity<si::time, real_t> dt
-  ) 
+  ) const
   { 
     assert(false);
     return real_t(0); 

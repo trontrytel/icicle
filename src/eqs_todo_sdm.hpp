@@ -515,7 +515,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     ptr_unordered_map<string, mtx::arr<real_t>> &aux, 
     const ptr_vector<mtx::arr<real_t>> C,
     const quantity<si::time, real_t> dt
-  ) 
+  )
   {
     const mtx::arr<real_t>
       &rhod = aux.at("rhod");

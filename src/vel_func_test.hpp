@@ -31,7 +31,7 @@ class vel_func_test : public vel_func<real_t>
     const quantity<si::length, real_t> &, 
     const quantity<si::length, real_t> &, 
     const quantity<si::length, real_t> &z
-  )   
+  ) const
   {   
     return -omega*(z-z0);
   }
@@ -40,7 +40,7 @@ class vel_func_test : public vel_func<real_t>
     const quantity<si::length, real_t> &x, 
     const quantity<si::length, real_t> &, 
     const quantity<si::length, real_t> &
-  )   
+  ) const
   {   
     return omega*(x-x0);
   }
@@ -49,7 +49,7 @@ class vel_func_test : public vel_func<real_t>
     const quantity<si::length, real_t> &,
     const quantity<si::length, real_t> &,
     const quantity<si::length, real_t> &
-  )
+  ) const
   {
     return vv;
   }

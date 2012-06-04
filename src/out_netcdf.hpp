@@ -35,8 +35,6 @@ class out_netcdf : public out<real_t>
     : info(cmdline)
   { 
     // TODO: that's about cartesian/spherical/etc, not about Arakawa-C
-    grd_arakawa_c_lorenz<real_t> *grid = dynamic_cast<grd_arakawa_c_lorenz<real_t>*>(setup.grid);
-    if (grid == NULL) error_macro("netCDF output supports only the Arakawa-C grid")
     try
     {
       netCDF::NcFile::FileFormat fmt;
@@ -50,9 +48,9 @@ class out_netcdf : public out<real_t>
 
       NcDim 
         d_t = f->addDim("time"),
-        d_xs = f->addDim("X", grid->nx()),
-        d_ys = f->addDim("Y", grid->ny()),
-        d_zs = f->addDim("Z", grid->nz());
+        d_xs = f->addDim("X", setup.grid.nx()),
+        d_ys = f->addDim("Y", setup.grid.ny()),
+        d_zs = f->addDim("Z", setup.grid.nz());
       {
         // dimensions
         vector<NcDim> sdims(4);
@@ -65,51 +63,49 @@ class out_netcdf : public out<real_t>
         NcVar v_xs = f->addVar("X", ncFloat, d_xs);
         v_xs.putAtt("unit", "metres");
         {
-          real_t *tmp = new real_t[grid->nx()];
-          for (int i = 0; i < grid->nx(); ++i) 
-            tmp[i] = grid->i2x(i) / si::metres;
+          real_t *tmp = new real_t[setup.grid.nx()];
+          for (int i = 0; i < setup.grid.nx(); ++i) 
+            tmp[i] = setup.grid.i2x(i) / si::metres;
           v_xs.putVar(tmp);
           delete[] tmp;
         }
         NcVar v_ys = f->addVar("Y", ncFloat, d_ys);
         v_ys.putAtt("unit", "metres");
         { // TODO: merge with the above
-          real_t *tmp = new real_t[grid->ny()];
-          for (int j = 0; j < grid->ny(); ++j) 
-            tmp[j] = grid->j2y(j) / si::metres;
+          real_t *tmp = new real_t[setup.grid.ny()];
+          for (int j = 0; j < setup.grid.ny(); ++j) 
+            tmp[j] = setup.grid.j2y(j) / si::metres;
           v_ys.putVar(tmp);
           delete[] tmp;
         }
         NcVar v_zs = f->addVar("Z", ncFloat, d_zs);
         v_zs.putAtt("unit", "metres");
         { // TODO: merge with the above
-          real_t *tmp = new real_t[grid->nz()];
-          for (int k = 0; k < grid->nz(); ++k) 
-            tmp[k] = grid->k2z(k) / si::metres;
+          real_t *tmp = new real_t[setup.grid.nz()];
+          for (int k = 0; k < setup.grid.nz(); ++k) 
+            tmp[k] = setup.grid.k2z(k) / si::metres;
           v_zs.putVar(tmp);
           delete[] tmp;
         }
 
         // scalar fields
-        for (int v = 0; v < setup.eqsys->n_vars(); ++v)
+        for (int v = 0; v < setup.eqsys.n_vars(); ++v)
         {
-          string name = setup.eqsys->var_name(v);
+          string name = setup.eqsys.var_name(v);
           vars[name] = f->addVar(name, ncFloat, sdims); 
-          vars[name].putAtt("unit", setup.eqsys->var_unit(v));
-          vars[name].putAtt("description", setup.eqsys->var_desc(v));
+          vars[name].putAtt("unit", setup.eqsys.var_unit(v));
+          vars[name].putAtt("description", setup.eqsys.var_desc(v));
         }
 
         // auxiliary fields
-        typename ptr_unordered_map<string, struct eqs<real_t>::axv>::iterator it;
-        for (it=setup.eqsys->auxvars().begin(); it != setup.eqsys->auxvars().end(); it++ )
+        for (const string &name : setup.eqsys.aux_names())
         {
-          string name = it->first;
-          if (setup.eqsys->aux_tobeoutput(name)) 
+          if (setup.eqsys.aux_tobeoutput(name)) 
           {
             // TODO: assert unique!
             vars[name] = f->addVar(name, ncFloat, sdims); 
-            vars[name].putAtt("unit", setup.eqsys->aux_unit(name));
-            vars[name].putAtt("description", setup.eqsys->aux_desc(name));
+            vars[name].putAtt("unit", setup.eqsys.aux_unit(name));
+            vars[name].putAtt("description", setup.eqsys.aux_desc(name));
           }
         }
 

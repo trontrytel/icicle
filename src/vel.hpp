@@ -25,6 +25,6 @@ class vel
     mtx::arr<real_t> *Qx[],
     mtx::arr<real_t> *Qy[],
     mtx::arr<real_t> *Qz[]
-  ) = 0;
+  ) const = 0;
 };
 #endif

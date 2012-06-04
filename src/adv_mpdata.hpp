@@ -21,15 +21,15 @@
 template <typename real_t> 
 class adv_mpdata : public adv_upstream<real_t> 
 {
-  public: const int stencil_extent() 
+  public: const int stencil_extent() const
   {
     int halo = 1;
     if (cross_terms && iord > 2) halo += (iord - 2);
     if (third_order && halo < 2) halo = 2;
     return 1 + 2 * halo;
   }
-  public: const int num_steps() { return iord; }
-  public: const int num_vctr_caches() 
+  public: const int num_steps() const { return iord; }
+  public: const int num_vctr_caches() const
   { 
     if (iord == 1) return 0;
     if (iord == 2) return 1; // storing anti-diff vel. instead of calculating it twice: for u_{i+1/2} and for u_{i-1/2}
@@ -385,7 +385,7 @@ class adv_mpdata : public adv_upstream<real_t>
     mtx::arr<real_t> **tmp_s,
     mtx::arr<real_t> **tmp_v,
     bool positive_definite
-  )
+  ) const
   {
     if (positive_definite)
       return new op3D<aon_nil>(ijk, tmp_s, tmp_v, cross_terms, iord, third_order);

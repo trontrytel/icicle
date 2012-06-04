@@ -19,17 +19,17 @@ class vel_func : public vel<real_t>
     const quantity<si::length, real_t> &x,
     const quantity<si::length, real_t> &y,
     const quantity<si::length, real_t> &z
-  ) = 0;
+  ) const = 0;
   private: virtual quantity<si::velocity, real_t> v(
     const quantity<si::length, real_t> &x,
     const quantity<si::length, real_t> &y,
     const quantity<si::length, real_t> &z
-  ) = 0;
+  ) const = 0;
   private: virtual quantity<si::velocity, real_t> w(
     const quantity<si::length, real_t> &x,
     const quantity<si::length, real_t> &y,
     const quantity<si::length, real_t> &z
-  ) = 0;
+  ) const = 0;
 
   private: const grd<real_t> &grid;
   public: vel_func(const grd<real_t> &grid)
@@ -44,7 +44,7 @@ class vel_func : public vel<real_t>
     mtx::arr<real_t> *[],
     mtx::arr<real_t> *[],
     mtx::arr<real_t> *[]
-  )   
+  ) const 
   {
     // helper variables: domain length
     quantity<si::length, real_t> 

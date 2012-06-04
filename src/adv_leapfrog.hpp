@@ -16,11 +16,11 @@
 template <typename real_t> 
 class adv_leapfrog : public adv<real_t> 
 {
-  public: const int stencil_extent() { return 3; }
-  public: const int time_levels() { return 3; }
+  public: const int stencil_extent() const { return 3; }
+  public: const int time_levels() const { return 3; }
  
-  public: const real_t courant_max() { return 1.; }
-  public: const real_t courant_min() { return .5; } ; //TODO Wicker Skamarock 2002 
+  public: const real_t courant_max() const { return 1.; }
+  public: const real_t courant_min() const { return .5; } ; //TODO Wicker Skamarock 2002 
  
   private: unique_ptr<adv_upstream<real_t>> fallback;
 
@@ -135,7 +135,7 @@ class adv_leapfrog : public adv<real_t>
     mtx::arr<real_t> **, 
     mtx::arr<real_t> **,
     bool 
-  ) 
+  ) const
   {
     return new op3D(ijk, fallback->factory(ijk, NULL, NULL, false));
   }

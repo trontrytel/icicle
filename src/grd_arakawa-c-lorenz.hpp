@@ -30,7 +30,7 @@ class grd_arakawa_c_lorenz : public grd<real_t> // TODO: rmerge it with grid... 
     : dx_(dx), dy_(dy), dz_(dz), nx_(nx), ny_(ny), nz_(nz)
   {}
 
-  public: quantity<si::length, real_t> i2x(int i) 
+  public: quantity<si::length, real_t> i2x(int i) const
   { 
     // i(-1/2, dx) = 0 m
     // i(  0 , dx) = dx/2 
@@ -40,8 +40,8 @@ class grd_arakawa_c_lorenz : public grd<real_t> // TODO: rmerge it with grid... 
   }
 
   // ditto
-  public: quantity<si::length, real_t> j2y(int j) { return (real_t(j) + real_t(.5)) * dy_; }
-  public: quantity<si::length, real_t> k2z(int k) { return (real_t(k) + real_t(.5)) * dz_; }
+  public: quantity<si::length, real_t> j2y(int j) const { return (real_t(j) + real_t(.5)) * dy_; }
+  public: quantity<si::length, real_t> k2z(int k) const { return (real_t(k) + real_t(.5)) * dz_; }
 
   public: const quantity<si::length, real_t> dx() const { return dx_; }
   public: const quantity<si::length, real_t> dy() const { return dy_; }
@@ -51,18 +51,18 @@ class grd_arakawa_c_lorenz : public grd<real_t> // TODO: rmerge it with grid... 
   public: const int ny() const { return ny_; }
   public: const int nz() const { return nz_; }
 
-  private: mtx::rng rng_sclr(int first, int last, int halo) 
+  private: mtx::rng rng_sclr(int first, int last, int halo) const
   { 
     return mtx::rng(first - halo, last + halo); 
   }
 
-  public: mtx::rng rng_vctr(int first, int last, int halo) 
+  public: mtx::rng rng_vctr(int first, int last, int halo) const
   { 
     assert(halo > 0);
     return mtx::rng(first - m_half - halo, last + p_half + halo); 
   }
 
-  public: mtx::idx rng_sclr(int i_min, int i_max, int j_min, int j_max, int k_min, int k_max, int halo) 
+  public: mtx::idx rng_sclr(int i_min, int i_max, int j_min, int j_max, int k_min, int k_max, int halo) const
   {
     return mtx::idx_ijk(
       rng_sclr(i_min, i_max, halo),
@@ -71,7 +71,7 @@ class grd_arakawa_c_lorenz : public grd<real_t> // TODO: rmerge it with grid... 
     );
   }
 
-  public: mtx::idx rng_vctr_x(const mtx::idx &ijk, int halo)
+  public: mtx::idx rng_vctr_x(const mtx::idx &ijk, int halo) const
   {
     return mtx::idx_ijk(
       rng_vctr(ijk.lbound(0), ijk.ubound(0), halo),
@@ -80,7 +80,7 @@ class grd_arakawa_c_lorenz : public grd<real_t> // TODO: rmerge it with grid... 
     );
   }
 
-  public: mtx::idx rng_vctr_y(const mtx::idx &ijk, int halo)
+  public: mtx::idx rng_vctr_y(const mtx::idx &ijk, int halo) const
   {
     return mtx::idx_ijk(
       rng_sclr(ijk.lbound(0), ijk.ubound(0), halo),
@@ -89,7 +89,7 @@ class grd_arakawa_c_lorenz : public grd<real_t> // TODO: rmerge it with grid... 
     );
   }
 
-  public: mtx::idx rng_vctr_z(const mtx::idx &ijk, int halo)
+  public: mtx::idx rng_vctr_z(const mtx::idx &ijk, int halo) const
   {
     return mtx::idx_ijk(
       rng_sclr(ijk.lbound(0), ijk.ubound(0), halo),

@@ -43,7 +43,7 @@ class eqs_todo_bulk : public eqs_todo<real_t>
       const ptr_unordered_map<string, mtx::arr<real_t>> &aux,
       const mtx::arr<real_t> * const * const psi,
       const quantity<si::time, real_t>
-      )
+    ) const
     {
       const mtx::arr<real_t>
         &rhod = aux.at("rhod"),
@@ -73,7 +73,7 @@ class eqs_todo_bulk : public eqs_todo<real_t>
       const ptr_unordered_map<string, mtx::arr<real_t>> &aux,
       const mtx::arr<real_t> * const * const psi,
       const quantity<si::time, real_t> dt
-    )
+    ) const
     {
       const mtx::arr<real_t>
         &rhod = aux.at("rhod"),
@@ -104,7 +104,7 @@ class eqs_todo_bulk : public eqs_todo<real_t>
       const ptr_unordered_map<string, mtx::arr<real_t>> &aux,
       const mtx::arr<real_t> * const * const psi,
       const quantity<si::time, real_t>
-    )
+    ) const
     {
       const mtx::arr<real_t>
         &rhod = aux.at("rhod"),

@@ -25,13 +25,14 @@ inline void opt_stp_desc(po::options_description &desc)
 }
 
 template <typename real_t>
-stp<real_t> *opt_stp(const po::variables_map& vm, 
-  adv<real_t> *advsch,
-  vel<real_t> *velocity,
-  ini<real_t> *intcond,
-  grd<real_t> *grid,
-  eqs<real_t> *eqsys
-  )
+stp<real_t> *opt_stp(
+  const po::variables_map& vm, 
+  const adv<real_t> &advsch,
+  const vel<real_t> &velocity,
+  const ini<real_t> &intcond,
+  const grd<real_t> &grid,
+  eqs<real_t> &eqsys
+)
 { 
   quantity<si::time, real_t> dt=0*si::seconds;
   if (vm["dt"].as<string>() == "auto" ) 

@@ -38,12 +38,12 @@ class eqs_harmonic_oscillator : public eqs<real_t>
       const ptr_unordered_map<string, mtx::arr<real_t>> &,
       const mtx::arr<real_t> * const * const psi,
       const quantity<si::time, real_t>
-    ) 
+    ) const
     { R(R.ijk) += omega_signed * (*psi[eqid])(R.ijk); };
 
     public: real_t implicit_part(
       const quantity<si::time, real_t> dt
-    )
+    ) const
     { return -(dt / si::seconds) * pow(omega_signed, 2); }
   };
 

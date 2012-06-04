@@ -30,16 +30,16 @@ class vel_func_uniform : public vel_func<real_t>
     const quantity<si::length, real_t> &x,
     const quantity<si::length, real_t> &y,
     const quantity<si::length, real_t> &z
-  ) { return uu; }
+  ) const { return uu; }
   public: virtual quantity<si::velocity, real_t> v(
     const quantity<si::length, real_t> &x,
     const quantity<si::length, real_t> &y,
     const quantity<si::length, real_t> &z
-  ) { return vv; }
+  ) const { return vv; }
   public: virtual quantity<si::velocity, real_t> w(
     const quantity<si::length, real_t> &x,
     const quantity<si::length, real_t> &y,
     const quantity<si::length, real_t> &z
-  ) { return ww; }
+  ) const { return ww; }
 };
 #endif

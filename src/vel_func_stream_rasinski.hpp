@@ -44,7 +44,7 @@ class vel_func_stream_rasinski : public vel_func_stream<real_t>
     const quantity<si::length, real_t> &x, 
     const quantity<si::length, real_t> &z, 
     const quantity<si::length, real_t> &
-  )   
+  ) const 
   {   
     // rho * u = - \frac{\partial \psi}{\partial z}
     return pi * (A / Z / this->rho(z)) * real_t(cos(2*pi * x / X) * cos(pi * z / Z));
@@ -54,7 +54,7 @@ class vel_func_stream_rasinski : public vel_func_stream<real_t>
     const quantity<si::length, real_t> &x, 
     const quantity<si::length, real_t> &z, 
     const quantity<si::length, real_t> &
-  )   
+  ) const
   {   
     // rho * w = \frac{\partial \psi}{\partial x}
     return 2 * pi * (A / X / this->rho(z)) * real_t(sin(2*pi * x / X) * sin(pi * z / Z)); 

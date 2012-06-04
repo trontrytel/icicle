@@ -18,7 +18,7 @@ class vel_func_stream : public vel_func<real_t>
     const quantity<si::length, real_t> &,  
     const quantity<si::length, real_t> &,  
     const quantity<si::length, real_t> &
-  )   
+  ) const
   {
     return real_t(0.) * si::metres / si::seconds; // TODO: assert(false);
   }
@@ -27,10 +27,10 @@ class vel_func_stream : public vel_func<real_t>
   
   protected: quantity<si::mass_density, real_t> rho(
     const quantity<si::length, real_t> &z
-  ) 
+  ) const
   {
     assert(z >= 0 * si::metres);
-    return rhomap[z];
+    return rhomap.at(z);
   }
 
   public: vel_func_stream(const grd<real_t> &grid, const string &filename)

@@ -36,7 +36,7 @@ class vel_momeq_extrapol : public vel_momeq<real_t>
     mtx::arr<real_t> *Qx[],
     mtx::arr<real_t> *Qy[],
     mtx::arr<real_t> *Qz[]
-  )   
+  ) const
   {
     {
       mtx::arr<real_t> *C[] = { Cx, Cy, Cz };

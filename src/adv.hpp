@@ -16,14 +16,14 @@
 template <typename real_t>
 class adv 
 {
-  public: virtual const int stencil_extent() = 0;
-  public: virtual const int time_levels() = 0;
-  public: virtual const int num_steps() { return 1; }
-  public: virtual const int num_sclr_caches() { return 0; }
-  public: virtual const int num_vctr_caches() { return 0; }
+  public: virtual const int stencil_extent() const = 0;
+  public: virtual const int time_levels() const = 0;
+  public: virtual const int num_steps() const { return 1; }
+  public: virtual const int num_sclr_caches() const { return 0; }
+  public: virtual const int num_vctr_caches() const { return 0; }
 
-  public: virtual const real_t courant_max() = 0; 
-  public: virtual const real_t courant_min() = 0;
+  public: virtual const real_t courant_max() const = 0; 
+  public: virtual const real_t courant_min() const = 0;
 
   // functor factory (TODO: rename to op3D)
   public: class op3D 
@@ -52,7 +52,7 @@ class adv
     mtx::arr<real_t> *tmp_s[], 
     mtx::arr<real_t> *tmp_v[],
     bool positive_definite
-  ) = 0;
+  ) const = 0;
 
     // TODO: document, include as an option / autotest in CMake
 #  ifdef MPDATA_NEGPOSPART_ABS

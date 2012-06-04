@@ -43,11 +43,11 @@ void mdl(const po::variables_map &vm, const string &cmdline)
   // grouping all above into a single set-up object
   cerr << "-- init: parsing options: stp..." << endl;
   unique_ptr<stp<real_t>> setup(opt_stp<real_t>(vm, 
-    advsch.get(), 
-    velocity.get(), 
-    intcond.get(), 
-    grid.get(), 
-    eqsys.get()
+    *advsch, 
+    *velocity, 
+    *intcond, 
+    *grid, 
+    *eqsys
   ));
 
   // output choice

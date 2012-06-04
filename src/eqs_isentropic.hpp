@@ -35,7 +35,7 @@ class eqs_isentropic : public eqs<real_t>
   // nested class
   private: class rayleigh_damping : public rhs_implicit<real_t> // (aka sponge layer, aka gravity-wave absorber)
   {
-    private: real_t tau(int lev, int nlev, int abslev, real_t absamp)
+    private: real_t tau(int lev, int nlev, int abslev, real_t absamp) const
     {
       if (lev <= abslev) return real_t(0);
       real_t pi = acos(real_t(-1));
@@ -45,7 +45,7 @@ class eqs_isentropic : public eqs<real_t>
     public: rayleigh_damping(int lev, int nlev, int abslev, real_t absamp)
       : C(-tau(lev, nlev, abslev, absamp))
     { }
-    public: real_t implicit_part(const quantity<si::time, real_t>) 
+    public: real_t implicit_part(const quantity<si::time, real_t>) const
     { return C; }
   };
 
@@ -77,7 +77,7 @@ class eqs_isentropic : public eqs<real_t>
       const ptr_unordered_map<string, mtx::arr<real_t>> &aux,
       const mtx::arr<real_t> * const * const psi,
       const quantity<si::time, real_t> t
-    )
+    ) const
     {
       const mtx::arr<real_t> &p = aux.at("p"); 
       const mtx::arr<real_t> &M = aux.at("M");

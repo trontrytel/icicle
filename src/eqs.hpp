@@ -38,7 +38,7 @@ class eqs
     ptr_vector<rhs<real_t>> rhs_terms;
   };
 
-  public: bool is_homogeneous(int e) 
+  public: bool is_homogeneous(int e) const
   {
     assert(system().size() > e);
     if (system().at(e).rhs_terms.size() > 0) return false;
@@ -46,38 +46,38 @@ class eqs
   }
 
   protected: ptr_vector<struct eqs<real_t>::gte> sys;
-  private: ptr_vector<gte> &system() { return sys; }
+  private: const ptr_vector<gte> &system() const { return sys; }
 
-  public: int group(int e)
+  public: int group(int e) const
   {
     assert(system().size() > e);
     return system().at(e).group.id;
   }
 
-  public: bool positive_definite(int e)
+  public: bool positive_definite(int e) const
   {
     assert(system().size() > e);
     return system().at(e).posdef.is;
   }
 
-  public: int n_vars()
+  public: int n_vars() const
   {
     return system().size();
   }
 
-  public: int var_n_rhs_terms(int e)
+  public: int var_n_rhs_terms(int e) const
   {
     assert(system().size() > e);
     return system().at(e).rhs_terms.size();
   }
 
-  public: rhs<real_t> &var_rhs_term(int e, int i)
+  public: const rhs<real_t> &var_rhs_term(int e, int i) const
   {
     assert(system().size() > e);
     return system().at(e).rhs_terms[i];
   }
 
-  public: bool var_dynamic(int e) // i.e. involved in calculation of velocities
+  public: bool var_dynamic(int e) const // i.e. involved in calculation of velocities
   {
     assert(system().size() > e);
     if (system().at(e).pow_uvw.size() == 0) return false;
@@ -88,7 +88,7 @@ class eqs
       system().at(e).pow_uvw[2] != 0;
   }
  
-  public: string var_name(int i)
+  public: string var_name(int i) const
   {
     assert(system().size() > i);
     return system().at(i).name;
@@ -96,7 +96,7 @@ class eqs
 
   //       group   xyz   eq-pow      eq   pow       
   private: vector<vector<vector<pair<int, int>>>> vm;
-  public: int n_group() { return vm.size(); }
+  public: int n_group() const { return vm.size(); }
   protected: void init_maps()
   {
     // mem allocation (vm) and group-related sanity checks
@@ -145,19 +145,19 @@ class eqs
     }
   }
 
-  public: vector<pair<int,int>> &velmap(int g, int xyz) // equation -> power
+  public: const vector<pair<int,int>> &velmap(int g, int xyz) const // equation -> power
   {
     assert(vm.size() >= g);
-    return vm[g][xyz];
+    return vm.at(g).at(xyz);
   }
  
-  public: string var_desc(int i)
+  public: string var_desc(int i) const
   {
     assert(system().size() > i);
     return system().at(i).desc;
   }
 
-  public: string var_unit(int i)
+  public: string var_unit(int i) const
   {
     assert(system().size() > i);
     return system().at(i).unit;
@@ -191,63 +191,63 @@ class eqs
   };  
   
   protected: ptr_unordered_map<string, struct eqs<real_t>::axv> aux;
-  public: ptr_unordered_map<string, struct eqs<real_t>::axv> &auxvars() { return aux; } // TODO: should be private!
+  private: const ptr_unordered_map<string, struct eqs<real_t>::axv> &auxvars() const { return aux; } // TODO: do we nned it if it's private?
 
-  public: int n_auxv() { return auxvars().size(); } // TODO: is it needed anymore???
+  public: int n_auxv() const { return auxvars().size(); } // TODO: is it needed anymore???
 
-  public: mtx::idx aux_shape(const string &v, const mtx::idx &ijk) 
+  public: mtx::idx aux_shape(const string &v, const mtx::idx &ijk) const
   {
     // sanity checks
-    assert(auxvars()[v].dimspan.size() >= 3);
-    assert(auxvars()[v].dimspan.size() >= auxvars()[v].halo.size());
+    assert(auxvars().at(v).dimspan.size() >= 3);
+    assert(auxvars().at(v).dimspan.size() >= auxvars().at(v).halo.size());
 
     // computing the dimensions
     vector<mtx::rng> xyz(3);
     for (int d = 0; d < 3; ++d) 
     {
-      int halo = auxvars()[v].halo.size() > d 
-        ? auxvars()[v].halo[d] 
+      int halo = auxvars().at(v).halo.size() > d 
+        ? auxvars().at(v).halo[d] 
         : 0;
-      xyz[d] = (auxvars()[v].dimspan[d] == axv::span) 
+      xyz[d] = (auxvars().at(v).dimspan[d] == axv::span) 
         ? mtx::rng(ijk[d].first() - halo, ijk[d].last() + halo)  
-        : mtx::rng(0, auxvars()[v].dimspan[d] - 1);
+        : mtx::rng(0, auxvars().at(v).dimspan[d] - 1);
     }
 
     return mtx::idx_ijk(xyz[0], xyz[1], xyz[2]);
   }
 
-  public: vector<string> aux_names()
+  public: const vector<string> aux_names() const
   {
     vector<string> names;
-    for (const typename ptr_unordered_map<string, struct eqs<real_t>::axv>::value_type &axv : aux) names.push_back(axv.first);
+    for (const typename ptr_unordered_map<string, const struct eqs<real_t>::axv>::value_type &axv : aux) names.push_back(axv.first);
     return names;
   }
 
-  public: bool aux_const(const string &v)
+  public: bool aux_const(const string &v) const
   {
     assert(auxvars().count(v));
-    return auxvars()[v].constant.is;
+    return auxvars().at(v).constant.is;
   } 
 
-  public: bool aux_tobeoutput(const string &v)
+  public: bool aux_tobeoutput(const string &v) const
   {
     assert(auxvars().count(v));
     return (!aux_const(v) 
-      && auxvars()[v].dimspan[0] == axv::span
-      && auxvars()[v].dimspan[0] == axv::span
-      && auxvars()[v].dimspan[0] == axv::span);
+      && auxvars().at(v).dimspan[0] == axv::span
+      && auxvars().at(v).dimspan[0] == axv::span
+      && auxvars().at(v).dimspan[0] == axv::span);
   }
 
-  public: string aux_desc(const string &v)
+  public: string aux_desc(const string &v) const
   {
     assert(auxvars().count(v));
-    return auxvars()[v].desc;
+    return auxvars().at(v).desc;
   }
 
-  public: string aux_unit(const string &v)
+  public: string aux_unit(const string &v) const
   {
     assert(auxvars().count(v));
-    return auxvars()[v].unit;
+    return auxvars().at(v).unit;
   }
 
   /// @brief allows for post-advection and post-rhs adjustments to the state vector
