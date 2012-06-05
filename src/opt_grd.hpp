@@ -9,12 +9,12 @@
 #  define OPT_GRD_HPP
 
 #  include "opt.hpp"
-#  include "grd_arakawa-c-lorenz.hpp"
+#  include "grd_carthesian.hpp"
 
 inline void opt_grd_desc(po::options_description &desc)
 {
   desc.add_options()
-    ("grd", po::value<string>()->default_value("arakawa-c-lorenz"), "grid: arakawa-c-lorenz")
+    ("grd", po::value<string>()->default_value("carthesian"), "grid: carthesian")
     ("grd.dx", po::value<string>(), "gridbox length (X) [m]")
     ("grd.dy", po::value<string>()->default_value("1"), "gridbox length (Y) [m]")
     ("grd.dz", po::value<string>()->default_value("1"), "gridbox length (Z) [m]")
@@ -28,7 +28,7 @@ grd<real_t> *opt_grd(const po::variables_map& vm)
 {
   string grdtype = vm.count("grd") ? vm["grd"].as<string>() : "<unspecified>";
 
-  if (grdtype == "arakawa-c-lorenz")
+  if (grdtype == "carthesian")
   {
     if (!vm.count("grd.dx")) error_macro("specifying grd.dx is mandatory")
     int 
@@ -47,7 +47,7 @@ grd<real_t> *opt_grd(const po::variables_map& vm)
     if (nx <= 0 || ny <= 0 || nz <= 0) 
       error_macro("grd.nx, grd.ny and grd.nz must all be > 0")
 
-    return new grd_arakawa_c_lorenz<real_t>(dx, dy, dz, nx, ny, nz);
+    return new grd_carthesian<real_t>(dx, dy, dz, nx, ny, nz);
   }
   else error_macro("unsupported grid type: " << grdtype)
 }

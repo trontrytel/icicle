@@ -11,7 +11,7 @@
 #  define ADV_MPDATA_HPP
 
 #  include "adv_upstream.hpp"
-#  include "grd_arakawa-c-lorenz.hpp"
+#  include "grd.hpp"
 
 /** @brief
  *  C++ implementation of the second- and third-order accurate

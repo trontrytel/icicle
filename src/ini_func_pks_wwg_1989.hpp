@@ -13,7 +13,7 @@
 #  define INI_FUNC_PKS_WWG_1989_HPP
 
 #  include "ini_func.hpp" 
-#  include "grd_arakawa-c-lorenz.hpp"
+#  include "grd.hpp"
 
 template <typename real_t>
 class ini_func_pks_wwg_1989 : public ini_func<real_t>
@@ -21,12 +21,8 @@ class ini_func_pks_wwg_1989 : public ini_func<real_t>
   private: quantity<si::length, real_t> dx;
 
   public: ini_func_pks_wwg_1989(const grd<real_t> &grid)
-    : ini_func<real_t>(grid)
+    : ini_func<real_t>(grid), dx(grid.dx())
   {
-    // TODO: that's about cartesian/spherical/etc, not about Arakawa-C
-    const grd_arakawa_c_lorenz<real_t> *grid_cartesian = dynamic_cast<const grd_arakawa_c_lorenz<real_t>*>(&grid);
-    if (grid_cartesian == NULL) error_macro("netCDF output supports only the Arakawa-C grid")
-    dx = grid_cartesian->dx();
   }
 
   private: real_t psi_0(real_t x) const

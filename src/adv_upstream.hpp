@@ -11,7 +11,7 @@
 #  define ADV_UPSTREAM_HPP
 
 #  include "adv.hpp"
-#  include "grd_arakawa-c-lorenz.hpp"
+#  include "grd.hpp"
 
 /** @brief
  *  implementation of the upstream/upwind/donor-cell scheme 

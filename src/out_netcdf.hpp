@@ -13,7 +13,7 @@
 #    include "inf.hpp"
 #    include "eqs.hpp"
 #    include "stp.hpp"
-#    include "grd_arakawa-c-lorenz.hpp"
+#    include "grd.hpp"
 
 // TODO: ncFloat vs. ncDouble as a command-line option (but it float computations and double requeste -> error)
 // TODO: add X_sclr i X_vctr variables! (e.g. for axis labelling)

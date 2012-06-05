@@ -4,24 +4,24 @@
  *  @date November 2011
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
- *  @brief contains definition of the grd_arakawa_c_lorenz class representing the Arakawa-C/Lorenz staggered grid
+ *  @brief contains definition of the grd_carthesian class
  */
-#ifndef GRD_ARAKAWA_C_LORENZ_HPP
-#  define GRD_ARAKAWA_C_LORENZ_HPP
+#ifndef GRD_CARTHESIAN_HPP
+#  define GRD_CARTHESIAN_HPP
 
 #  include "grd.hpp"
 
-/// @brief the Arakawa-C/Lorenz staggered grid
 template<typename real_t>
-class grd_arakawa_c_lorenz : public grd<real_t> // TODO: rmerge it with grid... KISS!
+class grd_carthesian : public grd<real_t> // TODO: rmerge it with grid... KISS!
 {
+  // the Arakawa-C/Lorenz grid
   public: static const int m_half = 0;
   public: static const int p_half = 1;
 
   private: quantity<si::length, real_t> dx_, dy_, dz_;
   private: int nx_, ny_, nz_;
 
-  public: grd_arakawa_c_lorenz(
+  public: grd_carthesian(
     quantity<si::length, real_t> dx,
     quantity<si::length, real_t> dy,
     quantity<si::length, real_t> dz,

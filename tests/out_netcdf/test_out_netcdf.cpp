@@ -24,7 +24,7 @@ int main()
   int status;
   std::string cmd =
     "../../icicle"
-    " --grd.dx 1 --grd.dy 1 --grd.dz 1 --grd arakawa-c-lorenz"
+    " --grd.dx 1 --grd.dy 1 --grd.dz 1"
     " --vel uniform --vel.uniform.u -1"
     " --t_max 10 --dt_out 1 --grd.nx 20"
     " --adv mpdata"

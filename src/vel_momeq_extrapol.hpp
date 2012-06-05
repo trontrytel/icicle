@@ -9,18 +9,16 @@
 #  define VEL_MOMEQ_EXTRAPOL_HPP
 
 #  include "vel_momeq.hpp" 
-#  include "grd_arakawa-c-lorenz.hpp"
+#  include "grd_carthesian.hpp"
 
 template <typename real_t>
 class vel_momeq_extrapol : public vel_momeq<real_t>
 {
-  private: const grd_arakawa_c_lorenz<real_t> &grid;
+  private: const grd<real_t> &grid;
 
   public: vel_momeq_extrapol(const grd<real_t> &grid)
-    : grid(dynamic_cast<const grd_arakawa_c_lorenz<real_t>&>(grid))
+    : grid(grid)
   { }
-//    if (grid == NULL) error_macro("vel_momeq_extrapol supports the Arakawa-C grid only")
-//  }
 
   // eq. 34b in Smolarkiewicz & Margolin 1998
   // .25 = .5 * .5 (stems from i +/- 1/2 averaging)
@@ -46,8 +44,8 @@ class vel_momeq_extrapol : public vel_momeq<real_t>
         if (Q[xyz] != NULL) 
         {
           const mtx::idx 
-            imph_j_k(mtx::idx_ijk(C[xyz]->i - grid.p_half /* sic! */, C[xyz]->j, C[xyz]->k)),
-            ipmh_j_k(mtx::idx_ijk(C[xyz]->i + grid.m_half /* sic! */, C[xyz]->j, C[xyz]->k));
+            imph_j_k(mtx::idx_ijk(C[xyz]->i - grd_carthesian<real_t>::p_half /* sic! */, C[xyz]->j, C[xyz]->k)),
+            ipmh_j_k(mtx::idx_ijk(C[xyz]->i + grd_carthesian<real_t>::m_half /* sic! */, C[xyz]->j, C[xyz]->k));
 
           (*C[xyz])(C[xyz]->ijk) = extrapol(
             (*Q[xyz][nm0])(imph_j_k),

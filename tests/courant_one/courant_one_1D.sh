@@ -25,7 +25,7 @@ for bits in {32,64,128}; do
 
                   # the actual test
                   cmd="../../icicle --ini boxcar --ini.boxcar.bx 1"
-                  cmd="$cmd --bits $bits --dt_out 1 --grd.dx 1 --grd.dy 1 --grd.dz 1 --grd arakawa-c-lorenz"
+                  cmd="$cmd --bits $bits --dt_out 1 --grd.dx 1 --grd.dy 1 --grd.dz 1"
                   cmd="$cmd --vel uniform $nxyz $u"
                   cmd="$cmd --t_max $t_max --adv $adv --slv $slv --out gnuplot --nsd $nsd"
 # TODO: --sdom $sdom --nssdom $nssdom --nout $nout"

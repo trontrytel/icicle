@@ -10,7 +10,7 @@
 #  define ADV_LEAPFROG_HPP
 
 #  include "adv.hpp"
-#  include "grd_arakawa-c-lorenz.hpp"
+#  include "grd.hpp"
 
 /// @brief an implementation of the leapfrog advection scheme
 template <typename real_t> 
