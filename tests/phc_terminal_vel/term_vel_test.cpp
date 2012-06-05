@@ -1,22 +1,21 @@
-/* @file
+/** @file
+ *  @example phc_terminal_vel/term_vel_test.cpp
  *  @author Anna Jaruga <ajaruga@igf.fuw.edu.pl>
  *  @copyright University of Warsaw
- *  @date March 2012
+ *  @date May 2012
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
+ *  @section DESCRIPTION
+ *    Terminal velocity parametersiation following [Khvorostyanow and Curry 2002][] (cf. solid line in Figure 2 therein).
+ *  @section REFERENCES
+ *    [Khvorostyanow and Curry 2002]: http://dx.doi.org/10.1175/1520-0469(2002)059%3C1872:TVODAC%3E2.0.CO;2
+ *    [Khvorostyanow and Curry 2002] - Terminal Velocities of Droplets and Crystals: Power Laws with Continuous Parameters over the Size Spectrum, J. Atmos. Sci., 59, 1872–1884. 
+ *
+ *    \image html "../../tests/phc_terminal_vel/term_vel_test.svg"
  */
-
-#include <vector>
-using std::vector;
 
 #include <map>
 using std::map;
-
-#include <iostream>
-using std::ostringstream;
-using std::cerr;
-using std::endl;
-#define notice_macro(msg) { cerr << msg << endl; }
 
 #include <boost/units/systems/si.hpp>
 #include <boost/units/io.hpp>
@@ -27,9 +26,8 @@ using boost::units::detail::get_value;
 
 #define GNUPLOT_ENABLE_BLITZ
 #include <gnuplot-iostream/gnuplot-iostream.h>
+using std::endl;
 
-#include "../../src/cmn.hpp"
-#include "../../src/phc_theta.hpp"
 #include "../../src/phc_terminal_vel.hpp"
 
 typedef float real_t;
@@ -43,24 +41,18 @@ int main()
   quantity<si::length, real_t> radius;
   quantity<si::velocity, real_t> term_vel;
  
-  cout << 1e2 << endl;
-  cout << 10e2 << endl;
-
   map< quantity<si::length, real_t>, quantity<si::velocity, real_t> > plot_data;
   for(int i=0; i<=45; i++){
     radius = r*real_t(i*100) ; 
-//    cout << radius << endl;
     term_vel = phc::vt(r * real_t(i * 100),T, rhoa) ;
-//    cout << term_vel << endl;
     plot_data[radius * real_t(2*1e6)] = term_vel * real_t(100);
   }
  
   Gnuplot gp;
   gp << "set xlabel 'drop diameter [um]'" << endl;
   gp << "set ylabel 'terminal velocity [cm/s]'" << endl;
-  gp << "set term postscript" << endl;
-  gp << "set output 'term_vel_test.ps'" << endl; 
+  gp << "set term svg" << endl;
+  gp << "set output 'term_vel_test.svg'" << endl; 
   gp << "plot '-' u 1:3" << endl;
   gp.send(plot_data);
-
 }

@@ -44,7 +44,6 @@
  * [University of Warsaw](http://www.uw.edu.pl/) (the copyright holder)
  * with funding from the Polish [National Science Centre](http://www.ncn.gov.pl/)
  * (cf. @ref sec_README for details).
- *
  */
 /** @page README README file (incl. requirements and installation instructions)
  *  @section sec_README README file
