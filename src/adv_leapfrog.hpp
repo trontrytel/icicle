@@ -98,7 +98,14 @@ class adv_leapfrog : public adv<real_t>
       else assert(false);
     }
 
-    // private methods
+    /// Implements a leapfrog-type scheme on an Arakawa-C grid.
+    /// \f$ 
+    ///   \psi^{n+1}_i = \psi^{n-1}_i - C^{n}_{i} \cdot (\psi^{n}_{i+1} - \psi^{n}_{i-1}) 
+    /// \f$
+    /// where C is the average Courant number for Arakawa C grid: 
+    /// \f$ 
+    ///   C^{n}_i=0.5\cdot(C^{n}_{i+1/2} + C^{n}_{i-1/2}) 
+    /// \f$
     private: 
     template <class indices>
     void op1D(
@@ -112,13 +119,6 @@ class adv_leapfrog : public adv<real_t>
     )
     {
       assert(step == 1);
-      /// \f$ 
-      ///   \psi^{n+1}_i = \psi^{n-1}_i - C^{n}_{i} \cdot (\psi^{n}_{i+1} - \psi^{n}_{i-1}) 
-      /// \f$
-      /// where C is the average Courant number for Arakawa C grid: 
-      /// \f$ 
-      ///   C^{n}_i=0.5\cdot(C^{n}_{i+1/2} + C^{n}_{i-1/2}) 
-      /// \f$
       (*psi[n+1])(idx.i_j_k) -= 
         .5 * ( // average Courant number
           (*Cx)(idx.iph_j_k) + 

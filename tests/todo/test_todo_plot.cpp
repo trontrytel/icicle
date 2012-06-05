@@ -9,6 +9,9 @@
 #include <string>
 using std::string;
 
+#include <list>
+using std::list;
+
 #include <vector>
 using std::vector;
 
@@ -107,7 +110,7 @@ int main()
 
   system("mkdir -p tmp");
 
-  for (size_t t = 0 ; t < nt; ++t) 
+  for (size_t t = 0 ; t < nt; ++t) for (string &ext : list<string>({"eps","png"}))
   {
     notice_macro("generating frame at t=" << t)
     gp << "reset" << endl;
@@ -126,45 +129,38 @@ int main()
 
     gp << "set label 't = " << int(real_t(t) * dt_out / si::seconds) << " s' at screen .48,.96 left" << endl;
 
-    gp << "set term png enhanced size 800,800" << endl;
-//  gp << "set term postscript size 36cm,12cm solid enhanced color" << endl;
-    gp << "set term postscript size 36cm,24cm solid enhanced color" << endl;
-//    gp << "set output 'tmp/test_" << zeropad(t) << ".png'" << endl;
-    gp << "set output 'tmp/test_" << zeropad(t) << ".ps'" << endl;
+    if (ext == "png")
+      gp << "set term png enhanced size 800,800" << endl;
+    else if (ext == "eps")
+      gp << "set term postscript size 36cm,24cm solid enhanced color" << endl;
+    else assert(false);
+
+    gp << "set output 'tmp/test_" << zeropad(t) << "." << ext << "'" << endl;
     gp << "set multiplot layout 3,2" << endl;
-//    gp << "set multiplot layout 1,3" << endl;
 
     gp << "set title 'water vapour mixing ratio [g/kg]'" << endl;
     gp << "set cbrange [6:8]" << endl;
     nf.getVar("rhod_rv").getVar(start({t,0,0,0}), count({1,nx,ny,1}), rv.data()); 
     rv /= rhod;
     gp << "splot '-' binary" << gp.binfmt(rv) << dxdy << " using ($1*1000) with image notitle";
-    //gp << ",'-' binary" << gp.binfmt(rv) << dxdy << " ps 0 notitle";
     gp << endl;
     gp.sendBinary(rv);
-    //gp.sendBinary(rv);
 
     gp << "set title 'potential temperature [K]'" << endl;
     gp << "set cbrange [288:293]" << endl;
     nf.getVar("rhod_th").getVar(start({t,0,0,0}), count({1,nx,ny,1}), th.data()); 
     th /= rhod;
     gp << "splot '-' binary" << gp.binfmt(th) << dxdy << " with image notitle";
-    //gp << ",'-' binary" << gp.binfmt(th) << dxdy << " ps 0 notitle";
     gp << endl;
     gp.sendBinary(th);
-    //gp.sendBinary(th);
 
-
-/*
     gp << "set title 'liquid water mixing ratio [g/kg]'" << endl;
     gp << "set cbrange [0:1]" << endl;
     nf.getVar("rhod_rl").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
     tmp0 /= rhod;
     gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using ($1*1000) with image notitle";
-    //gp << ",'-' binary" << gp.binfmt(tmp0) << dxdy << " ps 0 notitle";
     gp << endl;
     gp.sendBinary(tmp0);
-    //gp.sendBinary(tmp0);
 
     gp << "set title 'rain water mixing ratio [g/kg]'" << endl;
     gp << "set cbrange [0.:.02]" << endl;
@@ -172,52 +168,39 @@ int main()
     nf.getVar("rhod_rr").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
     tmp0 /= rhod;
     gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using ($1*1000) with image notitle";
-    //gp << ",'-' binary" << gp.binfmt(tmp0) << dxdy << " ps 0 notitle";
     gp << endl;
     gp.sendBinary(tmp0);
-    //gp.sendBinary(tmp0);
-*/
-
-
-    //gp << "set label 'results obtained with icicle - a GPL-ed C++ MPDATA-based solver from University of Warsaw' at screen .98,.02 right" << endl;
-    //gp << "set label '8th International Cloud Modeling Workshop 2012: Case 1 (work in progress!)' at screen .02,.02 left" << endl;
 
 /*
     gp << "set title 'super-droplet conc. [1/dx/dy/dz]'" << endl;
     gp << "set cbrange [0:150]" << endl;
     nf.getVar("sd_conc").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
     gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";
-    //gp << ",'-' binary" << gp.binfmt(tmp0) << dxdy << " ps 0 notitle";
     gp << endl;
     gp.sendBinary(tmp0);
-    //gp.sendBinary(tmp0);
-*/
+
     gp << "set title 'cloud droplet conc. [1/cm^3]'" << endl;
     gp << "set cbrange [0:150]" << endl;
     nf.getVar("n_ccn").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
     tmp0 /= 1e6;
     gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";
-    //gp << ",'-' binary" << gp.binfmt(tmp0) << dxdy << " ps 0 notitle";
     gp << endl;
     gp.sendBinary(tmp0);
-    //gp.sendBinary(tmp0);
 
     gp << "set title 'aerosol concentration [1/cm^3]'" << endl;
     gp << "set cbrange [0:150]" << endl;
     nf.getVar("n_tot").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp1.data()); 
     tmp0 = tmp1 / 1e6 - tmp0;
     gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";
-    //gp << ",'-' binary" << gp.binfmt(tmp0) << dxdy << " ps 0 notitle";
     gp << endl;
     gp.sendBinary(tmp0);
-    //gp.sendBinary(tmp0);
+*/
 
     gp << "unset multiplot" << endl;
     gp << "unset label" << endl;
   }
 
-  system("convert -delay 10 tmp/test_*.png todo.gif");
-  system("rm -rf tmp/test_*.png");
+  system("convert -monitor -delay 10 tmp/test_*.png todo.gif");
   notice_macro("done.")
 }
 
