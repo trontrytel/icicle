@@ -37,6 +37,7 @@ using boost::units::detail::get_value;
 
 #include "../../src/cmn.hpp"
 #include "../../src/phc_theta.hpp"
+#include "../../src/phc_terminal_vel.hpp"
 
 typedef float real_t;
 
@@ -61,7 +62,7 @@ const quantity<si::dimensionless, real_t>
 // other parameters deduced from the Fortran code published at:
 // http://www.rap.ucar.edu/~gthompsn/workshop2012/case1/kinematic_wrain.vocals.v3.for
 const int 
-  bits = 32,
+  bits = 64,
   fct = 1,  
   toa = 0,
   iord = 2;  

@@ -126,7 +126,8 @@ int main()
 
     gp << "set label 't = " << int(real_t(t) * dt_out / si::seconds) << " s' at screen .48,.96 left" << endl;
 
-//  gp << "set term png enhanced size 800,800" << endl;
+
+  gp << "set term png enhanced size 800,800" << endl;
 //  gp << "set term postscript size 36cm,12cm solid enhanced color" << endl;
   gp << "set term postscript size 36cm,24cm solid enhanced color" << endl;
 //    gp << "set output 'tmp/test_" << zeropad(t) << ".png'" << endl;
@@ -182,6 +183,7 @@ int main()
     //gp << "set label 'results obtained with icicle - a GPL-ed C++ MPDATA-based solver from University of Warsaw' at screen .98,.02 right" << endl;
     //gp << "set label '8th International Cloud Modeling Workshop 2012: Case 1 (work in progress!)' at screen .02,.02 left" << endl;
 
+/*
     gp << "set title 'super-droplet conc. [1/dx/dy/dz]'" << endl;
     gp << "set cbrange [0:150]" << endl;
     nf.getVar("sd_conc").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
@@ -190,7 +192,7 @@ int main()
     gp << endl;
     gp.sendBinary(tmp0);
     //gp.sendBinary(tmp0);
-
+*/
     gp << "set title 'cloud droplet conc. [1/cm^3]'" << endl;
     gp << "set cbrange [0:150]" << endl;
     nf.getVar("n_ccn").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
@@ -210,9 +212,6 @@ int main()
     gp << endl;
     gp.sendBinary(tmp0);
     //gp.sendBinary(tmp0);
-
-    gp << "unset label" << endl;
-    gp << "unset multiplot" << endl;
   }
 
   system("convert -delay 10 tmp/test_*.png todo.gif");
