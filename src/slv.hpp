@@ -34,6 +34,9 @@ class slv
 
   public: virtual void integ_loop() = 0;
   public: virtual void sync(int e, int n) {};
+
+  // ensuring derived-class destructor will be called
+  public: virtual ~slv() {}
 };
 
 #endif

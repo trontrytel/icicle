@@ -10,7 +10,7 @@
 
 #  if defined(USE_THRUST) 
 #    include <thrust/device_vector.h>
-#    include <thrust/random.h>
+#    include <thrust/random.h> // TODO: random is not used in this file...
 #    include <thrust/sequence.h>
 #    include <thrust/sort.h>
 #    include <thrust/iterator/constant_iterator.h>

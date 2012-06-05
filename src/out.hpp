@@ -20,6 +20,9 @@ class out
     const mtx::idx &ijk, 
     const unsigned long t
   ) = 0;
+  
+  // ensuring derived-class destructor will be called
+  public: virtual ~out() {}
 };
 
 #endif

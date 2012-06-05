@@ -37,9 +37,11 @@ class adv_mpdata : public adv_upstream<real_t>
     return 6; // for higher iords we have to save all components repeatedly
   }
 
+  // private fields
   private: int iord;
   private: bool cross_terms, third_order;
 
+  // ctor
   public: adv_mpdata(int iord, bool cross_terms, bool third_order) // TODO: enums?
     : iord(iord), cross_terms(cross_terms), third_order(third_order), adv_upstream<real_t>()
   {
@@ -130,9 +132,9 @@ class adv_mpdata : public adv_upstream<real_t>
       { } 
     };  
 
-    // members fields
+    // member fields
     private: typename adv_upstream<real_t>::op3D upstream;
-    private: mtx::arr<real_t> **tmp_s, **tmp_v;
+    private: mtx::arr<real_t> **tmp_s, **tmp_v; // TODO: get rid of it
     private: int iord, cross_terms, third_order;
     public: ptr_vector<indices<mtx::idx_ijk>> indcs_x;
     public: ptr_vector<indices<mtx::idx_jki>> indcs_y;
@@ -141,13 +143,14 @@ class adv_mpdata : public adv_upstream<real_t>
     // ctor
     public: op3D(
       const mtx::idx &ijk, 
-      mtx::arr<real_t> **tmp_s,
-      mtx::arr<real_t> **tmp_v,
+      mtx::arr<real_t> **tmp_s, // TODO: get rid of it
+      mtx::arr<real_t> **tmp_v, // TODO: get rid of it
       int cross_terms, int iord, int third_order
     ) :
       adv<real_t>::op3D(ijk),
       upstream(ijk),
-      tmp_s(tmp_s), tmp_v(tmp_v), iord(iord), cross_terms(cross_terms), third_order(third_order)
+      tmp_s(tmp_s), tmp_v(tmp_v), // TODO: get rid of it!
+      iord(iord), cross_terms(cross_terms), third_order(third_order)
     { 
       for (int step = 1; step <= iord; ++step)
       {

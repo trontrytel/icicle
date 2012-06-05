@@ -11,8 +11,7 @@ cmake_minimum_required(VERSION 2.6) # for simplified if-constructs
 
 # TODO: -fprofile-use, -fprofile-generate
 set(TMP "-std=c++0x ") # C++11 (name understandable for pre-2011 compilers)
-#set(CMAKE_CXX_FLAGS_RELEASE "${TMP} -Ofast -DNDEBUG" CACHE STRING "Release options." FORCE)
-set(CMAKE_CXX_FLAGS_RELEASE "${TMP} -O1 -ffast-math -DNDEBUG -Wfatal-errors" CACHE STRING "Release options." FORCE)
+set(CMAKE_CXX_FLAGS_RELEASE "${TMP} -Ofast -DNDEBUG -Wfatal-errors" CACHE STRING "Release options." FORCE)
 set(CMAKE_CXX_FLAGS_DEBUG "${TMP} -DBZ_DEBUG" CACHE STRING "Debug options." FORCE)
 unset(TMP)
 

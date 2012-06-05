@@ -15,11 +15,8 @@
 template <typename real_t>
 class tmp 
 {
-  private: unique_ptr<mtx::arr<real_t> > *sclr_guard;
-  public: mtx::arr<real_t> **sclr;
-
-  private: unique_ptr<mtx::arr<real_t> > *vctr_guard;
-  public: mtx::arr<real_t> **vctr;
+  private: ptr_vector<mtx::arr<real_t>> sclr_guard, vctr_guard;
+  public: mtx::arr<real_t> **sclr, **vctr;
  
   public: tmp(
     int n_vctr, int n_sclr, const grd<real_t> &grid, int halomax,
@@ -28,36 +25,24 @@ class tmp
     int k_min, int k_max  // TODO: ...
   )
   {
-    vctr_guard = new unique_ptr<mtx::arr<real_t>>[n_vctr];
-    vctr = new mtx::arr<real_t>*[n_vctr];
     for (int n=0; n < n_vctr; ++n)
     {
-      vctr_guard[n].reset(new mtx::arr<real_t>(mtx::idx_ijk(
+      vctr_guard.push_back(new mtx::arr<real_t>(mtx::idx_ijk(
         // 3 x rng_vctr guarantees the temp space may be used for all dimensions
         grid.rng_vctr(i_min, i_max, halomax), 
         grid.rng_vctr(j_min, j_max, halomax), 
         grid.rng_vctr(k_min, k_max, halomax)  
       )));
-      vctr[n] = vctr_guard[n].get();
     }
+    vctr = vctr_guard.c_array();
 
-    sclr_guard = new unique_ptr<mtx::arr<real_t> >[n_sclr];
-    sclr = new mtx::arr<real_t>*[n_sclr];
     for (int n=0; n < n_sclr; ++n)
     {
-      sclr_guard[n].reset(new mtx::arr<real_t>(
+      sclr_guard.push_back(new mtx::arr<real_t>(
         grid.rng_sclr(i_min, i_max, j_min, j_max, k_min, k_max, halomax)
       ));
-      sclr[n] = sclr_guard[n].get();
     }
-  }
-
-  public: ~tmp() // TODO: get rid of it by using ptr_vector as in slv_serial.hpp
-  {
-    delete[] vctr;
-    delete[] vctr_guard;
-    delete[] sclr;
-    delete[] sclr_guard;
+    sclr = sclr_guard.c_array();
   }
 };
 #endif

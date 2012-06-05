@@ -2,7 +2,7 @@
  *  @author Sylwester Arabas <slayoo@igf.fuw.edu.pl>
  *  @author Anna Jaruga <ajaruga@igf.fuw.edu.pl>
  *  @copyright University of Warsaw
- *  @date April 2012
+ *  @date April-June 2012
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
@@ -142,7 +142,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     // TODO: random seed as an option
     private: thrust::random::taus88 engine; // TODO: RNG engine as an option
     private: thrust::uniform_real_distribution<thrust_real_t> dist;
-    public: rng(thrust_real_t a, thrust_real_t b) : dist(a, b) {}
+    public: rng(thrust_real_t a, thrust_real_t b, thrust_real_t seed) : dist(a, b), engine(seed) {}
     public: thrust_real_t operator()() { return dist(engine); }
   };
 
@@ -259,22 +259,25 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     const real_t kappa
   )
   {
-    // initialise particle coordinates
-    thrust::generate( // x
-      stat.x_begin, stat.x_end, 
-      rng(0, grid.nx() * (grid.dx() / si::metres))
-    ); 
-    thrust::generate( // y
-      stat.y_begin, stat.y_end,
-      rng(0, grid.ny() * (grid.dy() / si::metres))
-    ); 
+    thrust_real_t seed = 1234.;
 
+    // initialise particle coordinates
+    {
+      rng rand_x(0, grid.nx() * (grid.dx() / si::metres), seed);
+      thrust::generate(stat.x_begin, stat.x_end, rand_x);
+      seed = rand_x();
+    }
+    {
+      rng rand_y(0, grid.ny() * (grid.dy() / si::metres), seed);
+      thrust::generate(stat.y_begin, stat.y_end, rand_y);
+      seed = rand_y();
+    }
 
     // initialise particle dry size spectrum 
     // TODO: assert that the distribution is < epsilon at rd_min and rd_max
     thrust::generate( // rd3 temporarily means logarithms of radius!
       stat.rd3.begin(), stat.rd3.end(), 
-      rng(log(min_rd), log(max_rd))
+      rng(log(min_rd), log(max_rd), seed) 
     ); 
     {
       real_t multi = log(max_rd/min_rd) / sd_conc_mean 

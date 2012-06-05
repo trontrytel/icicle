@@ -126,10 +126,9 @@ int main()
 
     gp << "set label 't = " << int(real_t(t) * dt_out / si::seconds) << " s' at screen .48,.96 left" << endl;
 
-
-  gp << "set term png enhanced size 800,800" << endl;
+    gp << "set term png enhanced size 800,800" << endl;
 //  gp << "set term postscript size 36cm,12cm solid enhanced color" << endl;
-  gp << "set term postscript size 36cm,24cm solid enhanced color" << endl;
+    gp << "set term postscript size 36cm,24cm solid enhanced color" << endl;
 //    gp << "set output 'tmp/test_" << zeropad(t) << ".png'" << endl;
     gp << "set output 'tmp/test_" << zeropad(t) << ".ps'" << endl;
     gp << "set multiplot layout 3,2" << endl;
@@ -212,6 +211,9 @@ int main()
     gp << endl;
     gp.sendBinary(tmp0);
     //gp.sendBinary(tmp0);
+
+    gp << "unset multiplot" << endl;
+    gp << "unset label" << endl;
   }
 
   system("convert -delay 10 tmp/test_*.png todo.gif");
