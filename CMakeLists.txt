@@ -6,8 +6,9 @@
 #  @section LICENSE
 #    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
 
-cmake_minimum_required(VERSION 2.6) # for simplified if-constructs
-#TODO: check which version is needed for FeatureSummary
+# http://www.cmake.org/Wiki/CMake_Version_Compatibility_Matrix/StandardCMakeModules
+# cmake_minimum_required(VERSION 2.6) # for simplified if-constructs
+cmake_minimum_required(VERSION 2.8.6) # for CMakePushCheckState
 
 # TODO: -fprofile-use, -fprofile-generate
 set(TMP "-std=c++0x ") # C++11 (name understandable for pre-2011 compilers)

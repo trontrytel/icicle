@@ -6,10 +6,8 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  *  @section DESCRIPTION
- *    Terminal velocity parametersiation following [Khvorostyanow and Curry 2002][] (cf. solid line in Figure 2 therein).
- *  @section REFERENCES
- *    [Khvorostyanow and Curry 2002]: http://dx.doi.org/10.1175/1520-0469(2002)059%3C1872:TVODAC%3E2.0.CO;2
- *    [Khvorostyanow and Curry 2002] - Terminal Velocities of Droplets and Crystals: Power Laws with Continuous Parameters over the Size Spectrum, J. Atmos. Sci., 59, 1872–1884. 
+ *    Tests the terminal velocity parametersiation implemented in phc_terminal_vel.hpp
+ *    following @copybrief Khvorostyanow_and_Curry_2002 (cf. solid line in Figure 2 therein)
  *
  *    \image html "../../tests/phc_terminal_vel/term_vel_test.svg"
  */
