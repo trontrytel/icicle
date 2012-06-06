@@ -7,7 +7,7 @@
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  *  @section DESCRIPTION
  *    Tests the terminal velocity parametersiation implemented in phc_terminal_vel.hpp
- *    following @copybrief Khvorostyanow_and_Curry_2002 (cf. solid line in Figure 2 therein)
+ *    following @copydetails Khvorostyanow_and_Curry_2002 (cf. solid line in Figure 2 therein)
  *
  *    \image html "../../tests/phc_terminal_vel/term_vel_test.svg"
  */

@@ -57,16 +57,3 @@
  *  @section sec_COPYING GNU General Public License version 3
  *  @verbinclude "../COPYING"
  */
-
-/// central reference list for the documentation
-namespace bib
-{
-  /// @brief 
-  /// [Khvorostyanow and Curry 2002]: http://dx.doi.org/10.1175/1520-0469(2002)059%3C1872:TVODAC%3E2.0.CO;2
-  /// [Khvorostyanow and Curry 2002][]
-  ///
-  /// [Khvorostyanow and Curry 2002]: http://dx.doi.org/10.1175/1520-0469(2002)059%3C1872:TVODAC%3E2.0.CO;2
-  struct Khvorostyanow_and_Curry_2002 {}
-  {
-  }
-}

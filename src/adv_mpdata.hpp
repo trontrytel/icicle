@@ -177,8 +177,7 @@ class adv_mpdata : public adv_upstream<real_t>
     ///     \psi^{*}_{i+1,j+1}+\psi^{*}_{i,j+1}+\psi^{*}_{i+1,j-1}+\psi^{*}_{i,j-1}
     ///   } 
     /// \f$
-    /// eq. (13-14) in Smolarkiewicz 1984 (J. Comp. Phys.,54,352-362) \n
-
+    /// eq. (13-14) in @copydetail Smolarkiewicz_1984 (J. Comp. Phys.,54,352-362) \n
     public:
     template <class indices_t>
     void mpdata_U(

@@ -5,6 +5,7 @@
  *  @date April-June 2012
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
+ *  @brief definition of the eqs_todo_sdm class
  */
 #ifndef EQS_TODO_SDM_HPP
 #  define EQS_TODO_SDM_HPP
@@ -21,10 +22,10 @@
 #  include "sdm_ode_xi.hpp"
 #  include "sdm_ode_xy.hpp"
 
-// @brief 
-//   implementation of the Super-Droplet Method (Shima et al. 2009, QJRMS, 135)
-//   with kappa-Koehler parameterisation of aerosol solubility (Patters and Kreidenweis 2007, ACP, 7)
-//   and ...
+/// @brief 
+/// implementation of the Super-Droplet Method (@copydetails Shima_et_al_2009, QJRMS, 135)
+/// with kappa-Koehler parameterisation of aerosol solubility (@copydetails Petters_and_Kreidenweis_2007, ACP, 7)
+/// and ...
 template <typename real_t>
 class eqs_todo_sdm : public eqs_todo<real_t> 
 {

@@ -7,7 +7,7 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  *  @section DESCRIPTION
-      Rotating cone test from Anderson and Fattahi 1973 J. Atmos. Sci.
+      Rotating cone test from @copydetails Anderson_and_Fattahi_1974 J. Atmos. Sci.
  *  @section RESULTS
  *    \include "adv_anderson_fattahi_1973/test_adv_anderson_fattahi_1973.py"
  *    \image html "../../tests/adv_anderson_fattahi_1973/fig-leapfrog-2d.gif"
