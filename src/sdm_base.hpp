@@ -51,21 +51,6 @@ namespace sdm
     }
   };
 
-  // TODO: is this one really needed???
-  // nested structure: super-droplet diagnosed variables
-  template <typename real_t>
-  struct diag_t
-  {
-    // TODO: document it
-    thrust::device_vector<int> M_ij;
-    
-    // ctor
-    diag_t(int nx, int ny)
-    {
-      M_ij.resize(nx * ny);
-    }
-  };
-
   // nested structure: super-droplet state info
   template <typename real_t>
   struct stat_t
@@ -73,7 +58,7 @@ namespace sdm
     // number of particles (i.e. super-droplets)
     thrust_size_t n_part;
 
-    // SD parameters that are variable from the ODE point of view (x,y,rw,...)
+    // SD parameters that are variable from the ODE point of view (x,y,xi)
     thrust::device_vector<thrust_real_t> xy, xi; 
 
     // ... and since x and y are hidden in one SD.xy, we declare helper iterators

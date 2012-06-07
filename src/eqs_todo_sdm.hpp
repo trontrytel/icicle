@@ -10,11 +10,6 @@
 #ifndef EQS_TODO_SDM_HPP
 #  define EQS_TODO_SDM_HPP
 
-// TODO: substepping with timesteps as an option
-// TODO: units in SD_stat, SD_diag, SD_envi... should be possible as odeint supports Boost.units!
-// TODO: a base class for all functors... perhaps containing stat and envi?
-// TODO: check why random number generation fails with g++ -O2!!!
-
 #  include "eqs_todo.hpp" 
 #  include "phc_lognormal.hpp" // TODO: not here?
 #  include "phc_kappa_koehler.hpp" // TODO: not here?
@@ -67,14 +62,13 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     grid(grid), 
     constant_velocity(velocity.is_constant()),
     stat(grid.nx(), grid.ny(), sd_conc_mean),
-    envi(grid.nx(), grid.ny()),
-    diag(grid.nx(), grid.ny()) 
+    envi(grid.nx(), grid.ny())
   {
     // TODO: assert that we use no paralellisation or allow some parallelism!
     // TODO: random seed as an option
     // TODO: option: number of cores to use (via Thrust)
 
-    // TODO: union?
+    tmp_shrt.resize(grid.nx() * grid.ny());
     tmp_long.resize(grid.nx() * grid.ny());
     tmp_real.resize(grid.nx() * grid.ny());
 
@@ -256,7 +250,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   {
     // calculating super-droplet concentration (per grid cell)
     {
-      // zeroing the temporary var
+      // zeroing the temporary var 
       thrust::fill(tmp_long.begin(), tmp_long.end(), 0); // TODO: is it needed?
       // doing the reduction
       thrust::pair<
@@ -265,16 +259,16 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       > n = thrust::reduce_by_key(
         stat.ij.begin(), stat.ij.end(),
         thrust::make_constant_iterator(1),
-        diag.M_ij.begin(),
-        tmp_long.begin()
+        tmp_shrt.begin(), // will store the grid cell indices
+        tmp_long.begin()  // will store the concentrations per grid cell
       );
       // writing to aux
       mtx::arr<real_t> &sd_conc = aux.at("sd_conc");
       sd_conc(sd_conc.ijk) = real_t(0); // as some grid cells could be void of particles
       thrust::counting_iterator<thrust_size_t> iter(0);
-      thrust::for_each(iter, iter + (n.first - diag.M_ij.begin()), 
+      thrust::for_each(iter, iter + (n.first - tmp_shrt.begin()), 
         sdm::copy_from_device<real_t>(
-          grid.nx(), diag.M_ij, tmp_long, sd_conc 
+          grid.nx(), tmp_shrt, tmp_long, sd_conc 
         )
       );
     }
@@ -293,16 +287,16 @@ class eqs_todo_sdm : public eqs_todo<real_t>
           thrust::device_vector<thrust_size_t>::iterator,
           thrust::device_vector<thrust_size_t>::iterator
         >(stat.n.begin(), stat.id.begin()), 
-        diag.M_ij.begin(),
-        tmp_long.begin()
+        tmp_shrt.begin(), // will store the grid cell indices
+        tmp_long.begin()  // will store the concentrations per grid cell
       );
       // writing to aux
       mtx::arr<real_t> &n_tot = aux.at("n_tot");
       n_tot(n_tot.ijk) = real_t(0); // as some grid cells could be void of particles
       thrust::counting_iterator<thrust_size_t> iter(0);
-      thrust::for_each(iter, iter + (n.first - diag.M_ij.begin()), 
+      thrust::for_each(iter, iter + (n.first - tmp_shrt.begin()), 
         sdm::copy_from_device<real_t>( 
-          grid.nx(), diag.M_ij, tmp_long, n_tot, 
+          grid.nx(), tmp_shrt, tmp_long, n_tot, 
           real_t(1) / grid.dx() / grid.dy() / grid.dz() * si::cubic_metres
         )
       );
@@ -337,16 +331,16 @@ class eqs_todo_sdm : public eqs_todo<real_t>
           thrust::device_vector<thrust_size_t>::iterator,
           thrust_size_t
         >(stat.id.begin(), threshold_counter(stat, F_xi->transform(thrust_real_t(500e-9)))),
-        diag.M_ij.begin(),
-        tmp_long.begin()
+        tmp_shrt.begin(), // will store the grid cell indices
+        tmp_long.begin()  // will store the concentrations per grid cell
       );
       // writing to aux
       mtx::arr<real_t> &n_ccn = aux.at("n_ccn");
       n_ccn(n_ccn.ijk) = real_t(0); // as some grid cells could be void of particles
       thrust::counting_iterator<thrust_size_t> iter(0);
-      thrust::for_each(iter, iter + (n.first - diag.M_ij.begin()), 
+      thrust::for_each(iter, iter + (n.first - tmp_shrt.begin()), 
         sdm::copy_from_device<real_t>( 
-          grid.nx(), diag.M_ij, tmp_long, n_ccn, 
+          grid.nx(), tmp_shrt, tmp_long, n_ccn, 
           real_t(1) / grid.dx() / grid.dy() / grid.dz() * si::cubic_metres
         )
       );
@@ -413,9 +407,9 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   // private fields with super droplet structures
   private: sdm::stat_t<real_t> stat;
   private: sdm::envi_t<real_t> envi;
-  private: sdm::diag_t<real_t> diag;
 
   // private field with temporary space
+  thrust::device_vector<int> tmp_shrt; // e.g. for grid cell indices
   thrust::device_vector<thrust_size_t> tmp_long; // e.g. for particle concentrations
   thrust::device_vector<thrust_real_t> tmp_real; // e.g. for mean radii
 
@@ -427,18 +421,17 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     const quantity<si::time, real_t> dt
   )
   {
-    const mtx::arr<real_t>
-      &rhod = aux.at("rhod");
-    mtx::arr<real_t>
-      &rhod_th = psi[this->par.idx_rhod_th][n],
-      &rhod_rv = psi[this->par.idx_rhod_rv][n];
-
     //assert(sd_conc.lbound(mtx::k) == sd_conc.ubound(mtx::k)); // 2D
 
-// TODO: which order would be best?
-    sd_sync(rhod, rhod_th, rhod_rv);
+    // TODO: substepping with different timesteps as an option
+    // TODO: which order would be best?
+    sd_sync(
+      aux.at("rhod"),
+      psi[this->par.idx_rhod_th][n],
+      psi[this->par.idx_rhod_rv][n]
+    );
+    sd_condevap(dt); // does init() at first time step - has to be placed after sync, and before others
     sd_advection(dt, C[0], C[1]); // TODO: sedimentation
-    sd_condevap(dt);
 //    sd_coalescence(dt);
 //    sd_breakup(dt);
     sd_diag(aux); 
