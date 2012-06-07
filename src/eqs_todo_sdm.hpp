@@ -19,6 +19,7 @@
 #  include "phc_lognormal.hpp" // TODO: not here?
 #  include "phc_kappa_koehler.hpp" // TODO: not here?
 
+#  include "sdm_functors.hpp"
 #  include "sdm_ode_xi.hpp"
 #  include "sdm_ode_xy.hpp"
 
@@ -138,118 +139,6 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   typedef double thrust_real_t; // TODO: option / check if the device supports it
   typedef thrust::device_vector<int>::size_type thrust_size_t;
 
-  // nested functor: RNG
-  private: class rng {
-    // TODO: random seed as an option
-    private: thrust::random::taus88 engine; // TODO: RNG engine as an option
-    private: thrust::uniform_real_distribution<thrust_real_t> dist;
-    public: rng(thrust_real_t a, thrust_real_t b, thrust_real_t seed) : dist(a, b), engine(seed) {}
-    public: thrust_real_t operator()() { return dist(engine); }
-  };
-
-  // nested functor: divide by real constant and cast to int
-  private: class divide_by_constant
-  {
-    private: thrust_real_t c;
-    public: divide_by_constant(thrust_real_t c) : c(c) {}
-    public: int operator()(thrust_real_t x) { return x/c; }
-  };
-
-  // nested functor: multiply by a real constant
-  private: class multiply_by_constant
-  {
-    private: thrust_real_t c;
-    public: multiply_by_constant(thrust_real_t c) : c(c) {}
-    public: thrust_real_t operator()(thrust_real_t x) { return x*c; }
-  };
-
-  // nested functor: 
-  private: class ravel_indices
-  {
-    private: int n;
-    public: ravel_indices(int n) : n(n) {}
-    public: int operator()(int i, int j) { return i + j * n; }
-  };
-
-  // nested functor: 
-  private: class modulo
-  {
-    private: thrust_real_t mod;
-    public: modulo(thrust_real_t mod) : mod(mod) {}
-    public: thrust_real_t operator()(thrust_real_t a) { return fmod(a + mod, mod); }
-  };
-
-  // nested functor: 
-  private: class copy_from_device 
-  {
-    private: int n;
-    private: const thrust::device_vector<int> &idx2ij;
-    private: const thrust::device_vector<thrust_size_t> &from;
-    private: mtx::arr<real_t> &to;
-    private: real_t scl;
-
-    // ctor
-    public: copy_from_device(int n, 
-      const thrust::device_vector<int> &idx2ij,
-      const thrust::device_vector<thrust_size_t> &from,
-      mtx::arr<real_t> &to,
-      real_t scl = real_t(1)
-    ) : n(n), idx2ij(idx2ij), from(from), to(to), scl(scl) {}
-
-    public: void operator()(int idx) 
-    { 
-      to(idx2ij[idx] % n, idx2ij[idx] / n, 0) = scl * from[idx]; 
-    }
-  };
-
-  // nested_functor:
-  private: class copy_to_device
-  {
-    private: int n;
-    private: const mtx::arr<real_t> &from;
-    private: thrust::device_vector<thrust_real_t> &to;
-    private: thrust_real_t scl;
-
-    // ctor
-    public: copy_to_device(int n,
-      const mtx::arr<real_t> &from,
-      thrust::device_vector<thrust_real_t> &to,
-      thrust_real_t scl = thrust_real_t(1)
-    ) : n(n), from(from), to(to), scl(scl) {}
-
-    public: void operator()(int ij)
-    {
-      to[ij] = scl * from(ij % n, ij / n, 0);
-    }
-  };
-
-  // nested functor
-  private: class lognormal
-  {
-    private: quantity<si::length, real_t> mean_rd1, mean_rd2;
-    private: quantity<si::dimensionless, real_t> sdev_rd1, sdev_rd2;
-    private: quantity<power_typeof_helper<si::length, static_rational<-3>>::type, real_t> n1_tot, n2_tot;
-    
-    public: lognormal(
-      const quantity<si::length, real_t> mean_rd1,
-      const quantity<si::dimensionless, real_t> sdev_rd1,
-      const quantity<power_typeof_helper<si::length, static_rational<-3>>::type, real_t> n1_tot,
-      const quantity<si::length, real_t> mean_rd2,
-      const quantity<si::dimensionless, real_t> sdev_rd2,
-      const quantity<power_typeof_helper<si::length, static_rational<-3>>::type, real_t> n2_tot
-    ) : mean_rd1(mean_rd1), sdev_rd1(sdev_rd1), n1_tot(n1_tot), mean_rd2(mean_rd2), sdev_rd2(sdev_rd2), n2_tot(n2_tot) {}
-
-    public: thrust_real_t operator()(real_t lnrd)
-    {
-      return thrust_real_t(( //TODO allow more modes of distribution
-// TODO: logarith or not: as an option
-          phc::log_norm_n_e<real_t>(mean_rd1, sdev_rd1, n1_tot, lnrd) + 
-          phc::log_norm_n_e<real_t>(mean_rd2, sdev_rd2, n2_tot, lnrd) 
-        ) * si::cubic_metres
-      );
-    }
-  };
-
   // initialising particle positions, numbers and dry radii
   private: void sd_init(
     const real_t min_rd, const real_t max_rd,
@@ -264,12 +153,12 @@ class eqs_todo_sdm : public eqs_todo<real_t>
 
     // initialise particle coordinates
     {
-      rng rand_x(0, grid.nx() * (grid.dx() / si::metres), seed);
+      sdm::rng<thrust_real_t> rand_x(0, grid.nx() * (grid.dx() / si::metres), seed);
       thrust::generate(stat.x_begin, stat.x_end, rand_x);
       seed = rand_x();
     }
     {
-      rng rand_y(0, grid.ny() * (grid.dy() / si::metres), seed);
+      sdm::rng<thrust_real_t> rand_y(0, grid.ny() * (grid.dy() / si::metres), seed);
       thrust::generate(stat.y_begin, stat.y_end, rand_y);
       seed = rand_y();
     }
@@ -278,7 +167,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     // TODO: assert that the distribution is < epsilon at rd_min and rd_max
     thrust::generate( // rd3 temporarily means logarithms of radius!
       stat.rd3.begin(), stat.rd3.end(), 
-      rng(log(min_rd), log(max_rd), seed) 
+      sdm::rng<thrust_real_t>(log(min_rd), log(max_rd), seed) 
     ); 
     {
       real_t multi = log(max_rd/min_rd) / sd_conc_mean 
@@ -286,7 +175,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       thrust::transform(
         stat.rd3.begin(), stat.rd3.end(), 
         stat.n.begin(), 
-        lognormal(
+        sdm::lognormal<thrust_real_t>(
           mean_rd1 * si::metres, sdev_rd1, multi * n1_tot / si::cubic_metres, 
           mean_rd2 * si::metres, sdev_rd2, multi * n2_tot / si::cubic_metres
         ) 
@@ -312,20 +201,20 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     thrust::transform(
       stat.x_begin, stat.x_end,
       stat.i.begin(),
-      divide_by_constant(grid.dx() / si::metres)
+      sdm::divide_by_constant<thrust_real_t>(grid.dx() / si::metres)
     );
     // computing stat.j
     thrust::transform(
       stat.y_begin, stat.y_end,
       stat.j.begin(),
-      divide_by_constant(grid.dy() / si::metres)
+      sdm::divide_by_constant<thrust_real_t>(grid.dy() / si::metres)
     );
     // computing stat.ij
     thrust::transform(
       stat.i.begin(), stat.i.end(),
       stat.j.begin(),
       stat.ij.begin(),
-      ravel_indices(grid.ny())
+      sdm::ravel_indices(grid.ny())
     );
     // filling-in stat.id
     thrust::sequence(stat.id.begin(), stat.id.end());
@@ -338,21 +227,27 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     // getting thermodynamic fields from the Eulerian model 
     {
       thrust::counting_iterator<thrust_size_t> iter(0);
-      thrust::for_each(iter, iter + envi.rhod.size(), copy_to_device(
-        grid.nx(), rhod, envi.rhod
-      )); // TODO: this could be done just once in the kinematic model!
+      thrust::for_each(iter, iter + envi.rhod.size(), 
+        sdm::copy_to_device<real_t, thrust_real_t>(
+          grid.nx(), rhod, envi.rhod
+        )
+      ); // TODO: this could be done just once in the kinematic model!
     }
     {
       thrust::counting_iterator<thrust_size_t> iter(0);
-      thrust::for_each(iter, iter + envi.rhod_th.size(), copy_to_device(
-        grid.nx(), rhod_th, envi.rhod_th
-      ));
+      thrust::for_each(iter, iter + envi.rhod_th.size(), 
+        sdm::copy_to_device<real_t, thrust_real_t>(
+          grid.nx(), rhod_th, envi.rhod_th
+        )
+      );
     }
     {
       thrust::counting_iterator<thrust_size_t> iter(0);
-      thrust::for_each(iter, iter + envi.rhod_rv.size(), copy_to_device(
-        grid.nx(), rhod_rv, envi.rhod_rv
-      ));
+      thrust::for_each(iter, iter + envi.rhod_rv.size(), 
+        sdm::copy_to_device<real_t, thrust_real_t>(
+          grid.nx(), rhod_rv, envi.rhod_rv
+        )
+      );
     }
   }
 
@@ -377,9 +272,11 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       mtx::arr<real_t> &sd_conc = aux.at("sd_conc");
       sd_conc(sd_conc.ijk) = real_t(0); // as some grid cells could be void of particles
       thrust::counting_iterator<thrust_size_t> iter(0);
-      thrust::for_each(iter, iter + (n.first - diag.M_ij.begin()), copy_from_device(
-        grid.nx(), diag.M_ij, tmp_long, sd_conc 
-      ));
+      thrust::for_each(iter, iter + (n.first - diag.M_ij.begin()), 
+        sdm::copy_from_device<real_t>(
+          grid.nx(), diag.M_ij, tmp_long, sd_conc 
+        )
+      );
     }
 
     // calculating the zero-th moment (i.e. total particle concentration per unit volume)
@@ -403,10 +300,12 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       mtx::arr<real_t> &n_tot = aux.at("n_tot");
       n_tot(n_tot.ijk) = real_t(0); // as some grid cells could be void of particles
       thrust::counting_iterator<thrust_size_t> iter(0);
-      thrust::for_each(iter, iter + (n.first - diag.M_ij.begin()), copy_from_device( 
-        grid.nx(), diag.M_ij, tmp_long, n_tot, 
-        real_t(1) / grid.dx() / grid.dy() / grid.dz() * si::cubic_metres
-      ));
+      thrust::for_each(iter, iter + (n.first - diag.M_ij.begin()), 
+        sdm::copy_from_device<real_t>( 
+          grid.nx(), diag.M_ij, tmp_long, n_tot, 
+          real_t(1) / grid.dx() / grid.dy() / grid.dz() * si::cubic_metres
+        )
+      );
     }
 
     // calculating number of particles with radius greater than a given threshold
@@ -443,10 +342,12 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       mtx::arr<real_t> &n_ccn = aux.at("n_ccn");
       n_ccn(n_ccn.ijk) = real_t(0); // as some grid cells could be void of particles
       thrust::counting_iterator<thrust_size_t> iter(0);
-      thrust::for_each(iter, iter + (n.first - diag.M_ij.begin()), copy_from_device( 
-        grid.nx(), diag.M_ij, tmp_long, n_ccn, 
-        real_t(1) / grid.dx() / grid.dy() / grid.dz() * si::cubic_metres
-      ));
+      thrust::for_each(iter, iter + (n.first - diag.M_ij.begin()), 
+        sdm::copy_from_device<real_t>( 
+          grid.nx(), diag.M_ij, tmp_long, n_ccn, 
+          real_t(1) / grid.dx() / grid.dy() / grid.dz() * si::cubic_metres
+        )
+      );
     }
   }
 
@@ -459,23 +360,35 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     // getting velocities from the Eulerian model (TODO: if constant_velocity -> only once!)
     {
       thrust::counting_iterator<thrust_size_t> iter(0);
-      thrust::for_each(iter, iter + envi.vx.size(), copy_to_device(
-        grid.nx() + 1, Cx, envi.vx, (grid.dx() / si::metres) / (dt / si::seconds)
-      ));
+      thrust::for_each(iter, iter + envi.vx.size(), 
+        sdm::copy_to_device<real_t, thrust_real_t>(
+          grid.nx() + 1, Cx, envi.vx, (grid.dx() / si::metres) / (dt / si::seconds)
+        )
+      );
     }
     {
       thrust::counting_iterator<thrust_size_t> iter(0);
-      thrust::for_each(iter, iter + envi.vy.size(), copy_to_device(
-        grid.nx(), Cy, envi.vy, (grid.dx() / si::metres) / (dt / si::seconds)
-      ));
+      thrust::for_each(iter, iter + envi.vy.size(), 
+        sdm::copy_to_device<real_t, thrust_real_t>(
+          grid.nx(), Cy, envi.vy, (grid.dx() / si::metres) / (dt / si::seconds)
+        )
+      );
     }
 
     // performing advection using odeint // TODO sedimentation
     F_xy->advance(stat.xy, dt);
 
     // periodic boundary conditions (in-place transforms)
-    thrust::transform(stat.x_begin, stat.x_end, stat.x_begin, modulo(grid.nx() * (grid.dx() / si::metres)));
-    thrust::transform(stat.y_begin, stat.y_end, stat.y_begin, modulo(grid.ny() * (grid.dy() / si::metres)));
+    thrust::transform(stat.x_begin, stat.x_end, stat.x_begin, 
+      sdm::modulo<thrust_real_t>(
+        grid.nx() * (grid.dx() / si::metres)
+      )
+    );
+    thrust::transform(stat.y_begin, stat.y_end, stat.y_begin, 
+      sdm::modulo<thrust_real_t>(
+        grid.ny() * (grid.dy() / si::metres)
+      )
+    );
   }
   
   private: void sd_condevap(
@@ -522,9 +435,6 @@ class eqs_todo_sdm : public eqs_todo<real_t>
 
 // TODO: which order would be best?
     sd_sync(rhod, rhod_th, rhod_rv);
-// !!!!!
-F_xi->init(); // should be done only once!
-// !!!!!
     sd_advection(dt, C[0], C[1]); // TODO: sedimentation
     sd_condevap(dt);
 //    sd_coalescence(dt);

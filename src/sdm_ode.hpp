@@ -71,11 +71,19 @@ namespace sdm
       const thrust_real_t
     ) = 0;
 
+    private: bool inited = false;
+    protected: virtual void init() {}
+ 
     public: void advance(
       thrust::device_vector<thrust_real_t> &x, 
       const quantity<si::time, real_t> &dt
     )
     {
+      if (!inited) 
+      {
+        init();
+        inited = true;
+      }
       stepper.do_step(boost::ref(*this), x, 0, dt / si::seconds);
     }
   };
