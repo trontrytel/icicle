@@ -18,6 +18,8 @@
 #  include "sdm_ode_xi.hpp"
 #  include "sdm_ode_xy.hpp"
 
+// TODO: option to set the number of threads to use!
+
 /// @brief 
 /// implementation of the Super-Droplet Method (@copydetails Shima_et_al_2009, QJRMS, 135)
 /// with kappa-Koehler parameterisation of aerosol solubility (@copydetails Petters_and_Kreidenweis_2007, ACP, 7)

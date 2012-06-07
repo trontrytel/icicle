@@ -116,7 +116,7 @@ namespace sdm
   template <typename real_t, class algo, class xi>
   class ode_xi : public ode_algo<real_t, algo>
   { 
-    public: thrust_real_t transform(thrust_real_t &x) 
+    public: thrust_real_t transform(const thrust_real_t &x) 
     {   
       return xi::xi_of_rw(x);
     }  

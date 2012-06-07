@@ -86,7 +86,7 @@ bool
   blk_sedi = true,
   blk_revp = true;
 std::string
-  sdm_xi = "id", 
+  sdm_xi = "ln", 
   sdm_ode_algo_xy = "euler",
   sdm_ode_algo_xi = "rk4";
 real_t 
