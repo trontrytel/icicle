@@ -311,15 +311,17 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     // calculating number of particles with radius greater than a given threshold
     {
       // nested functor
-      class n_ccn_iterator
+      class threshold_counter
       {
         private: const sdm::stat_t<real_t> &stat;
-        public: n_ccn_iterator(const sdm::stat_t<real_t> &stat) : stat(stat) {}
+        private: const thrust_real_t threshold;
+        public: threshold_counter(
+          const sdm::stat_t<real_t> &stat,
+          const thrust_real_t threshold
+        ) : stat(stat), threshold(threshold) {}
         public: thrust_size_t operator()(const thrust_size_t id) const
         {
-          return stat.xi[id] > 500e-9  // TEMP!!!! temporarily it works only for xi_id!!
-            ? stat.n[id]
-            : 0;
+          return stat.xi[id] > threshold ? stat.n[id] : 0;
         }
       };
       // zeroing the temporary var
@@ -331,10 +333,10 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       > n = thrust::reduce_by_key(
         stat.ij.begin(), stat.ij.end(),
         thrust::transform_iterator<
-          n_ccn_iterator, 
+          threshold_counter, 
           thrust::device_vector<thrust_size_t>::iterator,
           thrust_size_t
-        >(stat.id.begin(), n_ccn_iterator(stat)),
+        >(stat.id.begin(), threshold_counter(stat, F_xi->transform(thrust_real_t(500e-9)))),
         diag.M_ij.begin(),
         tmp_long.begin()
       );

@@ -15,37 +15,41 @@ namespace sdm
   // identity: xi = rw
   template <typename T = thrust_real_t> struct xi_id 
   { 
-    T xi(const T &rw) { return rw; }
-    T rw(const T &xi) { return xi; } 
-    T dxidrw(const T &xi) { return 1; }
+    static T xi_of_rw(const T &rw) { return rw; }
+    static T xi_of_rw3(const T &rw3) { return pow(rw3, T(1./3)); }
+    static T rw_of_xi(const T &xi) { return xi; } 
+    static T dxidrw(const T &xi) { return 1; }
   };
 
   // xi = ln(rw / nm)
   template <typename T = thrust_real_t> struct xi_ln
   { 
-    T xi(const T &rw) { return log(rw / T(1e-9)); }
-    T rw(const T &xi) { return T(1e-9) * exp(xi); } 
-    T dxidrw(const T &rw) { return T(1) / rw; }
+    static T xi_of_rw(const T &rw) { return log(rw / T(1e-9)); }
+    static T xi_of_rw3(const T &rw3) { return log(pow(rw3, T(1./3)) / T(1e-9)); }
+    static T rw_of_xi(const T &xi) { return T(1e-9) * exp(xi); } 
+    static T dxidrw(const T &rw) { return T(1) / rw; }
   };
 
   // xi = pow(rw, 2) 
   template <typename T = thrust_real_t> struct xi_p2
   { 
-    T xi(const T &rw) { return rw * rw; }
-    T rw(const T &xi) { return sqrt(xi); } 
-    T dxidrw(const T &rw) { return T(2) * rw; }
+    static T xi_of_rw(const T &rw) { return rw * rw; }
+    static T xi_of_rw3(const T &rw3) { return pow(rw3, T(2./3)); }
+    static T rw_of_xi(const T &xi) { return sqrt(xi); } 
+    static T dxidrw(const T &rw) { return T(2) * rw; }
   };
 
   // xi = pow(rw, 3) 
   template <typename T = thrust_real_t> struct xi_p3
   { 
-    T xi(const T &rw) { return rw * rw * rw; }
-    T rw(const T &xi) { return pow(xi, T(1)/T(3)); } 
-    T dxidrw(const T &rw) { return T(3) * rw * rw; }
+    static T xi_of_rw(const T &rw) { return rw * rw * rw; }
+    static T xi_of_rw3(const T &rw3) { return rw3; }
+    static T rw_of_xi(const T &xi) { return pow(xi, T(1)/T(3)); } 
+    static T dxidrw(const T &rw) { return T(3) * rw * rw; }
   };
 
   // nested functor: setting wet radii to equilibrium values
-  // TODO: no need for template! - could be placed within a block and ose F_xi->xi()
+  // TODO: no need for template! - could be placed within a block and use F_xi->xi()
   template <typename real_t, class xi> struct equil : xi
   { 
     stat_t<real_t> &stat;
@@ -100,11 +104,11 @@ namespace sdm
     void operator()(thrust_size_t idx) 
     { 
       // ij and already sorted here!!!
-      stat.xi[stat.id[idx]] = this->xi(pow(phc::rw3_eq<thrust_real_t>(
+      stat.xi[stat.id[idx]] = this->xi_of_rw3(phc::rw3_eq<thrust_real_t>(
         stat.rd3[stat.id[idx]] * si::cubic_metres, 
-        0 + stat.kpa[stat.id[idx]],    // it fails to compile without the zero!
+        0 + stat.kpa[stat.id[idx]], // it fails to compile without the zero!
         0 + tmp[stat.ij[idx]] // ditto
-      ) / si::cubic_metres, thrust_real_t(1)/thrust_real_t(3))); 
+      ) / si::cubic_metres); 
     }
   };
 
@@ -112,6 +116,11 @@ namespace sdm
   template <typename real_t, class algo, class xi>
   class ode_xi : public ode_algo<real_t, algo>
   { 
+    public: thrust_real_t transform(thrust_real_t &x) 
+    {   
+      return xi::xi_of_rw(x);
+    }  
+
     // nested functor
     private: 
     class drop_growth_equation : public xi

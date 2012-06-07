@@ -56,6 +56,12 @@ namespace sdm
       thrust::device_vector<thrust_real_t> &x, 
       const quantity<si::time, real_t> &dt
     ) = 0;
+
+    // TODO: a better name needed...
+    public: virtual thrust_real_t transform(const thrust_real_t &x)
+    {
+      return x; // i.e. identity 
+    }
   };
 
   // nested class: 
@@ -79,6 +85,8 @@ namespace sdm
       const quantity<si::time, real_t> &dt
     )
     {
+      // intended for calculations that cannot be placed in the constructor 
+      // since at that time the initial values are not loaded yet to psi
       if (!inited) 
       {
         init();
