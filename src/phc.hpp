@@ -18,7 +18,7 @@
 #  define phc_derived_const_macro(name, value) template <typename real_t> \
   static constexpr auto name() phc_decltype_return(value)
 
-#  define phc_declare_funct_macro template <typename real_t> constexpr 
+#  define phc_declare_funct_macro template <typename real_t> 
 
 // TODO: the same functions with Blitz arguments - how to automate???
 
@@ -56,6 +56,9 @@ namespace phc
   phc_declare_const_macro(p_tri, 611.73, si::pascals) // pressure
   phc_declare_const_macro(T_tri, 273.16, si::kelvins) // temperature
   phc_declare_const_macro(l_tri, 2.5e6, si::joules / si::kilograms) // latent heat of evaporation
+
+  // water density
+  phc_declare_const_macro(rho_w, 1e3, si::kilograms / si::cubic_metres) 
 
   // mixing rule for extensive quantitites (i.e. using mass mixing ratio)
   template <typename real_t, typename quant>

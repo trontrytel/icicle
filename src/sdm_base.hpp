@@ -14,12 +14,11 @@
 #    include <thrust/sequence.h>
 #    include <thrust/sort.h>
 #    include <thrust/iterator/constant_iterator.h>
-#  endif
 
 namespace sdm 
 {
 
-  typedef double thrust_real_t; // TODO: option / check if the device supports it
+  typedef double thrust_real_t; // TODO: option / check if the device supports it (this is used elswhere as a template param!)
   typedef thrust::device_vector<int>::size_type thrust_size_t;
 
   // nested structure: super-droplet environment (velocity, temperature and moisture field)
@@ -89,6 +88,6 @@ namespace sdm
       y_end   = y_begin + n_part;
     }
   };
-
 }
+#  endif
 #endif

@@ -14,9 +14,11 @@
 #  include "phc_lognormal.hpp" // TODO: not here?
 #  include "phc_kappa_koehler.hpp" // TODO: not here?
 
-#  include "sdm_functors.hpp"
-#  include "sdm_ode_xi.hpp"
-#  include "sdm_ode_xy.hpp"
+#  if defined(USE_BOOST_ODEINT) && defined(USE_THRUST)
+#    include "sdm_functors.hpp"
+#    include "sdm_ode_xi.hpp"
+#    include "sdm_ode_xy.hpp"
+#  endif
 
 // TODO: option to set the number of threads to use!
 

@@ -29,12 +29,10 @@ namespace phc
     quantity<si::mass_density, real_t> rhoa //density of air
   )
   {
-    quantity<si::mass_density, real_t> rhow = real_t(999) * si::kilograms / si::cubic_metres ;
-  
     /// Best number (eq 2.7 in @copydetails Khvorostyanov_and_Curry_2002 J. Atmos. Sci) 
     /// with maximum projected cross-sectional area parametrised as for spherical droplets (A=pi/4*D^2)
-    quantity<si::dimensionless, real_t> X = real_t(32./3) * (rhow-rhoa)/rhoa * phc::g<real_t>() 
-      * r * r * r / visc(T) / visc(T) * rhoa * rhoa; //TODO use pow<>() 
+    quantity<si::dimensionless, real_t> X = real_t(32./3) * (rho_w<real_t>() - rhoa)/rhoa * phc::g<real_t>() 
+      * r * r * r / visc(T) / visc(T) * rhoa * rhoa; //TODO use pow<>()  
 
     /// terminal velocity parametrisation coeffs 
     /// eqs 2.12, 2.13 in @copydetails Khvorostyanov_and_Curry_2002 J. Atmos. Sci 
@@ -47,7 +45,7 @@ namespace phc
     /// eq 3.1 in @copydetails Khvorostyanov_and_Curry_2002 J. Atmos. Sci 
     quantity<si::dimensionless, real_t> Av = a  
       * pow(visc(T) / rhoa * real_t(1e4) * si::seconds / si::square_metres, real_t(1)-real_t(2)*b) 
-      * pow(real_t(4./3) * rhow / rhoa * phc::g<real_t>() *real_t(1e2)* si::seconds * si::seconds / si::metres, b) ;
+      * pow(real_t(4./3) * rho_w<real_t>() / rhoa * phc::g<real_t>() *real_t(1e2)* si::seconds * si::seconds / si::metres, b) ;
     quantity<si::dimensionless, real_t> Bv = real_t(3)*b - real_t(1) ;
 
     return (Av * real_t(pow(real_t(2*1e2) * r/si::metres, Bv)))/real_t(1e2) * si::metres_per_second  ;

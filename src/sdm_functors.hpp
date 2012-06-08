@@ -12,6 +12,8 @@
 
 #  include "sdm_base.hpp"
 
+#  ifdef USE_THRUST
+
 namespace sdm {
 
   /// @brief a random-number-generator functor
@@ -136,4 +138,5 @@ namespace sdm {
   };
 
 };
+#  endif
 #endif

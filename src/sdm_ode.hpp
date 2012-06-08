@@ -16,7 +16,6 @@
 #    include <boost/numeric/odeint/external/thrust/thrust_operations.hpp>
 #    include <boost/numeric/odeint/external/thrust/thrust_resize.hpp>
 namespace odeint = boost::numeric::odeint;
-#  endif
 
 namespace sdm
 {
@@ -97,4 +96,5 @@ namespace sdm
   };
 
 }
+#  endif
 #endif

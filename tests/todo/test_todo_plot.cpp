@@ -155,7 +155,6 @@ int main()
     gp.sendBinary(th);
 
 
-/*
     // bulk-relevant plots:
     gp << "set title 'liquid water mixing ratio [g/kg]'" << endl;
     gp << "set cbrange [0:1]" << endl;
@@ -174,7 +173,7 @@ int main()
     gp << endl;
     gp.sendBinary(tmp0);
 
-*/
+/*
     // sdm-relevant plots:
     gp << "set title 'super-droplet conc. [1/dx/dy/dz]'" << endl;
     gp << "set cbrange [0:150]" << endl;
@@ -198,6 +197,7 @@ int main()
     gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";
     gp << endl;
     gp.sendBinary(tmp0);
+*/
 
     gp << "unset multiplot" << endl;
     gp << "unset label" << endl;
