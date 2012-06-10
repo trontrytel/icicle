@@ -7,11 +7,10 @@
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  *  @brief definition of the adv_upstream class with an implementation of the upstream advection scheme
  */
-#ifndef ADV_UPSTREAM_HPP
-#  define ADV_UPSTREAM_HPP
+#pragma once
 
-#  include "adv.hpp"
-#  include "grd.hpp"
+#include "adv.hpp"
+#include "grd.hpp"
 
 /** @brief
  *  implementation of the upstream/upwind/donor-cell scheme 
@@ -47,7 +46,7 @@ class adv_upstream : public adv<real_t>
         im1_j_k(idx(i - 1,           j, k))
       { }
     };
-
+ 
     // member fields
     public: const indices<mtx::idx_ijk> indcs_x;
     public: const indices<mtx::idx_jki> indcs_y;
@@ -77,7 +76,6 @@ class adv_upstream : public adv<real_t>
       if (this->do_z()) op1D(psi, indcs_z, n, s, Cz, Cx, Cy); 
     }
     
-
     /// \f$ 
     ///   F(\psi_l, \psi_r, U) = 0.5 \cdot (U + |U|) \cdot \psi_l + 0.5 \cdot (U - |U|) \cdot \psi_r 
     /// \f$ 
@@ -98,7 +96,7 @@ class adv_upstream : public adv<real_t>
       const mtx::arr<real_t> * const
     )
     {
-      assert(step == 1);
+      assert(step == 1); 
 // TODO: perpahs use static cast to get rid of the idx argument!
 
       /// \f$ 
@@ -111,8 +109,9 @@ class adv_upstream : public adv<real_t>
       (*psi[n+1])(idx.i_j_k) -= (
         mpdata_F((*psi[n])(idx.i_j_k),   (*psi[n])(idx.ip1_j_k), (*Cx)(idx.iph_j_k)) - 
         mpdata_F((*psi[n])(idx.im1_j_k), (*psi[n])(idx.i_j_k),   (*Cx)(idx.imh_j_k))
-      );
-    }
+      ); 
+
+    };
   };
 
   public: typename adv<real_t>::op3D *factory(
@@ -120,9 +119,5 @@ class adv_upstream : public adv<real_t>
     mtx::arr<real_t> **,
     mtx::arr<real_t> **,
     bool
-  ) const
-  {
-    return new op3D(ijk);
-  }
+  ) const;
 };
-#endif

@@ -6,15 +6,14 @@
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  *  @brief contains definition of the @ref stp class - a container for simulation set-up elements
  */
-#ifndef STP_HPP
-#  define STP_HPP
+#pragma once
 
-#  include "adv.hpp"
-#  include "out.hpp"
-#  include "vel.hpp"
-#  include "ini.hpp"
-#  include "grd.hpp"
-#  include "eqs.hpp"
+#include "adv.hpp"
+#include "out.hpp"
+#include "vel.hpp"
+#include "ini.hpp"
+#include "grd.hpp"
+#include "eqs.hpp"
 
 /// @brief A simple container for storing simulation set-up elements, i.e.
 ///        advection scheme, velocity field, initial condition, grid, equation system, etc
@@ -108,5 +107,3 @@ struct stp
   }  
 
 };
-
-#endif

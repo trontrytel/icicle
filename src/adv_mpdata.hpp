@@ -7,11 +7,10 @@
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  *  @brief definition of the adv_mpdata class with an implementation of the MPDATA advection scheme
  */
-#ifndef ADV_MPDATA_HPP
-#  define ADV_MPDATA_HPP
+#pragma once
 
-#  include "adv_upstream.hpp"
-#  include "grd.hpp"
+#include "adv_upstream.hpp"
+#include "grd.hpp"
 
 /** @brief
  *  C++ implementation of the second- and third-order accurate
@@ -42,12 +41,7 @@ class adv_mpdata : public adv_upstream<real_t>
   private: bool cross_terms, third_order;
 
   // ctor
-  public: adv_mpdata(int iord, bool cross_terms, bool third_order) // TODO: enums?
-    : iord(iord), cross_terms(cross_terms), third_order(third_order), adv_upstream<real_t>()
-  {
-    if (iord <= 0) error_macro("iord (the number of iterations) must be > 0")
-    if (iord < 3 && third_order) warning_macro("third-order accuracy needs iord >= 3")
-  }
+  public: adv_mpdata(int iord, bool cross_terms, bool third_order); // TODO: enums?
 
   public: 
   template <class aon_class>
@@ -158,7 +152,7 @@ class adv_mpdata : public adv_upstream<real_t>
         indcs_y.push_back(new indices<mtx::idx_jki>(ijk.j, ijk.k, ijk.i, cross_terms, iord, step)); 
         indcs_z.push_back(new indices<mtx::idx_kij>(ijk.k, ijk.i, ijk.j, cross_terms, iord, step));
       }
-    } 
+    }   
 
     /// multidimensional antidiffusive velocity: 
     /// \f$ 
@@ -256,7 +250,7 @@ class adv_mpdata : public adv_upstream<real_t>
                 this->aon((*psi[n])(idx.im_jm_kmm1)), 
                 this->aon((*psi[n])(idx.imp1_jm_kmp1)), 
                 this->aon((*psi[n])(idx.imp1_jm_kmm1)), 
-                Cx(idx.ic_jm_km), // U, 
+                  Cx(idx.ic_jm_km), // U, 
                 adv_mpdata<real_t>::f_W( // W
                   Cz(idx.ir_jm_kmph), Cz(idx.il_jm_kmph), /* Wru, Wlu */ 
                   Cz(idx.ir_jm_kmmh), Cz(idx.il_jm_kmmh)  /* Wrd, Wld */ 
@@ -303,7 +297,7 @@ class adv_mpdata : public adv_upstream<real_t>
         );  
       }
     }
-
+  
     /// \f$ 
     ///   \psi^{n+1}_{i} = \psi^{*}_{i} -\sum\limits_{I} \left[ 
     ///     F^{I}( \psi^{*}_{i}, \psi^{*}_{i+1}, \tilde{U}^{I}_{i+1/2} ) -
@@ -337,7 +331,7 @@ class adv_mpdata : public adv_upstream<real_t>
             x_new += 3, y_new += 3, z_new += 3;
         }
       }
-
+  
       const mtx::arr<real_t> 
         * const Cx_unco = (step < 3 ? Cx : tmp_v[x_old]), 
         *       Cx_corr = (step < 2 ? Cx : tmp_v[x_new]),
@@ -345,7 +339,7 @@ class adv_mpdata : public adv_upstream<real_t>
         *       Cy_corr = (step < 2 ? Cy : tmp_v[y_new]),
         * const Cz_unco = (step < 3 ? Cz : tmp_v[z_old]), 
         *       Cz_corr = (step < 2 ? Cz : tmp_v[z_new]);
-     
+    
       *psi[n+1] = *psi[0]; // TODO: at least this should be placed in adv... and the leapfrog & upstream in adv_dimsplit?
       if (this->do_x())
       {
@@ -365,35 +359,34 @@ class adv_mpdata : public adv_upstream<real_t>
     }
   };
 
-  // on-demand support for transporting fields of variable sign
-  // see section 3.2, subsection (4) in PKS & LGM 1998 
-  protected: class aon_nil 
-  { 
-    protected: template<class T> T aon(const T &x) 
-    { 
-      return x; 
-    } 
-  };
-  protected: class aon_abs 
-  { 
-    protected: template<class T> auto aon(const T &x) -> decltype(abs(x))
-    { 
-      return abs(x); 
-    } 
-  };
-
   public: typename adv<real_t>::op3D *factory(
     const mtx::idx &ijk,
     mtx::arr<real_t> **tmp_s,
     mtx::arr<real_t> **tmp_v,
     bool positive_definite
-  ) const
+  ) const;
+
+
+  // on-demand support for transporting fields of variable sign
+  // see section 3.2, subsection (4) in PKS & LGM 1998 
+  protected: class aon_nil
   {
-    if (positive_definite)
-      return new op3D<aon_nil>(ijk, tmp_s, tmp_v, cross_terms, iord, third_order);
-    else
-      return new op3D<aon_abs>(ijk, tmp_s, tmp_v, cross_terms, iord, third_order);
-  }
+    protected: template<class T> T aon(const T &x)
+    { 
+      return x;
+    } 
+  };
+  protected: class aon_abs
+  {
+    protected: template<class T> auto aon(const T &x) -> decltype(abs(x))
+    { 
+      return abs(x);
+    } 
+  };
+
+// TODO: move the macros below to the .cpp file!
+
+
     // TODO: make it an option for the constructor (and recode with functors)
 #    ifdef MPDATA_FRAC_EPSILON
     protected: mtx_expr_2arg_macro(frac, num, den, 
@@ -491,4 +484,3 @@ class adv_mpdata : public adv_upstream<real_t>
     )
 
 };
-#endif

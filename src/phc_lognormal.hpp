@@ -5,8 +5,8 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef PHC_LOGNORMAL_HPP
-#  define PHC_LOGNORMAL_HPP
+#pragma once
+#include "phc.hpp"
 
 namespace phc
 {
@@ -40,5 +40,3 @@ namespace phc
     ;
   }
 };
-
-#endif

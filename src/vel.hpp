@@ -5,12 +5,11 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef VEL_HPP
-#  define VEL_HPP
+#pragma once
 
-#  include "cmn.hpp" 
-#  include "mtx.hpp" 
-#  include "grd.hpp" 
+#include "cmn.hpp" 
+#include "mtx.hpp" 
+#include "grd.hpp" 
 
 template <typename real_t>
 class vel
@@ -27,4 +26,3 @@ class vel
     mtx::arr<real_t> *Qz[]
   ) const = 0;
 };
-#endif

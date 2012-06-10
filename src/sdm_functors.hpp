@@ -7,12 +7,12 @@
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  *  @brief a set of functors used with Thrust routines in the eqs_todo_sdm class
  */
-#ifndef SDM_FUNCTORS_HPP
-#  define SDM_FUNCTORS_HPP
+#pragma once
 
-#  include "sdm_base.hpp"
+#include "sdm_base.hpp"
+#include "phc_lognormal.hpp"
 
-#  ifdef USE_THRUST
+#ifdef USE_THRUST
 
 namespace sdm {
 
@@ -138,5 +138,4 @@ namespace sdm {
   };
 
 };
-#  endif
 #endif

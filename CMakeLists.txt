@@ -11,7 +11,7 @@
 cmake_minimum_required(VERSION 2.8.6) # for CMakePushCheckState
 
 # TODO: -fprofile-use, -fprofile-generate
-set(TMP "-std=c++0x ") # C++11 (name understandable for pre-2011 compilers)
+set(TMP "-std=c++0x") # C++11 (name understandable for pre-2011 compilers)
 set(CMAKE_CXX_FLAGS_RELEASE "${TMP} -DNDEBUG -Wfatal-errors" CACHE STRING "Release options." FORCE)
 if (CMAKE_COMPILER_IS_GNUCXX)
   set(CMAKE_CXX_FLAGS_RELEASE "${TMP} -Ofast" CACHE STRING "Release options." FORCE)
@@ -102,7 +102,18 @@ icicle_option(FLOAT "'float' type support (i.e. single precision, 32 bits)" ON)
 icicle_option(DOUBLE "'double' type support (i.e. double precision, 64 bits)" ON)
 icicle_option(LDOUBLE "'long double' type support (compiler-dependent, 80 bits for GCC on x86_64)" ON)
 #icicle_option(FLOAT128 "'__float128' type support (GNU extension, 128 bits)" ON) #TODO: check if __float128 is actually supported by the compiler...
-set(tmp "src/icicle.cpp")
+
+set(tmp "")
+set(tmp "${tmp};src/adv_leapfrog.cpp")
+set(tmp "${tmp};src/adv_upstream.cpp")
+set(tmp "${tmp};src/adv_mpdata.cpp")
+set(tmp "${tmp};src/eqs_harmonic_oscillator.cpp")
+set(tmp "${tmp};src/eqs_shallow_water.cpp")
+set(tmp "${tmp};src/eqs_scalar_advection.cpp")
+set(tmp "${tmp};src/eqs_isentropic.cpp")
+set(tmp "${tmp};src/eqs_todo_sdm.cpp")
+set(tmp "${tmp};src/icicle.cpp")
+
 if(NOT FLOAT)
   message(STATUS "Building without float support (-DFLOAT=NO specified)")
 else()

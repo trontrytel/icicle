@@ -9,6 +9,7 @@ coding conventions in icicle:
   - declare local variables as near to their use as possible
   - avoid overly long lines...
   - use references instead of pointers if possible
+  - mark function arguments as const where possible
   - all variable, class and method named are lowercase
     optionally with underscores
   - all preprocessor macro names should end with _macro suffix
@@ -25,6 +26,9 @@ coding conventions in icicle:
 
 - loop index naming conventions... ? (TODO)
 - assert(condition && "message");   
+- @pragma once
+- cpp vs. hpp
+- cfg only in cpp
 
 References:
 [CERN] - CERN C++ Coding Standard Specification

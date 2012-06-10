@@ -5,11 +5,10 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef RHS_HPP
-#  define RHS_HPP
+#pragma once
 
-#  include "cmn.hpp" 
-#  include "mtx.hpp"
+#include "cmn.hpp" 
+#include "mtx.hpp"
 
 /** @brief TODO
  *
@@ -78,4 +77,3 @@ class rhs
     return real_t(0); 
   }
 };  
-#endif

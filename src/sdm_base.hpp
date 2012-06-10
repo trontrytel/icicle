@@ -5,15 +5,14 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef SDM_BASE_HPP
-#  define SDM_BASE_HPP
+#pragma once
 
-#  if defined(USE_THRUST) 
-#    include <thrust/device_vector.h>
-#    include <thrust/random.h> // TODO: random is not used in this file...
-#    include <thrust/sequence.h>
-#    include <thrust/sort.h>
-#    include <thrust/iterator/constant_iterator.h>
+#if defined(USE_THRUST) 
+#  include <thrust/device_vector.h>
+#  include <thrust/random.h> // TODO: random is not used in this file...
+#  include <thrust/sequence.h>
+#  include <thrust/sort.h>
+#  include <thrust/iterator/constant_iterator.h>
 
 namespace sdm 
 {
@@ -89,5 +88,4 @@ namespace sdm
     }
   };
 }
-#  endif
 #endif

@@ -5,10 +5,8 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef SDM_ODE_XY_HPP
-#  define SDM_ODE_XY_HPP
-
-#  include "sdm_ode.hpp"
+#pragma once
+#include "sdm_ode.hpp"
 
 namespace sdm
 {
@@ -76,6 +74,4 @@ namespace sdm
       }
     }
   };
-
 }
-#endif

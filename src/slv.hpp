@@ -5,11 +5,10 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef SLV_HPP
-#  define SLV_HPP
+#pragma once
 
-#  include "cmn.hpp" 
-#  include "adv.hpp"
+#include "cmn.hpp" 
+#include "adv.hpp"
 
 template <typename real_t>
 class slv 
@@ -38,5 +37,3 @@ class slv
   // ensuring derived-class destructor will be called
   public: virtual ~slv() {}
 };
-
-#endif

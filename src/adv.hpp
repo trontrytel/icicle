@@ -6,11 +6,10 @@
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  *  @brief definition of and helper macros for \ref adv - the base class for advection operators
  */
-#ifndef ADV_HPP
-#  define ADV_HPP
+#pragma once
 
-#  include "cmn.hpp"
-#  include "mtx.hpp"
+#include "cmn.hpp"
+#include "mtx.hpp"
 
 /// @brief a base class for advection operators
 template <typename real_t>
@@ -55,21 +54,20 @@ class adv
   ) const = 0;
 
     // TODO: document, include as an option / autotest in CMake
-#  ifdef MPDATA_NEGPOSPART_ABS
+#ifdef MPDATA_NEGPOSPART_ABS
     protected: mtx_expr_1arg_macro(pospart, x,
       real_t(.5) * (x + abs(x))
     )   
     protected: mtx_expr_1arg_macro(negpart, x,
       real_t(.5) * (x - abs(x))
     )   
-#  else
+#else
     protected: mtx_expr_1arg_macro(pospart, x,
       max(real_t(0), x)
     )   
     protected: mtx_expr_1arg_macro(negpart, x,
       min(real_t(0), x)
     )   
-#  endif
+#endif
 
 };
-#endif

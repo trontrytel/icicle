@@ -5,10 +5,12 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef SDM_ODE_XI_HPP
-#  define SDM_ODE_XI_HPP
+#pragma once
 
-#  include "sdm_ode.hpp"
+#include "sdm_ode.hpp"
+#include "phc_theta.hpp"
+#include "phc_const_cp.hpp"
+#include "phc_kappa_koehler.hpp"
 
 namespace sdm
 {
@@ -177,4 +179,3 @@ namespace sdm
     }
   };
 }
-#endif

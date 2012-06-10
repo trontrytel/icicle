@@ -5,16 +5,15 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef SDM_ODE_HPP
-#  define SDM_ODE_HPP
+#pragma once
 
-#  include "sdm_base.hpp"
+#include "sdm_base.hpp"
 
-#  if defined(USE_THRUST) && defined(USE_BOOST_ODEINT)
-#    include <boost/numeric/odeint.hpp>
-#    include <boost/numeric/odeint/external/thrust/thrust_algebra.hpp>
-#    include <boost/numeric/odeint/external/thrust/thrust_operations.hpp>
-#    include <boost/numeric/odeint/external/thrust/thrust_resize.hpp>
+#if defined(USE_THRUST) && defined(USE_BOOST_ODEINT)
+#  include <boost/numeric/odeint.hpp>
+#  include <boost/numeric/odeint/external/thrust/thrust_algebra.hpp>
+#  include <boost/numeric/odeint/external/thrust/thrust_operations.hpp>
+#  include <boost/numeric/odeint/external/thrust/thrust_resize.hpp>
 namespace odeint = boost::numeric::odeint;
 
 namespace sdm
@@ -96,5 +95,4 @@ namespace sdm
   };
 
 }
-#  endif
 #endif
