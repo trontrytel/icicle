@@ -7,8 +7,7 @@
  *  @brief common includes, using statements, macro definitions etc
  */
 
-#ifndef CMN_HPP
-#  define CMN_HPP
+#pragma once
 
 // STL includes
 #  include <cmath>
@@ -89,5 +88,3 @@ using boost::nullable;
 using boost::ptr_unordered_map;
 #  include <boost/assign/ptr_map_inserter.hpp>
 using boost::assign::ptr_map_insert;
-
-#endif

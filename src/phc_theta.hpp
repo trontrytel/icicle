@@ -7,10 +7,8 @@
  *  @brief contains definition of thermodynamic relations related
  *    to the definition of potential temperature and the Exner function
  */
-#ifndef PHC_THETA_HPP
-#  define PHC_THETA_HPP
-
-#  include "phc.hpp"
+#pragma once
+#include "phc.hpp"
 
 namespace phc
 {
@@ -68,5 +66,3 @@ namespace phc
     )); 
   }
 };
-
-#endif

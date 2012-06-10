@@ -9,10 +9,8 @@
  *    (i.e. formulas consistent with perfect gas model, but not 
  *    neccesarily the most efficient ones)
  */
-#ifndef PHC_CONST_CP_HPP
-#  define PHC_CONST_CP_HPP
-
-#  include "phc.hpp"
+#pragma once
+#include "phc.hpp"
 
 // TODO: perhaps a template parameter (svp?) that would allow
 //       swithing between different formulations 
@@ -50,5 +48,3 @@ namespace phc
     return l_tri<real_t>() + (c_pv<real_t>() - c_pw<real_t>()) * (T - T_tri<real_t>());
   }
 };
-
-#endif

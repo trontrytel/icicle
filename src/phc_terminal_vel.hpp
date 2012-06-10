@@ -5,10 +5,9 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef PHC_TERMINAL_VELOCITY_HPP
-#  define PHC_TERMINAL_VELOCITY_HPP
+#pragma once
+#include "phc.hpp"
 
-#  include "phc.hpp"
 namespace phc
 {
   /// @brief dynamic viscosity of air (@copydetails Rogers_and_Yau_1989 third edition page 102) 
@@ -51,5 +50,3 @@ namespace phc
     return (Av * real_t(pow(real_t(2*1e2) * r/si::metres, Bv)))/real_t(1e2) * si::metres_per_second  ;
   }
 };
-
-#endif

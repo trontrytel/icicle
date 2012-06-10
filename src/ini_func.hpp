@@ -6,11 +6,9 @@
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  *  @brief contains definition of the ini_func class - a base class for functional-form specified initial conditions
  */
-#ifndef INI_FUNC_HPP
-#  define INI_FUNC_HPP
-
-#  include "ini.hpp"
-#  include "grd.hpp"
+#pragma once
+#include "ini.hpp"
+#include "grd.hpp"
 
 /// @brief a base class for functional-form specified initial conditions (still pure virtual, applicable to single-equation systems only)
 template <typename real_t>
@@ -42,4 +40,3 @@ class ini_func : public ini<real_t>
           data(i,j,k) = psi(grid->x(i,j,k), grid->y(i,j,k), grid->z(i,j,k));
   }
 };
-#endif

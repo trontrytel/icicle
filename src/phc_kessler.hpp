@@ -5,10 +5,8 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef PHC_KESSLER_HPP
-#  define PHC_KESSLER_HPP
-
-#  include "phc.hpp"
+#pragma once
+#include "phc.hpp"
 
 namespace phc
 {
@@ -25,5 +23,3 @@ namespace phc
     return vterm_A<real_t>() * real_t(pow(rho_r * vterm_B<real_t>(), .1346) * sqrt(rho_d0 / rho_d));
   }
 };
-
-#endif

@@ -8,28 +8,7 @@
  */
 
 #include "cfg.hpp"
-
-#include "opt_adv.hpp"
-#include "opt_grd.hpp"
-#include "opt_ini.hpp"
-#include "opt_out.hpp"
-#include "opt_slv.hpp"
-#include "opt_vel.hpp"
-#include "opt_eqs.hpp"
-#include "opt_stp.hpp"
-
-#ifdef USE_FLOAT
-extern void mdl_flt(const po::variables_map&, const string&);
-#endif
-#ifdef USE_DOUBLE
-extern void mdl_dbl(const po::variables_map&, const string&);
-#endif
-#ifdef USE_LDOUBLE
-extern void mdl_ldb(const po::variables_map&, const string&);
-#endif
-#ifdef USE_FLOAT128
-extern void mdl_128(const po::variables_map&, const string&);
-#endif
+#include "mdl.hpp"
 
 int main(int ac, char* av[])
 {
@@ -95,22 +74,22 @@ int main(int ac, char* av[])
     int bits = vm["bits"].as<int>();
 #ifdef USE_FLOAT
     if (sizeof(float) * 8 == bits) 
-      mdl_flt(vm, options.str());
+      mdl<float>(vm, options.str());
     else 
 #endif
 #ifdef USE_DOUBLE
     if (sizeof(double) * 8 == bits) 
-      mdl_dbl(vm, options.str());
+      mdl<double>(vm, options.str());
     else 
 #endif
 #ifdef USE_LDOUBLE
     if (sizeof(long double) * 8 == bits) 
-      mdl_ldb(vm, options.str());
+      mdl<long double>(vm, options.str());
     else 
 #endif
 #ifdef USE_FLOAT128 // TODO: only if GNU compiler?
     if (sizeof(__float128) * 8 == bits) 
-      mdl_128(vm, options.str());
+      mdl<__float_128>(vm, options.str());
     else 
 #endif
     error_macro("unsupported number of bits (" << bits << ")")

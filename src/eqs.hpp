@@ -6,11 +6,9 @@
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  *  @brief definition of the @ref eqs class - a base class for all transport equation systems
  */
-#ifndef EQS_HPP
-#  define EQS_HPP
-
-#  include "cmn.hpp"
-#  include "rhs.hpp"
+#pragma once
+#include "cmn.hpp"
+#include "rhs.hpp"
 
 /// @brief a class defining a system of generalised transport equations
 template <typename real_t>
@@ -262,4 +260,3 @@ class eqs
   ) {} // no default adjustments
 
 };
-#endif

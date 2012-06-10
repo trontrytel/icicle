@@ -5,10 +5,8 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef PHC_KAPPA_KOEHLER_HPP
-#  define PHC_KAPPA_KOEHLER_HPP
-
-#  include "phc.hpp"
+#pragma once
+#include "phc.hpp"
 
 namespace phc
 {
@@ -36,5 +34,3 @@ namespace phc
     return rd3 * (1 - vap_ratio * (1 - kappa)) / (1 - vap_ratio);
   }
 };
-
-#endif

@@ -5,17 +5,15 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef MTX_HPP
-#  define MTX_HPP
-
-#  if defined(USE_BOOST_THREAD) || defined(_OPENMP)
-#    define BZ_THREADSAFE
-#  endif
-#  include <blitz/array.h>
-#  include <blitz/numinquire.h>
+#pragma once
+#if defined(USE_BOOST_THREAD) || defined(_OPENMP)
+#  define BZ_THREADSAFE
+#endif
+#include <blitz/array.h>
+#include <blitz/numinquire.h>
 using blitz::where;
 
-#  define mtx_expr_1arg_macro(name,a1,expr) \
+#define mtx_expr_1arg_macro(name,a1,expr) \
   template<class t1> \
   static auto name(const t1 &a1) \
   -> decltype(blitz::safeToReturn(expr)) \
@@ -23,7 +21,7 @@ using blitz::where;
     assert(isfinite(sum(a1))); \
     return blitz::safeToReturn(expr); \
   } 
-#  define mtx_expr_2arg_macro(name,a1,a2,expr) \
+#define mtx_expr_2arg_macro(name,a1,a2,expr) \
   template<class t1, class t2> \
   static auto name(const t1 &a1, const t2 &a2) \
   -> decltype(blitz::safeToReturn(expr)) \
@@ -32,7 +30,7 @@ using blitz::where;
     assert(isfinite(sum(a2))); \
     return blitz::safeToReturn(expr); \
   } 
-#  define mtx_expr_3arg_macro(name, a1, a2, a3, expr) \
+#define mtx_expr_3arg_macro(name, a1, a2, a3, expr) \
   template<class t1, class t2, class t3> \
   static auto name(const t1 &a1, const t2 &a2, const t3 &a3) \
   -> decltype(blitz::safeToReturn(expr)) \
@@ -42,7 +40,7 @@ using blitz::where;
     assert(isfinite(sum(a3))); \
     return blitz::safeToReturn(expr); \
   }
-#  define mtx_expr_4arg_macro(name, a1, a2, a3, a4, expr) \
+#define mtx_expr_4arg_macro(name, a1, a2, a3, a4, expr) \
   template<class t1, class t2, class t3, class t4> \
   static auto name(const t1 &a1, const t2 &a2, const t3 &a3, const t4 &a4) \
   -> decltype(blitz::safeToReturn(expr)) \
@@ -53,7 +51,7 @@ using blitz::where;
     assert(isfinite(sum(a4))); \
     return blitz::safeToReturn(expr); \
   }
-#  define mtx_expr_5arg_macro(name, a1, a2, a3, a4, a5, expr) \
+#define mtx_expr_5arg_macro(name, a1, a2, a3, a4, a5, expr) \
   template<class t1, class t2, class t3, class t4, class t5> \
   static auto name(const t1 &a1, const t2 &a2, const t3 &a3, const t4 &a4, const t5 &a5) \
   -> decltype(blitz::safeToReturn(expr)) \
@@ -65,7 +63,7 @@ using blitz::where;
     assert(isfinite(sum(a5))); \
     return blitz::safeToReturn(expr); \
   }
-#  define mtx_expr_6arg_macro(name, a1, a2, a3, a4, a5, a6, expr) \
+#define mtx_expr_6arg_macro(name, a1, a2, a3, a4, a5, a6, expr) \
   template<class t1, class t2, class t3, class t4, class t5, class t6> \
   static auto name(const t1 &a1, const t2 &a2, const t3 &a3, const t4 &a4, const t5 &a5, const t6 &a6) \
   -> decltype(blitz::safeToReturn(expr)) \
@@ -78,7 +76,7 @@ using blitz::where;
     assert(isfinite(sum(a6))); \
     return blitz::safeToReturn(expr); \
   }
-#  define mtx_expr_11arg_macro(name, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11, expr) \
+#define mtx_expr_11arg_macro(name, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11, expr) \
   template<class t1, class t2, class t3, class t4, class t5, class t6, class t7, class t8, class t9, class t10, class t11> \
   static auto name(const t1 &a1, const t2 &a2, const t3 &a3, const t4 &a4, const t5 &a5, const t6 &a6, const t7 &a7, const t8 &a8, const t9 &a9, const t10 &a10, const t11 &a11) \
   -> decltype(blitz::safeToReturn(expr)) \
@@ -220,9 +218,9 @@ namespace mtx
       k(blitz::Range(ijk.lbound(2), ijk.ubound(2))),
       ijk(ijk)
     {
-#  ifndef NDEBUG
+#ifndef NDEBUG
       fill_with_nans();
-#  endif
+#endif
     }
   };
 };
@@ -230,5 +228,3 @@ namespace mtx
 // Arakawa-C staggered grid helpers
 inline mtx::rng operator+(const mtx::rng &i, const static_rational<1,2>&) { return i + 1; }
 inline mtx::rng operator-(const mtx::rng &i, const static_rational<1,2>&) { return i; }
-
-#endif

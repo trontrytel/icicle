@@ -7,8 +7,7 @@
  *  @brief contains definition of the phc class encapsulating 
  *    a catalogue of physical constants
  */
-#ifndef PHC_HPP
-#  define PHC_HPP
+#pragma once
 
 #  define phc_decltype_return(expr) -> decltype(expr) { return expr; }
 
@@ -82,5 +81,3 @@ namespace phc
     return p * r / (r + eps<real_t>());
   }
 };
-
-#endif

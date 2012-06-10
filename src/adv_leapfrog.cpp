@@ -129,7 +129,6 @@ typename adv<real_t>::op3D *adv_leapfrog<real_t>::factory(
   return new op3D(ijk, fallback->factory(ijk, NULL, NULL, false));
 }
 
-
 // explicit instantiations
 #if defined(USE_FLOAT)
 template class adv_leapfrog<float>;

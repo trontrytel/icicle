@@ -5,17 +5,15 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef MODEL_HPP
-#  define MODEL_HPP
-
-#  include "opt_grd.hpp"
-#  include "opt_adv.hpp"
-#  include "opt_vel.hpp"
-#  include "opt_slv.hpp"
-#  include "opt_out.hpp"
-#  include "opt_ini.hpp"
-#  include "opt_eqs.hpp"
-#  include "opt_stp.hpp"
+#pragma once
+#include "opt_grd.hpp"
+#include "opt_adv.hpp"
+#include "opt_vel.hpp"
+#include "opt_slv.hpp"
+#include "opt_out.hpp"
+#include "opt_ini.hpp"
+#include "opt_eqs.hpp"
+#include "opt_stp.hpp"
 
 template <typename real_t>
 void mdl(const po::variables_map &vm, const string &cmdline) 
@@ -62,4 +60,3 @@ void mdl(const po::variables_map &vm, const string &cmdline)
   cerr << "-- init: parsing options: done." << endl;
   solver->integ_loop(); 
 }
-#endif

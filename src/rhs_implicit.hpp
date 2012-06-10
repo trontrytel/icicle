@@ -5,10 +5,8 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef RHS_IMPLICIT_HPP
-#  define RHS_IMPLICIT_HPP
-
-#  include "rhs.hpp" 
+#pragma once
+#include "rhs.hpp" 
 
 template <typename real_t>
 class rhs_implicit : public rhs<real_t>
@@ -21,4 +19,3 @@ class rhs_implicit : public rhs<real_t>
   ) const
   {}
 };  
-#endif

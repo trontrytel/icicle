@@ -5,10 +5,8 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef RHS_EXPLICIT_HPP
-#  define RHS_EXPLICIT_HPP
-
-#  include "rhs.hpp" 
+#pragma once
+#include "rhs.hpp" 
 
 template <typename real_t>
 class rhs_explicit : public rhs<real_t>
@@ -20,4 +18,3 @@ class rhs_explicit : public rhs<real_t>
     return real_t(0); 
   }
 };  
-#endif
