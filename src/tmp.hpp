@@ -5,12 +5,10 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef TMP_HPP
-#  define TMP_HPP
-
-#  include "cmn.hpp" 
-#  include "mtx.hpp"
-#  include "grd.hpp"
+#pragma once
+#include "cmn.hpp" 
+#include "mtx.hpp"
+#include "grd.hpp"
 
 template <typename real_t>
 class tmp 
@@ -45,4 +43,3 @@ class tmp
     sclr = sclr_guard.c_array();
   }
 };
-#endif

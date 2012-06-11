@@ -5,8 +5,7 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef OPT_EQS_HPP
-#  define OPT_EQS_HPP
+#pragma once
 
 #  include "opt.hpp"
 #  include "eqs_scalar_advection.hpp"
@@ -137,5 +136,3 @@ eqs<real_t> *opt_eqs(
   else 
   error_macro("unsupported equation system: " << initype)
 }
-
-#endif

@@ -5,8 +5,7 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef OPT_ADV_HPP
-#  define OPT_ADV_HPP
+#pragma once
 
 #  include "opt.hpp"
 #  include "adv_upstream.hpp"
@@ -50,5 +49,3 @@ adv<real_t> *opt_adv(const po::variables_map& vm)
   }
   else error_macro("unsupported advection scheme: " << advscheme)
 }
-
-#endif

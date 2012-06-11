@@ -5,13 +5,11 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef EQS_TODO_HPP
-#  define EQS_TODO_HPP
-
-#  include "cmn.hpp"
-#  include "eqs.hpp"
-#  include "rhs_explicit.hpp"
-#  include "grd.hpp"
+#pragma once
+#include "cmn.hpp"
+#include "eqs.hpp"
+#include "rhs_explicit.hpp"
+#include "grd.hpp"
 
 template <typename real_t>
 class eqs_todo : public eqs<real_t>  // TODO: rename to moist?
@@ -54,4 +52,3 @@ class eqs_todo : public eqs<real_t>  // TODO: rename to moist?
     par->idx_rhod_th = this->sys.size() - 1;
   }
 };
-#endif

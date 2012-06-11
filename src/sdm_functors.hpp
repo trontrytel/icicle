@@ -110,28 +110,28 @@ namespace sdm {
   };
 
   /// @brief a functor interface to phc_lognormal.hpp routines
-  template <typename thrust_real_t> 
+  template <typename real_t> 
   class lognormal
   {
-    private: quantity<si::length, thrust_real_t> mean_rd1, mean_rd2;
-    private: quantity<si::dimensionless, thrust_real_t> sdev_rd1, sdev_rd2;
-    private: quantity<power_typeof_helper<si::length, static_rational<-3>>::type, thrust_real_t> n1_tot, n2_tot;
+    private: quantity<si::length, real_t> mean_rd1, mean_rd2;
+    private: quantity<si::dimensionless, real_t> sdev_rd1, sdev_rd2;
+    private: quantity<power_typeof_helper<si::length, static_rational<-3>>::type, real_t> n1_tot, n2_tot;
     
     public: lognormal(
-      const quantity<si::length, thrust_real_t> mean_rd1,
-      const quantity<si::dimensionless, thrust_real_t> sdev_rd1,
-      const quantity<power_typeof_helper<si::length, static_rational<-3>>::type, thrust_real_t> n1_tot,
-      const quantity<si::length, thrust_real_t> mean_rd2,
-      const quantity<si::dimensionless, thrust_real_t> sdev_rd2,
-      const quantity<power_typeof_helper<si::length, static_rational<-3>>::type, thrust_real_t> n2_tot
+      const quantity<si::length, real_t> mean_rd1,
+      const quantity<si::dimensionless, real_t> sdev_rd1,
+      const quantity<power_typeof_helper<si::length, static_rational<-3>>::type, real_t> n1_tot,
+      const quantity<si::length, real_t> mean_rd2,
+      const quantity<si::dimensionless, real_t> sdev_rd2,
+      const quantity<power_typeof_helper<si::length, static_rational<-3>>::type, real_t> n2_tot
     ) : mean_rd1(mean_rd1), sdev_rd1(sdev_rd1), n1_tot(n1_tot), mean_rd2(mean_rd2), sdev_rd2(sdev_rd2), n2_tot(n2_tot) {}
 
-    public: thrust_real_t operator()(thrust_real_t lnrd)
+    public: real_t operator()(real_t lnrd)
     {
-      return thrust_real_t(( //TODO allow more modes of distribution
+      return real_t(( //TODO allow more modes of distribution
 // TODO: logarith or not: as an option
-          phc::log_norm_n_e<thrust_real_t>(mean_rd1, sdev_rd1, n1_tot, lnrd) + 
-          phc::log_norm_n_e<thrust_real_t>(mean_rd2, sdev_rd2, n2_tot, lnrd) 
+          phc::log_norm_n_e<real_t>(mean_rd1, sdev_rd1, n1_tot, lnrd) + 
+          phc::log_norm_n_e<real_t>(mean_rd2, sdev_rd2, n2_tot, lnrd) 
         ) * si::cubic_metres
       );
     }

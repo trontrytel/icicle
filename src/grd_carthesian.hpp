@@ -6,10 +6,8 @@
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  *  @brief contains definition of the grd_carthesian class
  */
-#ifndef GRD_CARTHESIAN_HPP
-#  define GRD_CARTHESIAN_HPP
-
-#  include "grd.hpp"
+#pragma once
+#include "grd.hpp"
 
 template<typename real_t>
 class grd_carthesian : public grd<real_t> // TODO: rmerge it with grid... KISS!
@@ -116,4 +114,3 @@ class grd_carthesian : public grd<real_t> // TODO: rmerge it with grid... KISS!
   public: quantity<si::length, real_t> z(int  , int  , int k) const { return (k + real_t(.5)) * dz_;};
 
 };
-#endif

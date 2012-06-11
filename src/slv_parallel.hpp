@@ -5,11 +5,9 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef SLV_PARALLEL_HPP
-#  define SLV_PARALLEL_HPP
-
-#  include "slv_serial.hpp"
-#  include "out.hpp"
+#pragma once
+#include "slv_serial.hpp"
+#include "out.hpp"
 
 template <typename real_t>
 class slv_parallel : public slv<real_t>
@@ -185,4 +183,3 @@ class slv_parallel : public slv<real_t>
     }
   }
 };
-#endif

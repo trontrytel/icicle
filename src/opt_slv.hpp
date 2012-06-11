@@ -5,8 +5,7 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef SLV_VEL_HPP
-#  define SLV_VEL_HPP
+#pragma once
 
 #  include "opt.hpp"
 #  include "slv_parallel_openmp.hpp"
@@ -61,14 +60,14 @@ slv<real_t> *opt_slv(
     else
 #  endif
     if (slvtype == "fork")
-      return new slv_parallel_distmem_fork<real_t, slv_parallel_serial<real_t> >(
+      return new slv_parallel_distmem_fork<real_t, slv_parallel_serial<real_t>>(
         setup, output, nsd
       );
     else
     // TODO: fork+threads, fork+openmp
 #  ifdef USE_BOOST_MPI
     if (slvtype == "mpi")
-      return new slv_parallel_distmem_mpi<real_t, slv_parallel_serial<real_t> >(
+      return new slv_parallel_distmem_mpi<real_t, slv_parallel_serial<real_t>>(
         setup, output, nsd
       );
     else
@@ -87,5 +86,3 @@ slv<real_t> *opt_slv(
   }
   else error_macro("unsupported solver type: " << slvtype)
 }
-
-#endif

@@ -6,8 +6,7 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef OPT_STP_HPP
-#  define OPT_STP_HPP
+#pragma once
 
 #  include "opt.hpp"
 #  include "stp.hpp"
@@ -66,5 +65,3 @@ stp<real_t> *opt_stp(
     );
   }
 }
-
-#endif

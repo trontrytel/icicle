@@ -5,12 +5,9 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef OPT_HPP
-#  define OPT_HPP
-
-#  include "cmn.hpp"
-
-#  include <boost/program_options.hpp>
+#pragma once
+#include "cmn.hpp"
+#include <boost/program_options.hpp>
 namespace po = boost::program_options;
 
 template <typename real_t>
@@ -33,5 +30,3 @@ real_t real_cast(const po::variables_map& vm, const string &name)
       << " into floating point value while handling the --" << name << " option"
   )
 }
-
-#endif

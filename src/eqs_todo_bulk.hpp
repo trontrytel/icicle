@@ -6,12 +6,10 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef EQS_TODO_BULK_HPP
-#  define EQS_TODO_BULK_HPP
-
-#  include "eqs_todo.hpp"
-#  include "phc_kessler.hpp"
-#  include "phc_theta.hpp"
+#pragma once
+#include "eqs_todo.hpp"
+#include "phc_kessler.hpp"
+#include "phc_theta.hpp"
 
 template <typename real_t>
 class eqs_todo_bulk : public eqs_todo<real_t> 
@@ -203,4 +201,3 @@ class eqs_todo_bulk : public eqs_todo<real_t>
     const quantity<si::time, real_t> dt
   ) = 0;   
 };
-#endif

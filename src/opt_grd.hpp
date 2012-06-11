@@ -5,8 +5,7 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef OPT_GRD_HPP
-#  define OPT_GRD_HPP
+#pragma once
 
 #  include "opt.hpp"
 #  include "grd_carthesian.hpp"
@@ -51,5 +50,3 @@ grd<real_t> *opt_grd(const po::variables_map& vm)
   }
   else error_macro("unsupported grid type: " << grdtype)
 }
-
-#endif

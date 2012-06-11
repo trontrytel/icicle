@@ -5,14 +5,11 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef VEL_MOMEQ_HPP
-#  define VEL_MOMEQ_HPP
-
-#  include "vel.hpp" 
+#pragma once
+#include "vel.hpp" 
 
 template <typename real_t>
 class vel_momeq : public vel<real_t>
 {
   public: bool is_constant() const { return false; } 
 };
-#endif

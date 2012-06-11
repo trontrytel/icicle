@@ -5,10 +5,8 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef VEL_FUNC_STREAM_HPP
-#  define VEL_FUNC_STREAM_HPP
-
-#  include "vel_func.hpp" 
+#pragma once
+#include "vel_func.hpp" 
 
 template <typename real_t>
 class vel_func_stream : public vel_func<real_t>
@@ -53,4 +51,3 @@ class vel_func_stream : public vel_func<real_t>
     catch (NcException& e) error_macro(e.what())
   }
 };
-#endif

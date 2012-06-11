@@ -5,8 +5,7 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef OPT_INI_HPP
-#  define OPT_INI_HPP
+#pragma once
 
 #  include "opt.hpp"
 #  include "grd.hpp"
@@ -101,5 +100,3 @@ ini<real_t> *opt_ini(const po::variables_map& vm, const grd<real_t> &grid)
   }
   else error_macro("unsupported initial condition: " << initype)
 }
-
-#endif

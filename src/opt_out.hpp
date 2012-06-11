@@ -5,8 +5,7 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef OPT_OUT_HPP
-#  define OPT_OUT_HPP
+#pragma once
 
 #  include "opt.hpp"
 #  include "grd.hpp"
@@ -47,5 +46,3 @@ out<real_t> *opt_out(
 #  endif
   error_macro("unsupported output type: " << outtype)
 }
-
-#endif

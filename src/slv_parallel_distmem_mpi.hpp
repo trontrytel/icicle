@@ -5,8 +5,8 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef SLV_PARALLEL_DISTMEM_MPI_HPP
-#  define SLV_PARALLEL_DISTMEM_MPI_HPP
+#pragma once
+//TODO: split into .hpp and .cpp
 #  ifdef USE_BOOST_MPI
 
 #  include "slv_parallel_distmem.hpp"
@@ -60,6 +60,4 @@ class slv_parallel_distmem_mpi : public slv_parallel_distmem<real_t, shrdmem_cla
     mpi::wait_all(reqs, reqs + r);
   }
 };
-
 #  endif
-#endif

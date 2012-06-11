@@ -5,8 +5,7 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef OPT_VEL_HPP
-#  define OPT_VEL_HPP
+#pragma once
 
 #  include "opt.hpp"
 #  include "grd.hpp"
@@ -64,5 +63,3 @@ vel<real_t> *opt_vel(const po::variables_map& vm, const grd<real_t> &grid)
   }
   else error_macro("unsupported velocity field type: " << veltype)
 }
-
-#endif

@@ -5,10 +5,8 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef VEL_FUNC_HPP
-#  define VEL_FUNC_HPP
-
-#  include "vel.hpp" 
+#pragma once
+#include "vel.hpp" 
 
 template <typename real_t>
 class vel_func : public vel<real_t>
@@ -85,4 +83,3 @@ class vel_func : public vel<real_t>
             );
   }
 };
-#endif

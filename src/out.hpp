@@ -5,11 +5,9 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef OUT_HPP
-#  define OUT_HPP
-
-#  include "cmn.hpp" 
-#  include "mtx.hpp" 
+#pragma once
+#include "cmn.hpp" 
+#include "mtx.hpp" 
 
 template <typename real_t>
 class out 
@@ -24,5 +22,3 @@ class out
   // ensuring derived-class destructor will be called
   public: virtual ~out() {}
 };
-
-#endif

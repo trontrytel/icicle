@@ -5,10 +5,8 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#ifndef SLV_PARALLEL_DISTMEM_HPP
-#  define SLV_PARALLEL_DISTMEM_HPP
-
-#  include "slv_parallel.hpp" 
+#pragma once
+#include "slv_parallel.hpp" 
 
 template <typename real_t, class shrdmem_class>
 class slv_parallel_distmem : public shrdmem_class
@@ -120,5 +118,3 @@ class slv_parallel_distmem : public shrdmem_class
 
   private: virtual void sndrcv(int peer, int cnt, real_t *ibuf, real_t *obuf) = 0;
 };
-
-#endif
