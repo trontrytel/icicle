@@ -14,7 +14,9 @@
 template <typename real_t>
 class slv_parallel_threads : public slv_parallel<real_t>
 {
+#ifdef USE_BOOST_THREAD
   private: unique_ptr<boost::barrier> b; 
+#endif
   private: int nsd;
 
   public: slv_parallel_threads(
@@ -37,7 +39,17 @@ class slv_parallel_threads : public slv_parallel<real_t>
   }
 #endif
 
-  public: void barrier();
+  public: void barrier()
+#ifdef USE_BOOST_THREAD
+  ;
+#else
+  {}
+#endif
 
-  public: void integ_loop();
+  public: void integ_loop()
+#ifdef USE_BOOST_THREAD
+  ;
+#else
+  {}
+#endif
 };
