@@ -113,6 +113,7 @@ set(tmp "${tmp};src/slv_parallel_serial.cpp")
 set(tmp "${tmp};src/slv_parallel_openmp.cpp")
 set(tmp "${tmp};src/slv_parallel_threads.cpp")
 set(tmp "${tmp};src/slv_parallel_distmem_fork.cpp")
+set(tmp "${tmp};src/slv_parallel_distmem_mpi.cpp")
 set(tmp "${tmp};src/eqs_harmonic_oscillator.cpp")
 set(tmp "${tmp};src/eqs_shallow_water.cpp")
 set(tmp "${tmp};src/eqs_scalar_advection.cpp")
@@ -162,10 +163,18 @@ target_link_libraries(icicle debug "-lblitz") # TODO: check if debugging actuall
 icicle_check(status "blitz" FATAL_ERROR ""
   "#include <blitz/array.h>\n int main() {}"
 )
-icicle_check(status "blitz_compiler" WARNING 
-  "Blitz++ seem not to have been configured with the same compiler. Consider reconfiguring Blitz++ with CXX=${CMAKE_CXX_COMPILER}"
-  "#include <blitz/array.h>\n int main() {assert(std::string(BZ__compiler_name)==std::string(\"${CMAKE_CXX_COMPILER}\"))\;}"
-) 
+check_cxx_source_runs("
+  #undef NDEBUG
+  #include <blitz/array.h>
+  int main() {
+    assert(std::string(BZ__compiler_name) == std::string(\"${CMAKE_CXX_COMPILER}\"));
+  }
+" icicle_blitz_compiler)
+if (NOT icicle_blitz_compiler)
+  message(WARNING "Blitz++ seem not to have been configured with the same compiler!
+    Consider reconfiguring Blitz++ with CXX=${CMAKE_CXX_COMPILER}"
+  )
+endif()
 
 # Boost.lexical_cast (mandatory)
 icicle_check(status "boost_lexical_cast" FATAL_ERROR ""
@@ -277,7 +286,9 @@ else()
   icicle_check(status "thrust" WARNING "Features relying on Thrust will not be available." "
     #define THRUST_DEVICE_SYSTEM THRUST_DEVICE_SYSTEM_OMP
     #include <thrust/device_vector.h>
-    int main() { thrust::device_vector<int> v\; }
+    int main() { 
+      thrust::device_vector<int> v(1)\; 
+    }
   ")
   set(USE_THRUST ${status})
   set(THRUST_DEVICE_SYSTEM THRUST_DEVICE_SYSTEM_OMP) #TODO: use somehow the information on OpenMP availability!

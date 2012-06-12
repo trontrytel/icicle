@@ -21,10 +21,10 @@
 ---------------------------------------------------------------
 * requirements (see below for Debian/Fedora/Macports hints):
 
-  - cmake ................................... http://cmake.org/
+  - CMake (>= 2.8.6) ........................ http://cmake.org/
 
   - C++11 and optionally OpenMP compliant C++ compiler, e.g.
-    - g++ (>= 4.7.1) ...................... http://gcc.gnu.org/
+    - g++ (>= 4.7) ........................ http://gcc.gnu.org/
     - clang++ (>= 3.1) ................. http://clang.llvm.org/
     - ... 
 
