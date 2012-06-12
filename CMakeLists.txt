@@ -26,9 +26,9 @@ if(NOT (
   "${CMAKE_BUILD_TYPE}" STREQUAL "Release" 
 ))
   message(FATAL_ERROR "Please specify the build type, i.e.:
-    \$ cmake . -DCMAKE_BUILD_TYPE=Debug   \# (CXX_FLAGS=\"\$CXXFLAGS ${CMAKE_CXX_FLAGS_DEBUG}\")
+    \$ cmake . -DCMAKE_BUILD_TYPE=Debug   \# (CXX_FLAGS=\"\$CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS_DEBUG}\")
     or
-    \$ cmake . -DCMAKE_BUILD_TYPE=Release \# (CXX_FLAGS=\"\$CXXFLAGS ${CMAKE_CXX_FLAGS_RELEASE}\")")
+    \$ cmake . -DCMAKE_BUILD_TYPE=Release \# (CXX_FLAGS=\"\$CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS_RELEASE}\")")
 endif()
 
 project(icicle CXX)

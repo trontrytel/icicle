@@ -136,14 +136,18 @@ void eqs_todo_sdm<real_t>::sd_init(
     sdm::rng<thrust_real_t>(log(min_rd), log(max_rd), seed) 
   ); 
   {
-    real_t multi = log(max_rd/min_rd) / sd_conc_mean 
+    thrust_real_t multi = log(max_rd/min_rd) / sd_conc_mean 
       * (grid.dx() * grid.dy() * grid.dz() / si::cubic_metres); 
     thrust::transform(
       stat.rd3.begin(), stat.rd3.end(), 
       stat.n.begin(), 
       sdm::lognormal<thrust_real_t>(
-        mean_rd1 * si::metres, sdev_rd1, multi * n1_tot / si::cubic_metres, 
-        mean_rd2 * si::metres, sdev_rd2, multi * n2_tot / si::cubic_metres
+        thrust_real_t(mean_rd1) * si::metres, 
+        thrust_real_t(sdev_rd1), 
+        thrust_real_t(multi * n1_tot) / si::cubic_metres, 
+        thrust_real_t(mean_rd2) * si::metres, 
+        thrust_real_t(sdev_rd2), 
+        thrust_real_t(multi * n2_tot) / si::cubic_metres
       ) 
     );
     // converting rd back from logarihms to rd3 
