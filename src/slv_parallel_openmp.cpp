@@ -25,9 +25,9 @@ slv_parallel_openmp<real_t>::slv_parallel_openmp(
       nsd
 )
 {
-    int ncpu = omp_get_num_procs();
-    if (nsd > ncpu) warning_macro("using more threads (" << nsd << ") than CPUs/cores (" << ncpu << ")")
-    omp_set_num_threads(nsd);
+  int ncpu = omp_get_num_procs();
+  if (nsd > ncpu) warning_macro("using more threads (" << nsd << ") than CPUs/cores (" << ncpu << ")")
+  omp_set_num_threads(nsd);
 }
 
 template <typename real_t>

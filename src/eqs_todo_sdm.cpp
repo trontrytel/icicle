@@ -9,10 +9,10 @@
  */
 
 #include "cfg.hpp"
+#include "eqs_todo_sdm.hpp"
 
 #if defined(USE_BOOST_ODEINT) && defined(USE_THRUST)
 
-#  include "eqs_todo_sdm.hpp"
 #  include "phc_lognormal.hpp" // TODO: not here?
 #  include "phc_kappa_koehler.hpp" // TODO: not here?
 
@@ -370,7 +370,7 @@ void eqs_todo_sdm<real_t>::sd_condevap(
   // growing/shrinking the droplets
   F_xi->advance(stat.xi, dt);
 }
-#  endif
+#endif
 
 // explicit instantiations
 #if defined(USE_FLOAT)

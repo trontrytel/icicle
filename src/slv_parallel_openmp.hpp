@@ -28,7 +28,17 @@ class slv_parallel_openmp : public slv_parallel<real_t>
   }
 #endif
 
-  public: void barrier();
+  public: void barrier()
+#ifdef _OPENMP
+  ;
+#else
+  {}
+#endif
 
-  public: void integ_loop();
+  public: void integ_loop()
+#ifdef _OPENMP
+  ; 
+#else
+  {}
+#endif
 };
