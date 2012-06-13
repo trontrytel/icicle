@@ -16,6 +16,8 @@
 #  include "phc_lognormal.hpp" // TODO: not here?
 #  include "phc_kappa_koehler.hpp" // TODO: not here?
 
+#  include "sdm_ode_ys.hpp"
+
 template <typename real_t>
 eqs_todo_sdm<real_t>::eqs_todo_sdm(
   const grd<real_t> &grid, 
@@ -23,6 +25,7 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
   map<enum processes, bool> opts,
   enum xi_dfntns xi_dfntn,
   enum ode_algos xy_algo,
+  enum ode_algos sd_algo,
   enum ode_algos xi_algo,
   real_t sd_conc_mean,
   real_t min_rd,
@@ -73,14 +76,22 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
   // initialising super-droplets
   sd_init(min_rd, max_rd, mean_rd1, mean_rd2, sdev_rd1, sdev_rd2, n1_tot, n2_tot, sd_conc_mean, kappa);
 
+// TODO: shouldn't the real_t below be replaced with thrust_real_t???
+
   // initialising ODE right-hand-sides
-  switch (xy_algo)
+  switch (xy_algo) // advection
   {
     case euler: F_xy.reset(new sdm::ode_xy<real_t, sdm::algo_euler>(stat, envi)); break;
     case rk4  : F_xy.reset(new sdm::ode_xy<real_t, sdm::algo_rk4  >(stat, envi)); break;
     default: assert(false);
   }
-  switch (xy_algo)
+  switch (sd_algo) // sedimentation
+  {
+    case euler : F_ys.reset(new sdm::ode_ys<real_t, sdm::algo_euler>(stat, envi)); break;
+    case rk4   : F_ys.reset(new sdm::ode_ys<real_t, sdm::algo_rk4  >(stat, envi)); break;
+    default: assert(false);
+  }
+  switch (xy_algo) // condensation/evaporation
   {
     case euler: switch (xi_dfntn)
     {
@@ -350,7 +361,7 @@ void eqs_todo_sdm<real_t>::sd_advection(
     );
   }
 
-  // performing advection using odeint // TODO sedimentation
+  // performing advection using odeint 
   F_xy->advance(stat.xy, dt);
 
   // periodic boundary conditions (in-place transforms)
@@ -359,12 +370,25 @@ void eqs_todo_sdm<real_t>::sd_advection(
       grid.nx() * (grid.dx() / si::metres)
     )
   );
-  thrust::transform(stat.y_begin, stat.y_end, stat.y_begin, 
+  thrust::transform(stat.y_begin, stat.y_end, stat.y_begin, //TODO: non-sense!
     sdm::modulo<thrust_real_t>(
       grid.ny() * (grid.dy() / si::metres)
     )
   );
 }
+
+template <typename real_t>
+void eqs_todo_sdm<real_t>::sd_sedimentation(
+  const quantity<si::time, real_t> dt,
+  const mtx::arr<real_t> &rhod
+)
+{
+  // performing advection using odeint
+  F_ys->advance(stat.xy, dt);
+
+  // TODO: do something with particles that leave the domain
+}
+
   
 template <typename real_t>
 void eqs_todo_sdm<real_t>::sd_condevap(

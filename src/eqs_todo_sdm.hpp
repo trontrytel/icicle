@@ -41,6 +41,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     map<enum processes, bool> opts,
     enum xi_dfntns xi_dfntn,
     enum ode_algos xy_algo,
+    enum ode_algos ys_algo,
     enum ode_algos xi_algo,
     real_t sd_conc_mean,
     real_t min_rd,
@@ -91,6 +92,11 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     const mtx::arr<real_t> &Cx,
     const mtx::arr<real_t> &Cy
   );
+
+  private: void sd_sedimentation(
+    const quantity<si::time, real_t> dt,
+    const mtx::arr<real_t> &rhod
+  );
   
   private: void sd_condevap(
     const quantity<si::time, real_t> dt
@@ -104,6 +110,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   // private fields for ODE machinery
   private: unique_ptr<sdm::ode<real_t>> F_xy;
   private: unique_ptr<sdm::ode<real_t>> F_xi; 
+  private: unique_ptr<sdm::ode<real_t>> F_ys; 
 
   // private fields with super droplet structures
   private: sdm::stat_t<real_t> stat;
@@ -132,7 +139,9 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       psi[this->par.idx_rhod_rv][n]
     );
     sd_condevap(dt); // does init() at first time step - has to be placed after sync, and before others
-    sd_advection(dt, C[0], C[1]); // TODO: sedimentation
+    sd_advection(dt, C[0], C[1]); 
+    if (opts[sedi]) 
+      sd_sedimentation(dt, aux.at("rhod"));
 //    sd_coalescence(dt);
 //    sd_breakup(dt);
     sd_diag(aux); 
