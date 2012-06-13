@@ -56,7 +56,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
 #if !defined(USE_BOOST_ODEINT) || !defined(USE_THRUST)
 : eqs_todo<real_t>(grid, &this->par)
 {
-  error_macro("eqs_todo_sdm requires icicle to be compiled with wupport for Boost.odeint and Thrust");
+  error_macro("eqs_todo_sdm requires icicle to be compiled with support for Boost.odeint and Thrust");
 }
 #else
 ; 

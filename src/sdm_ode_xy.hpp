@@ -56,22 +56,17 @@ namespace sdm
     )
     {
       // TODO use positions to interpolate velocities! (as an option?)
-      {
-        thrust::counting_iterator<thrust_size_t> iter(0);
-        thrust::transform(
-          iter, iter + stat.n_part, 
-          dxy_dt.begin(), 
-          interpol<1,0>(envi.vx_nx, envi.vx, stat)
-        );
-      }
-      {
-        thrust::counting_iterator<thrust_size_t> iter(0);
-        thrust::transform(
-          iter, iter + stat.n_part, 
-          dxy_dt.begin() + stat.n_part, 
-          interpol<0,1>(envi.vy_nx, envi.vy, stat)
-        );
-      }
+      thrust::counting_iterator<thrust_size_t> iter(0);
+      thrust::transform(
+        iter, iter + stat.n_part, 
+        dxy_dt.begin(), 
+        interpol<1,0>(envi.vx_nx, envi.vx, stat)
+      );
+      thrust::transform(
+        iter, iter + stat.n_part, 
+        dxy_dt.begin() + stat.n_part, 
+        interpol<0,1>(envi.vy_nx, envi.vy, stat)
+      );
     }
   };
 }
