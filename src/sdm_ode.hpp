@@ -27,37 +27,20 @@ namespace sdm
   > should benchmark both steppers and choose the faster one.
 */
 
-  typedef odeint::euler<
-    thrust::device_vector<thrust_real_t>, // state type
-    thrust_real_t, // value_type
-    thrust::device_vector<thrust_real_t>, // deriv type
-    thrust_real_t, // time type
-    odeint::thrust_algebra, 
-    odeint::thrust_operations
-  > algo_euler;
-
-  typedef odeint::runge_kutta4<
-    thrust::device_vector<thrust_real_t>, // state type
-    thrust_real_t, // value_type
-    thrust::device_vector<thrust_real_t>, // deriv type
-    thrust_real_t, // time type
-    odeint::thrust_algebra, 
-    odeint::thrust_operations
-  > algo_rk4;
-
   // nested class: 
   template <typename real_t>
   class ode 
   {
     public: virtual void init() {}
     public: virtual void advance(
-      thrust::device_vector<thrust_real_t> &x, 
+      thrust::device_vector<real_t> &x, 
       const quantity<si::time, real_t> &dt
     ) = 0;
 
     // TODO: a better name needed...
-    public: virtual thrust_real_t transform(const thrust_real_t &x)
+    public: virtual real_t transform(const real_t &x) const
     {
+      assert(false);
       return x; // i.e. identity 
     }
   };
@@ -70,16 +53,16 @@ namespace sdm
 
     // pure virtual method
     public: virtual void operator()(
-      const thrust::device_vector<thrust_real_t> &xy, 
-      thrust::device_vector<thrust_real_t> &dxy_dt, 
-      const thrust_real_t
+      const thrust::device_vector<real_t> &xy, 
+      thrust::device_vector<real_t> &dxy_dt, 
+      const real_t
     ) = 0;
 
     private: bool inited = false;
     protected: virtual void init() {}
  
     public: void advance(
-      thrust::device_vector<thrust_real_t> &x, 
+      thrust::device_vector<real_t> &x, 
       const quantity<si::time, real_t> &dt
     )
     {

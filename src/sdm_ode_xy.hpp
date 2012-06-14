@@ -20,18 +20,18 @@ namespace sdm
     {
       // private fields
       private: const int n;
-      private: const thrust::device_vector<thrust_real_t> &vel;
+      private: const thrust::device_vector<real_t> &vel;
       private: const stat_t<real_t> &stat;
 
       // ctor
       public: interpol(
         const int n,
-        const thrust::device_vector<thrust_real_t> &vel,
+        const thrust::device_vector<real_t> &vel,
         const stat_t<real_t> &stat
       ) : n(n), vel(vel), stat(stat) {}
 
       //  overloaded () operator invoked by thrust::transform()
-      public: thrust_real_t operator()(thrust_size_t id)
+      public: real_t operator()(thrust_size_t id)
       {
         // TODO weighting by position!
         return .5 * (
@@ -50,9 +50,9 @@ namespace sdm
 
     // overloaded () operator invoked by odeint
     public: void operator()(
-      const thrust::device_vector<thrust_real_t>&, 
-      thrust::device_vector<thrust_real_t> &dxy_dt, 
-      const thrust_real_t
+      const thrust::device_vector<real_t>&, 
+      thrust::device_vector<real_t> &dxy_dt, 
+      const real_t
     )
     {
       // TODO use positions to interpolate velocities! (as an option?)

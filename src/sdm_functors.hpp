@@ -19,31 +19,31 @@ namespace sdm {
   /// @brief a random-number-generator functor
   // TODO: random seed as an option
   // TODO: RNG engine as an option
-  template <typename thrust_real_t> 
+  template <typename real_t> 
   class rng 
   {
     private: thrust::random::taus88 engine; 
-    private: thrust::uniform_real_distribution<thrust_real_t> dist;
-    public: rng(thrust_real_t a, thrust_real_t b, thrust_real_t seed) : dist(a, b), engine(seed) {}
-    public: thrust_real_t operator()() { return dist(engine); }
+    private: thrust::uniform_real_distribution<real_t> dist;
+    public: rng(real_t a, real_t b, real_t seed) : dist(a, b), engine(seed) {}
+    public: real_t operator()() { return dist(engine); }
   };
 
   /// @brief a functor that divides by real constant and cast to int
-  template <typename thrust_real_t> 
+  template <typename real_t> 
   class divide_by_constant
   {
-    private: thrust_real_t c;
-    public: divide_by_constant(thrust_real_t c) : c(c) {}
-    public: int operator()(thrust_real_t x) { return x/c; }
+    private: real_t c;
+    public: divide_by_constant(real_t c) : c(c) {}
+    public: int operator()(real_t x) { return x/c; }
   };
 
   /// @brief a functor that multiplies by a real constant
-  template <typename thrust_real_t> 
+  template <typename real_t> 
   class multiply_by_constant
   {
-    private: thrust_real_t c;
-    public: multiply_by_constant(thrust_real_t c) : c(c) {}
-    public: thrust_real_t operator()(thrust_real_t x) { return x*c; }
+    private: real_t c;
+    public: multiply_by_constant(real_t c) : c(c) {}
+    public: real_t operator()(real_t x) { return x*c; }
   };
 
   /// @brief a functor that ravels (i,j) index pairs into a single index
@@ -55,12 +55,12 @@ namespace sdm {
   };
 
   /// @brief a functor interface to fmod()
-  template <typename thrust_real_t> 
+  template <typename real_t> 
   class modulo
   {
-    private: thrust_real_t mod;
-    public: modulo(thrust_real_t mod) : mod(mod) {}
-    public: thrust_real_t operator()(thrust_real_t a) { return fmod(a + mod, mod); }
+    private: real_t mod;
+    public: modulo(real_t mod) : mod(mod) {}
+    public: real_t operator()(real_t a) { return fmod(a + mod, mod); }
   };
 
   /// @brief a Thrust-to-Blitz data transfer functor 
@@ -88,19 +88,19 @@ namespace sdm {
   };
 
   /// @brief a Blitz-to-Thrust data transfer functor
-  template <typename blitz_real_t, typename thrust_real_t> 
+  template <typename blitz_real_t, typename real_t> 
   class copy_to_device
   {
     private: int n;
     private: const mtx::arr<blitz_real_t> &from;
-    private: thrust::device_vector<thrust_real_t> &to;
-    private: thrust_real_t scl;
+    private: thrust::device_vector<real_t> &to;
+    private: real_t scl;
 
     // ctor
     public: copy_to_device(int n,
       const mtx::arr<blitz_real_t> &from,
-      thrust::device_vector<thrust_real_t> &to,
-      thrust_real_t scl = thrust_real_t(1)
+      thrust::device_vector<real_t> &to,
+      real_t scl = real_t(1)
     ) : n(n), from(from), to(to), scl(scl) {}
 
     public: void operator()(int ij)
