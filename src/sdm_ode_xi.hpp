@@ -15,7 +15,7 @@
 namespace sdm
 {
   // identity: xi = rw
-  template <typename T = thrust_real_t> struct xi_id 
+  template <typename T> struct xi_id 
   { 
     static T xi_of_rw(const T &rw) { return rw; }
     static T xi_of_rw3(const T &rw3) { return pow(rw3, T(1./3)); }
@@ -24,7 +24,7 @@ namespace sdm
   };
 
   // xi = ln(rw / nm)
-  template <typename T = thrust_real_t> struct xi_ln
+  template <typename T> struct xi_ln
   { 
     static T xi_of_rw(const T &rw) { return log(rw / T(1e-9)); }
     static T xi_of_rw3(const T &rw3) { return log(pow(rw3, T(1./3)) / T(1e-9)); }
@@ -33,7 +33,7 @@ namespace sdm
   };
 
   // xi = pow(rw, 2) 
-  template <typename T = thrust_real_t> struct xi_p2
+  template <typename T> struct xi_p2
   { 
     static T xi_of_rw(const T &rw) { return rw * rw; }
     static T xi_of_rw3(const T &rw3) { return pow(rw3, T(2./3)); }
@@ -42,7 +42,7 @@ namespace sdm
   };
 
   // xi = pow(rw, 3) 
-  template <typename T = thrust_real_t> struct xi_p3
+  template <typename T> struct xi_p3
   { 
     static T xi_of_rw(const T &rw) { return rw * rw * rw; }
     static T xi_of_rw3(const T &rw3) { return rw3; }
@@ -54,7 +54,7 @@ namespace sdm
   template <typename real_t, class algo, class xi>
   class ode_xi : public ode_algo<real_t, algo>
   { 
-    public: thrust_real_t transform(const thrust_real_t &x) 
+    public: real_t transform(const real_t &x) const
     {   
       return xi::xi_of_rw(x);
     }  
@@ -64,44 +64,44 @@ namespace sdm
     { 
       stat_t<real_t> &stat;
       const envi_t<real_t> &envi;
-      thrust::device_vector<thrust_real_t> &tmp;
+      thrust::device_vector<real_t> &tmp;
 
       // ctor
       equil(
         stat_t<real_t> &stat, 
         const envi_t<real_t> &envi, 
-        thrust::device_vector<thrust_real_t> &tmp
+        thrust::device_vector<real_t> &tmp
       ) : stat(stat), envi(envi), tmp(tmp) 
       {
         // nested functor
         struct init_tmp
         {
           const envi_t<real_t> &envi;
-          thrust::device_vector<thrust_real_t> &tmp;
+          thrust::device_vector<real_t> &tmp;
             
           // ctor
-          init_tmp(const envi_t<real_t> &envi, thrust::device_vector<thrust_real_t> &tmp) 
+          init_tmp(const envi_t<real_t> &envi, thrust::device_vector<real_t> &tmp) 
             : envi(envi), tmp(tmp) 
           {}
 
           // overloded operator invoked by for_each below
           void operator()(thrust_size_t ij)
           {
-            quantity<phc::mixing_ratio, thrust_real_t> 
+            quantity<phc::mixing_ratio, real_t> 
               r = envi.rhod_rv[ij] / envi.rhod[ij];
-            quantity<si::pressure, thrust_real_t> 
-              p = phc::p<thrust_real_t>(envi.rhod_th[ij] * si::kelvins * si::kilograms / si::cubic_metres, r);
-            quantity<si::temperature, thrust_real_t> 
-              T = phc::T<thrust_real_t>((envi.rhod_th[ij] / envi.rhod[ij]) * si::kelvins, p, r);
+            quantity<si::pressure, real_t> 
+              p = phc::p<real_t>(envi.rhod_th[ij] * si::kelvins * si::kilograms / si::cubic_metres, r);
+            quantity<si::temperature, real_t> 
+              T = phc::T<real_t>((envi.rhod_th[ij] / envi.rhod[ij]) * si::kelvins, p, r);
   
             // - assuption of dr/dt = 0 => consistent only under subsaturation!
             // - initial values for vapour pressure field de facto assume aerosol at equilibrium
             // => using min(p/ps, .99) // TODO 99 as an option!
             tmp[ij] = thrust::min(
-              thrust_real_t(.99),
-              thrust_real_t(
-                phc::R_v<thrust_real_t>() * T * (envi.rhod_rv[ij] * si::kilograms / si::cubic_metres) // TODO: interpolation to drop positions?
-                / phc::p_vs<thrust_real_t>(T)
+              real_t(.99),
+              real_t(
+                phc::R_v<real_t>() * T * (envi.rhod_rv[ij] * si::kilograms / si::cubic_metres) // TODO: interpolation to drop positions?
+                / phc::p_vs<real_t>(T)
               )
             );
           } 
@@ -114,7 +114,7 @@ namespace sdm
       void operator()(thrust_size_t idx) 
       { 
         // ij and already sorted here!!!
-        stat.xi[stat.id[idx]] = this->xi_of_rw3(phc::rw3_eq<thrust_real_t>(
+        stat.xi[stat.id[idx]] = this->xi_of_rw3(phc::rw3_eq<real_t>(
           stat.rd3[stat.id[idx]] * si::cubic_metres, 
           0 + stat.kpa[stat.id[idx]], // it fails to compile without the zero!
           0 + tmp[stat.ij[idx]] // ditto
@@ -133,7 +133,7 @@ namespace sdm
       public: drop_growth_equation(const stat_t<real_t> &stat) : stat(stat) {}
 
       // overloaded () operator invoked by thrust::transform()
-      public: thrust_real_t operator()(thrust_size_t id)
+      public: real_t operator()(thrust_size_t id)
       {
         return 0;
         //return this->dxidrw(this->rw(stat.xi[id]));
@@ -144,13 +144,13 @@ namespace sdm
     // private fields
     private: stat_t<real_t> &stat;
     private: const envi_t<real_t> &envi;
-    thrust::device_vector<thrust_real_t> &tmp;
+    thrust::device_vector<real_t> &tmp;
 
     // ctor
     public: ode_xi(
       stat_t<real_t> &stat,
       const envi_t<real_t> &envi,
-      thrust::device_vector<thrust_real_t> &tmp
+      thrust::device_vector<real_t> &tmp
     ) : stat(stat), envi(envi), tmp(tmp)
     {}
 
@@ -165,9 +165,9 @@ namespace sdm
   
     // overloaded () operator invoked by odeint
     public: void operator()(
-      const thrust::device_vector<thrust_real_t>&, 
-      thrust::device_vector<thrust_real_t> &dxi_dt, 
-      const thrust_real_t 
+      const thrust::device_vector<real_t>&, 
+      thrust::device_vector<real_t> &dxi_dt, 
+      const real_t 
     )
     {
       thrust::counting_iterator<thrust_size_t> iter(0);
