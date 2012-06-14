@@ -16,6 +16,8 @@
 #  include "phc_lognormal.hpp" // TODO: not here?
 #  include "phc_kappa_koehler.hpp" // TODO: not here?
 
+#  include "sdm_ode_ys.hpp"
+
 template <typename real_t>
 eqs_todo_sdm<real_t>::eqs_todo_sdm(
   const grd<real_t> &grid, 
@@ -23,6 +25,7 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
   map<enum processes, bool> opts,
   enum xi_dfntns xi_dfntn,
   enum ode_algos xy_algo,
+  enum ode_algos sd_algo,
   enum ode_algos xi_algo,
   real_t sd_conc_mean,
   real_t min_rd,
@@ -73,35 +76,63 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
   // initialising super-droplets
   sd_init(min_rd, max_rd, mean_rd1, mean_rd2, sdev_rd1, sdev_rd2, n1_tot, n2_tot, sd_conc_mean, kappa);
 
+// TEMP!!!
+ typedef odeint::euler<
+      thrust::device_vector<real_t>, // state type
+      real_t, // value_type
+      thrust::device_vector<real_t>, // deriv type
+      real_t, // time type
+      odeint::thrust_algebra,
+      odeint::thrust_operations
+    > algo_euler;
+
+  typedef odeint::runge_kutta4<
+      thrust::device_vector<real_t>, // state type
+      real_t, // value_type
+      thrust::device_vector<real_t>, // deriv type
+      real_t, // time type
+      odeint::thrust_algebra,
+      odeint::thrust_operations
+    > algo_rk4;
+// TEMP!!!
+
+
+
   // initialising ODE right-hand-sides
-  switch (xy_algo)
+  switch (xy_algo) // advection
   {
-    case euler: F_xy.reset(new sdm::ode_xy<real_t, sdm::algo_euler>(stat, envi)); break;
-    case rk4  : F_xy.reset(new sdm::ode_xy<real_t, sdm::algo_rk4  >(stat, envi)); break;
+    case euler: F_xy.reset(new sdm::ode_xy<real_t, algo_euler>(stat, envi)); break;
+    case rk4  : F_xy.reset(new sdm::ode_xy<real_t, algo_rk4  >(stat, envi)); break;
     default: assert(false);
   }
-  switch (xy_algo)
+  switch (xy_algo) // condensation/evaporation
   {
     case euler: switch (xi_dfntn)
     {
-      case id : F_xi.reset(new sdm::ode_xi<real_t, sdm::algo_euler, sdm::xi_id<>>(stat, envi, tmp_real)); break;
-      case ln : F_xi.reset(new sdm::ode_xi<real_t, sdm::algo_euler, sdm::xi_ln<>>(stat, envi, tmp_real)); break;
-      case p2 : F_xi.reset(new sdm::ode_xi<real_t, sdm::algo_euler, sdm::xi_p2<>>(stat, envi, tmp_real)); break;
-      case p3 : F_xi.reset(new sdm::ode_xi<real_t, sdm::algo_euler, sdm::xi_p3<>>(stat, envi, tmp_real)); break;
+      case id : F_xi.reset(new sdm::ode_xi<real_t, algo_euler, sdm::xi_id<real_t>>(stat, envi, tmp_real)); break;
+      case ln : F_xi.reset(new sdm::ode_xi<real_t, algo_euler, sdm::xi_ln<real_t>>(stat, envi, tmp_real)); break;
+      case p2 : F_xi.reset(new sdm::ode_xi<real_t, algo_euler, sdm::xi_p2<real_t>>(stat, envi, tmp_real)); break;
+      case p3 : F_xi.reset(new sdm::ode_xi<real_t, algo_euler, sdm::xi_p3<real_t>>(stat, envi, tmp_real)); break;
       default: assert(false);
     } 
     break;
     case rk4  : switch (xi_dfntn) 
     {
-      case id : F_xi.reset(new sdm::ode_xi<real_t, sdm::algo_rk4,   sdm::xi_id<>>(stat, envi, tmp_real)); break;
-      case ln : F_xi.reset(new sdm::ode_xi<real_t, sdm::algo_rk4,   sdm::xi_ln<>>(stat, envi, tmp_real)); break;
-      case p2 : F_xi.reset(new sdm::ode_xi<real_t, sdm::algo_rk4,   sdm::xi_p2<>>(stat, envi, tmp_real)); break;
-      case p3 : F_xi.reset(new sdm::ode_xi<real_t, sdm::algo_rk4,   sdm::xi_p3<>>(stat, envi, tmp_real)); break;
+      case id : F_xi.reset(new sdm::ode_xi<real_t, algo_rk4,   sdm::xi_id<real_t>>(stat, envi, tmp_real)); break;
+      case ln : F_xi.reset(new sdm::ode_xi<real_t, algo_rk4,   sdm::xi_ln<real_t>>(stat, envi, tmp_real)); break;
+      case p2 : F_xi.reset(new sdm::ode_xi<real_t, algo_rk4,   sdm::xi_p2<real_t>>(stat, envi, tmp_real)); break;
+      case p3 : F_xi.reset(new sdm::ode_xi<real_t, algo_rk4,   sdm::xi_p3<real_t>>(stat, envi, tmp_real)); break;
       default: assert(false);
     }
     break;
     default: assert(false);
   } 
+  switch (sd_algo) // sedimentation
+  {
+    case euler : F_ys.reset(new sdm::ode_ys<real_t,algo_euler>(stat, envi, *F_xi)); break;
+    case rk4   : F_ys.reset(new sdm::ode_ys<real_t,algo_rk4  >(stat, envi, *F_xi)); break;
+    default: assert(false);
+  }
 }
 
 // initialising particle positions, numbers and dry radii
@@ -115,16 +146,16 @@ void eqs_todo_sdm<real_t>::sd_init(
   const real_t kappa
 )
 {
-  thrust_real_t seed = 1234.;
+  real_t seed = 1234.;
 
   // initialise particle coordinates
   {
-    sdm::rng<thrust_real_t> rand_x(0, grid.nx() * (grid.dx() / si::metres), seed);
+    sdm::rng<real_t> rand_x(0, grid.nx() * (grid.dx() / si::metres), seed);
     thrust::generate(stat.x_begin, stat.x_end, rand_x);
     seed = rand_x();
   }
   {
-    sdm::rng<thrust_real_t> rand_y(0, grid.ny() * (grid.dy() / si::metres), seed);
+    sdm::rng<real_t> rand_y(0, grid.ny() * (grid.dy() / si::metres), seed);
     thrust::generate(stat.y_begin, stat.y_end, rand_y);
     seed = rand_y();
   }
@@ -133,25 +164,25 @@ void eqs_todo_sdm<real_t>::sd_init(
   // TODO: assert that the distribution is < epsilon at rd_min and rd_max
   thrust::generate( // rd3 temporarily means logarithms of radius!
     stat.rd3.begin(), stat.rd3.end(), 
-    sdm::rng<thrust_real_t>(log(min_rd), log(max_rd), seed) 
+    sdm::rng<real_t>(log(min_rd), log(max_rd), seed) 
   ); 
   {
-    thrust_real_t multi = log(max_rd/min_rd) / sd_conc_mean 
+    real_t multi = log(max_rd/min_rd) / sd_conc_mean 
       * (grid.dx() * grid.dy() * grid.dz() / si::cubic_metres); 
     thrust::transform(
       stat.rd3.begin(), stat.rd3.end(), 
       stat.n.begin(), 
-      sdm::lognormal<thrust_real_t>(
-        thrust_real_t(mean_rd1) * si::metres, 
-        thrust_real_t(sdev_rd1), 
-        thrust_real_t(multi * n1_tot) / si::cubic_metres, 
-        thrust_real_t(mean_rd2) * si::metres, 
-        thrust_real_t(sdev_rd2), 
-        thrust_real_t(multi * n2_tot) / si::cubic_metres
+      sdm::lognormal<real_t>(
+        real_t(mean_rd1) * si::metres, 
+        real_t(sdev_rd1), 
+        real_t(multi * n1_tot) / si::cubic_metres, 
+        real_t(mean_rd2) * si::metres, 
+        real_t(sdev_rd2), 
+        real_t(multi * n2_tot) / si::cubic_metres
       ) 
     );
     // converting rd back from logarihms to rd3 
-    struct exp3x { thrust_real_t operator()(thrust_real_t x) { return exp(3*x); } };
+    struct exp3x { real_t operator()(real_t x) { return exp(3*x); } };
     thrust::transform(stat.rd3.begin(), stat.rd3.end(), stat.rd3.begin(), exp3x());
   }
 
@@ -172,13 +203,13 @@ void eqs_todo_sdm<real_t>::sd_sync(
   thrust::transform(
     stat.x_begin, stat.x_end,
     stat.i.begin(),
-    sdm::divide_by_constant<thrust_real_t>(grid.dx() / si::metres)
+    sdm::divide_by_constant<real_t>(grid.dx() / si::metres)
   );
   // computing stat.j
   thrust::transform(
     stat.y_begin, stat.y_end,
     stat.j.begin(),
-    sdm::divide_by_constant<thrust_real_t>(grid.dy() / si::metres)
+    sdm::divide_by_constant<real_t>(grid.dy() / si::metres)
   );
   // computing stat.ij
   thrust::transform(
@@ -199,7 +230,7 @@ void eqs_todo_sdm<real_t>::sd_sync(
   {
     thrust::counting_iterator<thrust_size_t> iter(0);
     thrust::for_each(iter, iter + envi.rhod.size(), 
-      sdm::copy_to_device<real_t, thrust_real_t>(
+      sdm::copy_to_device<real_t, real_t>(
         grid.nx(), rhod, envi.rhod
       )
     ); // TODO: this could be done just once in the kinematic model!
@@ -207,7 +238,7 @@ void eqs_todo_sdm<real_t>::sd_sync(
   {
     thrust::counting_iterator<thrust_size_t> iter(0);
     thrust::for_each(iter, iter + envi.rhod_th.size(), 
-      sdm::copy_to_device<real_t, thrust_real_t>(
+      sdm::copy_to_device<real_t, real_t>(
         grid.nx(), rhod_th, envi.rhod_th
       )
     );
@@ -215,7 +246,7 @@ void eqs_todo_sdm<real_t>::sd_sync(
   {
     thrust::counting_iterator<thrust_size_t> iter(0);
     thrust::for_each(iter, iter + envi.rhod_rv.size(), 
-      sdm::copy_to_device<real_t, thrust_real_t>(
+      sdm::copy_to_device<real_t, real_t>(
         grid.nx(), rhod_rv, envi.rhod_rv
       )
     );
@@ -286,10 +317,10 @@ void eqs_todo_sdm<real_t>::sd_diag(ptr_unordered_map<string, mtx::arr<real_t>> &
     class threshold_counter
     {
       private: const sdm::stat_t<real_t> &stat;
-      private: const thrust_real_t threshold;
+      private: const real_t threshold;
       public: threshold_counter(
         const sdm::stat_t<real_t> &stat,
-        const thrust_real_t threshold
+        const real_t threshold
       ) : stat(stat), threshold(threshold) {}
       public: thrust_size_t operator()(const thrust_size_t id) const
       {
@@ -308,7 +339,7 @@ void eqs_todo_sdm<real_t>::sd_diag(ptr_unordered_map<string, mtx::arr<real_t>> &
         threshold_counter, 
         thrust::device_vector<thrust_size_t>::iterator,
         thrust_size_t
-      >(stat.id.begin(), threshold_counter(stat, F_xi->transform(thrust_real_t(500e-9)))),
+      >(stat.id.begin(), threshold_counter(stat, F_xi->transform(real_t(500e-9)))),
       tmp_shrt.begin(), // will store the grid cell indices
       tmp_long.begin()  // will store the concentrations per grid cell
     );
@@ -336,7 +367,7 @@ void eqs_todo_sdm<real_t>::sd_advection(
   {
     thrust::counting_iterator<thrust_size_t> iter(0);
     thrust::for_each(iter, iter + envi.vx.size(), 
-      sdm::copy_to_device<real_t, thrust_real_t>(
+      sdm::copy_to_device<real_t, real_t>(
         grid.nx() + 1, Cx, envi.vx, (grid.dx() / si::metres) / (dt / si::seconds)
       )
     );
@@ -344,27 +375,40 @@ void eqs_todo_sdm<real_t>::sd_advection(
   {
     thrust::counting_iterator<thrust_size_t> iter(0);
     thrust::for_each(iter, iter + envi.vy.size(), 
-      sdm::copy_to_device<real_t, thrust_real_t>(
+      sdm::copy_to_device<real_t, real_t>(
         grid.nx(), Cy, envi.vy, (grid.dx() / si::metres) / (dt / si::seconds)
       )
     );
   }
 
-  // performing advection using odeint // TODO sedimentation
+  // performing advection using odeint 
   F_xy->advance(stat.xy, dt);
 
   // periodic boundary conditions (in-place transforms)
   thrust::transform(stat.x_begin, stat.x_end, stat.x_begin, 
-    sdm::modulo<thrust_real_t>(
+    sdm::modulo<real_t>(
       grid.nx() * (grid.dx() / si::metres)
     )
   );
-  thrust::transform(stat.y_begin, stat.y_end, stat.y_begin, 
-    sdm::modulo<thrust_real_t>(
+  thrust::transform(stat.y_begin, stat.y_end, stat.y_begin, //TODO: non-sense!
+    sdm::modulo<real_t>(
       grid.ny() * (grid.dy() / si::metres)
     )
   );
 }
+
+template <typename real_t>
+void eqs_todo_sdm<real_t>::sd_sedimentation(
+  const quantity<si::time, real_t> dt,
+  const mtx::arr<real_t> &rhod
+)
+{
+  // performing advection using odeint
+  F_ys->advance(stat.xy, dt);
+
+  // TODO: do something with particles that leave the domain
+}
+
   
 template <typename real_t>
 void eqs_todo_sdm<real_t>::sd_condevap(

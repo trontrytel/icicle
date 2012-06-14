@@ -86,11 +86,12 @@ bool
   blk_sedi = true,
   blk_revp = true;
 std::string
-  sdm_xi = "ln", 
-  sdm_ode_algo_xy = "euler",
+  sdm_xi = "id", 
+  sdm_ode_algo_xy = "rk4",
+  sdm_ode_algo_ys = "rk4",
   sdm_ode_algo_xi = "rk4";
 real_t 
-  sd_conc_mean = 64,
+  sd_conc_mean = 16,
   mean_rd1 = .04e-6,
   mean_rd2 = .15e-6,
   sdev_rd1 = 1.4,
@@ -240,8 +241,10 @@ int main()
       << " --eqs.todo_bulk.revp " << blk_revp
     ;
     else if (micro == "sdm") cmd << " --eqs todo_sdm"
+// TODO: processes
       << " --eqs.todo_sdm.xi " << sdm_xi
       << " --eqs.todo_sdm.ode_algo_xy " << sdm_ode_algo_xy
+      << " --eqs.todo_sdm.ode_algo_ys " << sdm_ode_algo_ys
       << " --eqs.todo_sdm.ode_algo_xi " << sdm_ode_algo_xi
       << " --eqs.todo_sdm.sd_conc_mean " << sd_conc_mean
       << " --eqs.todo_sdm.min_rd " << min_rd

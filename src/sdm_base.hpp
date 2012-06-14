@@ -17,7 +17,7 @@
 namespace sdm 
 {
 
-  typedef double thrust_real_t; // TODO: option / check if the device supports it (this is used elswhere as a template param!)
+  //typedef double thrust_real_t; // TODO: option / check if the device supports it (this is used elswhere as a template param!)
   typedef thrust::device_vector<int>::size_type thrust_size_t;
 
   // nested structure: super-droplet environment (velocity, temperature and moisture field)
@@ -25,11 +25,11 @@ namespace sdm
   struct envi_t
   {
     // velocity field (copied from an Arakawa-C grid)
-    thrust::device_vector<thrust_real_t> vx, vy;
+    thrust::device_vector<real_t> vx, vy;
     int vx_nx, vx_ny, vy_nx, vy_ny, n_cell; 
 
     // temperature and water vapour density fields (copied from an Arakawa-C grid)
-    thrust::device_vector<thrust_real_t> rhod, rhod_th, rhod_rv;
+    thrust::device_vector<real_t> rhod, rhod_th, rhod_rv;
 
     // ctor
     envi_t(int nx, int ny) 
@@ -57,13 +57,13 @@ namespace sdm
     thrust_size_t n_part;
 
     // SD parameters that are variable from the ODE point of view (x,y,xi)
-    thrust::device_vector<thrust_real_t> xy, xi; 
+    thrust::device_vector<real_t> xy, xi; 
 
     // ... and since x and y are hidden in one SD.xy, we declare helper iterators
-    thrust::device_vector<thrust_real_t>::iterator x_begin, x_end, y_begin, y_end;
+    typename thrust::device_vector<real_t>::iterator x_begin, x_end, y_begin, y_end;
 
     // SD parameters that are constant from the ODE point of view (n,rd3,i,j)
-    thrust::device_vector<thrust_real_t> rd3, kpa; // rd3 -> dry radius to the third power 
+    thrust::device_vector<real_t> rd3, kpa; // rd3 -> dry radius to the third power 
     thrust::device_vector<thrust_size_t> id, n; // n -> number of real droplets in a super-droplet
     thrust::device_vector<int> i, j, ij; // location of super-droplet within the grid
 
