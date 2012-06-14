@@ -86,12 +86,12 @@ bool
   blk_sedi = true,
   blk_revp = true;
 std::string
-  sdm_xi = "id", 
-  sdm_ode_algo_xy = "rk4",
-  sdm_ode_algo_ys = "rk4",
-  sdm_ode_algo_xi = "rk4";
+  sdm_xi = "ln", 
+  sdm_ode_algo_xy = "euler",
+  sdm_ode_algo_ys = "euler",
+  sdm_ode_algo_xi = "euler";
 real_t 
-  sd_conc_mean = 16,
+  sd_conc_mean = 64,
   mean_rd1 = .04e-6,
   mean_rd2 = .15e-6,
   sdev_rd1 = 1.4,

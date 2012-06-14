@@ -129,8 +129,24 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
   } 
   switch (sd_algo) // sedimentation
   {
-    case euler : F_ys.reset(new sdm::ode_ys<real_t,algo_euler>(stat, envi, *F_xi)); break;
-    case rk4   : F_ys.reset(new sdm::ode_ys<real_t,algo_rk4  >(stat, envi, *F_xi)); break;
+    case euler : switch (xi_dfntn)
+    {
+      case id : F_ys.reset(new sdm::ode_ys<real_t,algo_euler,sdm::xi_id<real_t>>(stat, envi)); break;
+      case ln : F_ys.reset(new sdm::ode_ys<real_t,algo_euler,sdm::xi_ln<real_t>>(stat, envi)); break;
+      case p2 : F_ys.reset(new sdm::ode_ys<real_t,algo_euler,sdm::xi_p2<real_t>>(stat, envi)); break;
+      case p3 : F_ys.reset(new sdm::ode_ys<real_t,algo_euler,sdm::xi_p3<real_t>>(stat, envi)); break;
+      default: assert(false);
+    }
+    break;
+    case rk4   : switch (xi_dfntn)
+    {
+      case id : F_ys.reset(new sdm::ode_ys<real_t,algo_rk4,  sdm::xi_id<real_t>>(stat, envi)); break;
+      case ln : F_ys.reset(new sdm::ode_ys<real_t,algo_rk4,  sdm::xi_ln<real_t>>(stat, envi)); break;
+      case p2 : F_ys.reset(new sdm::ode_ys<real_t,algo_rk4,  sdm::xi_p2<real_t>>(stat, envi)); break;
+      case p3 : F_ys.reset(new sdm::ode_ys<real_t,algo_rk4,  sdm::xi_p3<real_t>>(stat, envi)); break;
+      default: assert(false);
+    }
+    break;
     default: assert(false);
   }
 }
