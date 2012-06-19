@@ -28,8 +28,10 @@ namespace sdm
     thrust::device_vector<real_t> vx, vy;
     int vx_nx, vx_ny, vy_nx, vy_ny, n_cell; 
 
-    // temperature and water vapour density fields (copied from an Arakawa-C grid)
+    // fields copied from the Eulerian model
     thrust::device_vector<real_t> rhod, rhod_th, rhod_rv;
+    // derived fields
+    thrust::device_vector<real_t> T, p, r;
 
     // ctor
     envi_t(int nx, int ny) 
@@ -46,6 +48,9 @@ namespace sdm
       rhod.resize(n_cell); 
       rhod_th.resize(n_cell); 
       rhod_rv.resize(n_cell);
+      T.resize(n_cell);
+      p.resize(n_cell);
+      r.resize(n_cell);
     }
   };
 

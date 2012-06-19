@@ -64,15 +64,16 @@ namespace sdm
     { 
       stat_t<real_t> &stat;
       const envi_t<real_t> &envi;
-      thrust::device_vector<real_t> &tmp;
+      //thrust::device_vector<real_t> &tmp;
 
       // ctor
       equil(
         stat_t<real_t> &stat, 
-        const envi_t<real_t> &envi, 
-        thrust::device_vector<real_t> &tmp
-      ) : stat(stat), envi(envi), tmp(tmp) 
+        const envi_t<real_t> &envi//, 
+//        thrust::device_vector<real_t> &tmp
+      ) : stat(stat), envi(envi)//, tmp(tmp) 
       {
+/*
         // nested functor
         struct init_tmp
         {
@@ -87,6 +88,7 @@ namespace sdm
           // overloded operator invoked by for_each below
           void operator()(thrust_size_t ij)
           {
+// TODO: do wywalenia - mamy to w envi!!!
             quantity<phc::mixing_ratio, real_t> 
               r = envi.rhod_rv[ij] / envi.rhod[ij];
             quantity<si::pressure, real_t> 
@@ -109,6 +111,7 @@ namespace sdm
 
         thrust::counting_iterator<thrust_size_t> iter(0);
         thrust::for_each(iter, iter + envi.n_cell, init_tmp(envi, tmp));
+*/
       }
 
       void operator()(thrust_size_t idx) 
@@ -117,7 +120,13 @@ namespace sdm
         stat.xi[stat.id[idx]] = this->xi_of_rw3(phc::rw3_eq<real_t>(
           stat.rd3[stat.id[idx]] * si::cubic_metres, 
           0 + stat.kpa[stat.id[idx]], // it fails to compile without the zero!
-          0 + tmp[stat.ij[idx]] // ditto
+          thrust::min(
+            real_t(.99),
+            real_t( // TODO: interpolation to drop positions?
+              phc::R_v<real_t>() * (envi.T[stat.ij[idx]] * si::kelvins) * (envi.rhod_rv[stat.ij[idx]] * si::kilograms / si::cubic_metres) 
+              / phc::p_vs<real_t>(envi.T[stat.ij[idx]] * si::kelvins)
+            )
+          )
         ) / si::cubic_metres); 
       }
     };
@@ -144,14 +153,14 @@ namespace sdm
     // private fields
     private: stat_t<real_t> &stat;
     private: const envi_t<real_t> &envi;
-    thrust::device_vector<real_t> &tmp;
+    //thrust::device_vector<real_t> &tmp;
 
     // ctor
     public: ode_xi(
       stat_t<real_t> &stat,
-      const envi_t<real_t> &envi,
-      thrust::device_vector<real_t> &tmp
-    ) : stat(stat), envi(envi), tmp(tmp)
+      const envi_t<real_t> &envi//,
+      //thrust::device_vector<real_t> &tmp
+    ) : stat(stat), envi(envi)//, tmp(tmp)
     {}
 
     // a post-ctor init method
@@ -160,7 +169,7 @@ namespace sdm
     {
       // initialising the wet radii (xi variable) to equilibrium values
       thrust::counting_iterator<thrust_size_t> iter(0);
-      thrust::for_each(iter, iter + stat.n_part, equil(stat, envi, tmp));
+      thrust::for_each(iter, iter + stat.n_part, equil(stat, envi));//, tmp));
     }
   
     // overloaded () operator invoked by odeint

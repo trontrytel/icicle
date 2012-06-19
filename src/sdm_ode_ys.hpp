@@ -19,15 +19,17 @@ namespace sdm
     class term_vel : public xi
     {
       private: const stat_t<real_t> &stat;
+      private: const envi_t<real_t> &envi;
       public: term_vel(
-        const stat_t<real_t> &stat
-      ) : stat(stat) {}
+        const stat_t<real_t> &stat,
+        const envi_t<real_t> &envi
+      ) : stat(stat), envi(envi) {}
       public: real_t operator()(const thrust_size_t id)
       {
         return - phc::vt<real_t>(
           this->rw_of_xi(stat.xi[id]) * si::metres,
-          real_t(300) * si::kelvins,                   // TODO !!!
-          real_t(1) * si::kilograms / si::cubic_metres // TODO !!!
+          envi.T[stat.ij[id]] * si::kelvins,
+          envi.rhod[stat.ij[id]] * si::kilograms / si::cubic_metres // that's the dry air density
         ) * si::seconds / si::metres;
       }
     };
@@ -55,7 +57,7 @@ namespace sdm
       thrust::transform(
         iter, iter + stat.n_part, 
         dxy_dt.begin() + stat.n_part, 
-        term_vel(stat)
+        term_vel(stat, envi)
       );
     }
   };

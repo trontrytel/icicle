@@ -50,7 +50,7 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
 
   tmp_shrt.resize(grid.nx() * grid.ny());
   tmp_long.resize(grid.nx() * grid.ny());
-  tmp_real.resize(grid.nx() * grid.ny());
+  tmp_real.resize(grid.nx() * grid.ny()); // TODO: is it used anywhere???
 
   // auxliary variable for super-droplet conc
   ptr_map_insert(this->aux)("sd_conc", typename eqs<real_t>::axv({
@@ -109,19 +109,19 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
   {
     case euler: switch (xi_dfntn)
     {
-      case id : F_xi.reset(new sdm::ode_xi<real_t, algo_euler, sdm::xi_id<real_t>>(stat, envi, tmp_real)); break;
-      case ln : F_xi.reset(new sdm::ode_xi<real_t, algo_euler, sdm::xi_ln<real_t>>(stat, envi, tmp_real)); break;
-      case p2 : F_xi.reset(new sdm::ode_xi<real_t, algo_euler, sdm::xi_p2<real_t>>(stat, envi, tmp_real)); break;
-      case p3 : F_xi.reset(new sdm::ode_xi<real_t, algo_euler, sdm::xi_p3<real_t>>(stat, envi, tmp_real)); break;
+      case id : F_xi.reset(new sdm::ode_xi<real_t, algo_euler, sdm::xi_id<real_t>>(stat, envi)); break;
+      case ln : F_xi.reset(new sdm::ode_xi<real_t, algo_euler, sdm::xi_ln<real_t>>(stat, envi)); break;
+      case p2 : F_xi.reset(new sdm::ode_xi<real_t, algo_euler, sdm::xi_p2<real_t>>(stat, envi)); break;
+      case p3 : F_xi.reset(new sdm::ode_xi<real_t, algo_euler, sdm::xi_p3<real_t>>(stat, envi)); break;
       default: assert(false);
     } 
     break;
     case rk4  : switch (xi_dfntn) 
     {
-      case id : F_xi.reset(new sdm::ode_xi<real_t, algo_rk4,   sdm::xi_id<real_t>>(stat, envi, tmp_real)); break;
-      case ln : F_xi.reset(new sdm::ode_xi<real_t, algo_rk4,   sdm::xi_ln<real_t>>(stat, envi, tmp_real)); break;
-      case p2 : F_xi.reset(new sdm::ode_xi<real_t, algo_rk4,   sdm::xi_p2<real_t>>(stat, envi, tmp_real)); break;
-      case p3 : F_xi.reset(new sdm::ode_xi<real_t, algo_rk4,   sdm::xi_p3<real_t>>(stat, envi, tmp_real)); break;
+      case id : F_xi.reset(new sdm::ode_xi<real_t, algo_rk4,   sdm::xi_id<real_t>>(stat, envi)); break;
+      case ln : F_xi.reset(new sdm::ode_xi<real_t, algo_rk4,   sdm::xi_ln<real_t>>(stat, envi)); break;
+      case p2 : F_xi.reset(new sdm::ode_xi<real_t, algo_rk4,   sdm::xi_p2<real_t>>(stat, envi)); break;
+      case p3 : F_xi.reset(new sdm::ode_xi<real_t, algo_rk4,   sdm::xi_p3<real_t>>(stat, envi)); break;
       default: assert(false);
     }
     break;
@@ -243,8 +243,8 @@ void eqs_todo_sdm<real_t>::sd_sync(
   );
 
   // getting thermodynamic fields from the Eulerian model 
+  thrust::counting_iterator<thrust_size_t> iter(0);
   {
-    thrust::counting_iterator<thrust_size_t> iter(0);
     thrust::for_each(iter, iter + envi.rhod.size(), 
       sdm::copy_to_device<real_t, real_t>(
         grid.nx(), rhod, envi.rhod
@@ -252,21 +252,39 @@ void eqs_todo_sdm<real_t>::sd_sync(
     ); // TODO: this could be done just once in the kinematic model!
   }
   {
-    thrust::counting_iterator<thrust_size_t> iter(0);
     thrust::for_each(iter, iter + envi.rhod_th.size(), 
       sdm::copy_to_device<real_t, real_t>(
-        grid.nx(), rhod_th, envi.rhod_th
+        grid.nx(), rhod_th, envi.rhod_th 
       )
     );
   }
   {
-    thrust::counting_iterator<thrust_size_t> iter(0);
     thrust::for_each(iter, iter + envi.rhod_rv.size(), 
       sdm::copy_to_device<real_t, real_t>(
         grid.nx(), rhod_rv, envi.rhod_rv
       )
     );
   }
+  // calculating the derived fields (T,p,r)
+  class rpT
+  {
+    private: sdm::envi_t<real_t> &envi;
+    public: rpT(sdm::envi_t<real_t> &envi) : envi(envi) {}
+    public: void operator()(const thrust_size_t ij) 
+    { 
+      envi.r[ij] = envi.rhod_rv[ij] / envi.rhod[ij]; 
+      envi.p[ij] = phc::p<real_t>(
+        envi.rhod_th[ij] * si::kelvins * si::kilograms / si::cubic_metres, 
+        quantity<phc::mixing_ratio, real_t>(envi.r[ij])
+      ) / si::pascals; 
+      envi.T[ij] = phc::T<real_t>(
+        (envi.rhod_th[ij] / envi.rhod[ij]) * si::kelvins, 
+        envi.p[ij] * si::pascals, 
+        quantity<phc::mixing_ratio, real_t>(envi.r[ij])
+      ) / si::kelvins; 
+    }
+  };
+  thrust::for_each(iter, iter + envi.n_cell, rpT(envi));
 }
 
 // computing diagnostics
