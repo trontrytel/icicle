@@ -21,7 +21,7 @@ namespace sdm
     static T xi_of_rw3(const T &rw3) { return pow(rw3, T(1./3)); }
     static T rw_of_xi(const T &xi) { return xi; } 
     static T rw3_of_xi(const T &xi) { return pow(xi, 3); } 
-    static T dxidrw(const T &xi) { return 1; }
+    static T dxidrw(const T &) { return 1; }
   };
 
   // xi = ln(rw / nm)
@@ -86,7 +86,7 @@ namespace sdm
             real_t(.99),
             real_t( // TODO: interpolation to drop positions?
               phc::R_v<real_t>() * (envi.T[ij] * si::kelvins) * (envi.rhod_rv[ij] * si::kilograms / si::cubic_metres) 
-              / phc::p_vs<real_t>(envi.T[ij] * si::kelvins)
+              / (phc::p_vs<real_t>(envi.T[ij] * si::kelvins))
             )
           )
         ) / si::cubic_metres); 
@@ -111,12 +111,11 @@ namespace sdm
       public: real_t operator()(thrust_size_t id)
       {
         thrust_size_t ij = stat.ij[id]; 
-        return 
-          this->dxidrw(this->rw_of_xi(stat.xi[id])) * // Jacobian
+        real_t drdt =
           ( // vapour density difference
-            real_t(envi.rhod_rv[ij]) - // ambient rho_v
+            real_t(envi.rhod_rv[ij]) / si::cubic_metres * si::kilograms - // ambient rho_v
             ( // drop surface rho_v
-              real_t(
+              
                 phc::p_vs<real_t>(envi.T[ij] * si::kelvins)
                 / phc::R_v<real_t>() 
                 / (envi.T[ij] * si::kelvins)
@@ -126,10 +125,14 @@ namespace sdm
                   0 + stat.kpa[id] // kappa
                 )
 		// TODO: the Kelvin term
-                * si::cubic_metres / si::kilograms
-              )
+              
             )
-          ); // TODO: move it to a phc_maxwell_mason.hpp
+          ) / phc::rho_w<real_t>() / (this->rw_of_xi(stat.xi[id]) * si::metres)
+          * real_t(1e-5) * si::square_metres / si::seconds  // diffusion 
+          / si::metres * si::seconds       // to make it dimensionless
+          ; // TODO: move it to a phc_maxwell_mason.hpp
+//cerr << "dxi_dt = " << this->dxidrw(this->rw_of_xi(stat.xi[id])) << " * " << drdt << "=" << this->dxidrw(this->rw_of_xi(stat.xi[id])) * drdt << endl;
+        return this->dxidrw(this->rw_of_xi(stat.xi[id])) * drdt;// Jacobian
       }
     };
 

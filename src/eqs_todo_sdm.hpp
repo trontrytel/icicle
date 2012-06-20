@@ -136,7 +136,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       psi[this->par.idx_rhod_th][n],
       psi[this->par.idx_rhod_rv][n]
     );
-    if (opts[cond]) sd_condevap(dt); // does init() at first time step - has to be placed after sync, and before others
+    if (opts[cond]) sd_condevap(dt);  // /real_t(100000)); // TEMP!!! TODO TODO // does init() at first time step - has to be placed after sync, and before others
     if (opts[adve]) sd_advection(dt, C[0], C[1]); // includes periodic boundary for super droplets!
     if (opts[sedi]) sd_sedimentation(dt, aux.at("rhod")); // TODO: SD recycling!
 //    sd_coalescence(dt);
