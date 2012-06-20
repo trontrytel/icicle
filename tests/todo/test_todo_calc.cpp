@@ -67,7 +67,7 @@ const int
   toa = 0,
   iord = 2;  
 const quantity<si::time, real_t> 
-  t_max = 500 * si::seconds, // 4 * 3600
+  t_max = 50 * si::seconds, // 4 * 3600
   dt_out = real_t(10) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = real_t(.6) * si::metres / si::second; // .6 TODO: check it!
@@ -78,6 +78,8 @@ const quantity<divide_typeof_helper<si::momentum, si::area>::type, real_t>
 
 // options for microphysics
 std::string micro = "sdm"; // sdm | bulk
+
+// blk parameters
 bool 
   blk_cond = true,
   blk_cevp = true,
@@ -85,11 +87,18 @@ bool
   blk_clct = true,
   blk_sedi = true,
   blk_revp = true;
+
+// sdm parameters
 std::string
   sdm_xi = "ln", 
   sdm_ode_algo_xy = "euler",
   sdm_ode_algo_ys = "euler",
   sdm_ode_algo_xi = "euler";
+bool 
+  sdm_adve = true,
+  sdm_cond = true,
+  sdm_coal = false,
+  sdm_sedi = false;
 real_t 
   sd_conc_mean = 64,
   mean_rd1 = .04e-6,
@@ -241,11 +250,14 @@ int main()
       << " --eqs.todo_bulk.revp " << blk_revp
     ;
     else if (micro == "sdm") cmd << " --eqs todo_sdm"
-// TODO: processes
       << " --eqs.todo_sdm.xi " << sdm_xi
       << " --eqs.todo_sdm.ode_algo_xy " << sdm_ode_algo_xy
       << " --eqs.todo_sdm.ode_algo_ys " << sdm_ode_algo_ys
       << " --eqs.todo_sdm.ode_algo_xi " << sdm_ode_algo_xi
+      << " --eqs.todo_sdm.adve " << sdm_adve
+      << " --eqs.todo_sdm.cond " << sdm_cond
+      << " --eqs.todo_sdm.coal " << sdm_coal
+      << " --eqs.todo_sdm.sedi " << sdm_sedi
       << " --eqs.todo_sdm.sd_conc_mean " << sd_conc_mean
       << " --eqs.todo_sdm.min_rd " << min_rd
       << " --eqs.todo_sdm.max_rd " << max_rd

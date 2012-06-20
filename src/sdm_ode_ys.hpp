@@ -26,10 +26,11 @@ namespace sdm
       ) : stat(stat), envi(envi) {}
       public: real_t operator()(const thrust_size_t id)
       {
+        thrust_size_t ij = stat.ij[id];
         return - phc::vt<real_t>(
           this->rw_of_xi(stat.xi[id]) * si::metres,
-          envi.T[stat.ij[id]] * si::kelvins,
-          envi.rhod[stat.ij[id]] * si::kilograms / si::cubic_metres // that's the dry air density
+          envi.T[ij] * si::kelvins,
+          envi.rhod[ij] * si::kilograms / si::cubic_metres // that's the dry air density
         ) * si::seconds / si::metres;
       }
     };

@@ -35,6 +35,7 @@ inline void opt_eqs_desc(po::options_description &desc)
     ("eqs.todo_bulk.sedi", po::value<bool>()->default_value(true), "rain water sedimentation [on/off]")
     ("eqs.todo_bulk.revp", po::value<bool>()->default_value(true), "rain water evaporation [on/off]")
 
+    ("eqs.todo_sdm.adve", po::value<bool>()->default_value(true), "advection [on/off]")
     ("eqs.todo_sdm.cond", po::value<bool>()->default_value(true), "condensation/evaporation [on/off]")
     ("eqs.todo_sdm.coal", po::value<bool>()->default_value(true), "coalescence [on/off]")
     ("eqs.todo_sdm.sedi", po::value<bool>()->default_value(true), "sedimentation [on/off]")
@@ -115,6 +116,7 @@ eqs<real_t> *opt_eqs(
     });
     return new eqs_todo_sdm<real_t>(grid, velocity,
       map<enum eqs_todo_sdm<real_t>::processes, bool>({
+        {eqs_todo_sdm<real_t>::adve, vm["eqs.todo_sdm.adve"].as<bool>()},
         {eqs_todo_sdm<real_t>::cond, vm["eqs.todo_sdm.cond"].as<bool>()},
         {eqs_todo_sdm<real_t>::sedi, vm["eqs.todo_sdm.sedi"].as<bool>()},
         {eqs_todo_sdm<real_t>::coal, vm["eqs.todo_sdm.coal"].as<bool>()},

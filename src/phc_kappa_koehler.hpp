@@ -33,4 +33,14 @@ namespace phc
   {
     return rd3 * (1 - vap_ratio * (1 - kappa)) / (1 - vap_ratio);
   }
+
+  /// @brief activity of water in solution (eqs. 1,6) in @copydetails Petters_and_Kreidenweis_2007
+  phc_declare_funct_macro quantity<si::dimensionless, real_t> a_w(
+    quantity<si::volume, real_t> rw3,
+    quantity<si::volume, real_t> rd3,
+    quantity<si::dimensionless, real_t> kappa
+  )
+  {
+    return (rw3 - rd3) / (rw3 - rd3 * (real_t(1) - kappa));
+  }
 };

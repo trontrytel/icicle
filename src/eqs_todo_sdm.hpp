@@ -28,7 +28,7 @@ template <typename real_t>
 class eqs_todo_sdm : public eqs_todo<real_t> 
 {
   // a container for storing options (i.e. which processes ar on/off)
-  public: enum processes {cond, sedi, coal};
+  public: enum processes {adve, cond, sedi, coal};
   public: enum ode_algos {euler, rk4};
   public: enum xi_dfntns {id, ln, p2, p3};
 
@@ -118,7 +118,6 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   // private field with temporary space
   thrust::device_vector<int> tmp_shrt; // e.g. for grid cell indices
   thrust::device_vector<thrust_size_t> tmp_long; // e.g. for particle concentrations
-  thrust::device_vector<real_t> tmp_real; // e.g. for mean radii
 
   public: void adjustments(
     int n, // TODO: mo¿e jednak bez n...
@@ -137,9 +136,9 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       psi[this->par.idx_rhod_th][n],
       psi[this->par.idx_rhod_rv][n]
     );
-    sd_condevap(dt); // does init() at first time step - has to be placed after sync, and before others
-    sd_advection(dt, C[0], C[1]); // includes periodic boundary for super droplets!
-    if (opts[sedi]) sd_sedimentation(dt, aux.at("rhod"));
+    if (opts[cond]) sd_condevap(dt); // does init() at first time step - has to be placed after sync, and before others
+    if (opts[adve]) sd_advection(dt, C[0], C[1]); // includes periodic boundary for super droplets!
+    if (opts[sedi]) sd_sedimentation(dt, aux.at("rhod")); // TODO: SD recycling!
 //    sd_coalescence(dt);
 //    sd_breakup(dt);
     sd_diag(aux); 

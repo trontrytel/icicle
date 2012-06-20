@@ -69,8 +69,8 @@ namespace sdm
 
     // SD parameters that are constant from the ODE point of view (n,rd3,i,j)
     thrust::device_vector<real_t> rd3, kpa; // rd3 -> dry radius to the third power 
-    thrust::device_vector<thrust_size_t> id, n; // n -> number of real droplets in a super-droplet
-    thrust::device_vector<int> i, j, ij; // location of super-droplet within the grid
+    thrust::device_vector<thrust_size_t> sorted_id, n; // n -> number of real droplets in a super-droplet
+    thrust::device_vector<int> i, j, ij, sorted_ij; // location of super-droplet within the grid
 
     // sdm::stat ctor
     stat_t(int nx, int ny, real_t sd_conc_mean)
@@ -84,7 +84,8 @@ namespace sdm
       j.resize(n_part);
       ij.resize(n_part);
       n.resize(n_part);
-      id.resize(n_part);
+      sorted_ij.resize(n_part);
+      sorted_id.resize(n_part);
 
       x_begin = xy.begin(); 
       x_end   = x_begin + n_part;

@@ -50,7 +50,6 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
 
   tmp_shrt.resize(grid.nx() * grid.ny());
   tmp_long.resize(grid.nx() * grid.ny());
-  tmp_real.resize(grid.nx() * grid.ny()); // TODO: is it used anywhere???
 
   // auxliary variable for super-droplet conc
   ptr_map_insert(this->aux)("sd_conc", typename eqs<real_t>::axv({
@@ -76,7 +75,6 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
   // initialising super-droplets
   sd_init(min_rd, max_rd, mean_rd1, mean_rd2, sdev_rd1, sdev_rd2, n1_tot, n2_tot, sd_conc_mean, kappa);
 
-// TEMP!!!
  typedef odeint::euler<
       thrust::device_vector<real_t>, // state type
       real_t, // value_type
@@ -94,9 +92,6 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
       odeint::thrust_algebra,
       odeint::thrust_operations
     > algo_rk4;
-// TEMP!!!
-
-
 
   // initialising ODE right-hand-sides
   switch (xy_algo) // advection
@@ -234,12 +229,14 @@ void eqs_todo_sdm<real_t>::sd_sync(
     stat.ij.begin(),
     sdm::ravel_indices(grid.ny())
   );
-  // filling-in stat.id
-  thrust::sequence(stat.id.begin(), stat.id.end());
-  // sorting stat.ij and stat.id
+  // making a copy of ij
+  thrust::copy(stat.ij.begin(), stat.ij.end(), stat.sorted_ij.begin());
+  // filling-in stat.sorted_id
+  thrust::sequence(stat.sorted_id.begin(), stat.sorted_id.end());
+  // sorting stat.ij and stat.sorted_id
   thrust::sort_by_key(
-    stat.ij.begin(), stat.ij.end(),
-    stat.id.begin()
+    stat.sorted_ij.begin(), stat.sorted_ij.end(),
+    stat.sorted_id.begin()
   );
 
   // getting thermodynamic fields from the Eulerian model 
@@ -265,6 +262,7 @@ void eqs_todo_sdm<real_t>::sd_sync(
       )
     );
   }
+
   // calculating the derived fields (T,p,r)
   class rpT
   {
@@ -300,7 +298,7 @@ void eqs_todo_sdm<real_t>::sd_diag(ptr_unordered_map<string, mtx::arr<real_t>> &
       thrust::device_vector<int>::iterator, 
       thrust::device_vector<thrust_size_t>::iterator
     > n = thrust::reduce_by_key(
-      stat.ij.begin(), stat.ij.end(),
+      stat.sorted_ij.begin(), stat.sorted_ij.end(),
       thrust::make_constant_iterator(1),
       tmp_shrt.begin(), // will store the grid cell indices
       tmp_long.begin()  // will store the concentrations per grid cell
@@ -325,11 +323,11 @@ void eqs_todo_sdm<real_t>::sd_diag(ptr_unordered_map<string, mtx::arr<real_t>> &
       thrust::device_vector<int>::iterator, 
       thrust::device_vector<thrust_size_t>::iterator
     > n = thrust::reduce_by_key(
-      stat.ij.begin(), stat.ij.end(),
+      stat.sorted_ij.begin(), stat.sorted_ij.end(),
       thrust::permutation_iterator<
         thrust::device_vector<thrust_size_t>::iterator,
         thrust::device_vector<thrust_size_t>::iterator
-      >(stat.n.begin(), stat.id.begin()), 
+      >(stat.n.begin(), stat.sorted_id.begin()), 
       tmp_shrt.begin(), // will store the grid cell indices
       tmp_long.begin()  // will store the concentrations per grid cell
     );
@@ -368,12 +366,12 @@ void eqs_todo_sdm<real_t>::sd_diag(ptr_unordered_map<string, mtx::arr<real_t>> &
       thrust::device_vector<int>::iterator, 
       thrust::device_vector<thrust_size_t>::iterator
     > n = thrust::reduce_by_key(
-      stat.ij.begin(), stat.ij.end(),
+      stat.sorted_ij.begin(), stat.sorted_ij.end(),
       thrust::transform_iterator<
         threshold_counter, 
         thrust::device_vector<thrust_size_t>::iterator,
         thrust_size_t
-      >(stat.id.begin(), threshold_counter(stat, F_xi->transform(real_t(500e-9)))),
+      >(stat.sorted_id.begin(), threshold_counter(stat, F_xi->transform(real_t(500e-9)))),
       tmp_shrt.begin(), // will store the grid cell indices
       tmp_long.begin()  // will store the concentrations per grid cell
     );
