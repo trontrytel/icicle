@@ -67,7 +67,7 @@ const int
   toa = 0,
   iord = 2;  
 const quantity<si::time, real_t> 
-  t_max = 50 * si::seconds, // 4 * 3600
+  t_max = 200 * si::seconds, // 4 * 3600
   dt_out = real_t(10) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = real_t(.6) * si::metres / si::second; // .6 TODO: check it!
@@ -90,12 +90,12 @@ bool
 
 // sdm parameters
 std::string
-  sdm_xi = "ln", 
-  sdm_ode_algo_xy = "euler",
-  sdm_ode_algo_ys = "euler",
+  sdm_xi = "p2", 
+  sdm_ode_algo_xy = "rk4",
+  sdm_ode_algo_ys = "rk4",
   sdm_ode_algo_xi = "euler";
 bool 
-  sdm_adve = true,
+  sdm_adve = false,
   sdm_cond = true,
   sdm_coal = false,
   sdm_sedi = false;
