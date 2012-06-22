@@ -33,6 +33,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   public: enum xi_dfntns {id, ln, p2, p3};
 
   private: typename eqs_todo<real_t>::params par;
+  private: enum xi_dfntns xi_dfntn;
 
   // ctor of eqs_todo_sdm
   public: eqs_todo_sdm(
@@ -118,6 +119,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   // private field with temporary space
   thrust::device_vector<int> tmp_shrt; // e.g. for grid cell indices
   thrust::device_vector<thrust_size_t> tmp_long; // e.g. for particle concentrations
+  thrust::device_vector<real_t> tmp_real; // e.g. for particle concentrations
 
   public: void adjustments(
     int n, // TODO: mo¿e jednak bez n...

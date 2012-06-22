@@ -185,7 +185,7 @@ int main()
 
     gp << "set title 'cloud droplet conc. [1/cm^3]'" << endl;
     gp << "set cbrange [0:150]" << endl;
-    nf.getVar("n_ccn").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
+    nf.getVar("m_0").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
     tmp0 /= 1e6;
     gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";
     gp << endl;
@@ -195,6 +195,16 @@ int main()
     gp << "set cbrange [0:150]" << endl;
     nf.getVar("n_tot").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp1.data()); 
     tmp0 = tmp1 / 1e6 - tmp0;
+    gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";
+    gp << endl;
+    gp.sendBinary(tmp0);
+
+    gp << "set title 'cloud droplet effective radius [{/Symbol m}m]'" << endl;
+    gp << "set autoscale cb" << endl;
+    nf.getVar("m_3").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
+    nf.getVar("m_2").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp1.data()); 
+    tmp0 /= tmp1;
+    tmp0 *= 1e6;
     gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";
     gp << endl;
     gp.sendBinary(tmp0);

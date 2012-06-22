@@ -27,6 +27,11 @@ namespace sdm
       public: real_t operator()(const thrust_size_t id)
       {
         thrust_size_t ij = stat.ij[id];
+cerr << "id=" << id << endl;
+cerr << stat.ij[id] << endl;
+cerr << stat.xi[id] << endl;
+cerr << envi.T[ij] << endl;
+cerr << envi.rhod[ij] << endl;
         return - phc::vt<real_t>(
           this->rw_of_xi(stat.xi[id]) * si::metres,
           envi.T[ij] * si::kelvins,
