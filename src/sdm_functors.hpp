@@ -64,21 +64,21 @@ namespace sdm {
   };
 
   /// @brief a Thrust-to-Blitz data transfer functor 
-  template <typename blitz_real_t> 
+  template <typename real_t> 
   class copy_from_device 
   {
     private: int n;
     private: const thrust::device_vector<int> &idx2ij;
-    private: const thrust::device_vector<thrust_size_t> &from;
-    private: mtx::arr<blitz_real_t> &to;
-    private: blitz_real_t scl;
+    private: const thrust::device_vector<real_t> &from;
+    private: mtx::arr<real_t> &to;
+    private: real_t scl;
 
     // ctor
     public: copy_from_device(int n, 
       const thrust::device_vector<int> &idx2ij,
-      const thrust::device_vector<thrust_size_t> &from,
-      mtx::arr<blitz_real_t> &to,
-      blitz_real_t scl = blitz_real_t(1)
+      const thrust::device_vector<real_t> &from,
+      mtx::arr<real_t> &to,
+      real_t scl = real_t(1)
     ) : n(n), idx2ij(idx2ij), from(from), to(to), scl(scl) {}
 
     public: void operator()(int idx) 
@@ -88,7 +88,7 @@ namespace sdm {
   };
 
   /// @brief a Blitz-to-Thrust data transfer functor
-  template <typename blitz_real_t, typename real_t> 
+  template <typename blitz_real_t, typename real_t>  // TODO: blitz_real_t == real_t ? 
   class copy_to_device
   {
     private: int n;
@@ -134,6 +134,41 @@ namespace sdm {
           phc::log_norm_n_e<real_t>(mean_rd2, sdev_rd2, n2_tot, lnrd) 
         ) * si::cubic_metres
       );
+    }
+  };
+
+/*
+  template <typename real_t>
+  class moment_counter
+  {
+    public: virtual real_t operator()(const thrust_size_t id) const 
+    {
+      assert(false); // ptr_vector would not accept an abstract type hence not marking pure
+    }
+  };
+*/
+
+  template <typename real_t, class xi>
+  class moment_counter //: public moment_counter<real_t>
+  { 
+    private: const sdm::stat_t<real_t> &stat;
+    private: const real_t threshold;
+    private: int k;
+    public: moment_counter(
+      const sdm::stat_t<real_t> &stat,
+      const real_t threshold,
+      const int k
+    ) : stat(stat), threshold(xi::xi_of_rw(threshold)), k(k) {}
+    public: real_t operator()(const thrust_size_t id) const
+    {   
+      switch (k)
+      {
+        case 0: return stat.xi[id] > threshold ? (stat.n[id]) : 0;
+        case 1: return stat.xi[id] > threshold ? (stat.n[id] * xi::rw_of_xi(stat.xi[id])) : 0; 
+        case 2: return stat.xi[id] > threshold ? (stat.n[id] * xi::rw2_of_xi(stat.xi[id])) : 0;
+        case 3: return stat.xi[id] > threshold ? (stat.n[id] * xi::rw3_of_xi(stat.xi[id])) : 0;
+        default: return stat.xi[id] > threshold ? (stat.n[id] * pow(xi::rw_of_xi(stat.xi[id]), k)) : 0;
+      }
     }
   };
 
