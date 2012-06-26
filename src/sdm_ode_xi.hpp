@@ -62,30 +62,29 @@ namespace sdm
   template <typename real_t, class algo, class xi>
   class ode_xi : public ode_algo<real_t, algo>
   { 
-/*
-    public: real_t transform(const real_t &x) const
-    {   
-      return xi::xi_of_rw(x);
-    }  
-*/
-
     // nested functor: setting wet radii to equilibrium values
     struct equil : xi
     { 
       stat_t<real_t> &stat;
       const envi_t<real_t> &envi;
+      mtx::arr<real_t> &m_3;
+      const int nx;
 
       // ctor
       equil(
         stat_t<real_t> &stat, 
-        const envi_t<real_t> &envi
-      ) : stat(stat), envi(envi)
-      { }
+        const envi_t<real_t> &envi,
+        mtx::arr<real_t> &m_3,
+        const int nx
+      ) : stat(stat), envi(envi), m_3(m_3), nx(nx)
+      { 
+        m_3(m_3.ijk) = real_t(0);
+      }
 
       void operator()(thrust_size_t id) 
       { 
         thrust_size_t ij = stat.ij[id]; 
-        stat.xi[id] = this->xi_of_rw3(phc::rw3_eq<real_t>( // TODO: allow choice among different Koehler curves
+        real_t rw3_eq = phc::rw3_eq<real_t>( // TODO: allow choice among different Koehler curves
           stat.rd3[id] * si::cubic_metres, 
           0 + stat.kpa[id], // it fails to compile without the zero!
           thrust::min(
@@ -95,7 +94,9 @@ namespace sdm
               / (phc::p_vs<real_t>(envi.T[ij] * si::kelvins))
             )
           )
-        ) / si::cubic_metres); 
+        ) / si::cubic_metres;
+        stat.xi[id] = this->xi_of_rw3(rw3_eq);
+        m_3(int(ij % nx), int(ij / nx), 0) += stat.n[id] * rw3_eq;
       }
     };
 
@@ -131,13 +132,11 @@ namespace sdm
                   0 + stat.kpa[id] // kappa
                 )
 		// TODO: the Kelvin term
-              
             )
           ) / phc::rho_w<real_t>() / (this->rw_of_xi(stat.xi[id]) * si::metres)
           * real_t(1e-5) * si::square_metres / si::seconds  // diffusion 
           / si::metres * si::seconds       // to make it dimensionless
           ; // TODO: move it to a phc_maxwell_mason.hpp
-//cerr << "dxi_dt = " << this->dxidrw(this->rw_of_xi(stat.xi[id])) << " * " << drdt << "=" << this->dxidrw(this->rw_of_xi(stat.xi[id])) * drdt << endl;
         return this->dxidrw(this->rw_of_xi(stat.xi[id])) * drdt;// Jacobian
       }
     };
@@ -145,12 +144,16 @@ namespace sdm
     // private fields
     private: stat_t<real_t> &stat;
     private: const envi_t<real_t> &envi;
+    private: mtx::arr<real_t> &m_3;
+    private: const grd<real_t> &grid;
 
     // ctor
     public: ode_xi(
       stat_t<real_t> &stat,
-      const envi_t<real_t> &envi
-    ) : stat(stat), envi(envi)
+      const envi_t<real_t> &envi,
+      mtx::arr<real_t> &m_3,
+      const grd<real_t> &grid
+    ) : stat(stat), envi(envi), m_3(m_3), grid(grid)
     {}
 
     // a post-ctor init method
@@ -159,7 +162,8 @@ namespace sdm
     {
       // initialising the wet radii (xi variable) to equilibrium values
       thrust::counting_iterator<thrust_size_t> iter(0);
-      thrust::for_each(iter, iter + stat.n_part, equil(stat, envi));
+      thrust::for_each(iter, iter + stat.n_part, equil(stat, envi, m_3, grid.nx()));
+      m_3 /= (grid.dx() * grid.dy() * grid.dz() / si::cubic_metres); 
     }
   
     // overloaded () operator invoked by odeint

@@ -120,6 +120,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   thrust::device_vector<int> tmp_shrt; // e.g. for grid cell indices
   thrust::device_vector<thrust_size_t> tmp_long; // e.g. for particle concentrations
   thrust::device_vector<real_t> tmp_real; // e.g. for particle concentrations
+  mtx::arr<real_t> drhov; // e.g. for condensation rate
 
   public: void adjustments(
     int n, // TODO: mo¿e jednak bez n...
@@ -133,17 +134,28 @@ class eqs_todo_sdm : public eqs_todo<real_t>
 
     // TODO: substepping with different timesteps as an option
     // TODO: which order would be best?
-    sd_sync(
-      aux.at("rhod"),
-      psi[this->par.idx_rhod_th][n],
-      psi[this->par.idx_rhod_rv][n]
-    );
+    const mtx::arr<real_t> &rhod = aux.at("rhod");
+    mtx::arr<real_t> &rhod_th = psi[this->par.idx_rhod_th][n];
+    mtx::arr<real_t> &rhod_rv = psi[this->par.idx_rhod_rv][n];
+
+    sd_sync(rhod, rhod_th, rhod_rv);
     if (opts[cond]) sd_condevap(dt);  // /real_t(100000)); // TEMP!!! TODO TODO // does init() at first time step - has to be placed after sync, and before others
     if (opts[adve]) sd_advection(dt, C[0], C[1]); // includes periodic boundary for super droplets!
     if (opts[sedi]) sd_sedimentation(dt, aux.at("rhod")); // TODO: SD recycling!
+//    sd_chemistry(dt);
 //    sd_coalescence(dt);
 //    sd_breakup(dt);
     sd_diag(aux); 
+
+    // (drhov is filled-in initially at F_xi->init())
+    const mtx::idx &ijk = drhov.ijk;
+    drhov(ijk) -= (aux.at("m_3"))(ijk); // now that's <r^3>_old - <r^3>_new = -\Delta <r^3> (per unit volume)
+    drhov(ijk) *= // calculating \Delta rhod_rv
+      (phc::rho_w<real_t>() / si::kilograms * si::cubic_metres) // water density
+      * real_t(4./3) * phc::pi<real_t>(); // <r^3> --> volume
+    rhod_rv(ijk) += drhov(ijk);
+    //rhod_th -= rhod_th / rhod * (phc::l_v<real_t>(T) / real_t(pow(1 + r, 2)) / phc::c_p(r) / T); // TODO!!!
+    drhov(ijk) = (aux.at("m_3"))(ijk); // for the next timestep
   }
 #endif
 };

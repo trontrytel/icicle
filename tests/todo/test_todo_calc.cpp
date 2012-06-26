@@ -56,13 +56,13 @@ const quantity<phc::mixing_ratio, real_t>
 const quantity<si::pressure, real_t> 
   p_0 = 101500 * si::pascals; // 1015 hPa
 const quantity<si::dimensionless, real_t>
-  //kappa = 0.61; // ammonium sulphate
-  kappa = 1.28; // sodium chloride
+  kappa = 0.61; // ammonium sulphate
+  //kappa = 1.28; // sodium chloride
 
 // other parameters deduced from the Fortran code published at:
 // http://www.rap.ucar.edu/~gthompsn/workshop2012/case1/kinematic_wrain.vocals.v3.for
 const int 
-  bits = 64,
+  bits = 32,
   fct = 1,  
   toa = 0,
   iord = 2;  

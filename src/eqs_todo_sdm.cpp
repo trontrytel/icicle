@@ -45,7 +45,12 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
   constant_velocity(velocity.is_constant()),
   stat(grid.nx(), grid.ny(), sd_conc_mean),
   envi(grid.nx(), grid.ny()),
-  xi_dfntn(xi_dfntn)
+  xi_dfntn(xi_dfntn), 
+  drhov(mtx::idx_ijk(
+      mtx::rng(0,grid.nx()-1), 
+      mtx::rng(0,grid.ny()-1)
+    )
+  )
 {
   // TODO: assert that we use no paralellisation or allow some parallelism!
   // TODO: random seed as an option
@@ -136,19 +141,19 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
   {
     case euler: switch (xi_dfntn)
     {
-      case id : F_xi.reset(new sdm::ode_xi<real_t, algo_euler, sdm::xi_id<real_t>>(stat, envi)); break;
-      case ln : F_xi.reset(new sdm::ode_xi<real_t, algo_euler, sdm::xi_ln<real_t>>(stat, envi)); break;
-      case p2 : F_xi.reset(new sdm::ode_xi<real_t, algo_euler, sdm::xi_p2<real_t>>(stat, envi)); break;
-      case p3 : F_xi.reset(new sdm::ode_xi<real_t, algo_euler, sdm::xi_p3<real_t>>(stat, envi)); break;
+      case id : F_xi.reset(new sdm::ode_xi<real_t, algo_euler, sdm::xi_id<real_t>>(stat, envi, drhov, grid)); break;
+      case ln : F_xi.reset(new sdm::ode_xi<real_t, algo_euler, sdm::xi_ln<real_t>>(stat, envi, drhov, grid)); break;
+      case p2 : F_xi.reset(new sdm::ode_xi<real_t, algo_euler, sdm::xi_p2<real_t>>(stat, envi, drhov, grid)); break;
+      case p3 : F_xi.reset(new sdm::ode_xi<real_t, algo_euler, sdm::xi_p3<real_t>>(stat, envi, drhov, grid)); break;
       default: assert(false);
     } 
     break;
     case rk4  : switch (xi_dfntn) 
     {
-      case id : F_xi.reset(new sdm::ode_xi<real_t, algo_rk4,   sdm::xi_id<real_t>>(stat, envi)); break;
-      case ln : F_xi.reset(new sdm::ode_xi<real_t, algo_rk4,   sdm::xi_ln<real_t>>(stat, envi)); break;
-      case p2 : F_xi.reset(new sdm::ode_xi<real_t, algo_rk4,   sdm::xi_p2<real_t>>(stat, envi)); break;
-      case p3 : F_xi.reset(new sdm::ode_xi<real_t, algo_rk4,   sdm::xi_p3<real_t>>(stat, envi)); break;
+      case id : F_xi.reset(new sdm::ode_xi<real_t, algo_rk4,   sdm::xi_id<real_t>>(stat, envi, drhov, grid)); break;
+      case ln : F_xi.reset(new sdm::ode_xi<real_t, algo_rk4,   sdm::xi_ln<real_t>>(stat, envi, drhov, grid)); break;
+      case p2 : F_xi.reset(new sdm::ode_xi<real_t, algo_rk4,   sdm::xi_p2<real_t>>(stat, envi, drhov, grid)); break;
+      case p3 : F_xi.reset(new sdm::ode_xi<real_t, algo_rk4,   sdm::xi_p3<real_t>>(stat, envi, drhov, grid)); break;
       default: assert(false);
     }
     break;
@@ -376,52 +381,49 @@ void eqs_todo_sdm<real_t>::sd_diag(ptr_unordered_map<string, mtx::arr<real_t>> &
   }
 
   // calculating k-th moment of the particle distribution (for particles with radius greater than a given threshold)
+  for (int &k : list<int>({0,1,2,3,6}))
   {
-    for (int &k : list<int>({0,1,2,3,6}))
+    // zeroing the temporary var
+    thrust::fill(tmp_real.begin(), tmp_real.end(), 0); // TODO: is it needed
+
+    // doing the reduction, i.e. 
+    thrust::pair<
+      decltype(tmp_shrt.begin()),
+      decltype(tmp_real.begin()) 
+    > n;
+
+    switch (xi_dfntn)
     {
-      // zeroing the temporary var
-      thrust::fill(tmp_real.begin(), tmp_real.end(), 0); // TODO: is it needed
-
-      // doing the reduction, i.e. 
-      thrust::pair<
-        decltype(tmp_shrt.begin()),
-        decltype(tmp_real.begin()) 
-      > n;
-
-      switch (xi_dfntn)
-      {
-        case p2:
-        n = thrust::reduce_by_key(
-          stat.sorted_ij.begin(), stat.sorted_ij.end(),
-          thrust::transform_iterator<
-            sdm::moment_counter<real_t, sdm::xi_p2<real_t>>,
-            decltype(stat.sorted_id.begin()),
-            real_t
-          >(stat.sorted_id.begin(), sdm::moment_counter<real_t, sdm::xi_p2<real_t>>(stat, real_t(500e-9), k)),//
-          tmp_shrt.begin(), // will store the grid cell indices
-          tmp_real.begin()  // will store the concentrations per grid cell
-        );
-        break;
-        default: assert(false); //TODO: ln, p3, id, ...
-      }
-
-
-  //    if (k==3) { thrust::copy(tmp_real.begin(), tmp_real.end(), std::ostream_iterator<real_t>(std::cout, "\n")); }
-
-      // writing to aux
-      ostringstream tmp;
-      tmp << "m_" << k;
-      mtx::arr<real_t> &out = aux.at(tmp.str());
-      out(out.ijk) = real_t(0); // as some grid cells could be void of particles
-      thrust::counting_iterator<thrust_size_t> iter(0);
-      thrust::for_each(iter, iter + (n.first - tmp_shrt.begin()), 
-        sdm::copy_from_device<real_t>( 
-          grid.nx(), tmp_shrt, tmp_real, out, 
-          real_t(1) / grid.dx() / grid.dy() / grid.dz() * si::cubic_metres
-        )
+      case p2:
+      n = thrust::reduce_by_key(
+        stat.sorted_ij.begin(), stat.sorted_ij.end(),
+        thrust::transform_iterator<
+          sdm::moment_counter<real_t, sdm::xi_p2<real_t>>,
+          decltype(stat.sorted_id.begin()),
+          real_t
+        >(stat.sorted_id.begin(), sdm::moment_counter<real_t, sdm::xi_p2<real_t>>(stat, real_t(500e-9), k)),//
+        tmp_shrt.begin(), // will store the grid cell indices
+        tmp_real.begin()  // will store the concentrations per grid cell
       );
+      break;
+      default: assert(false); //TODO: ln, p3, id, ...
     }
+
+    // writing to aux
+    ostringstream tmp;
+    tmp << "m_" << k;
+    mtx::arr<real_t> &out = aux.at(tmp.str());
+    out(out.ijk) = real_t(0); // as some grid cells could be void of particles
+    thrust::counting_iterator<thrust_size_t> iter(0);
+    thrust::for_each(iter, iter + (n.first - tmp_shrt.begin()), 
+      sdm::copy_from_device<real_t>( 
+        grid.nx(), tmp_shrt, tmp_real, out, 
+        real_t(1) / grid.dx() / grid.dy() / grid.dz() * si::cubic_metres
+      )
+    );
   }
+
+  // 
 }
 
 template <typename real_t>

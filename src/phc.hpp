@@ -19,6 +19,8 @@
 
 #  define phc_declare_funct_macro template <typename real_t> 
 
+#  include <boost/math/constants/constants.hpp>
+
 // TODO: the same functions with Blitz arguments - how to automate???
 
 // TODO: would changing namespace to class and hence marking all members defined below as inline help?
@@ -26,6 +28,9 @@
 namespace phc
 {
   typedef si::dimensionless mixing_ratio;
+
+  // pi
+  phc_derived_const_macro(pi, boost::math::constants::pi<real_t>())
 
   // acceleration due to gravity
   phc_declare_const_macro(g, 9.81, si::metres_per_second_squared)

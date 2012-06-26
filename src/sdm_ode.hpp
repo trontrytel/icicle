@@ -36,15 +36,6 @@ namespace sdm
       thrust::device_vector<real_t> &x, 
       const quantity<si::time, real_t> &dt
     ) = 0;
-
-/*
-    // TODO: a better name needed...
-    public: virtual real_t transform(const real_t &x) const
-    {
-      assert(false);
-      return x; // i.e. identity 
-    }
-*/
   };
 
   // nested class: 

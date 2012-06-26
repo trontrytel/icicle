@@ -66,10 +66,11 @@ class eqs_todo_bulk_ode<real_t>::rhs
     {
       update(rhod_th, rhod_rv);
       F = - rhod_th / rhod * (
-        phc::l_v<real_t>(T) / real_t(pow(1 + r, 2)) / phc::c_p(r) / T // the 'liquid water' term
+        phc::l_v<real_t>(T) / real_t(pow(2 + r, 2)) / phc::c_p(r) / T // the 'liquid water' term
         //+ 
         //log(p/phc::p_1000<real_t>()) * phc::R_d_over_c_pd<real_t>() * (1/phc::eps<real_t>() - 1/phc::ups<real_t>()) * pow(1+r/phc::ups<real_t>(),-2) // the 'virtual' term
       );
+// TODO: as an option!
 //cerr << (
 //        log(p/phc::p_1000<real_t>()) * phc::R_d_over_c_pd<real_t>() * (1/phc::eps<real_t>() - 1/phc::ups<real_t>()) * pow(1+r/phc::ups<real_t>(),-2) // the 'virtual' term
 //) / (
@@ -120,7 +121,7 @@ void eqs_todo_bulk_ode<real_t>::condevap(
           real_t drho_rr_max = 0; // TODO: quantity<si::mass_density
           if (F.rs > F.r && rhod_rr(i,j,k) > 0 && opt_revp) 
             drho_rr_max = (dt / si::seconds) * (1 - F.r / F.rs) * (1.6 + 124.9 * pow(1e-3 * rhod_rr(i,j,k), .2046)) * pow(1e-3 * rhod_rr(i,j,k), .525) / 
-              (5.4e2 + 2.55e5 * (1. / (F.p / si::pascals) / F.rs));
+              (5.4e2 + 2.55e5 * (1. / (F.p / si::pascals) / F.rs)); // TODO: move to phc!!!
           bool incloud;
 
           // TODO: rethink and document 2*rho_eps!!!
