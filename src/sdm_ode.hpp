@@ -34,7 +34,8 @@ namespace sdm
     public: virtual void init() {}
     public: virtual void advance(
       thrust::device_vector<real_t> &x, 
-      const quantity<si::time, real_t> &dt
+      const quantity<si::time, real_t> &dt,
+      const int n_steps = 1
     ) = 0;
   };
 
@@ -56,7 +57,8 @@ namespace sdm
  
     public: void advance(
       thrust::device_vector<real_t> &x, 
-      const quantity<si::time, real_t> &dt
+      const quantity<si::time, real_t> &dt,
+      const int n_steps 
     )
     {
       // intended for calculations that cannot be placed in the constructor 
@@ -66,7 +68,8 @@ namespace sdm
         init();
         inited = true;
       }
-      stepper.do_step(boost::ref(*this), x, 0, dt / si::seconds);
+      for (int i = 0; i < n_steps; ++i)
+        stepper.do_step(boost::ref(*this), x, 0, dt / si::seconds / n_steps);
     }
   };
 

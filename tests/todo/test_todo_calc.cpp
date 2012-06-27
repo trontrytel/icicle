@@ -98,7 +98,7 @@ bool
   sdm_adve = true,
   sdm_cond = true,
   sdm_coal = false,
-  sdm_sedi = false;
+  sdm_sedi = true;
 real_t 
   sd_conc_mean = 66,
   mean_rd1 = .04e-6,

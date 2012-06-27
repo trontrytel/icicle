@@ -100,6 +100,16 @@ namespace sdm
       }
     };
 
+    // a post-ctor init method
+    // (cannot be placed in the constructor as at that time the initial values were not loaded yet to psi)
+    void init()
+    {
+      // initialising the wet radii (xi variable) to equilibrium values
+      thrust::counting_iterator<thrust_size_t> iter(0);
+      thrust::for_each(iter, iter + stat.n_part, equil(stat, envi, m_3, grid.nx()));
+      m_3 /= (grid.dx() * grid.dy() * grid.dz() / si::cubic_metres); 
+    }
+
     // nested functor: the drop growth law
     private: 
     class drop_growth_equation : public xi
@@ -118,7 +128,7 @@ namespace sdm
       public: real_t operator()(const thrust_size_t id)
       {
         thrust_size_t ij = stat.ij[id]; 
-        real_t drdt =
+        real_t rdrdt =
           ( // vapour density difference
             real_t(envi.rhod_rv[ij]) / si::cubic_metres * si::kilograms - // ambient rho_v
             ( // drop surface rho_v
@@ -133,11 +143,12 @@ namespace sdm
                 )
 		// TODO: the Kelvin term
             )
-          ) / phc::rho_w<real_t>() / (this->rw_of_xi(stat.xi[id]) * si::metres)
-          * real_t(1e-5) * si::square_metres / si::seconds  // diffusion 
-          / si::metres * si::seconds       // to make it dimensionless
+          ) / phc::rho_w<real_t>() 
+          * real_t(2.21e-5) * si::square_metres / si::seconds  // diffusion 
+          * si::seconds / si::square_metres       // to make it dimensionless
           ; // TODO: move it to a phc_maxwell_mason.hpp
-        return this->dxidrw(this->rw_of_xi(stat.xi[id])) * drdt;// Jacobian
+        return rdrdt * this->dxidrw(this->rw_of_xi(stat.xi[id])) / this->rw_of_xi(stat.xi[id]); // Jacobian
+// TODO? this->dxidrw_by_r?
       }
     };
 
@@ -155,16 +166,6 @@ namespace sdm
       const grd<real_t> &grid
     ) : stat(stat), envi(envi), m_3(m_3), grid(grid)
     {}
-
-    // a post-ctor init method
-    // (cannot be placed in the constructor as at that time the initial values were not loaded yet to psi)
-    void init()
-    {
-      // initialising the wet radii (xi variable) to equilibrium values
-      thrust::counting_iterator<thrust_size_t> iter(0);
-      thrust::for_each(iter, iter + stat.n_part, equil(stat, envi, m_3, grid.nx()));
-      m_3 /= (grid.dx() * grid.dy() * grid.dz() / si::cubic_metres); 
-    }
   
     // overloaded () operator invoked by odeint
     public: void operator()(

@@ -238,15 +238,9 @@ void eqs_todo_sdm<real_t>::sd_init(
   thrust::fill(stat.kpa.begin(), stat.kpa.end(), kappa);
 }
 
-  // sorting out which particle belongs to which grid cell
 template <typename real_t>
-void eqs_todo_sdm<real_t>::sd_sync(
-  const mtx::arr<real_t> &rhod,
-  const mtx::arr<real_t> &rhod_th,
-  const mtx::arr<real_t> &rhod_rv
-)
+void eqs_todo_sdm<real_t>::sd_ij()
 {
-  // sorting the particles
   // computing stat.i 
   thrust::transform(
     stat.x_begin, stat.x_end,
@@ -266,6 +260,16 @@ void eqs_todo_sdm<real_t>::sd_sync(
     stat.ij.begin(),
     sdm::ravel_indices(grid.ny())
   );
+}
+
+// sorting out which particle belongs to which grid cell
+template <typename real_t>
+void eqs_todo_sdm<real_t>::sd_sync(
+  const mtx::arr<real_t> &rhod,
+  const mtx::arr<real_t> &rhod_th,
+  const mtx::arr<real_t> &rhod_rv
+)
+{
   // making a copy of ij
   thrust::copy(stat.ij.begin(), stat.ij.end(), stat.sorted_ij.begin());
   // filling-in stat.sorted_id
@@ -280,21 +284,21 @@ void eqs_todo_sdm<real_t>::sd_sync(
   thrust::counting_iterator<thrust_size_t> iter(0);
   {
     thrust::for_each(iter, iter + envi.rhod.size(), 
-      sdm::copy_to_device<real_t, real_t>(
+      sdm::blitz2thrust<real_t, real_t>(
         grid.nx(), rhod, envi.rhod
       )
     ); // TODO: this could be done just once in the kinematic model!
   }
   {
     thrust::for_each(iter, iter + envi.rhod_th.size(), 
-      sdm::copy_to_device<real_t, real_t>(
+      sdm::blitz2thrust<real_t, real_t>(
         grid.nx(), rhod_th, envi.rhod_th 
       )
     );
   }
   {
     thrust::for_each(iter, iter + envi.rhod_rv.size(), 
-      sdm::copy_to_device<real_t, real_t>(
+      sdm::blitz2thrust<real_t, real_t>(
         grid.nx(), rhod_rv, envi.rhod_rv
       )
     );
@@ -345,7 +349,7 @@ void eqs_todo_sdm<real_t>::sd_diag(ptr_unordered_map<string, mtx::arr<real_t>> &
     sd_conc(sd_conc.ijk) = real_t(0); // as some grid cells could be void of particles
     thrust::counting_iterator<thrust_size_t> iter(0);
     thrust::for_each(iter, iter + (n.first - tmp_shrt.begin()), 
-      sdm::copy_from_device<real_t>(
+      sdm::thrust2blitz<real_t>(
         grid.nx(), tmp_shrt, tmp_long, sd_conc 
       )
     );
@@ -373,7 +377,7 @@ void eqs_todo_sdm<real_t>::sd_diag(ptr_unordered_map<string, mtx::arr<real_t>> &
     n_tot(n_tot.ijk) = real_t(0); // as some grid cells could be void of particles
     thrust::counting_iterator<thrust_size_t> iter(0);
     thrust::for_each(iter, iter + (n.first - tmp_shrt.begin()), 
-      sdm::copy_from_device<real_t>( 
+      sdm::thrust2blitz<real_t>( 
         grid.nx(), tmp_shrt, tmp_long, n_tot, 
         real_t(1) / grid.dx() / grid.dy() / grid.dz() * si::cubic_metres
       )
@@ -416,7 +420,7 @@ void eqs_todo_sdm<real_t>::sd_diag(ptr_unordered_map<string, mtx::arr<real_t>> &
     out(out.ijk) = real_t(0); // as some grid cells could be void of particles
     thrust::counting_iterator<thrust_size_t> iter(0);
     thrust::for_each(iter, iter + (n.first - tmp_shrt.begin()), 
-      sdm::copy_from_device<real_t>( 
+      sdm::thrust2blitz<real_t>( 
         grid.nx(), tmp_shrt, tmp_real, out, 
         real_t(1) / grid.dx() / grid.dy() / grid.dz() * si::cubic_metres
       )
@@ -437,7 +441,7 @@ void eqs_todo_sdm<real_t>::sd_advection(
   {
     thrust::counting_iterator<thrust_size_t> iter(0);
     thrust::for_each(iter, iter + envi.vx.size(), 
-      sdm::copy_to_device<real_t, real_t>(
+      sdm::blitz2thrust<real_t, real_t>(
         grid.nx() + 1, Cx, envi.vx, (grid.dx() / si::metres) / (dt / si::seconds)
       )
     );
@@ -445,7 +449,7 @@ void eqs_todo_sdm<real_t>::sd_advection(
   {
     thrust::counting_iterator<thrust_size_t> iter(0);
     thrust::for_each(iter, iter + envi.vy.size(), 
-      sdm::copy_to_device<real_t, real_t>(
+      sdm::blitz2thrust<real_t, real_t>(
         grid.nx(), Cy, envi.vy, (grid.dx() / si::metres) / (dt / si::seconds)
       )
     );
@@ -453,18 +457,6 @@ void eqs_todo_sdm<real_t>::sd_advection(
 
   // performing advection using odeint 
   F_xy->advance(stat.xy, dt);
-
-  // periodic boundary conditions (in-place transforms)
-  thrust::transform(stat.x_begin, stat.x_end, stat.x_begin, 
-    sdm::modulo<real_t>(
-      grid.nx() * (grid.dx() / si::metres)
-    )
-  );
-  thrust::transform(stat.y_begin, stat.y_end, stat.y_begin, //TODO: non-sense!
-    sdm::modulo<real_t>(
-      grid.ny() * (grid.dy() / si::metres)
-    )
-  );
 }
 
 template <typename real_t>
@@ -475,15 +467,29 @@ void eqs_todo_sdm<real_t>::sd_sedimentation(
 {
   // performing advection using odeint
   F_ys->advance(stat.xy, dt);
+}
 
-  // TODO: do something with particles that leave the domain
-  thrust::transform(stat.y_begin, stat.y_end, stat.y_begin, //TODO: non-sense!
+template <typename real_t>
+void eqs_todo_sdm<real_t>::sd_periodic_x()
+{
+  // periodic boundary condition (in-place transforms)
+  thrust::transform(stat.x_begin, stat.x_end, stat.x_begin, 
+    sdm::modulo<real_t>(
+      grid.nx() * (grid.dx() / si::metres)
+    )
+  );
+}
+
+template <typename real_t>
+void eqs_todo_sdm<real_t>::sd_periodic_y()
+{
+  // periodic boundary condition (in-place transforms)
+  thrust::transform(stat.y_begin, stat.y_end, stat.y_begin, 
     sdm::modulo<real_t>(
       grid.ny() * (grid.dy() / si::metres)
     )
   );
 }
-
   
 template <typename real_t>
 void eqs_todo_sdm<real_t>::sd_condevap(
@@ -491,7 +497,8 @@ void eqs_todo_sdm<real_t>::sd_condevap(
 )
 {
   // growing/shrinking the droplets
-  F_xi->advance(stat.xi, dt);
+  F_xi->advance(stat.xi, dt, 10); // TEMP!!!
+  assert(*thrust::min_element(stat.xi.begin(), stat.xi.end()) > 0);
 }
 #endif
 

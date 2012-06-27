@@ -102,6 +102,10 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     const quantity<si::time, real_t> dt
   );
 
+  private: void sd_periodic_x();
+  private: void sd_periodic_y();
+  private: void sd_ij();
+
   // private fields of eqs_todo_sdm
   private: map<enum processes, bool> opts;
   private: bool constant_velocity;
@@ -138,10 +142,22 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     mtx::arr<real_t> &rhod_th = psi[this->par.idx_rhod_th][n];
     mtx::arr<real_t> &rhod_rv = psi[this->par.idx_rhod_rv][n];
 
+    sd_ij();
     sd_sync(rhod, rhod_th, rhod_rv);
-    if (opts[cond]) sd_condevap(dt);  // /real_t(100000)); // TEMP!!! TODO TODO // does init() at first time step - has to be placed after sync, and before others
-    if (opts[adve]) sd_advection(dt, C[0], C[1]); // includes periodic boundary for super droplets!
-    if (opts[sedi]) sd_sedimentation(dt, aux.at("rhod")); // TODO: SD recycling!
+    if (opts[cond]) sd_condevap(dt); // does init() at first time step - has to be placed after sync, and before others
+    if (opts[adve]) 
+    {
+      sd_advection(dt, C[0], C[1]); // includes periodic boundary for super droplets!
+      sd_periodic_x();
+      sd_periodic_y();
+      sd_ij();
+    }
+    if (opts[sedi]) 
+    {
+      sd_sedimentation(dt, aux.at("rhod")); // TODO: SD recycling!
+      sd_periodic_y();
+      sd_ij();
+    }
 //    sd_chemistry(dt);
 //    sd_coalescence(dt);
 //    sd_breakup(dt);
