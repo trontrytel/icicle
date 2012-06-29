@@ -28,8 +28,7 @@
     - clang++ (>= 3.1) ................. http://clang.llvm.org/
     - ... 
 
-  - Blitz++ library ............. http://blitz.sourceforge.net/
-    (preferably the development version from the hg repository)
+  - Blitz++ library (>= 0.10) ... http://blitz.sourceforge.net/
 
   - Boost C++ libraries, incl.: ............. http://boost.org/
     - Boost.Units (header only)
