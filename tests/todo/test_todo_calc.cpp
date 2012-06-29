@@ -63,7 +63,7 @@ const quantity<si::dimensionless, real_t>
 // http://www.rap.ucar.edu/~gthompsn/workshop2012/case1/kinematic_wrain.vocals.v3.for
 const int 
   bits = 32,
-  fct = 1,  
+  fct = 0,  
   toa = 0,
   iord = 2;  
 const quantity<si::time, real_t> 
@@ -91,14 +91,14 @@ bool
 // sdm parameters
 std::string
   sdm_xi = "p2", 
-  sdm_ode_algo_xy = "rk4",
-  sdm_ode_algo_ys = "rk4",
+  sdm_ode_algo_xy = "mmid",
+  sdm_ode_algo_ys = "mmid",
   sdm_ode_algo_xi = "rk4";
 bool 
   sdm_adve = true,
   sdm_cond = true,
   sdm_coal = false,
-  sdm_sedi = true;
+  sdm_sedi = false;
 real_t 
   sd_conc_mean = 66,
   mean_rd1 = .04e-6,

@@ -52,9 +52,10 @@ namespace sdm
     public: void operator()(
       const thrust::device_vector<real_t>&, 
       thrust::device_vector<real_t> &dxy_dt, 
-      const real_t
+      const real_t t
     )
     {
+cerr << "ode_xy::operator(" << t << ") called..." << endl;
       // TODO use positions to interpolate velocities! (as an option?)
       thrust::counting_iterator<thrust_size_t> iter(0);
       thrust::transform(

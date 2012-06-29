@@ -130,14 +130,24 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
       odeint::thrust_operations
     > algo_rk4;
 
+  typedef odeint::modified_midpoint<
+      thrust::device_vector<real_t>, // state type
+      real_t, // value_type
+      thrust::device_vector<real_t>, // deriv type
+      real_t, // time type
+      odeint::thrust_algebra,
+      odeint::thrust_operations
+    > algo_mmid;
+
   // initialising ODE right-hand-sides
   switch (xy_algo) // advection
   {
     case euler: F_xy.reset(new sdm::ode_xy<real_t, algo_euler>(stat, envi)); break;
+    case mmid : F_xy.reset(new sdm::ode_xy<real_t, algo_mmid >(stat, envi)); break;
     case rk4  : F_xy.reset(new sdm::ode_xy<real_t, algo_rk4  >(stat, envi)); break;
     default: assert(false);
   }
-  switch (xy_algo) // condensation/evaporation
+  switch (xi_algo) // condensation/evaporation
   {
     case euler: switch (xi_dfntn)
     {
@@ -145,6 +155,15 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
       case ln : F_xi.reset(new sdm::ode_xi<real_t, algo_euler, sdm::xi_ln<real_t>>(stat, envi, drhov, grid)); break;
       case p2 : F_xi.reset(new sdm::ode_xi<real_t, algo_euler, sdm::xi_p2<real_t>>(stat, envi, drhov, grid)); break;
       case p3 : F_xi.reset(new sdm::ode_xi<real_t, algo_euler, sdm::xi_p3<real_t>>(stat, envi, drhov, grid)); break;
+      default: assert(false);
+    } 
+    break;
+    case mmid: switch (xi_dfntn)
+    {
+      case id : F_xi.reset(new sdm::ode_xi<real_t, algo_mmid, sdm::xi_id<real_t>>(stat, envi, drhov, grid)); break;
+      case ln : F_xi.reset(new sdm::ode_xi<real_t, algo_mmid, sdm::xi_ln<real_t>>(stat, envi, drhov, grid)); break;
+      case p2 : F_xi.reset(new sdm::ode_xi<real_t, algo_mmid, sdm::xi_p2<real_t>>(stat, envi, drhov, grid)); break;
+      case p3 : F_xi.reset(new sdm::ode_xi<real_t, algo_mmid, sdm::xi_p3<real_t>>(stat, envi, drhov, grid)); break;
       default: assert(false);
     } 
     break;
@@ -167,6 +186,15 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
       case ln : F_ys.reset(new sdm::ode_ys<real_t,algo_euler,sdm::xi_ln<real_t>>(stat, envi)); break;
       case p2 : F_ys.reset(new sdm::ode_ys<real_t,algo_euler,sdm::xi_p2<real_t>>(stat, envi)); break;
       case p3 : F_ys.reset(new sdm::ode_ys<real_t,algo_euler,sdm::xi_p3<real_t>>(stat, envi)); break;
+      default: assert(false);
+    }
+    break;
+    case mmid: switch (xi_dfntn)
+    {
+      case id : F_ys.reset(new sdm::ode_ys<real_t,algo_mmid,  sdm::xi_id<real_t>>(stat, envi)); break;
+      case ln : F_ys.reset(new sdm::ode_ys<real_t,algo_mmid,  sdm::xi_ln<real_t>>(stat, envi)); break;
+      case p2 : F_ys.reset(new sdm::ode_ys<real_t,algo_mmid,  sdm::xi_p2<real_t>>(stat, envi)); break;
+      case p3 : F_ys.reset(new sdm::ode_ys<real_t,algo_mmid,  sdm::xi_p3<real_t>>(stat, envi)); break;
       default: assert(false);
     }
     break;

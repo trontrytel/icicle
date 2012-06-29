@@ -29,7 +29,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
 {
   // a container for storing options (i.e. which processes ar on/off)
   public: enum processes {adve, cond, sedi, coal};
-  public: enum ode_algos {euler, rk4};
+  public: enum ode_algos {euler, mmid, rk4};
   public: enum xi_dfntns {id, ln, p2, p3};
 
   private: typename eqs_todo<real_t>::params par;
@@ -134,6 +134,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     const quantity<si::time, real_t> dt
   )
   {
+cerr << "adjustments..." << endl;
     //assert(sd_conc.lbound(mtx::k) == sd_conc.ubound(mtx::k)); // 2D
 
     // TODO: substepping with different timesteps as an option
@@ -163,15 +164,18 @@ class eqs_todo_sdm : public eqs_todo<real_t>
 //    sd_breakup(dt);
     sd_diag(aux); 
 
-    // (drhov is filled-in initially at F_xi->init())
-    const mtx::idx &ijk = drhov.ijk;
-    drhov(ijk) -= (aux.at("m_3"))(ijk); // now that's <r^3>_old - <r^3>_new = -\Delta <r^3> (per unit volume)
-    drhov(ijk) *= // calculating \Delta rhod_rv
-      (phc::rho_w<real_t>() / si::kilograms * si::cubic_metres) // water density
-      * real_t(4./3) * phc::pi<real_t>(); // <r^3> --> volume
-    rhod_rv(ijk) += drhov(ijk);
-    //rhod_th -= rhod_th / rhod * (phc::l_v<real_t>(T) / real_t(pow(1 + r, 2)) / phc::c_p(r) / T); // TODO!!!
-    drhov(ijk) = (aux.at("m_3"))(ijk); // for the next timestep
+    if (opts[cond])
+    {
+      // (drhov is filled-in initially at F_xi->init())
+      const mtx::idx &ijk = drhov.ijk;
+      drhov(ijk) -= (aux.at("m_3"))(ijk); // now that's <r^3>_old - <r^3>_new = -\Delta <r^3> (per unit volume)
+      drhov(ijk) *= // calculating \Delta rhod_rv
+        (phc::rho_w<real_t>() / si::kilograms * si::cubic_metres) // water density
+        * real_t(4./3) * phc::pi<real_t>(); // <r^3> --> volume
+      rhod_rv(ijk) += drhov(ijk);
+      //rhod_th -= rhod_th / rhod * (phc::l_v<real_t>(T) / real_t(pow(1 + r, 2)) / phc::c_p(r) / T); // TODO!!!
+      drhov(ijk) = (aux.at("m_3"))(ijk); // for the next timestep
+    }
   }
 #endif
 };
