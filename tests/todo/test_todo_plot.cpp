@@ -40,6 +40,10 @@ using blitz::Range;
 #define GNUPLOT_ENABLE_BLITZ
 #include <gnuplot-iostream/gnuplot-iostream.h>
 
+// mkdir
+#include <sys/stat.h>
+#include <sys/types.h>
+
 #include "../../src/cmn.hpp"
 #include "../../src/phc.hpp"
 
@@ -53,10 +57,13 @@ std::string zeropad(int n)
   return tmp.str();
 }
 
-int main()
+int main(int argc, char **argv)
 {
+
+  string dir= argc > 1 ? argv[1] : "tmp";
+ 
   notice_macro("opening netCDF file")
-  NcFile nf("out.nc", NcFile::read);
+  NcFile nf(dir+"/out.nc", NcFile::read);
 
   notice_macro("reading dt_out")
   quantity<si::time, real_t> dt_out;
@@ -96,7 +103,7 @@ int main()
   notice_macro("allocating temp storage space")
   Array<real_t,2> tmp0(nx, ny), tmp1(nx, ny), rhod(nx, ny), rv(nx,ny), th(nx,ny);
   {
-    NcFile nfini("ini.nc", NcFile::read);
+    NcFile nfini(dir+"/ini.nc", NcFile::read);
     for (int i = 0; i < nx; ++i)
     {
       Range j(0, ny-1);
@@ -107,8 +114,6 @@ int main()
 
   notice_macro("setting-up plot parameters")
   Gnuplot gp;
-
-  system("mkdir -p tmp");
 
   for (size_t t = 0 ; t < nt; ++t) for (string &ext : list<string>({"eps","png"}))
   {
@@ -135,7 +140,7 @@ int main()
       gp << "set term postscript size 36cm,24cm solid enhanced color" << endl;
     else assert(false);
 
-    gp << "set output 'tmp/test_" << zeropad(t) << "." << ext << "'" << endl;
+    gp << "set output '" << dir << "/test_" << zeropad(t) << "." << ext << "'" << endl;
     gp << "set multiplot layout 3,2" << endl;
 
     gp << "set title 'water vapour mixing ratio [g/kg]'" << endl;
@@ -155,7 +160,6 @@ int main()
     gp.sendBinary(th);
 
 
-/*
     // bulk-relevant plots:
     gp << "set title 'liquid water mixing ratio [g/kg]'" << endl;
     gp << "set cbrange [0:1]" << endl;
@@ -173,8 +177,8 @@ int main()
     gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using ($1*1000) with image notitle";
     gp << endl;
     gp.sendBinary(tmp0);
-*/
 
+/*
     // sdm-relevant plots:
     gp << "set title 'super-droplet conc. [1/dx/dy/dz]'" << endl;
     gp << "set cbrange [0:150]" << endl;
@@ -208,12 +212,14 @@ int main()
     gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";
     gp << endl;
     gp.sendBinary(tmp0);
+*/
 
     gp << "unset multiplot" << endl;
     gp << "unset label" << endl;
   }
 
-  system("convert -monitor -delay 10 tmp/test_*.png todo.gif");
+  string cmd="convert -monitor -delay 10 " + dir + "/test_*.png todo.gif 1>&2";
+  system(cmd.c_str());
   notice_macro("done.")
 }
 

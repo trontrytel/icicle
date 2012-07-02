@@ -1,0 +1,135 @@
+<!DOCTYPE html> 
+<html>
+  <head>
+    <title>        </title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <style type="text/css">
+    body {
+    /* IE10 Consumer Preview */ 
+    background-image: -ms-linear-gradient(top, #000000 0%, #2E2E42 50%, #877F94 100%);
+
+    /* Mozilla Firefox */ 
+    background-image: -moz-linear-gradient(top, #000000 0%, #2E2E42 50%, #877F94 100%);
+
+    /* Opera */ 
+    background-image: -o-linear-gradient(top, #000000 0%, #2E2E42 50%, #877F94 100%);
+
+    /* Webkit (Safari/Chrome 10) */ 
+    background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #000000), color-stop(0.5, #2E2E42), color-stop(1, #877F94));
+
+    /* Webkit (Chrome 11+) */ 
+    background-image: -webkit-linear-gradient(top, #000000 0%, #2E2E42 50%, #877F94 100%);
+
+    /* W3C Markup, IE10 Release Preview */ 
+    background-image: linear-gradient(to bottom, #000000 0%, #2E2E42 50%, #877F94 100%);
+    
+    color : white;
+    font-family : Verdana;
+    }
+    </style>
+    <script src="https://github.com/fryn/html5slider/raw/master/html5slider.js">
+    </script>
+  </head>
+  <body>
+
+  <center>
+    <span style="font-size : 10em">  icicle </span>
+  </center>
+  <center>
+    <span style="font-size : 1.9em">  http://icicle.igf.fuw.edu.pl/ </span>
+  </center>
+
+  <form action="test_todo.cgi" target="plot" >
+    <input type="hidden" name="micro" value="bulk" />
+    <fieldset>
+      <legend> initial conditions </legend>
+
+      <fieldset>
+        <legend> initial mixing ratio [ ]</legend>
+        <input type="range" min="0.004" max="0.01" step="0.0005" value="0.0075" onchange="showValueA(this.value)" name="rt_0" />
+        <span id="range0">0.0075</span>
+        <script type="text/javascript">
+        function showValueA(newValue)
+        {
+	  document.getElementById("range0").innerHTML=parseFloat(newValue).toFixed(4);
+        }
+        </script>
+      </fieldset>
+
+      <fieldset>
+        <legend> initial temperature [K]</legend>
+        <input type="range" min="283" max="303" value="289" onchange="showValueB(this.value)" />
+        <span id="range1">289</span>
+        <script type="text/javascript">
+        function showValueB(newValue)
+        {
+	  document.getElementById("range1").innerHTML=newValue;
+        }
+        </script>    
+      </fieldset>   
+
+      <fieldset>
+        <legend> initial maximum vertical velocity [m/s]</legend>
+        <input type="range" min="0" max="2" step="0.1" value="0.6" onchange="showValueC(this.value)" />
+        <span id="range3">0.6</span>
+        <script type="text/javascript">
+        function showValueC(newValue)
+        {
+	  document.getElementById("range3").innerHTML=parseFloat(newValue).toFixed(1);
+        }
+        </script>    
+      </fieldset>
+
+    </fieldset>
+
+<!--    <fieldset>
+      <legend> microphysics </legend>
+      bulk   <input type="radio" name="bulk"/>
+             <input type="radio" name="bulk"/>  super droplets
+    </fieldset>
+-->
+    <fieldset>
+      <legend> microphysics options </legend>
+
+      Kessler parametrisation of cloud and rain
+
+
+      <fieldset>
+        <legend> condensation </legend>
+            <label for="cond-t">on</label>
+            <input type="radio" name="cond" value="1" id="cond-t"/>
+            <label for="cond-f">off</label>
+            <input type="radio" name="cond" value="0" id="cond-f"/>
+      </fieldset>
+      <fieldset>
+        <legend> cloud evaporation </legend>
+        on  <input type="radio" name="cevp"/>
+            <input type="radio" name="cevp"/> off
+      </fieldset>
+      <fieldset>
+        <legend> conversion </legend>
+        on  <input type="radio" name="conv"/>
+            <input type="radio" name="conv"/> off
+      </fieldset>
+      <fieldset>
+        <legend> collection </legend>
+        on  <input type="radio" name="clct"/>
+            <input type="radio" name="clct"/> off
+      </fieldset>
+      <fieldset>
+        <legend> sedimentation </legend>
+        on  <input type="radio" name="sedi"/>
+            <input type="radio" name="sedi"/> off
+      </fieldset>
+      <fieldset>
+        <legend> rain evaporation </legend>
+        on  <input type="radio" name="revp"/>
+            <input type="radio" name="revp"/> off
+      </fieldset>
+
+    </fieldset>
+  <input type="submit" />
+  </form>
+
+  </body>
+</html>

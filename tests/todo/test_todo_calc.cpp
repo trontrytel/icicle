@@ -35,9 +35,27 @@ using boost::units::quantity;
 using boost::units::divide_typeof_helper;
 using boost::units::detail::get_value;
 
+// mkdir()
+#include <sys/stat.h>
+#include <sys/types.h>
+
+#include <boost/lexical_cast.hpp>
+
 #include "../../src/cmn.hpp"
 #include "../../src/phc_theta.hpp"
 #include "../../src/phc_terminal_vel.hpp"
+
+#include <cgicc/Cgicc.h>
+cgicc::Cgicc cgi;
+
+template <typename T>
+T http_or_default(const string &name, const T &def)
+{
+  string tmp;
+  try { tmp = cgi(name); } catch (...) { return def; }
+  cerr << "got: " << tmp << endl;
+  return boost::lexical_cast<T>(tmp);
+}
 
 typedef float real_t;
 
@@ -52,7 +70,7 @@ const quantity<si::length,real_t>
 const quantity<si::temperature, real_t>
   th_0 = 289 * si::kelvins;   // 289 K
 const quantity<phc::mixing_ratio, real_t>
-  rt_0 = 7.5e-3;              // 7.5e-3 kg/kg
+  rt_0 = http_or_default("rt_0", 7.5e-3);              // 7.5e-3 kg/kg
 const quantity<si::pressure, real_t> 
   p_0 = 101500 * si::pascals; // 1015 hPa
 const quantity<si::dimensionless, real_t>
@@ -77,16 +95,16 @@ const quantity<divide_typeof_helper<si::momentum, si::area>::type, real_t>
   ampl = rho_0 * w_max * (real_t(nx) * dx) / real_t(4*atan(1));
 
 // options for microphysics
-std::string micro = "sdm"; // sdm | bulk
+std::string micro = http_or_default("micro", string("sdm")); // sdm | bulk
 
 // blk parameters
 bool 
-  blk_cond = true,
-  blk_cevp = true,
-  blk_conv = true,
-  blk_clct = true,
-  blk_sedi = true,
-  blk_revp = true;
+  blk_cond = http_or_default("cond", true),
+  blk_cevp = true, //http_or_default("cevp", true),
+  blk_conv = true, //http_or_default("conv", true),
+  blk_clct = true, //http_or_default("clct", true),
+  blk_sedi = true, //http_or_default("sedi", true),
+  blk_revp = true; //http_or_default("revp", true);
 
 // sdm parameters
 std::string
@@ -100,7 +118,7 @@ bool
   sdm_coal = false,
   sdm_sedi = false;
 real_t 
-  sd_conc_mean = 66,
+  sd_conc_mean = 99,
   mean_rd1 = .04e-6,
   mean_rd2 = .15e-6,
   sdev_rd1 = 1.4,
@@ -138,11 +156,15 @@ quantity<si::mass_density, real_t> rhod_todo(
   return (p - phc::p_v<real_t>(p, rt_0)) / (phc::exner<real_t>(p, rt_0) * phc::R_d<real_t>() * th_0);
 }
 
-int main()
+int main(int argc, char **argv)
 {
+  string dir = argc > 1 ? argv[1] : "tmp";
+  notice_macro("creating " << dir << "...");
+  mkdir(dir.c_str(), 0777);
+
   {
     notice_macro("creating rho.nc ...")
-    NcFile nf("rho.nc", NcFile::newFile, NcFile::classic);
+    NcFile nf(dir + "/rho.nc", NcFile::newFile, NcFile::classic);
 
     // dimensions and variables
     NcDim ndy = nf.addDim("Y", 2 * ny+1); 
@@ -161,10 +183,11 @@ int main()
       nvy.putVar(start({j}), z / si::metres);
       nvrho.putVar(start({j}), rhod * si::cubic_metres / si::kilogram);
     }
-  }
+  } // nf gets closed here
+
   {
     notice_macro("creating ini.nc ...")
-    NcFile nf("ini.nc", NcFile::newFile, NcFile::classic);
+    NcFile nf(dir + "/ini.nc", NcFile::newFile, NcFile::classic);
 
     // dimensions
     NcDim ndx = nf.addDim("X", 1); 
@@ -221,7 +244,7 @@ int main()
     << "../../icicle"
     << " --bits " << bits
     << " --ini netcdf"
-    << " --ini.netcdf.file ini.nc"
+    << " --ini.netcdf.file " << dir << "/ini.nc"
     << " --grd.dx " << dx / si::metres
     << " --grd.nx " << nx
     << " --grd.dy " << dy / si::metres
@@ -231,13 +254,13 @@ int main()
       << " --adv.mpdata.iord " << iord
       << " --adv.mpdata.third_order " << toa
     << " --vel rasinski"
-      << " --vel.rasinski.file " << "rho.nc"
+      << " --vel.rasinski.file " << dir << "/rho.nc"
       << " --vel.rasinski.A " << ampl
     << " --t_max " << real_t(t_max / si::seconds)
     << " --dt " << "auto" 
     << " --dt_out " << real_t(dt_out / si::seconds)
     << " --out netcdf" 
-    << " --out.netcdf.file out.nc"
+    << " --out.netcdf.file " << dir << "/out.nc"
     //<< " --slv serial"
     << " --slv openmp --nsd 1"
     ;
