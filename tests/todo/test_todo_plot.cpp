@@ -159,60 +159,66 @@ int main(int argc, char **argv)
     gp << endl;
     gp.sendBinary(th);
 
+    string micro = "sdm";
+    try { nf.getVar("m_0"); } catch (...) { micro = "bulk"; }
 
-    // bulk-relevant plots:
-    gp << "set title 'liquid water mixing ratio [g/kg]'" << endl;
-    gp << "set cbrange [0:1]" << endl;
-    nf.getVar("rhod_rl").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
-    tmp0 /= rhod;
-    gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using ($1*1000) with image notitle";
-    gp << endl;
-    gp.sendBinary(tmp0);
+    if (micro == "bulk")
+    {
+      // bulk-relevant plots:
+      gp << "set title 'liquid water mixing ratio [g/kg]'" << endl;
+      gp << "set cbrange [0:1]" << endl;
+      nf.getVar("rhod_rl").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
+      tmp0 /= rhod;
+      gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using ($1*1000) with image notitle";
+      gp << endl;
+      gp.sendBinary(tmp0);
 
-    gp << "set title 'rain water mixing ratio [g/kg]'" << endl;
-    gp << "set cbrange [0.:.02]" << endl;
-    gp << "set cbtics .01" << endl;
-    nf.getVar("rhod_rr").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
-    tmp0 /= rhod;
-    gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using ($1*1000) with image notitle";
-    gp << endl;
-    gp.sendBinary(tmp0);
+      gp << "set title 'rain water mixing ratio [g/kg]'" << endl;
+      gp << "set cbrange [0.:.02]" << endl;
+      gp << "set cbtics .01" << endl;
+      nf.getVar("rhod_rr").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
+      tmp0 /= rhod;
+      gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using ($1*1000) with image notitle";
+      gp << endl;
+      gp.sendBinary(tmp0);
+    }
+    else if (micro == "sdm")
+    {
+      // sdm-relevant plots:
+      gp << "set title 'super-droplet conc. [1/dx/dy/dz]'" << endl;
+      gp << "set cbrange [0:150]" << endl;
+      nf.getVar("sd_conc").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
+      gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";
+      gp << endl;
+      gp.sendBinary(tmp0);
 
-/*
-    // sdm-relevant plots:
-    gp << "set title 'super-droplet conc. [1/dx/dy/dz]'" << endl;
-    gp << "set cbrange [0:150]" << endl;
-    nf.getVar("sd_conc").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
-    gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";
-    gp << endl;
-    gp.sendBinary(tmp0);
+      gp << "set title 'cloud droplet conc. [1/cm^3]'" << endl;
+      gp << "set cbrange [0:150]" << endl;
+      nf.getVar("m_0").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
+      tmp0 /= 1e6;
+      gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";
+      gp << endl;
+      gp.sendBinary(tmp0);
 
-    gp << "set title 'cloud droplet conc. [1/cm^3]'" << endl;
-    gp << "set cbrange [0:150]" << endl;
-    nf.getVar("m_0").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
-    tmp0 /= 1e6;
-    gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";
-    gp << endl;
-    gp.sendBinary(tmp0);
+      gp << "set title 'aerosol concentration [1/cm^3]'" << endl;
+      gp << "set cbrange [0:150]" << endl;
+      nf.getVar("n_tot").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp1.data()); 
+      tmp0 = tmp1 / 1e6 - tmp0;
+      gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";
+      gp << endl;
+      gp.sendBinary(tmp0);
 
-    gp << "set title 'aerosol concentration [1/cm^3]'" << endl;
-    gp << "set cbrange [0:150]" << endl;
-    nf.getVar("n_tot").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp1.data()); 
-    tmp0 = tmp1 / 1e6 - tmp0;
-    gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";
-    gp << endl;
-    gp.sendBinary(tmp0);
-
-    gp << "set title 'cloud droplet effective radius [{/Symbol m}m]'" << endl;
-    gp << "set autoscale cb" << endl;
-    nf.getVar("m_3").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
-    nf.getVar("m_2").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp1.data()); 
-    tmp0 /= tmp1;
-    tmp0 *= 1e6;
-    gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";
-    gp << endl;
-    gp.sendBinary(tmp0);
-*/
+      gp << "set title 'cloud droplet effective radius [{/Symbol m}m]'" << endl;
+      gp << "set autoscale cb" << endl;
+      nf.getVar("m_3").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
+      nf.getVar("m_2").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp1.data()); 
+      tmp0 /= tmp1;
+      tmp0 *= 1e6;
+      gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";
+      gp << endl;
+      gp.sendBinary(tmp0);
+    }
+    else assert(false);
 
     gp << "unset multiplot" << endl;
     gp << "unset label" << endl;
