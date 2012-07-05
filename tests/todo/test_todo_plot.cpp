@@ -134,14 +134,18 @@ int main(int argc, char **argv)
 
     gp << "set label 't = " << int(real_t(t) * dt_out / si::seconds) << " s' at screen .48,.96 left" << endl;
 
+    // TODO...
+    string micro = nf.getVar("m_0").isNull() ? "bulk" : "sdm";
+    int rows = micro == "bulk" ? 2 : 3;
+
     if (ext == "png")
-      gp << "set term png enhanced size 800,800" << endl;
+      gp << "set term png enhanced size 1000," << rows * 500 << endl;
     else if (ext == "eps")
-      gp << "set term postscript size 36cm,24cm solid enhanced color" << endl;
+      gp << "set term postscript size 24cm," << 12 * rows << "cm solid enhanced color" << endl;
     else assert(false);
 
     gp << "set output '" << dir << "/test_" << zeropad(t) << "." << ext << "'" << endl;
-    gp << "set multiplot layout 3,2" << endl;
+    gp << "set multiplot layout " << rows << ",2" << endl;
 
     gp << "set title 'water vapour mixing ratio [g/kg]'" << endl;
     gp << "set cbrange [6:8]" << endl;
@@ -159,9 +163,6 @@ int main(int argc, char **argv)
     gp << endl;
     gp.sendBinary(th);
 
-    string micro = "sdm";
-    try { nf.getVar("m_0"); } catch (...) { micro = "bulk"; }
-
     if (micro == "bulk")
     {
       // bulk-relevant plots:
@@ -174,7 +175,7 @@ int main(int argc, char **argv)
       gp.sendBinary(tmp0);
 
       gp << "set title 'rain water mixing ratio [g/kg]'" << endl;
-      gp << "set cbrange [0.:.02]" << endl;
+      gp << "set cbrange [0.:.01]" << endl;
       gp << "set cbtics .01" << endl;
       nf.getVar("rhod_rr").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
       tmp0 /= rhod;
@@ -224,7 +225,7 @@ int main(int argc, char **argv)
     gp << "unset label" << endl;
   }
 
-  string cmd="convert -monitor -delay 10 " + dir + "/test_*.png todo.gif 1>&2";
+  string cmd="convert -monitor -delay 10 -loop 1 " + dir + "/test_*.png " + dir + "/todo.gif 1>&2";
   system(cmd.c_str());
   notice_macro("done.")
 }

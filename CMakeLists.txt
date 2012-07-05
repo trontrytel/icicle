@@ -13,11 +13,11 @@ cmake_minimum_required(VERSION 2.8.6) # for CMakePushCheckState
 # TODO: -fprofile-use, -fprofile-generate
 set(TMP "-std=c++0x") # C++11 (name understandable for pre-2011 compilers)
 set(CMAKE_CXX_FLAGS_RELEASE "${TMP} -DNDEBUG -Wfatal-errors" CACHE STRING "Release options." FORCE)
-if (CMAKE_COMPILER_IS_GNUCXX)
-  set(CMAKE_CXX_FLAGS_RELEASE "${TMP} -Ofast" CACHE STRING "Release options." FORCE)
-else()
-  set(CMAKE_CXX_FLAGS_RELEASE "${TMP} -O3" CACHE STRING "Release options." FORCE)
-endif()
+#if (CMAKE_COMPILER_IS_GNUCXX)
+  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Ofast" CACHE STRING "Release options." FORCE)
+#else()
+#  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3" CACHE STRING "Release options." FORCE)
+#endif()
 set(CMAKE_CXX_FLAGS_DEBUG "${TMP} -DBZ_DEBUG" CACHE STRING "Debug options." FORCE)
 unset(TMP)
 

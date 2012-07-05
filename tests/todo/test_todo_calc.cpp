@@ -1,5 +1,6 @@
 /* @file
  *  @author Sylwester Arabas <slayoo@igf.fuw.edu.pl>
+ *  @author Ania Jaruga <ajaruga@igf.fuw.edu.pl>
  *  @copyright University of Warsaw
  *  @date March 2012
  *  @section LICENSE
@@ -51,10 +52,10 @@ cgicc::Cgicc cgi;
 template <typename T>
 T http_or_default(const string &name, const T &def)
 {
+  static char *qs = getenv("QUERY_STRING");
+  if (qs == NULL) return def;
   string tmp;
-  try { tmp = cgi(name); } catch (...) { return def; }
-  cerr << "got: " << tmp << endl;
-  return boost::lexical_cast<T>(tmp);
+  return boost::lexical_cast<T>(cgi(name));
 }
 
 typedef float real_t;
@@ -62,15 +63,15 @@ typedef float real_t;
 // simulation parameteters (the 8th WMO Cloud Modelling Workshop: Case 1    
 // by W.W.Grabowski: http://rap.ucar.edu/~gthompsn/workshop2012/case1/case1.pdf  
 const size_t 
-  nx = 75,                   // 75 
-  ny = 75;                    // 75 
+  nx = http_or_default("nx",size_t(75)),                   // 75 
+  ny = http_or_default("ny",size_t(75));                    // 75 
 const quantity<si::length,real_t> 
-  dx = 20 * si::metres,       // 20 m
-  dy = 20 * si::metres;       // 20 m
+  dx = http_or_default("dx",real_t(20.)) * si::metres,       // 20 m
+  dy = http_or_default("dy",real_t(20.)) * si::metres;       // 20 m
 const quantity<si::temperature, real_t>
-  th_0 = 289 * si::kelvins;   // 289 K
+  th_0 = http_or_default("th_0", real_t(289)) * si::kelvins;   // 289 K
 const quantity<phc::mixing_ratio, real_t>
-  rt_0 = http_or_default("rt_0", 7.5e-3);              // 7.5e-3 kg/kg
+  rt_0 = http_or_default("rt_0", real_t(7.5e-3));              // 7.5e-3 kg/kg
 const quantity<si::pressure, real_t> 
   p_0 = 101500 * si::pascals; // 1015 hPa
 const quantity<si::dimensionless, real_t>
@@ -80,31 +81,31 @@ const quantity<si::dimensionless, real_t>
 // other parameters deduced from the Fortran code published at:
 // http://www.rap.ucar.edu/~gthompsn/workshop2012/case1/kinematic_wrain.vocals.v3.for
 const int 
-  bits = 64,
-  fct = 1,  
-  toa = 0,
-  iord = 2;  
+  bits = http_or_default("bits", int(32)),
+  fct = http_or_default("fct", int(0)),  
+  toa = http_or_default("toa", int(0)),
+  iord = http_or_default("iord", int(2)),
+  nsd = http_or_default("nsd", int(1));  
 const quantity<si::time, real_t> 
-  t_max = 20 * si::seconds, // 4 * 3600
-  dt_out = real_t(10) * si::seconds; // 300
+  t_max = 1200 * si::seconds, // 4 * 3600
+  dt_out = real_t(100) * si::seconds; // 300
 const quantity<si::velocity, real_t>
-  w_max = real_t(.6) * si::metres / si::second; // .6 TODO: check it!
+  w_max = http_or_default("w_max", real_t(.6)) * si::metres / si::second; // .6 TODO: check it!
 const quantity<si::mass_density, real_t>
   rho_0 = 1 * si::kilograms / si::cubic_metres;
 const quantity<divide_typeof_helper<si::momentum, si::area>::type, real_t> 
   ampl = rho_0 * w_max * (real_t(nx) * dx) / real_t(4*atan(1));
 
 // options for microphysics
-std::string micro = http_or_default("micro", string("sdm")); // sdm | bulk
+std::string micro = http_or_default("micro", string("bulk")); // sdm | bulk
 
 // blk parameters
 bool 
-  blk_cond = http_or_default("cond", true),
-  blk_cevp = true, //http_or_default("cevp", true),
-  blk_conv = true, //http_or_default("conv", true),
-  blk_clct = true, //http_or_default("clct", true),
-  blk_sedi = true, //http_or_default("sedi", true),
-  blk_revp = true; //http_or_default("revp", true);
+  blk_cevp = http_or_default("cevp", false),
+  blk_conv = http_or_default("conv", false),
+  blk_clct = http_or_default("clct", false),
+  blk_sedi = http_or_default("sedi", false),
+  blk_revp = http_or_default("revp", false);
 
 // sdm parameters
 std::string
@@ -262,10 +263,9 @@ int main(int argc, char **argv)
     << " --out netcdf" 
     << " --out.netcdf.file " << dir << "/out.nc"
     //<< " --slv serial"
-    << " --slv openmp --nsd 1"
+    << " --slv openmp --nsd " << nsd
     ;
     if (micro == "bulk") cmd << " --eqs todo_bulk"
-      << " --eqs.todo_bulk.cond " << blk_cond
       << " --eqs.todo_bulk.cevp " << blk_cevp
       << " --eqs.todo_bulk.conv " << blk_conv
       << " --eqs.todo_bulk.clct " << blk_clct

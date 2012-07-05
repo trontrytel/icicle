@@ -93,7 +93,6 @@ eqs<real_t> *opt_eqs(
   if (initype == "todo_bulk")
     return new eqs_todo_bulk_ode<real_t>(grid,
       map<enum eqs_todo_bulk<real_t>::processes, bool>({
-        {eqs_todo_bulk<real_t>::cond, vm["eqs.todo_bulk.cond"].as<bool>()},
         {eqs_todo_bulk<real_t>::cevp, vm["eqs.todo_bulk.cevp"].as<bool>()},
         {eqs_todo_bulk<real_t>::conv, vm["eqs.todo_bulk.conv"].as<bool>()},
         {eqs_todo_bulk<real_t>::clct, vm["eqs.todo_bulk.clct"].as<bool>()},
