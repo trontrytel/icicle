@@ -28,10 +28,12 @@ namespace sdm
     thrust::device_vector<real_t> vx, vy;
     int vx_nx, vx_ny, vy_nx, vy_ny, n_cell; 
 
-    // fields copied from the Eulerian model
+    // fields copied "as is" from the Eulerian model
     thrust::device_vector<real_t> rhod, rhod_th, rhod_rv;
     // derived fields
     thrust::device_vector<real_t> T, p, r;
+    // diagnosed fields
+    thrust::device_vector<real_t> m_3_old, m_3_new;
 
     // ctor
     envi_t(int nx, int ny) 
@@ -51,6 +53,8 @@ namespace sdm
       T.resize(n_cell);
       p.resize(n_cell);
       r.resize(n_cell);
+      m_3_old.resize(n_cell);
+      m_3_new.resize(n_cell);
     }
   };
 

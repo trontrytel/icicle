@@ -22,7 +22,7 @@ class eqs_todo_bulk : public eqs_todo<real_t>
   protected: params par;
 
   // a container for storing options (i.e. which processes ar on/off)
-  public: enum processes {cond, cevp, conv, clct, sedi, revp};
+  public: enum processes {cevp, conv, clct, sedi, revp};
   private: map<enum processes, bool> opts;
 
   // nested class

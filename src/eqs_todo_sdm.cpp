@@ -45,12 +45,7 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
   constant_velocity(velocity.is_constant()),
   stat(grid.nx(), grid.ny(), sd_conc_mean),
   envi(grid.nx(), grid.ny()),
-  xi_dfntn(xi_dfntn), 
-  drhov(mtx::idx_ijk(
-      mtx::rng(0,grid.nx()-1), 
-      mtx::rng(0,grid.ny()-1)
-    )
-  )
+  xi_dfntn(xi_dfntn)
 {
   // TODO: assert that we use no paralellisation or allow some parallelism!
   // TODO: random seed as an option
@@ -151,28 +146,28 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
   {
     case euler: switch (xi_dfntn)
     {
-      case id : F_xi.reset(new sdm::ode_xi<real_t, algo_euler, sdm::xi_id<real_t>>(stat, envi, drhov, grid)); break;
-      case ln : F_xi.reset(new sdm::ode_xi<real_t, algo_euler, sdm::xi_ln<real_t>>(stat, envi, drhov, grid)); break;
-      case p2 : F_xi.reset(new sdm::ode_xi<real_t, algo_euler, sdm::xi_p2<real_t>>(stat, envi, drhov, grid)); break;
-      case p3 : F_xi.reset(new sdm::ode_xi<real_t, algo_euler, sdm::xi_p3<real_t>>(stat, envi, drhov, grid)); break;
+      case id : F_xi.reset(new sdm::ode_xi<real_t, algo_euler, sdm::xi_id<real_t>>(stat, envi, grid)); break;
+      case ln : F_xi.reset(new sdm::ode_xi<real_t, algo_euler, sdm::xi_ln<real_t>>(stat, envi, grid)); break;
+      case p2 : F_xi.reset(new sdm::ode_xi<real_t, algo_euler, sdm::xi_p2<real_t>>(stat, envi, grid)); break;
+      case p3 : F_xi.reset(new sdm::ode_xi<real_t, algo_euler, sdm::xi_p3<real_t>>(stat, envi, grid)); break;
       default: assert(false);
     } 
     break;
     case mmid: switch (xi_dfntn)
     {
-      case id : F_xi.reset(new sdm::ode_xi<real_t, algo_mmid, sdm::xi_id<real_t>>(stat, envi, drhov, grid)); break;
-      case ln : F_xi.reset(new sdm::ode_xi<real_t, algo_mmid, sdm::xi_ln<real_t>>(stat, envi, drhov, grid)); break;
-      case p2 : F_xi.reset(new sdm::ode_xi<real_t, algo_mmid, sdm::xi_p2<real_t>>(stat, envi, drhov, grid)); break;
-      case p3 : F_xi.reset(new sdm::ode_xi<real_t, algo_mmid, sdm::xi_p3<real_t>>(stat, envi, drhov, grid)); break;
+      case id : F_xi.reset(new sdm::ode_xi<real_t, algo_mmid, sdm::xi_id<real_t>>(stat, envi, grid)); break;
+      case ln : F_xi.reset(new sdm::ode_xi<real_t, algo_mmid, sdm::xi_ln<real_t>>(stat, envi, grid)); break;
+      case p2 : F_xi.reset(new sdm::ode_xi<real_t, algo_mmid, sdm::xi_p2<real_t>>(stat, envi, grid)); break;
+      case p3 : F_xi.reset(new sdm::ode_xi<real_t, algo_mmid, sdm::xi_p3<real_t>>(stat, envi, grid)); break;
       default: assert(false);
     } 
     break;
     case rk4  : switch (xi_dfntn) 
     {
-      case id : F_xi.reset(new sdm::ode_xi<real_t, algo_rk4,   sdm::xi_id<real_t>>(stat, envi, drhov, grid)); break;
-      case ln : F_xi.reset(new sdm::ode_xi<real_t, algo_rk4,   sdm::xi_ln<real_t>>(stat, envi, drhov, grid)); break;
-      case p2 : F_xi.reset(new sdm::ode_xi<real_t, algo_rk4,   sdm::xi_p2<real_t>>(stat, envi, drhov, grid)); break;
-      case p3 : F_xi.reset(new sdm::ode_xi<real_t, algo_rk4,   sdm::xi_p3<real_t>>(stat, envi, drhov, grid)); break;
+      case id : F_xi.reset(new sdm::ode_xi<real_t, algo_rk4,   sdm::xi_id<real_t>>(stat, envi, grid)); break;
+      case ln : F_xi.reset(new sdm::ode_xi<real_t, algo_rk4,   sdm::xi_ln<real_t>>(stat, envi, grid)); break;
+      case p2 : F_xi.reset(new sdm::ode_xi<real_t, algo_rk4,   sdm::xi_p2<real_t>>(stat, envi, grid)); break;
+      case p3 : F_xi.reset(new sdm::ode_xi<real_t, algo_rk4,   sdm::xi_p3<real_t>>(stat, envi, grid)); break;
       default: assert(false);
     }
     break;
@@ -266,6 +261,7 @@ void eqs_todo_sdm<real_t>::sd_init(
   thrust::fill(stat.kpa.begin(), stat.kpa.end(), kappa);
 }
 
+// sorting out which particle belongs to which grid cell
 template <typename real_t>
 void eqs_todo_sdm<real_t>::sd_ij()
 {
@@ -290,24 +286,13 @@ void eqs_todo_sdm<real_t>::sd_ij()
   );
 }
 
-// sorting out which particle belongs to which grid cell
 template <typename real_t>
-void eqs_todo_sdm<real_t>::sd_sync(
+void eqs_todo_sdm<real_t>::sd_sync_in(
   const mtx::arr<real_t> &rhod,
   const mtx::arr<real_t> &rhod_th,
   const mtx::arr<real_t> &rhod_rv
 )
 {
-  // making a copy of ij
-  thrust::copy(stat.ij.begin(), stat.ij.end(), stat.sorted_ij.begin());
-  // filling-in stat.sorted_id
-  thrust::sequence(stat.sorted_id.begin(), stat.sorted_id.end());
-  // sorting stat.ij and stat.sorted_id
-  thrust::sort_by_key(
-    stat.sorted_ij.begin(), stat.sorted_ij.end(),
-    stat.sorted_id.begin()
-  );
-
   // getting thermodynamic fields from the Eulerian model 
   thrust::counting_iterator<thrust_size_t> iter(0);
   {
@@ -333,6 +318,7 @@ void eqs_todo_sdm<real_t>::sd_sync(
   }
 
   // calculating the derived fields (T,p,r)
+  // TODO! should be done just once!!! TODO - now it's repeated in ode_xi::adjust()
   class rpT
   {
     private: sdm::envi_t<real_t> &envi;
@@ -354,10 +340,36 @@ void eqs_todo_sdm<real_t>::sd_sync(
   thrust::for_each(iter, iter + envi.n_cell, rpT(envi));
 }
 
+template <typename real_t>
+void eqs_todo_sdm<real_t>::sd_sync_out(
+  mtx::arr<real_t> &rhod_th,
+  mtx::arr<real_t> &rhod_rv
+)
+{
+  thrust::counting_iterator<thrust_size_t> zero(0);
+  thrust::sequence(tmp_shrt.begin(), tmp_shrt.end()); // TODO: could be optimised...
+  thrust::for_each(zero, zero + envi.n_cell, 
+    sdm::thrust2blitz<real_t>(grid.nx(), tmp_shrt, envi.rhod_th, rhod_th)
+  );
+  thrust::for_each(zero, zero + envi.n_cell,
+    sdm::thrust2blitz<real_t>(grid.nx(), tmp_shrt, envi.rhod_rv, rhod_rv)
+  );
+}
+
 // computing diagnostics
 template <typename real_t>
 void eqs_todo_sdm<real_t>::sd_diag(ptr_unordered_map<string, mtx::arr<real_t>> &aux)
 {
+  // making a copy of ij
+  thrust::copy(stat.ij.begin(), stat.ij.end(), stat.sorted_ij.begin());
+  // filling-in stat.sorted_id
+  thrust::sequence(stat.sorted_id.begin(), stat.sorted_id.end());
+  // sorting stat.ij and stat.sorted_id
+  thrust::sort_by_key(
+    stat.sorted_ij.begin(), stat.sorted_ij.end(),
+    stat.sorted_id.begin()
+  );
+
   // calculating super-droplet concentration (per grid cell)
   {
     // zeroing the temporary var 
@@ -525,7 +537,7 @@ void eqs_todo_sdm<real_t>::sd_condevap(
 )
 {
   // growing/shrinking the droplets
-  F_xi->advance(stat.xi, dt, 10); // TEMP!!!
+  F_xi->advance(stat.xi, dt, 20); // TODO: maximal timestep as an option!
   assert(*thrust::min_element(stat.xi.begin(), stat.xi.end()) > 0);
 }
 #endif

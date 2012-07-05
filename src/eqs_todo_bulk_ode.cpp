@@ -30,8 +30,10 @@ eqs_todo_bulk_ode<real_t>::eqs_todo_bulk_ode(
 
 // RHS of the ODE to be solved for saturation adjustment 
 template <typename real_t>
-class eqs_todo_bulk_ode<real_t>::rhs
-{ 
+struct eqs_todo_bulk_ode<real_t>::detail
+{
+  class rhs
+  { 
     private: quantity<si::mass_density, real_t> rhod;
     public: void init(
       const quantity<si::mass_density, real_t> _rhod, 
@@ -65,18 +67,9 @@ class eqs_todo_bulk_ode<real_t>::rhs
     )
     {
       update(rhod_th, rhod_rv);
-      F = - rhod_th / rhod * (
-        phc::l_v<real_t>(T) / real_t(pow(2 + r, 2)) / phc::c_p(r) / T // the 'liquid water' term
-        //+ 
-        //log(p/phc::p_1000<real_t>()) * phc::R_d_over_c_pd<real_t>() * (1/phc::eps<real_t>() - 1/phc::ups<real_t>()) * pow(1+r/phc::ups<real_t>(),-2) // the 'virtual' term
-      );
-// TODO: as an option!
-//cerr << (
-//        log(p/phc::p_1000<real_t>()) * phc::R_d_over_c_pd<real_t>() * (1/phc::eps<real_t>() - 1/phc::ups<real_t>()) * pow(1+r/phc::ups<real_t>(),-2) // the 'virtual' term
-//) / (
-//        phc::l_v<real_t>(T) / pow(1 + r, 2) / phc::c_p(r) / T // the 'liquid water' term
-//) << endl;
+      F = phc::dtheta_drv<real_t>(T, p, r, rhod_th, rhod); // TODO: option : which dtheta...
     }
+  };
 };
 
 template <typename real_t>
@@ -103,7 +96,7 @@ void eqs_todo_bulk_ode<real_t>::condevap(
       odeint::default_operations, 
       odeint::never_resizer
     > S; // TODO: would be better to instantiate in the ctor (but what about thread safety! :()
-    rhs F;
+    typename detail::rhs F;
 
     for (int k = rhod.lbound(mtx::k); k <= rhod.ubound(mtx::k); ++k)
       for (int j = rhod.lbound(mtx::j); j <= rhod.ubound(mtx::j); ++j)

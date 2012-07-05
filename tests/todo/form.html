@@ -1,0 +1,140 @@
+<!DOCTYPE html> 
+<html>
+  <head>
+    <title>icicle</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <script src="https://github.com/fryn/html5slider/raw/master/html5slider.js">
+    </script>
+    <script type="text/javascript">
+    function showValue(id, value, prec)
+    {
+      document.getElementById(id).innerHTML=parseFloat(value).toFixed(prec);
+    }
+    </script>
+  </head>
+  <body>
+
+  <center style="margin-bottom: 1em">
+    <span style="font-size : 8em">  icicle </span>
+    <span style="font-size : 1.5em">  http://icicle.igf.fuw.edu.pl/ </span>
+  </center>
+
+  <form action="test_todo.cgi" target="plot" >
+    <input type="hidden" name="micro" value="bulk" />
+    <input type="hidden" name="dx" value="20" />
+    <input type="hidden" name="dy" value="20" />
+    <input type="hidden" name="nx" value="75" />
+    <input type="hidden" name="ny" value="75" />
+    <fieldset>
+      <legend> initial conditions </legend>
+
+      <fieldset>
+        <legend> initial mixing ratio [ ]</legend>
+        <input type="range" min="0.004" max="0.01" step="0.0005" value="0.0075" 
+          onchange="showValue('range0', this.value, 4)" name="rt_0" 
+        />
+        <span id="range0">0.0075</span>
+      </fieldset>
+
+      <fieldset>
+        <legend> initial potential temperature [K]</legend>
+        <input type="range" min="283" max="303" value="289" 
+          onchange="showValue('range1', this.value, 0)" name="th_0"
+        />
+        <span id="range1">289</span>
+      </fieldset>   
+
+      <fieldset>
+        <legend> initial maximum vertical velocity [m/s]</legend>
+        <input type="range" min="0" max="2" step="0.1" value="0.6" 
+          onchange="showValue('range3', this.value, 1)" name="w_max"
+        />
+        <span id="range3">0.6</span>
+      </fieldset>
+
+    </fieldset>
+
+    <fieldset>
+      <legend> Kessler microphysics options </legend>
+      <fieldset>
+        <legend> cloud evaporation </legend>
+        <label for="cevp-t">on</label>    
+        <input type="radio" name="cevp" value="1" id="cevp-t"/>
+        <label for="cevp-f">off</label>
+        <input type="radio" name="cevp" value="0" id="cevp-f" checked="checked"/> 
+      </fieldset>
+      <fieldset>
+        <legend> conversion </legend>
+        <label for="conv-t">on</label> 
+        <input type="radio" name="conv" value="1" id="conv-t"/>
+        <label for="conv-f">off</label>
+        <input type="radio" name="conv" value="0" id="conv-f" checked="checked"/> 
+      </fieldset>
+      <fieldset>
+        <legend> collection </legend>
+        <label for="clct-t">on</label> 
+        <input type="radio" name="clct" value="1" id="clct-t"/>
+        <label for="clct-f">off</label>
+        <input type="radio" name="clct" value="0" id="clct-f" checked="checked"/> 
+      </fieldset>
+      <fieldset>
+        <legend> sedimentation </legend>
+        <label for="sedi-t">on</label> 
+        <input type="radio" name="sedi" value="1" id="sedi-t"/>
+        <label for="sedi-f">off</label>
+        <input type="radio" name="sedi" value="0" id="sedi-f" checked="checked"/> 
+      </fieldset>
+      <fieldset>
+        <legend> rain evaporation </legend>
+        <label for="revp-t">on</label> 
+        <input type="radio" name="revp" value="1" id="revp-t"/>
+        <label for="revp-f">off</label>
+        <input type="radio" name="revp" value="0" id="revp-f" checked="checked"/> 
+      </fieldset>
+
+    </fieldset>
+
+    <fieldset>
+      <legend>solver options</legend>
+      <fieldset>
+        <legend>floating point precision</legend>
+        <select name="bits">
+          <option value="32">32 bits (float)</option>
+          <option value="64">64 bits (double)</option>
+          <option value="128">128 bits (long double)</option>
+        </select>
+      </fieldset>
+      <fieldset>
+        <legend>MPDATA: non-oscillatory option</legend>
+        <label for="fct-t">on</label> 
+        <input type="radio" name="fct" value="1" id="fct-t"/>
+        <label for="fct-f">off</label>
+        <input type="radio" name="fct" value="0" id="fct-f" checked="checked"/> 
+      </fieldset>
+      <fieldset>
+        <legend>MPDATA: number of iterations</legend>
+        <input type="range" min="1" max="3" step="1" value="2" 
+          onchange="showValue('iord', this.value, 0)" name="iord"
+        />
+        <span id="iord">2</span>
+      </fieldset>
+      <fieldset>
+        <legend>MPDATA: third-order accuracy</legend>
+        <label for="toa-t">on</label> 
+        <input type="radio" name="toa" value="1" id="toa-t"/>
+        <label for="toa-f">off</label>
+        <input type="radio" name="toa" value="0" id="toa-f" checked="checked"/> 
+      </fieldset>
+      <fieldset>
+        <legend>OpenMP: number of cores to use</legend>
+        <input type="range" min="1" max="4" step="1" value="1" 
+          onchange="showValue('nsd', this.value, 0)" name="nsd"
+        />
+        <span id="nsd">1</span>
+      </fieldset>
+    </fieldset>
+    <input type="submit" />
+  </form>
+
+  </body>
+</html>

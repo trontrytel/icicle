@@ -31,7 +31,6 @@ namespace sdm
   template <typename real_t>
   class ode 
   {
-    public: virtual void init() {}
     public: virtual void advance(
       thrust::device_vector<real_t> &x, 
       const quantity<si::time, real_t> &dt,
@@ -54,6 +53,7 @@ namespace sdm
 
     private: bool inited = false;
     protected: virtual void init() {}
+    protected: virtual void adjust() {}
  
     public: void advance(
       thrust::device_vector<real_t> &x, 
@@ -69,7 +69,11 @@ namespace sdm
         inited = true;
       }
       for (int i = 0; i < n_steps; ++i)
+      {
         stepper.do_step(boost::ref(*this), x, 0, dt / si::seconds / n_steps);
+        adjust();
+      }
+      // TODO: error_stepper ?
     }
   };
 

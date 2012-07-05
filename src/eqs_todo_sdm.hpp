@@ -77,11 +77,14 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     const real_t kappa
   );
 
-  // sorting out which particle belongs to which grid cell
-  private: void sd_sync(
+  private: void sd_sync_in(
     const mtx::arr<real_t> &rhod,
     const mtx::arr<real_t> &rhod_th,
     const mtx::arr<real_t> &rhod_rv
+  );
+  private: void sd_sync_out(
+    mtx::arr<real_t> &rhod_th,
+    mtx::arr<real_t> &rhod_rv
   );
 
   // computing diagnostics
@@ -104,6 +107,8 @@ class eqs_todo_sdm : public eqs_todo<real_t>
 
   private: void sd_periodic_x();
   private: void sd_periodic_y();
+
+  // sorting out which particle belongs to which grid cell
   private: void sd_ij();
 
   // private fields of eqs_todo_sdm
@@ -124,7 +129,6 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   thrust::device_vector<int> tmp_shrt; // e.g. for grid cell indices
   thrust::device_vector<thrust_size_t> tmp_long; // e.g. for particle concentrations
   thrust::device_vector<real_t> tmp_real; // e.g. for particle concentrations
-  mtx::arr<real_t> drhov; // e.g. for condensation rate
 
   public: void adjustments(
     int n, // TODO: mo¿e jednak bez n...
@@ -138,13 +142,13 @@ cerr << "adjustments..." << endl;
     //assert(sd_conc.lbound(mtx::k) == sd_conc.ubound(mtx::k)); // 2D
 
     // TODO: substepping with different timesteps as an option
-    // TODO: which order would be best?
+    // TODO: which order would be best? (i.e. cond, chem, coal, ...)
     const mtx::arr<real_t> &rhod = aux.at("rhod");
     mtx::arr<real_t> &rhod_th = psi[this->par.idx_rhod_th][n];
     mtx::arr<real_t> &rhod_rv = psi[this->par.idx_rhod_rv][n];
 
     sd_ij();
-    sd_sync(rhod, rhod_th, rhod_rv);
+    sd_sync_in(rhod, rhod_th, rhod_rv);
     if (opts[cond]) sd_condevap(dt); // does init() at first time step - has to be placed after sync, and before others
     if (opts[adve]) 
     {
@@ -162,20 +166,10 @@ cerr << "adjustments..." << endl;
 //    sd_chemistry(dt);
 //    sd_coalescence(dt);
 //    sd_breakup(dt);
-    sd_diag(aux); 
+    sd_diag(aux); // TODO: only when recording???
+    sd_sync_out(rhod_th, rhod_rv); // TODO: could be placed just after condensation?
 
-    if (opts[cond])
-    {
-      // (drhov is filled-in initially at F_xi->init())
-      const mtx::idx &ijk = drhov.ijk;
-      drhov(ijk) -= (aux.at("m_3"))(ijk); // now that's <r^3>_old - <r^3>_new = -\Delta <r^3> (per unit volume)
-      drhov(ijk) *= // calculating \Delta rhod_rv
-        (phc::rho_w<real_t>() / si::kilograms * si::cubic_metres) // water density
-        * real_t(4./3) * phc::pi<real_t>(); // <r^3> --> volume
-      rhod_rv(ijk) += drhov(ijk);
-      //rhod_th -= rhod_th / rhod * (phc::l_v<real_t>(T) / real_t(pow(1 + r, 2)) / phc::c_p(r) / T); // TODO!!!
-      drhov(ijk) = (aux.at("m_3"))(ijk); // for the next timestep
-    }
+    // TODO: transfer new rhod_rv and rhod_th back to Blitz
   }
 #endif
 };

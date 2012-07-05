@@ -19,7 +19,7 @@ class eqs_todo_bulk_ode : public eqs_todo_bulk<real_t>
   public: eqs_todo_bulk_ode(const grd<real_t> &grid, map<enum eqs_todo_bulk<real_t>::processes, bool> opts);
 
   // RHS of the ODE to be solved for saturation adjustment 
-  private: class rhs;
+  private: struct detail; //rhs; // TODO -> detail 
 
   private: void condevap(
     const mtx::arr<real_t> &rhod,
