@@ -84,7 +84,7 @@ namespace sdm
       void operator()(const thrust_size_t id)
       {
         out[stat.ij[id]] += real_t(stat.n[id]) * this->rw3_of_xi(stat.xi[id]) / dv;
-cerr << "!!!" << stat.n[id] << " " << stat.xi[id] << " " << this->rw3_of_xi(stat.xi[id]) << endl;
+//cerr << "!!!" << stat.n[id] << " " << stat.xi[id] << " " << this->rw3_of_xi(stat.xi[id]) << endl;
       }
     };
 
@@ -126,12 +126,14 @@ cerr << "!!!" << stat.n[id] << " " << stat.xi[id] << " " << this->rw3_of_xi(stat
       // private fields
       private: const stat_t<real_t> &stat;
       private: const envi_t<real_t> &envi;
+      private: const real_t dt;
 
       // ctor
       public: drop_growth_equation(
         const stat_t<real_t> &stat,
-        const envi_t<real_t> &envi
-      ) : stat(stat), envi(envi) {}
+        const envi_t<real_t> &envi,
+        const real_t dt
+      ) : stat(stat), envi(envi), dt(dt) {}
 
       // overloaded () operator invoked by thrust::transform()
       public: real_t operator()(const thrust_size_t id)
@@ -156,6 +158,11 @@ cerr << "!!!" << stat.n[id] << " " << stat.xi[id] << " " << this->rw3_of_xi(stat
           * real_t(2.21e-5) * si::square_metres / si::seconds  // diffusion 
           * si::seconds / si::square_metres       // to make it dimensionless
           ; // TODO: move it to a phc_maxwell_mason.hpp
+real_t rnew = stat.xi[id] + dt * rdrdt * this->dxidrw(this->rw_of_xi(stat.xi[id])) / this->rw_of_xi(stat.xi[id]);
+if (rnew < 0) cerr 
+  << "xi + rdr/dt * dxi/dr / r * dt = " << stat.xi[id] << " + "
+  << rdrdt << " * " << this->dxidrw(this->rw_of_xi(stat.xi[id])) << " / " << this->rw_of_xi(stat.xi[id])  << " * " << dt << " = " 
+  << rnew << endl;
         return rdrdt * this->dxidrw(this->rw_of_xi(stat.xi[id])) / this->rw_of_xi(stat.xi[id]); // Jacobian
 // TODO? this->dxidrw_by_r?
       }
@@ -186,7 +193,7 @@ cerr << "ode_xi::operator(" << t << ") called..." << endl;
       thrust::transform(
         iter, iter + stat.n_part, 
         dxi_dt.begin(), 
-        drop_growth_equation(stat, envi)
+        drop_growth_equation(stat, envi, t) // here: t = dt !
       );
     }
 
@@ -232,13 +239,16 @@ cerr << "adjust() called..." << endl;
             const quantity<si::mass_density, real_t> rhod_rv
           )
           {
-            envi.r[ij] = rhod_rv / (envi.rhod[ij] * si::kilograms / si::cubic_metres);
-            envi.p[ij] = phc::p<real_t>(rhod_th, real_t(envi.r[ij])) / si::pascals;
-            envi.T[ij] = phc::T<real_t>(
-              rhod_th / (envi.rhod[ij] * si::kilograms / si::cubic_metres), 
-              envi.p[ij] * si::pascals, 
-              real_t(envi.r[ij])
-            ) / si::kelvins;
+            //if (rhod_rv != rhod_rv_initial) // TODO 
+            //{
+              envi.r[ij] = rhod_rv / (envi.rhod[ij] * si::kilograms / si::cubic_metres);
+              envi.p[ij] = phc::p<real_t>(rhod_th, real_t(envi.r[ij])) / si::pascals;
+              envi.T[ij] = phc::T<real_t>(
+                rhod_th / (envi.rhod[ij] * si::kilograms / si::cubic_metres), 
+                envi.p[ij] * si::pascals, 
+                real_t(envi.r[ij])
+              ) / si::kelvins;
+            //}
             F = phc::dtheta_drv<real_t>(
               envi.T[ij] * si::kelvins, 
               envi.p[ij] * si::pascals, 
