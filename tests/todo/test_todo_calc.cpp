@@ -87,7 +87,7 @@ const int
   iord = http_or_default("iord", int(2)),
   nsd = http_or_default("nsd", int(1));  
 const quantity<si::time, real_t> 
-  t_max = 30 * si::seconds, // 4 * 3600
+  t_max = 200 * si::seconds, // 4 * 3600
   dt_out = real_t(3) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = http_or_default("w_max", real_t(.6)) * si::metres / si::second; // .6 TODO: check it!
@@ -112,14 +112,16 @@ std::string
   sdm_xi = "p2", 
   sdm_ode_algo_xy = "mmid",
   sdm_ode_algo_ys = "mmid",
-  sdm_ode_algo_xi = "rk4";
+  sdm_ode_algo_xi = "mmid",
+  sdm_ode_algo_chem = "mmid";
 bool 
   sdm_adve = true,
   sdm_cond = true,
   sdm_coal = false,
-  sdm_sedi = false;
+  sdm_sedi = true,
+  sdm_chem = true;
 real_t 
-  sd_conc_mean = 10,
+  sd_conc_mean = 20,
   mean_rd1 = .04e-6,
   mean_rd2 = .15e-6,
   sdev_rd1 = 1.4,
@@ -277,10 +279,12 @@ int main(int argc, char **argv)
       << " --eqs.todo_sdm.ode_algo_xy " << sdm_ode_algo_xy
       << " --eqs.todo_sdm.ode_algo_ys " << sdm_ode_algo_ys
       << " --eqs.todo_sdm.ode_algo_xi " << sdm_ode_algo_xi
+      << " --eqs.todo_sdm.ode_algo_chem " << sdm_ode_algo_chem
       << " --eqs.todo_sdm.adve " << sdm_adve
       << " --eqs.todo_sdm.cond " << sdm_cond
       << " --eqs.todo_sdm.coal " << sdm_coal
       << " --eqs.todo_sdm.sedi " << sdm_sedi
+      << " --eqs.todo_sdm.chem " << sdm_chem
       << " --eqs.todo_sdm.sd_conc_mean " << sd_conc_mean
       << " --eqs.todo_sdm.min_rd " << min_rd
       << " --eqs.todo_sdm.max_rd " << max_rd

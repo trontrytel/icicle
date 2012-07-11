@@ -17,6 +17,7 @@
 #  include "phc_kappa_koehler.hpp" // TODO: not here?
 
 #  include "sdm_ode_ys.hpp"
+#  include "sdm_ode_chem.hpp"
 #  include <list>
 using std::list;
 
@@ -29,6 +30,7 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
   enum ode_algos xy_algo,
   enum ode_algos sd_algo,
   enum ode_algos xi_algo,
+  enum ode_algos chem_algo,
   real_t sd_conc_mean,
   real_t min_rd,
   real_t max_rd, 
@@ -199,6 +201,37 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
       case ln : F_ys.reset(new sdm::ode_ys<real_t,algo_rk4,  sdm::xi_ln<real_t>>(stat, envi)); break;
       case p2 : F_ys.reset(new sdm::ode_ys<real_t,algo_rk4,  sdm::xi_p2<real_t>>(stat, envi)); break;
       case p3 : F_ys.reset(new sdm::ode_ys<real_t,algo_rk4,  sdm::xi_p3<real_t>>(stat, envi)); break;
+      default: assert(false);
+    }
+    break;
+    default: assert(false);
+  }
+  switch (chem_algo) // chemistry
+  {
+    case euler : switch (xi_dfntn)
+    {
+      case id : F_chem.reset(new sdm::ode_chem<real_t,algo_euler,sdm::xi_id<real_t>>(stat, envi)); break;
+      case ln : F_chem.reset(new sdm::ode_chem<real_t,algo_euler,sdm::xi_ln<real_t>>(stat, envi)); break;
+      case p2 : F_chem.reset(new sdm::ode_chem<real_t,algo_euler,sdm::xi_p2<real_t>>(stat, envi)); break;
+      case p3 : F_chem.reset(new sdm::ode_chem<real_t,algo_euler,sdm::xi_p3<real_t>>(stat, envi)); break;
+      default: assert(false);
+    }
+    break;
+    case mmid: switch (xi_dfntn)
+    {
+      case id : F_chem.reset(new sdm::ode_chem<real_t,algo_mmid,  sdm::xi_id<real_t>>(stat, envi)); break;
+      case ln : F_chem.reset(new sdm::ode_chem<real_t,algo_mmid,  sdm::xi_ln<real_t>>(stat, envi)); break;
+      case p2 : F_chem.reset(new sdm::ode_chem<real_t,algo_mmid,  sdm::xi_p2<real_t>>(stat, envi)); break;
+      case p3 : F_chem.reset(new sdm::ode_chem<real_t,algo_mmid,  sdm::xi_p3<real_t>>(stat, envi)); break;
+      default: assert(false);
+    }
+    break;
+    case rk4   : switch (xi_dfntn)
+    {
+      case id : F_chem.reset(new sdm::ode_chem<real_t,algo_rk4,  sdm::xi_id<real_t>>(stat, envi)); break;
+      case ln : F_chem.reset(new sdm::ode_chem<real_t,algo_rk4,  sdm::xi_ln<real_t>>(stat, envi)); break;
+      case p2 : F_chem.reset(new sdm::ode_chem<real_t,algo_rk4,  sdm::xi_p2<real_t>>(stat, envi)); break;
+      case p3 : F_chem.reset(new sdm::ode_chem<real_t,algo_rk4,  sdm::xi_p3<real_t>>(stat, envi)); break;
       default: assert(false);
     }
     break;
@@ -539,6 +572,16 @@ void eqs_todo_sdm<real_t>::sd_condevap(
   // growing/shrinking the droplets
   F_xi->advance(stat.xi, dt, 20); // TODO: maximal timestep as an option!
   assert(*thrust::min_element(stat.xi.begin(), stat.xi.end()) > 0);
+}
+
+template <typename real_t>
+void eqs_todo_sdm<real_t>::sd_chem(
+  const quantity<si::time, real_t> dt
+)
+{
+  // TODO-AJ
+  F_chem->advance(stat.c, dt, 20); // TODO: maximal timestep as an option!
+  assert(*thrust::min_element(stat.c.begin(), stat.c.end()) > 0);
 }
 #endif
 

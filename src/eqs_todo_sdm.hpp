@@ -28,7 +28,7 @@ template <typename real_t>
 class eqs_todo_sdm : public eqs_todo<real_t> 
 {
   // a container for storing options (i.e. which processes ar on/off)
-  public: enum processes {adve, cond, sedi, coal};
+  public: enum processes {adve, cond, sedi, coal, chem};
   public: enum ode_algos {euler, mmid, rk4};
   public: enum xi_dfntns {id, ln, p2, p3};
 
@@ -44,6 +44,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     enum ode_algos xy_algo,
     enum ode_algos ys_algo,
     enum ode_algos xi_algo,
+    enum ode_algos chem_algo,
     real_t sd_conc_mean,
     real_t min_rd,
     real_t max_rd, 
@@ -105,6 +106,10 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     const quantity<si::time, real_t> dt
   );
 
+  private: void sd_chem(
+    const quantity<si::time, real_t> dt
+  );
+
   private: void sd_periodic_x();
   private: void sd_periodic_y();
 
@@ -120,6 +125,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   private: unique_ptr<sdm::ode<real_t>> F_xy;
   private: unique_ptr<sdm::ode<real_t>> F_xi; 
   private: unique_ptr<sdm::ode<real_t>> F_ys; 
+  private: unique_ptr<sdm::ode<real_t>> F_chem; 
 
   // private fields with super droplet structures
   private: sdm::stat_t<real_t> stat;
@@ -163,7 +169,7 @@ cerr << "adjustments..." << endl;
       sd_periodic_y();
       sd_ij();
     }
-//    sd_chemistry(dt);
+    if (opts[chem]) sd_chem(dt);
 //    sd_coalescence(dt);
 //    sd_breakup(dt);
     sd_diag(aux); // TODO: only when recording???

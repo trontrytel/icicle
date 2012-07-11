@@ -106,7 +106,7 @@ namespace sdm
         thrust_size_t ij = stat.ij[id]; 
         real_t rw3_eq = phc::rw3_eq<real_t>( // TODO: allow choice among different Koehler curves
           stat.rd3[id] * si::cubic_metres, 
-          0 + stat.kpa[id], // it fails to compile without the zero!
+          0 + stat.kpa[id], // it fails to compile without the zero! // TODO: real_t()
           thrust::min(
             real_t(.99),
             real_t( // TODO: interpolation to drop positions?
@@ -158,12 +158,31 @@ namespace sdm
           * real_t(2.21e-5) * si::square_metres / si::seconds  // diffusion 
           * si::seconds / si::square_metres       // to make it dimensionless
           ; // TODO: move it to a phc_maxwell_mason.hpp
-real_t rnew = stat.xi[id] + dt * rdrdt * this->dxidrw(this->rw_of_xi(stat.xi[id])) / this->rw_of_xi(stat.xi[id]);
-if (rnew < 0) cerr 
-  << "xi + rdr/dt * dxi/dr / r * dt = " << stat.xi[id] << " + "
-  << rdrdt << " * " << this->dxidrw(this->rw_of_xi(stat.xi[id])) << " / " << this->rw_of_xi(stat.xi[id])  << " * " << dt << " = " 
-  << rnew << endl;
-        return rdrdt * this->dxidrw(this->rw_of_xi(stat.xi[id])) / this->rw_of_xi(stat.xi[id]); // Jacobian
+        real_t dxidt = rdrdt * this->dxidrw(this->rw_of_xi(stat.xi[id])) / this->rw_of_xi(stat.xi[id]);
+return std::max(real_t(0), dxidt); // TODO: only if evap turned off
+/*
+        if (dt != 0 && stat.xi[id] + dt * dxidt < 0) dxidt = (this->xi_of_rw3(
+          phc::rw3_eq<real_t>(
+            stat.rd3[id] * si::cubic_metres, 
+            real_t(stat.kpa[id]),
+            real_t( // TODO: interpolation to drop positions?
+              thrust::min(
+                real_t(.99),
+                real_t(phc::R_v<real_t>() * (envi.T[ij] * si::kelvins) * (envi.rhod_rv[ij] * si::kilograms / si::cubic_metres) 
+                / (phc::p_vs<real_t>(envi.T[ij] * si::kelvins)))
+              )   
+            )
+          ) / si::cubic_metres) 
+          - stat.xi[id]
+        ) / dt;
+if (stat.xi[id] < 0 || !isfinite(dxidt)) 
+{
+  cerr << "dxidt = " << rdrdt << " * " << this->dxidrw(this->rw_of_xi(stat.xi[id])) / this->rw_of_xi(stat.xi[id]) << endl;
+  cerr << "xi_new = xi + dt * dxidt = " << stat.xi[id] << " + " << dt << " * " << dxidt << endl;
+  exit(1);
+}
+        return .1 *  dxidt;
+*/
 // TODO? this->dxidrw_by_r?
       }
     };
@@ -278,7 +297,7 @@ cerr << "adjust() called..." << endl;
         // invoked by thrust::transform
         public: void operator()(const thrust_size_t ij) // TODO: too much duplication with eqs_todo_bulk_ode.cpp :(
         {
-cerr << "< rhod_th=" << envi.rhod_th[ij] << " rhod_rv=" << envi.rhod_rv[ij] << endl;
+//cerr << "< rhod_th=" << envi.rhod_th[ij] << " rhod_rv=" << envi.rhod_rv[ij] << endl;
           // theta is modified by do_step, and hence we cannot pass an expression and we need a temp. var.
           quantity<multiply_typeof_helper<si::mass_density, si::temperature>::type, real_t>
             tmp = envi.rhod_th[ij] * si::kilograms / si::cubic_metres * si::kelvins;
@@ -286,7 +305,7 @@ cerr << "< rhod_th=" << envi.rhod_th[ij] << " rhod_rv=" << envi.rhod_rv[ij] << e
           // (<r^3>_new - <r^3>_old)  --->  drhod_rv
           quantity<si::mass_density, real_t> drhod_rv =
             (envi.m_3_old[ij] - envi.m_3_new[ij]) * phc::rho_w<real_t>() * real_t(4./3) * phc::pi<real_t>();
-cerr << "drhod_rv = " << envi.m_3_old[ij] << " - " << envi.m_3_new[ij] << "=" << drhod_rv << endl;
+//cerr << "drhod_rv = " << envi.m_3_old[ij] << " - " << envi.m_3_new[ij] << "=" << drhod_rv << endl;
 
           // integrating the First Law for moist air
           rhs F(envi, ij); // TODO: instantiate it somewehere else - not every sub-time-step !!!
@@ -302,7 +321,7 @@ cerr << "drhod_rv = " << envi.m_3_old[ij] << " - " << envi.m_3_new[ij] << "=" <<
 
           // updating rhod_rv
           envi.rhod_rv[ij] += drhod_rv / (si::kilograms / si::cubic_metres);
-cerr << "> rhod_th=" << envi.rhod_th[ij] << " rhod_rv=" << envi.rhod_rv[ij] << endl;
+//cerr << "> rhod_th=" << envi.rhod_th[ij] << " rhod_rv=" << envi.rhod_rv[ij] << endl;
           //assert(rhod_rv(i,j,k) >= 0);  TODO
           //assert(isfinite(rhod_rv(i,j,k))); TODO
         }
@@ -311,7 +330,7 @@ cerr << "> rhod_th=" << envi.rhod_th[ij] << " rhod_rv=" << envi.rhod_rv[ij] << e
       thrust::counting_iterator<thrust_size_t> zero(0);
 
       // calculating new <r^3>
-cerr << "calculating new <r^3>" << endl;
+//cerr << "calculating new <r^3>" << endl;
       thrust::for_each(zero, zero + stat.n_part, m_3(stat, envi.m_3_new, grid)); // TODO: does the zero work????
 
       // adjusting rhod_rv and rhod_th according to the First Law (and T,p,r as well)
