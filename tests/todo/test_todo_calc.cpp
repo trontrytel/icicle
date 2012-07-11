@@ -87,7 +87,7 @@ const int
   iord = http_or_default("iord", int(2)),
   nsd = http_or_default("nsd", int(1));  
 const quantity<si::time, real_t> 
-  t_max = 1200 * si::seconds, // 4 * 3600
+  t_max = 1000 * si::seconds, // 4 * 3600
   dt_out = real_t(100) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = http_or_default("w_max", real_t(.6)) * si::metres / si::second; // .6 TODO: check it!
@@ -101,11 +101,11 @@ std::string micro = http_or_default("micro", string("bulk")); // sdm | bulk
 
 // blk parameters
 bool 
-  blk_cevp = http_or_default("cevp", false),
-  blk_conv = http_or_default("conv", false),
-  blk_clct = http_or_default("clct", false),
-  blk_sedi = http_or_default("sedi", false),
-  blk_revp = http_or_default("revp", false);
+  blk_cevp = http_or_default("cevp", true),
+  blk_conv = http_or_default("conv", true),
+  blk_clct = http_or_default("clct", true),
+  blk_sedi = http_or_default("sedi", true),
+  blk_revp = http_or_default("revp", true);
 
 // sdm parameters
 std::string

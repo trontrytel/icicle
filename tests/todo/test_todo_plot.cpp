@@ -156,7 +156,7 @@ int main(int argc, char **argv)
     gp.sendBinary(rv);
 
     gp << "set title 'potential temperature [K]'" << endl;
-    gp << "set cbrange [288:293]" << endl;
+    gp << "set cbrange [286:293]" << endl;
     nf.getVar("rhod_th").getVar(start({t,0,0,0}), count({1,nx,ny,1}), th.data()); 
     th /= rhod;
     gp << "splot '-' binary" << gp.binfmt(th) << dxdy << " with image notitle";
@@ -175,7 +175,7 @@ int main(int argc, char **argv)
       gp.sendBinary(tmp0);
 
       gp << "set title 'rain water mixing ratio [g/kg]'" << endl;
-      gp << "set cbrange [0.:.01]" << endl;
+      gp << "set cbrange [0.:.02]" << endl;
       gp << "set cbtics .01" << endl;
       nf.getVar("rhod_rr").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
       tmp0 /= rhod;
