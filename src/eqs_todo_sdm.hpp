@@ -14,8 +14,7 @@
 
 # if defined(USE_BOOST_ODEINT) && defined(USE_THRUST)
 #  include "sdm_functors.hpp"
-#  include "sdm_ode_xi.hpp"
-#  include "sdm_ode_xy.hpp"
+#  include "sdm_ode.hpp"
 #endif
 
 // TODO: option to set the number of threads to use!
@@ -122,9 +121,9 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   private: const grd<real_t> &grid;
 
   // private fields for ODE machinery
-  private: unique_ptr<sdm::ode<real_t>> F_xy;
-  private: unique_ptr<sdm::ode<real_t>> F_xi; 
-  private: unique_ptr<sdm::ode<real_t>> F_ys; 
+  private: unique_ptr<sdm::ode<real_t>> F_adve;
+  private: unique_ptr<sdm::ode<real_t>> F_cond; 
+  private: unique_ptr<sdm::ode<real_t>> F_sedi; 
   private: unique_ptr<sdm::ode<real_t>> F_chem; 
 
   // private fields with super droplet structures
