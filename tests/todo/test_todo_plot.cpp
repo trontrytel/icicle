@@ -148,8 +148,8 @@ int main(int argc, char **argv)
     gp << "set multiplot layout " << rows << ",2" << endl;
 
     gp << "set title 'water vapour mixing ratio [g/kg]'" << endl;
-//    gp << "set cbrange [6:8]" << endl;
-      gp << "set autoscale cb" << endl;
+    gp << "set cbrange [6:8]" << endl;
+//      gp << "set autoscale cb" << endl;
     nf.getVar("rhod_rv").getVar(start({t,0,0,0}), count({1,nx,ny,1}), rv.data()); 
     rv /= rhod;
     gp << "splot '-' binary" << gp.binfmt(rv) << dxdy << " using ($1*1000) with image notitle";
@@ -157,8 +157,8 @@ int main(int argc, char **argv)
     gp.sendBinary(rv);
 
     gp << "set title 'potential temperature [K]'" << endl;
-//    gp << "set cbrange [288:293]" << endl;
-      gp << "set autoscale cb" << endl;
+    gp << "set cbrange [288:293]" << endl;
+//      gp << "set autoscale cb" << endl;
     nf.getVar("rhod_th").getVar(start({t,0,0,0}), count({1,nx,ny,1}), th.data()); 
     th /= rhod;
     gp << "splot '-' binary" << gp.binfmt(th) << dxdy << " with image notitle";
