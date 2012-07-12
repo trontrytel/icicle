@@ -210,32 +210,34 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
     break;
     default: assert(false);
   }
+// TODO !!! TODO
+real_t c1 = 100, c2 = 200, c3 = 300, c4 = 400;
   switch (chem_algo) // chemistry
   {
     case euler : switch (xi_dfntn)
     {
-      case id : F_chem.reset(new sdm::ode_chem<real_t,algo_euler,sdm::xi_id<real_t>>(stat, envi)); break;
-      case ln : F_chem.reset(new sdm::ode_chem<real_t,algo_euler,sdm::xi_ln<real_t>>(stat, envi)); break;
-      case p2 : F_chem.reset(new sdm::ode_chem<real_t,algo_euler,sdm::xi_p2<real_t>>(stat, envi)); break;
-      case p3 : F_chem.reset(new sdm::ode_chem<real_t,algo_euler,sdm::xi_p3<real_t>>(stat, envi)); break;
+      case id : F_chem.reset(new sdm::ode_chem<real_t,algo_euler,sdm::xi_id<real_t>>(stat, envi, c1, c2, c3, c4)); break;
+      case ln : F_chem.reset(new sdm::ode_chem<real_t,algo_euler,sdm::xi_ln<real_t>>(stat, envi, c1, c2, c3, c4)); break;
+      case p2 : F_chem.reset(new sdm::ode_chem<real_t,algo_euler,sdm::xi_p2<real_t>>(stat, envi, c1, c2, c3, c4)); break;
+      case p3 : F_chem.reset(new sdm::ode_chem<real_t,algo_euler,sdm::xi_p3<real_t>>(stat, envi, c1, c2, c3, c4)); break;
       default: assert(false);
     }
     break;
     case mmid: switch (xi_dfntn)
     {
-      case id : F_chem.reset(new sdm::ode_chem<real_t,algo_mmid,  sdm::xi_id<real_t>>(stat, envi)); break;
-      case ln : F_chem.reset(new sdm::ode_chem<real_t,algo_mmid,  sdm::xi_ln<real_t>>(stat, envi)); break;
-      case p2 : F_chem.reset(new sdm::ode_chem<real_t,algo_mmid,  sdm::xi_p2<real_t>>(stat, envi)); break;
-      case p3 : F_chem.reset(new sdm::ode_chem<real_t,algo_mmid,  sdm::xi_p3<real_t>>(stat, envi)); break;
+      case id : F_chem.reset(new sdm::ode_chem<real_t,algo_mmid,  sdm::xi_id<real_t>>(stat, envi, c1, c2, c3, c4)); break;
+      case ln : F_chem.reset(new sdm::ode_chem<real_t,algo_mmid,  sdm::xi_ln<real_t>>(stat, envi, c1, c2, c3, c4)); break;
+      case p2 : F_chem.reset(new sdm::ode_chem<real_t,algo_mmid,  sdm::xi_p2<real_t>>(stat, envi, c1, c2, c3, c4)); break;
+      case p3 : F_chem.reset(new sdm::ode_chem<real_t,algo_mmid,  sdm::xi_p3<real_t>>(stat, envi, c1, c2, c3, c4)); break;
       default: assert(false);
     }
     break;
     case rk4   : switch (xi_dfntn)
     {
-      case id : F_chem.reset(new sdm::ode_chem<real_t,algo_rk4,  sdm::xi_id<real_t>>(stat, envi)); break;
-      case ln : F_chem.reset(new sdm::ode_chem<real_t,algo_rk4,  sdm::xi_ln<real_t>>(stat, envi)); break;
-      case p2 : F_chem.reset(new sdm::ode_chem<real_t,algo_rk4,  sdm::xi_p2<real_t>>(stat, envi)); break;
-      case p3 : F_chem.reset(new sdm::ode_chem<real_t,algo_rk4,  sdm::xi_p3<real_t>>(stat, envi)); break;
+      case id : F_chem.reset(new sdm::ode_chem<real_t,algo_rk4,  sdm::xi_id<real_t>>(stat, envi, c1, c2, c3, c4)); break;
+      case ln : F_chem.reset(new sdm::ode_chem<real_t,algo_rk4,  sdm::xi_ln<real_t>>(stat, envi, c1, c2, c3, c4)); break;
+      case p2 : F_chem.reset(new sdm::ode_chem<real_t,algo_rk4,  sdm::xi_p2<real_t>>(stat, envi, c1, c2, c3, c4)); break;
+      case p3 : F_chem.reset(new sdm::ode_chem<real_t,algo_rk4,  sdm::xi_p3<real_t>>(stat, envi, c1, c2, c3, c4)); break;
       default: assert(false);
     }
     break;
@@ -583,9 +585,8 @@ void eqs_todo_sdm<real_t>::sd_chem(
   const quantity<si::time, real_t> dt
 )
 {
-  // TODO-AJ
-  F_chem->advance(stat.c, dt, 20); // TODO: maximal timestep as an option!
-  assert(*thrust::min_element(stat.c.begin(), stat.c.end()) > 0);
+  F_chem->advance(stat.c, dt); 
+  assert(*thrust::min_element(stat.c.begin(), stat.c.end()) >= 0);
 }
 #endif
 

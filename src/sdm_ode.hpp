@@ -52,7 +52,7 @@ namespace sdm
     ) = 0;
 
     private: bool inited = false;
-    protected: virtual void init() {}
+    protected: virtual void init(const quantity<si::time, real_t> &dt) {}
     protected: virtual void adjust() {}
  
     public: void advance(
@@ -65,7 +65,7 @@ namespace sdm
       // since at that time the initial values are not loaded yet to psi
       if (!inited) 
       {
-        init();
+        init(dt);
         inited = true;
       }
       for (int i = 0; i < n_steps; ++i)

@@ -63,6 +63,7 @@ template <typename real_t>
 eqs<real_t> *opt_eqs(
   const po::variables_map& vm, 
   const grd<real_t> &grid, 
+  const stp<real_t> &setup,
   const ini<real_t> &intcond, 
   const vel<real_t> &velocity
 ) 

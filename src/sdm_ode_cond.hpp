@@ -217,7 +217,7 @@ if (stat.xi[id] < 0 || !isfinite(dxidt))
 
     // a post-ctor init method
     // (cannot be placed in the constructor as at that time the initial values were not loaded yet to psi)
-    void init()
+    void init(const quantity<si::time, real_t> &dt)
     {
       thrust::counting_iterator<thrust_size_t> iter(0);
 
