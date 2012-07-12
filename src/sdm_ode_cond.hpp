@@ -207,7 +207,6 @@ if (stat.xi[id] < 0 || !isfinite(dxidt))
       const real_t t
     )
     {
-cerr << "ode_xi::operator(" << t << ") called..." << endl;
       thrust::counting_iterator<thrust_size_t> iter(0);
       thrust::transform(
         iter, iter + stat.n_part, 
@@ -220,22 +219,18 @@ cerr << "ode_xi::operator(" << t << ") called..." << endl;
     // (cannot be placed in the constructor as at that time the initial values were not loaded yet to psi)
     void init()
     {
-cerr << "init() called..." << endl;
       thrust::counting_iterator<thrust_size_t> iter(0);
 
       // initialising the wet radii (xi variable) to equilibrium values
-cerr << "init: calling equil..." << endl;
       thrust::for_each(iter, iter + stat.n_part, equil(stat, envi));
 
       // 
-cerr << "init: calling m_3..." << endl;
       thrust::for_each(iter, iter + stat.n_part, m_3(stat, envi.m_3_old, grid));
     }
 
     // a post-ode-step method
     void adjust()
     {
-cerr << "adjust() called..." << endl;
       // nested functor
       class adj
       {
@@ -297,7 +292,6 @@ cerr << "adjust() called..." << endl;
         // invoked by thrust::transform
         public: void operator()(const thrust_size_t ij) // TODO: too much duplication with eqs_todo_bulk_ode.cpp :(
         {
-//cerr << "< rhod_th=" << envi.rhod_th[ij] << " rhod_rv=" << envi.rhod_rv[ij] << endl;
           // theta is modified by do_step, and hence we cannot pass an expression and we need a temp. var.
           quantity<multiply_typeof_helper<si::mass_density, si::temperature>::type, real_t>
             tmp = envi.rhod_th[ij] * si::kilograms / si::cubic_metres * si::kelvins;
@@ -305,7 +299,6 @@ cerr << "adjust() called..." << endl;
           // (<r^3>_new - <r^3>_old)  --->  drhod_rv
           quantity<si::mass_density, real_t> drhod_rv =
             (envi.m_3_old[ij] - envi.m_3_new[ij]) * phc::rho_w<real_t>() * real_t(4./3) * phc::pi<real_t>();
-//cerr << "drhod_rv = " << envi.m_3_old[ij] << " - " << envi.m_3_new[ij] << "=" << drhod_rv << endl;
 
           // integrating the First Law for moist air
           rhs F(envi, ij); // TODO: instantiate it somewehere else - not every sub-time-step !!!
@@ -321,7 +314,6 @@ cerr << "adjust() called..." << endl;
 
           // updating rhod_rv
           envi.rhod_rv[ij] += drhod_rv / (si::kilograms / si::cubic_metres);
-//cerr << "> rhod_th=" << envi.rhod_th[ij] << " rhod_rv=" << envi.rhod_rv[ij] << endl;
           //assert(rhod_rv(i,j,k) >= 0);  TODO
           //assert(isfinite(rhod_rv(i,j,k))); TODO
         }
@@ -330,17 +322,13 @@ cerr << "adjust() called..." << endl;
       thrust::counting_iterator<thrust_size_t> zero(0);
 
       // calculating new <r^3>
-//cerr << "calculating new <r^3>" << endl;
       thrust::for_each(zero, zero + stat.n_part, m_3(stat, envi.m_3_new, grid)); // TODO: does the zero work????
 
       // adjusting rhod_rv and rhod_th according to the First Law (and T,p,r as well)
-cerr << "calling adj()" << endl;
       thrust::for_each(zero, zero + envi.n_cell, adj(envi));
 
-cerr << "swapping..." << endl;
       // new -> old 
-      //thrust::swap(envi.m_3_old, envi.m_3_new); // TODO: would be better if that works...
-      thrust::copy(envi.m_3_new.begin(), envi.m_3_new.end(), envi.m_3_old.begin());
+      thrust::swap(envi.m_3_old, envi.m_3_new); 
     }
   };
 } // namespace sdm

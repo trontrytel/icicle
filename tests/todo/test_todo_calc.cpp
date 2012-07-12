@@ -87,7 +87,7 @@ const int
   iord = http_or_default("iord", int(2)),
   nsd = http_or_default("nsd", int(1));  
 const quantity<si::time, real_t> 
-  t_max = 200 * si::seconds, // 4 * 3600
+  t_max = 400 * si::seconds, // 4 * 3600
   dt_out = real_t(3) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = http_or_default("w_max", real_t(.6)) * si::metres / si::second; // .6 TODO: check it!
@@ -110,18 +110,18 @@ bool
 // sdm parameters
 std::string
   sdm_xi = "p2", 
-  sdm_ode_algo_xy = "mmid",
-  sdm_ode_algo_ys = "mmid",
-  sdm_ode_algo_xi = "mmid",
+  sdm_ode_algo_adve = "rk4",
+  sdm_ode_algo_sedi = "mmid",
+  sdm_ode_algo_cond = "rk4",
   sdm_ode_algo_chem = "mmid";
 bool 
   sdm_adve = true,
   sdm_cond = true,
   sdm_coal = false,
-  sdm_sedi = true,
-  sdm_chem = true;
+  sdm_sedi = false,
+  sdm_chem = false;
 real_t 
-  sd_conc_mean = 20,
+  sd_conc_mean = 50,
   mean_rd1 = .04e-6,
   mean_rd2 = .15e-6,
   sdev_rd1 = 1.4,
@@ -264,8 +264,8 @@ int main(int argc, char **argv)
     << " --dt_out " << real_t(dt_out / si::seconds)
     << " --out netcdf" 
     << " --out.netcdf.file " << dir << "/out.nc"
-    //<< " --slv serial"
-    << " --slv openmp --nsd " << nsd
+    << " --slv serial"
+    //<< " --slv openmp --nsd " << nsd
     ;
     if (micro == "bulk") cmd << " --eqs todo_bulk"
       << " --eqs.todo_bulk.cevp " << blk_cevp
@@ -276,10 +276,10 @@ int main(int argc, char **argv)
     ;
     else if (micro == "sdm") cmd << " --eqs todo_sdm"
       << " --eqs.todo_sdm.xi " << sdm_xi
-      << " --eqs.todo_sdm.ode_algo_xy " << sdm_ode_algo_xy
-      << " --eqs.todo_sdm.ode_algo_ys " << sdm_ode_algo_ys
-      << " --eqs.todo_sdm.ode_algo_xi " << sdm_ode_algo_xi
-      << " --eqs.todo_sdm.ode_algo_chem " << sdm_ode_algo_chem
+      << " --eqs.todo_sdm.adve.algo " << sdm_ode_algo_adve
+      << " --eqs.todo_sdm.sedi.algo " << sdm_ode_algo_sedi
+      << " --eqs.todo_sdm.cond.algo " << sdm_ode_algo_cond
+      << " --eqs.todo_sdm.chem.algo " << sdm_ode_algo_chem
       << " --eqs.todo_sdm.adve " << sdm_adve
       << " --eqs.todo_sdm.cond " << sdm_cond
       << " --eqs.todo_sdm.coal " << sdm_coal

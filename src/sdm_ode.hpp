@@ -76,6 +76,5 @@ namespace sdm
       // TODO: error_stepper ?
     }
   };
-
 }
 #endif

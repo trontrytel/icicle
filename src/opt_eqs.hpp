@@ -37,14 +37,14 @@ inline void opt_eqs_desc(po::options_description &desc)
 
     ("eqs.todo_sdm.adve", po::value<bool>()->default_value(true), "advection [on/off]")
     ("eqs.todo_sdm.cond", po::value<bool>()->default_value(true), "condensation/evaporation [on/off]")
-    ("eqs.todo_sdm.coal", po::value<bool>()->default_value(true), "coalescence [on/off]")
     ("eqs.todo_sdm.sedi", po::value<bool>()->default_value(true), "sedimentation [on/off]")
     ("eqs.todo_sdm.chem", po::value<bool>()->default_value(true), "chemistry [on/off]")
+    ("eqs.todo_sdm.coal", po::value<bool>()->default_value(true), "coalescence [on/off]")
     ("eqs.todo_sdm.xi", po::value<string>()->default_value("ln"), "definition of xi (id, ln, p2, p3)")
-    ("eqs.todo_sdm.ode_algo_xy", po::value<string>()->default_value("rk4"), "advection ODE solver type (euler, mmid, rk4)")
-    ("eqs.todo_sdm.ode_algo_ys", po::value<string>()->default_value("rk4"), "sedimentation ODE solver type (euler, mmid, rk4)")
-    ("eqs.todo_sdm.ode_algo_xi", po::value<string>()->default_value("rk4"), "condensation/evaporation ODE solver type (euler, mmid, rk4)")
-    ("eqs.todo_sdm.ode_algo_chem", po::value<string>()->default_value("rk4"), "chemistry ODE solver type (euler, mmid, rk4)")
+    ("eqs.todo_sdm.adve.algo", po::value<string>()->default_value("rk4"), "advection ODE solver type (euler, mmid, rk4)")
+    ("eqs.todo_sdm.cond.algo", po::value<string>()->default_value("rk4"), "condensation/evaporation ODE solver type (euler, mmid, rk4)")
+    ("eqs.todo_sdm.sedi.algo", po::value<string>()->default_value("rk4"), "sedimentation ODE solver type (euler, mmid, rk4)")
+    ("eqs.todo_sdm.chem.algo", po::value<string>()->default_value("rk4"), "chemistry ODE solver type (euler, mmid, rk4)")
     ("eqs.todo_sdm.sd_conc_mean", po::value<string>()->default_value("64"), "mean super-droplet density per cell") // TODO: why 64? :)
     ("eqs.todo_sdm.min_rd", po::value<string>(), "minimum possible dry aerosol radius [m]") 
     ("eqs.todo_sdm.max_rd", po::value<string>(), "maximum posiible dry aerosol radius [m]")
@@ -125,10 +125,10 @@ eqs<real_t> *opt_eqs(
         {eqs_todo_sdm<real_t>::chem, vm["eqs.todo_sdm.chem"].as<bool>()},
       }),
       map_xid.at(vm["eqs.todo_sdm.xi"].as<string>()),
-      map_algo.at(vm["eqs.todo_sdm.ode_algo_xy"].as<string>()),
-      map_algo.at(vm["eqs.todo_sdm.ode_algo_ys"].as<string>()),
-      map_algo.at(vm["eqs.todo_sdm.ode_algo_xi"].as<string>()),
-      map_algo.at(vm["eqs.todo_sdm.ode_algo_chem"].as<string>()),
+      map_algo.at(vm["eqs.todo_sdm.adve.algo"].as<string>()),
+      map_algo.at(vm["eqs.todo_sdm.sedi.algo"].as<string>()),
+      map_algo.at(vm["eqs.todo_sdm.cond.algo"].as<string>()),
+      map_algo.at(vm["eqs.todo_sdm.chem.algo"].as<string>()),
       real_cast<real_t>(vm, "eqs.todo_sdm.sd_conc_mean"),
       real_cast<real_t>(vm, "eqs.todo_sdm.min_rd"),
       real_cast<real_t>(vm, "eqs.todo_sdm.max_rd"),

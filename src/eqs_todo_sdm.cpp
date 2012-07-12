@@ -138,6 +138,8 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
       odeint::thrust_operations
     > algo_mmid;
 
+  // TODO: adams_bashforth_moulton...
+
   // initialising ODE right-hand-sides
   switch (xy_algo) // advection
   {
@@ -572,7 +574,7 @@ void eqs_todo_sdm<real_t>::sd_condevap(
 )
 {
   // growing/shrinking the droplets
-  F_cond->advance(stat.xi, dt, 20); // TODO: maximal timestep as an option!
+  F_cond->advance(stat.xi, dt, 40); // TODO: maximal timestep as an option!
   assert(*thrust::min_element(stat.xi.begin(), stat.xi.end()) > 0);
 }
 
