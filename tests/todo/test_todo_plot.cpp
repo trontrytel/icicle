@@ -149,7 +149,6 @@ int main(int argc, char **argv)
 
     gp << "set title 'water vapour mixing ratio [g/kg]'" << endl;
     gp << "set cbrange [6:8]" << endl;
-//      gp << "set autoscale cb" << endl;
     nf.getVar("rhod_rv").getVar(start({t,0,0,0}), count({1,nx,ny,1}), rv.data()); 
     rv /= rhod;
     gp << "splot '-' binary" << gp.binfmt(rv) << dxdy << " using ($1*1000) with image notitle";
@@ -158,7 +157,6 @@ int main(int argc, char **argv)
 
     gp << "set title 'potential temperature [K]'" << endl;
     gp << "set cbrange [288:293]" << endl;
-//      gp << "set autoscale cb" << endl;
     nf.getVar("rhod_th").getVar(start({t,0,0,0}), count({1,nx,ny,1}), th.data()); 
     th /= rhod;
     gp << "splot '-' binary" << gp.binfmt(th) << dxdy << " with image notitle";
@@ -177,7 +175,7 @@ int main(int argc, char **argv)
       gp.sendBinary(tmp0);
 
       gp << "set title 'rain water mixing ratio [g/kg]'" << endl;
-      gp << "set cbrange [0.:.01]" << endl;
+      gp << "set cbrange [0.:.02]" << endl;
       gp << "set cbtics .01" << endl;
       nf.getVar("rhod_rr").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
       tmp0 /= rhod;
@@ -204,7 +202,7 @@ int main(int argc, char **argv)
       gp.sendBinary(tmp0);
 
       gp << "set title 'aerosol concentration [1/cm^3]'" << endl;
-      gp << "set cbrange [0:150]" << endl;
+      gp << "set cbrange [0:512]" << endl;
       nf.getVar("n_tot").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp1.data()); 
       tmp0 = tmp1 / 1e6 - tmp0;
       gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";

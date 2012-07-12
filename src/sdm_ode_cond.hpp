@@ -11,6 +11,7 @@
 #include "phc_theta.hpp"
 #include "phc_const_cp.hpp"
 #include "phc_kappa_koehler.hpp"
+#include "phc_maxwell-mason.hpp"
 
 namespace sdm
 {
@@ -139,25 +140,15 @@ namespace sdm
       public: real_t operator()(const thrust_size_t id)
       {
         thrust_size_t ij = stat.ij[id]; 
-        real_t rdrdt =
-          ( // vapour density difference
-            real_t(envi.rhod_rv[ij]) / si::cubic_metres * si::kilograms - // ambient rho_v
-            ( // drop surface rho_v
-              
-                phc::p_vs<real_t>(envi.T[ij] * si::kelvins)
-                / phc::R_v<real_t>() 
-                / (envi.T[ij] * si::kelvins)
-                * phc::a_w<real_t>(
-                  this->rw3_of_xi(stat.xi[id]) * si::cubic_metres, // rw3
-                  stat.rd3[id] * si::cubic_metres, // rd3
-                  0 + stat.kpa[id] // kappa
-                )
-		// TODO: the Kelvin term
-            )
-          ) / phc::rho_w<real_t>() 
-          * real_t(2.21e-5) * si::square_metres / si::seconds  // diffusion 
-          * si::seconds / si::square_metres       // to make it dimensionless
-          ; // TODO: move it to a phc_maxwell_mason.hpp
+        real_t rdrdt = phc::rdrdt<real_t>(
+          real_t(envi.rhod_rv[ij]) / si::cubic_metres * si::kilograms,
+          envi.T[ij] * si::kelvins,
+          phc::a_w<real_t>(
+            this->rw3_of_xi(stat.xi[id]) * si::cubic_metres, // rw3
+            stat.rd3[id] * si::cubic_metres, // rd3
+            real_t(stat.kpa[id]) // kappa
+          )
+        ) * si::seconds / si::square_metres;       // to make it dimensionless
         real_t dxidt = rdrdt * this->dxidrw(this->rw_of_xi(stat.xi[id])) / this->rw_of_xi(stat.xi[id]);
 return std::max(real_t(0), dxidt); // TODO: only if evap turned off
 /*
@@ -211,13 +202,13 @@ if (stat.xi[id] < 0 || !isfinite(dxidt))
       thrust::transform(
         iter, iter + stat.n_part, 
         dxi_dt.begin(), 
-        drop_growth_equation(stat, envi, t) // here: t = dt !
+        drop_growth_equation(stat, envi, t) // here: t = dt ! // TODO!!!
       );
     }
 
     // a post-ctor init method
     // (cannot be placed in the constructor as at that time the initial values were not loaded yet to psi)
-    void init()
+    void init(const quantity<si::time, real_t> &dt)
     {
       thrust::counting_iterator<thrust_size_t> iter(0);
 
