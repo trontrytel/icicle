@@ -11,7 +11,7 @@
 namespace sdm
 {
   template <typename real_t, class algo>
-  class ode_xy : public ode_algo<real_t, algo>
+  class ode_adve : public ode_algo<real_t, algo>
   { 
     // nested functor 
     private: 
@@ -46,7 +46,7 @@ namespace sdm
     private: const envi_t<real_t> &envi;
  
     // ctor 
-    public: ode_xy(const stat_t<real_t> &stat, const envi_t<real_t> &envi) : stat(stat), envi(envi) {}
+    public: ode_adve(const stat_t<real_t> &stat, const envi_t<real_t> &envi) : stat(stat), envi(envi) {}
 
     // overloaded () operator invoked by odeint
     public: void operator()(

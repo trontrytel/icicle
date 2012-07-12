@@ -13,7 +13,7 @@
 namespace sdm
 {
   template <typename real_t, class algo, class xi>
-  class ode_ys : public ode_algo<real_t, algo>
+  class ode_sedi : public ode_algo<real_t, algo>
   { 
     // nested functor
     class term_vel : public xi
@@ -45,7 +45,7 @@ namespace sdm
     private: const thrust::counting_iterator<thrust_size_t> iter;
  
     // ctor 
-    public: ode_ys(
+    public: ode_sedi(
       const stat_t<real_t> &stat, 
       const envi_t<real_t> &envi
     ) 

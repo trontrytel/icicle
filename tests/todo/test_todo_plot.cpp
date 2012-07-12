@@ -156,7 +156,7 @@ int main(int argc, char **argv)
     gp.sendBinary(rv);
 
     gp << "set title 'potential temperature [K]'" << endl;
-    gp << "set cbrange [286:293]" << endl;
+    gp << "set cbrange [288:293]" << endl;
     nf.getVar("rhod_th").getVar(start({t,0,0,0}), count({1,nx,ny,1}), th.data()); 
     th /= rhod;
     gp << "splot '-' binary" << gp.binfmt(th) << dxdy << " with image notitle";
