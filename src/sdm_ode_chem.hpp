@@ -1,41 +1,41 @@
 /** @file
- *  @author Sylwester Arabas <slayoo@igf.fuw.edu.pl>
  *  @author Anna Jaruga <ajaruga@igf.fuw.edu.pl>
+ *  @author Sylwester Arabas <slayoo@igf.fuw.edu.pl>
  *  @copyright University of Warsaw
- *  @date June 2012
+ *  @date July 2012
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
 #pragma once
 #include "sdm_ode.hpp"
-#include "phc_terminal_vel.hpp"
+//#include "phc_henry...hpp" // TODO-AJ
+//#include "phc_react...hpp" // TODO-AJ
 
 namespace sdm
 {
   template <typename real_t, class algo, class xi>
-  class ode_ys : public ode_algo<real_t, algo>
+  class ode_chem : public ode_algo<real_t, algo>
   { 
-    // nested functor
-    class term_vel : public xi
+    // nested functor 
+    class rhs : public xi
     {
       private: const stat_t<real_t> &stat;
       private: const envi_t<real_t> &envi;
-      public: term_vel(
+      public: rhs(
         const stat_t<real_t> &stat,
         const envi_t<real_t> &envi
       ) : stat(stat), envi(envi) {}
+
+      // overloaded operator invoked by thrust
       public: real_t operator()(const thrust_size_t id)
       {
-        thrust_size_t ij = stat.ij[id];
-        assert(isfinite(stat.xi[id]));
-        assert(isfinite(this->rw_of_xi(stat.xi[id])));
-        real_t vt = - phc::vt<real_t>(
-          this->rw_of_xi(stat.xi[id]) * si::metres,
-          envi.T[ij] * si::kelvins,
-          envi.rhod[ij] * si::kilograms / si::cubic_metres // that's the dry air density
-        ) * si::seconds / si::metres;
-        assert(isfinite(vt));
-        return vt;
+cerr << "CHEMISTRY!!!" << endl;
+        //// Aniu! to moze sie przydac:
+        // thrust_size_t ij = stat.ij[id];
+        // this->rw_of_xi(stat.xi[id]) 
+        // envi.T[ij] 
+        // envi.rhod[ij]
+        return 0; // ta funkcja ma zwrocic wartosci "prawych stron" ODE
       }
     };
 
@@ -45,7 +45,7 @@ namespace sdm
     private: const thrust::counting_iterator<thrust_size_t> iter;
  
     // ctor 
-    public: ode_ys(
+    public: ode_chem(
       const stat_t<real_t> &stat, 
       const envi_t<real_t> &envi
     ) 
@@ -55,14 +55,14 @@ namespace sdm
     // overloaded () operator invoked by odeint
     public: void operator()(
       const thrust::device_vector<real_t>&, 
-      thrust::device_vector<real_t> &dxy_dt, 
+      thrust::device_vector<real_t> &dc_dt, 
       const real_t
     )
     {
       thrust::transform(
-        iter, iter + stat.n_part, 
-        dxy_dt.begin() + stat.n_part, 
-        term_vel(stat, envi)
+        iter, iter + 4 * stat.n_part, // TODO-AJ: 4 - od czterech stezen!
+        dc_dt.begin(),  
+        rhs(stat, envi)
       );
     }
   };

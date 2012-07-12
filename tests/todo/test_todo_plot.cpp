@@ -209,7 +209,8 @@ int main(int argc, char **argv)
       gp << endl;
       gp.sendBinary(tmp0);
 
-      gp << "set title 'cloud droplet effective radius [{/Symbol m}m]'" << endl;
+      //gp << "set title 'cloud droplet effective radius [{/Symbol m}m]'" << endl;
+      gp << "set title 'cloud droplet effective radius [um]'" << endl;
       gp << "set autoscale cb" << endl;
       nf.getVar("m_3").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
       nf.getVar("m_2").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp1.data()); 

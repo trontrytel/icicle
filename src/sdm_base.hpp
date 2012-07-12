@@ -28,10 +28,12 @@ namespace sdm
     thrust::device_vector<real_t> vx, vy;
     int vx_nx, vx_ny, vy_nx, vy_ny, n_cell; 
 
-    // fields copied from the Eulerian model
+    // fields copied "as is" from the Eulerian model
     thrust::device_vector<real_t> rhod, rhod_th, rhod_rv;
     // derived fields
     thrust::device_vector<real_t> T, p, r;
+    // diagnosed fields
+    thrust::device_vector<real_t> m_3_old, m_3_new;
 
     // ctor
     envi_t(int nx, int ny) 
@@ -51,6 +53,8 @@ namespace sdm
       T.resize(n_cell);
       p.resize(n_cell);
       r.resize(n_cell);
+      m_3_old.resize(n_cell);
+      m_3_new.resize(n_cell);
     }
   };
 
@@ -68,7 +72,7 @@ namespace sdm
     typename thrust::device_vector<real_t>::iterator x_begin, x_end, y_begin, y_end;
 
     // SD parameters that are constant from the ODE point of view (n,rd3,i,j)
-    thrust::device_vector<real_t> rd3, kpa; // rd3 -> dry radius to the third power 
+    thrust::device_vector<real_t> rd3, kpa, c; // rd3 -> dry radius to the third power 
     thrust::device_vector<thrust_size_t> sorted_id, n; // n -> number of real droplets in a super-droplet
     thrust::device_vector<int> i, j, ij, sorted_ij; // location of super-droplet within the grid
 
@@ -76,14 +80,16 @@ namespace sdm
     stat_t(int nx, int ny, real_t sd_conc_mean)
     {
       n_part = thrust_size_t(real_t(nx * ny) * sd_conc_mean);
-      xy.resize(2 * n_part);
-      xi.resize(n_part);
-      rd3.resize(n_part);
-      kpa.resize(n_part);
-      i.resize(n_part);
-      j.resize(n_part);
-      ij.resize(n_part);
-      n.resize(n_part);
+      xy.resize(2 * n_part); // particle's physical coordinates (x,y)
+      xi.resize(n_part);     // particle's xi(r_w)
+      rd3.resize(n_part);    // particle's r_d^3
+      kpa.resize(n_part);    // particle's kappa
+      i.resize(n_part);      // particle's grid cell i 
+      j.resize(n_part);      // particle's grid cell j
+      ij.resize(n_part);     // partcile's grid cell id = i*nx+j 
+      n.resize(n_part);      // particle's multiplicity
+      c.resize(4 * n_part);  // particle's chemical stuff // TODO-AJ: to 4 odpowiada czterem stężeniom
+
       sorted_ij.resize(n_part);
       sorted_id.resize(n_part);
 

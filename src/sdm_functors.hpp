@@ -65,7 +65,7 @@ namespace sdm {
 
   /// @brief a Thrust-to-Blitz data transfer functor 
   template <typename real_t> 
-  class copy_from_device 
+  class thrust2blitz
   {
     private: int n;
     private: const thrust::device_vector<int> &idx2ij;
@@ -74,7 +74,7 @@ namespace sdm {
     private: real_t scl;
 
     // ctor
-    public: copy_from_device(int n, 
+    public: thrust2blitz(int n, 
       const thrust::device_vector<int> &idx2ij,
       const thrust::device_vector<real_t> &from,
       mtx::arr<real_t> &to,
@@ -89,7 +89,7 @@ namespace sdm {
 
   /// @brief a Blitz-to-Thrust data transfer functor
   template <typename blitz_real_t, typename real_t>  // TODO: blitz_real_t == real_t ? 
-  class copy_to_device
+  class blitz2thrust
   {
     private: int n;
     private: const mtx::arr<blitz_real_t> &from;
@@ -97,7 +97,7 @@ namespace sdm {
     private: real_t scl;
 
     // ctor
-    public: copy_to_device(int n,
+    public: blitz2thrust(int n,
       const mtx::arr<blitz_real_t> &from,
       thrust::device_vector<real_t> &to,
       real_t scl = real_t(1)

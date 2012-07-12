@@ -28,8 +28,8 @@ template <typename real_t>
 class eqs_todo_sdm : public eqs_todo<real_t> 
 {
   // a container for storing options (i.e. which processes ar on/off)
-  public: enum processes {adve, cond, sedi, coal};
-  public: enum ode_algos {euler, rk4};
+  public: enum processes {adve, cond, sedi, coal, chem};
+  public: enum ode_algos {euler, mmid, rk4};
   public: enum xi_dfntns {id, ln, p2, p3};
 
   private: typename eqs_todo<real_t>::params par;
@@ -44,6 +44,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     enum ode_algos xy_algo,
     enum ode_algos ys_algo,
     enum ode_algos xi_algo,
+    enum ode_algos chem_algo,
     real_t sd_conc_mean,
     real_t min_rd,
     real_t max_rd, 
@@ -77,11 +78,14 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     const real_t kappa
   );
 
-  // sorting out which particle belongs to which grid cell
-  private: void sd_sync(
+  private: void sd_sync_in(
     const mtx::arr<real_t> &rhod,
     const mtx::arr<real_t> &rhod_th,
     const mtx::arr<real_t> &rhod_rv
+  );
+  private: void sd_sync_out(
+    mtx::arr<real_t> &rhod_th,
+    mtx::arr<real_t> &rhod_rv
   );
 
   // computing diagnostics
@@ -102,6 +106,16 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     const quantity<si::time, real_t> dt
   );
 
+  private: void sd_chem(
+    const quantity<si::time, real_t> dt
+  );
+
+  private: void sd_periodic_x();
+  private: void sd_periodic_y();
+
+  // sorting out which particle belongs to which grid cell
+  private: void sd_ij();
+
   // private fields of eqs_todo_sdm
   private: map<enum processes, bool> opts;
   private: bool constant_velocity;
@@ -111,6 +125,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   private: unique_ptr<sdm::ode<real_t>> F_xy;
   private: unique_ptr<sdm::ode<real_t>> F_xi; 
   private: unique_ptr<sdm::ode<real_t>> F_ys; 
+  private: unique_ptr<sdm::ode<real_t>> F_chem; 
 
   // private fields with super droplet structures
   private: sdm::stat_t<real_t> stat;
@@ -129,21 +144,38 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     const quantity<si::time, real_t> dt
   )
   {
+cerr << "adjustments..." << endl;
     //assert(sd_conc.lbound(mtx::k) == sd_conc.ubound(mtx::k)); // 2D
 
     // TODO: substepping with different timesteps as an option
-    // TODO: which order would be best?
-    sd_sync(
-      aux.at("rhod"),
-      psi[this->par.idx_rhod_th][n],
-      psi[this->par.idx_rhod_rv][n]
-    );
-    if (opts[cond]) sd_condevap(dt);  // /real_t(100000)); // TEMP!!! TODO TODO // does init() at first time step - has to be placed after sync, and before others
-    if (opts[adve]) sd_advection(dt, C[0], C[1]); // includes periodic boundary for super droplets!
-    if (opts[sedi]) sd_sedimentation(dt, aux.at("rhod")); // TODO: SD recycling!
+    // TODO: which order would be best? (i.e. cond, chem, coal, ...)
+    const mtx::arr<real_t> &rhod = aux.at("rhod");
+    mtx::arr<real_t> &rhod_th = psi[this->par.idx_rhod_th][n];
+    mtx::arr<real_t> &rhod_rv = psi[this->par.idx_rhod_rv][n];
+
+    sd_ij();
+    sd_sync_in(rhod, rhod_th, rhod_rv);
+    if (opts[cond]) sd_condevap(dt); // does init() at first time step - has to be placed after sync, and before others
+    if (opts[adve]) 
+    {
+      sd_advection(dt, C[0], C[1]); // includes periodic boundary for super droplets!
+      sd_periodic_x();
+      sd_periodic_y();
+      sd_ij();
+    }
+    if (opts[sedi]) 
+    {
+      sd_sedimentation(dt, aux.at("rhod")); // TODO: SD recycling!
+      sd_periodic_y();
+      sd_ij();
+    }
+    if (opts[chem]) sd_chem(dt);
 //    sd_coalescence(dt);
 //    sd_breakup(dt);
-    sd_diag(aux); 
+    sd_diag(aux); // TODO: only when recording???
+    sd_sync_out(rhod_th, rhod_rv); // TODO: could be placed just after condensation?
+
+    // TODO: transfer new rhod_rv and rhod_th back to Blitz
   }
 #endif
 };

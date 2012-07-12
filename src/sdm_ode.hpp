@@ -31,20 +31,11 @@ namespace sdm
   template <typename real_t>
   class ode 
   {
-    public: virtual void init() {}
     public: virtual void advance(
       thrust::device_vector<real_t> &x, 
-      const quantity<si::time, real_t> &dt
+      const quantity<si::time, real_t> &dt,
+      const int n_steps = 1
     ) = 0;
-
-/*
-    // TODO: a better name needed...
-    public: virtual real_t transform(const real_t &x) const
-    {
-      assert(false);
-      return x; // i.e. identity 
-    }
-*/
   };
 
   // nested class: 
@@ -62,10 +53,12 @@ namespace sdm
 
     private: bool inited = false;
     protected: virtual void init() {}
+    protected: virtual void adjust() {}
  
     public: void advance(
       thrust::device_vector<real_t> &x, 
-      const quantity<si::time, real_t> &dt
+      const quantity<si::time, real_t> &dt,
+      const int n_steps 
     )
     {
       // intended for calculations that cannot be placed in the constructor 
@@ -75,7 +68,12 @@ namespace sdm
         init();
         inited = true;
       }
-      stepper.do_step(boost::ref(*this), x, 0, dt / si::seconds);
+      for (int i = 0; i < n_steps; ++i)
+      {
+        stepper.do_step(boost::ref(*this), x, 0, dt / si::seconds / n_steps);
+        adjust();
+      }
+      // TODO: error_stepper ?
     }
   };
 

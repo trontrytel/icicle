@@ -75,8 +75,8 @@ const quantity<phc::mixing_ratio, real_t>
 const quantity<si::pressure, real_t> 
   p_0 = 101500 * si::pascals; // 1015 hPa
 const quantity<si::dimensionless, real_t>
-  //kappa = 0.61; // ammonium sulphate
-  kappa = 1.28; // sodium chloride
+  kappa = 0.61; // ammonium sulphate
+  //kappa = 1.28; // sodium chloride
 
 // other parameters deduced from the Fortran code published at:
 // http://www.rap.ucar.edu/~gthompsn/workshop2012/case1/kinematic_wrain.vocals.v3.for
@@ -87,8 +87,8 @@ const int
   iord = http_or_default("iord", int(2)),
   nsd = http_or_default("nsd", int(1));  
 const quantity<si::time, real_t> 
-  t_max = 1000 * si::seconds, // 4 * 3600
-  dt_out = real_t(100) * si::seconds; // 300
+  t_max = 200 * si::seconds, // 4 * 3600
+  dt_out = real_t(3) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = http_or_default("w_max", real_t(.6)) * si::metres / si::second; // .6 TODO: check it!
 const quantity<si::mass_density, real_t>
@@ -97,7 +97,7 @@ const quantity<divide_typeof_helper<si::momentum, si::area>::type, real_t>
   ampl = rho_0 * w_max * (real_t(nx) * dx) / real_t(4*atan(1));
 
 // options for microphysics
-std::string micro = http_or_default("micro", string("bulk")); // sdm | bulk
+std::string micro = http_or_default("micro", string("sdm")); // sdm | bulk
 
 // blk parameters
 bool 
@@ -110,16 +110,18 @@ bool
 // sdm parameters
 std::string
   sdm_xi = "p2", 
-  sdm_ode_algo_xy = "rk4",
-  sdm_ode_algo_ys = "rk4",
-  sdm_ode_algo_xi = "rk4";
+  sdm_ode_algo_xy = "mmid",
+  sdm_ode_algo_ys = "mmid",
+  sdm_ode_algo_xi = "mmid",
+  sdm_ode_algo_chem = "mmid";
 bool 
   sdm_adve = true,
   sdm_cond = true,
   sdm_coal = false,
-  sdm_sedi = false;
+  sdm_sedi = true,
+  sdm_chem = true;
 real_t 
-  sd_conc_mean = 99,
+  sd_conc_mean = 20,
   mean_rd1 = .04e-6,
   mean_rd2 = .15e-6,
   sdev_rd1 = 1.4,
@@ -277,10 +279,12 @@ int main(int argc, char **argv)
       << " --eqs.todo_sdm.ode_algo_xy " << sdm_ode_algo_xy
       << " --eqs.todo_sdm.ode_algo_ys " << sdm_ode_algo_ys
       << " --eqs.todo_sdm.ode_algo_xi " << sdm_ode_algo_xi
+      << " --eqs.todo_sdm.ode_algo_chem " << sdm_ode_algo_chem
       << " --eqs.todo_sdm.adve " << sdm_adve
       << " --eqs.todo_sdm.cond " << sdm_cond
       << " --eqs.todo_sdm.coal " << sdm_coal
       << " --eqs.todo_sdm.sedi " << sdm_sedi
+      << " --eqs.todo_sdm.chem " << sdm_chem
       << " --eqs.todo_sdm.sd_conc_mean " << sd_conc_mean
       << " --eqs.todo_sdm.min_rd " << min_rd
       << " --eqs.todo_sdm.max_rd " << max_rd
