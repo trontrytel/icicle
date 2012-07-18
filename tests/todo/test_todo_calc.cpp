@@ -84,10 +84,10 @@ const int
   bits = http_or_default("bits", int(32)),
   fct = http_or_default("fct", int(0)),  
   toa = http_or_default("toa", int(0)),
-  iord = http_or_default("iord", int(2)),
+  iord = http_or_default("iord", int(1)),
   nsd = http_or_default("nsd", int(1));  
 const quantity<si::time, real_t> 
-  t_max = 200 * si::seconds, // 4 * 3600
+  t_max = 1000 * si::seconds, // 4 * 3600
   dt_out = real_t(3) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = http_or_default("w_max", real_t(.6)) * si::metres / si::second; // .6 TODO: check it!
@@ -110,16 +110,16 @@ bool
 // sdm parameters
 std::string
   sdm_xi = "p2", 
-  sdm_ode_algo_adve = "rk4",
-  sdm_ode_algo_sedi = "mmid",
-  sdm_ode_algo_cond = "rk4",
-  sdm_ode_algo_chem = "mmid";
+  sdm_ode_algo_adve = "euler",
+  sdm_ode_algo_sedi = "euler",
+  sdm_ode_algo_cond = "euler",
+  sdm_ode_algo_chem = "euler";
 bool 
   sdm_adve = true,
   sdm_cond = true,
   sdm_coal = false,
   sdm_sedi = false,
-  sdm_chem = true;
+  sdm_chem = false;
 real_t 
   sd_conc_mean = 256,
   mean_rd1 = .04e-6,

@@ -55,8 +55,8 @@ namespace sdm
       const real_t t
     )
     {
-cerr << "ode_xy::operator(" << t << ") called..." << endl;
       // TODO use positions to interpolate velocities! (as an option?)
+      // TODO: adjust() method to re-interpolate velocities after each sub-step (as vapour in cond)
       thrust::counting_iterator<thrust_size_t> iter(0);
       thrust::transform(
         iter, iter + stat.n_part, 

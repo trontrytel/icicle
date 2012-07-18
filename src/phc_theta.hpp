@@ -83,12 +83,14 @@ namespace phc
         / real_t(pow(1 + r, 2)) 
         / c_p(r) 
         / T 
+/*
       +   
       // the 'virtual' term (TODO: as an option!)
       log(p / p_1000<real_t>()) 
         * R_d_over_c_pd<real_t>() 
         * (real_t(1) / eps<real_t>() - real_t(1) / ups<real_t>()) 
         * real_t(pow(real_t(1) + r / ups<real_t>(),-2)) 
+*/
     );  
   }
 
