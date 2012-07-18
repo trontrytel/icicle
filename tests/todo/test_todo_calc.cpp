@@ -110,10 +110,10 @@ bool
 // sdm parameters
 std::string
   sdm_xi = "p2", 
-  sdm_ode_algo_adve = "rk4",
-  sdm_ode_algo_sedi = "mmid",
-  sdm_ode_algo_cond = "rk4",
-  sdm_ode_algo_chem = "mmid";
+  sdm_ode_algo_adve = "euler",
+  sdm_ode_algo_sedi = "euler",
+  sdm_ode_algo_cond = "euler",
+  sdm_ode_algo_chem = "euler";
 bool 
   sdm_adve = true,
   sdm_cond = true,
