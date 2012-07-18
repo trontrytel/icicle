@@ -187,7 +187,7 @@ int main(int argc, char **argv)
     {
       // sdm-relevant plots:
       gp << "set title 'super-droplet conc. [1/dx/dy/dz]'" << endl;
-      gp << "set cbrange [0:150]" << endl;
+      gp << "set cbrange [0:512]" << endl;
       nf.getVar("sd_conc").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
       gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";
       gp << endl;
@@ -213,7 +213,7 @@ int main(int argc, char **argv)
 
       //gp << "set title 'cloud droplet effective radius [{/Symbol m}m]'" << endl;
       gp << "set title 'cloud droplet effective radius [um]'" << endl;
-      gp << "set autoscale cb" << endl;
+      gp << "set cbrange [0:20]" << endl;
       nf.getVar("m_3").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
       nf.getVar("m_2").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp1.data()); 
       tmp0 /= tmp1;

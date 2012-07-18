@@ -11,6 +11,7 @@
 #include "phc_theta.hpp"
 #include "phc_const_cp.hpp"
 #include "phc_kappa_koehler.hpp"
+#include "phc_maxwell-mason.hpp"
 
 namespace sdm
 {
@@ -84,7 +85,6 @@ namespace sdm
       void operator()(const thrust_size_t id)
       {
         out[stat.ij[id]] += real_t(stat.n[id]) * this->rw3_of_xi(stat.xi[id]) / dv;
-//cerr << "!!!" << stat.n[id] << " " << stat.xi[id] << " " << this->rw3_of_xi(stat.xi[id]) << endl;
       }
     };
 
@@ -106,7 +106,7 @@ namespace sdm
         thrust_size_t ij = stat.ij[id]; 
         real_t rw3_eq = phc::rw3_eq<real_t>( // TODO: allow choice among different Koehler curves
           stat.rd3[id] * si::cubic_metres, 
-          0 + stat.kpa[id], // it fails to compile without the zero! // TODO: real_t()
+          real_t(stat.kpa[id]),
           thrust::min(
             real_t(.99),
             real_t( // TODO: interpolation to drop positions?
@@ -139,29 +139,18 @@ namespace sdm
       public: real_t operator()(const thrust_size_t id)
       {
         thrust_size_t ij = stat.ij[id]; 
-        real_t rdrdt =
-          ( // vapour density difference
-            real_t(envi.rhod_rv[ij]) / si::cubic_metres * si::kilograms - // ambient rho_v
-            ( // drop surface rho_v
-              
-                phc::p_vs<real_t>(envi.T[ij] * si::kelvins)
-                / phc::R_v<real_t>() 
-                / (envi.T[ij] * si::kelvins)
-                * phc::a_w<real_t>(
-                  this->rw3_of_xi(stat.xi[id]) * si::cubic_metres, // rw3
-                  stat.rd3[id] * si::cubic_metres, // rd3
-                  0 + stat.kpa[id] // kappa
-                )
-		// TODO: the Kelvin term
-            )
-          ) / phc::rho_w<real_t>() 
-          * real_t(2.21e-5) * si::square_metres / si::seconds  // diffusion 
-          * si::seconds / si::square_metres       // to make it dimensionless
-          ; // TODO: move it to a phc_maxwell_mason.hpp
+        real_t rdrdt = phc::rdrdt<real_t>(
+          real_t(envi.rhod_rv[ij]) / si::cubic_metres * si::kilograms,
+          envi.T[ij] * si::kelvins,
+          phc::a_w<real_t>(
+            this->rw3_of_xi(stat.xi[id]) * si::cubic_metres, // rw3
+            stat.rd3[id] * si::cubic_metres, // rd3
+            real_t(stat.kpa[id]) // kappa
+          )
+        ) * si::seconds / si::square_metres;       // to make it dimensionless
         real_t dxidt = rdrdt * this->dxidrw(this->rw_of_xi(stat.xi[id])) / this->rw_of_xi(stat.xi[id]);
-return std::max(real_t(0), dxidt); // TODO: only if evap turned off
-/*
-        if (dt != 0 && stat.xi[id] + dt * dxidt < 0) dxidt = (this->xi_of_rw3(
+
+        real_t xi_eq = this->xi_of_rw3(
           phc::rw3_eq<real_t>(
             stat.rd3[id] * si::cubic_metres, 
             real_t(stat.kpa[id]),
@@ -172,17 +161,9 @@ return std::max(real_t(0), dxidt); // TODO: only if evap turned off
                 / (phc::p_vs<real_t>(envi.T[ij] * si::kelvins)))
               )   
             )
-          ) / si::cubic_metres) 
-          - stat.xi[id]
-        ) / dt;
-if (stat.xi[id] < 0 || !isfinite(dxidt)) 
-{
-  cerr << "dxidt = " << rdrdt << " * " << this->dxidrw(this->rw_of_xi(stat.xi[id])) / this->rw_of_xi(stat.xi[id]) << endl;
-  cerr << "xi_new = xi + dt * dxidt = " << stat.xi[id] << " + " << dt << " * " << dxidt << endl;
-  exit(1);
-}
-        return .1 *  dxidt;
-*/
+          ) / si::cubic_metres);
+        if (stat.xi[id] + dt * dxidt < xi_eq) dxidt = (xi_eq - stat.xi[id]) / dt;
+        return dxidt;
 // TODO? this->dxidrw_by_r?
       }
     };
@@ -191,6 +172,7 @@ if (stat.xi[id] < 0 || !isfinite(dxidt))
     private: stat_t<real_t> &stat;
     private: envi_t<real_t> &envi;
     private: const grd<real_t> &grid;
+    private: quantity<si::time, real_t> dt;
 
     // ctor
     public: ode_cond(
@@ -204,28 +186,27 @@ if (stat.xi[id] < 0 || !isfinite(dxidt))
     public: void operator()(
       const thrust::device_vector<real_t>&, 
       thrust::device_vector<real_t> &dxi_dt, 
-      const real_t t
+      const real_t 
     )
     {
       thrust::counting_iterator<thrust_size_t> iter(0);
       thrust::transform(
         iter, iter + stat.n_part, 
         dxi_dt.begin(), 
-        drop_growth_equation(stat, envi, t) // here: t = dt !
+        drop_growth_equation(stat, envi, dt / si::seconds)
       );
     }
 
     // a post-ctor init method
     // (cannot be placed in the constructor as at that time the initial values were not loaded yet to psi)
-    void init(const quantity<si::time, real_t> &dt)
+    void init(const quantity<si::time, real_t> &dt_)
     {
-      thrust::counting_iterator<thrust_size_t> iter(0);
+      dt = dt_;      
 
       // initialising the wet radii (xi variable) to equilibrium values
-      thrust::for_each(iter, iter + stat.n_part, equil(stat, envi));
-
-      // 
-      thrust::for_each(iter, iter + stat.n_part, m_3(stat, envi.m_3_old, grid));
+      thrust::counting_iterator<thrust_size_t> zero(0);
+      thrust::for_each(zero, zero + stat.n_part, equil(stat, envi));
+      thrust::for_each(zero, zero + stat.n_part, m_3(stat, envi.m_3_old, grid));
     }
 
     // a post-ode-step method

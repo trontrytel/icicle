@@ -660,7 +660,7 @@ void eqs_todo_sdm<real_t>::sd_condevap(
 )
 {
   // growing/shrinking the droplets
-  F_cond->advance(stat.xi, dt, 40); // TODO: maximal timestep as an option!
+  F_cond->advance(stat.xi, dt, 10); // TODO: maximal timestep as an option!
   assert(*thrust::min_element(stat.xi.begin(), stat.xi.end()) > 0);
 }
 

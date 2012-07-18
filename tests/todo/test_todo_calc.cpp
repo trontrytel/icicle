@@ -84,11 +84,11 @@ const int
   bits = http_or_default("bits", int(32)),
   fct = http_or_default("fct", int(0)),  
   toa = http_or_default("toa", int(0)),
-  iord = http_or_default("iord", int(2)),
+  iord = http_or_default("iord", int(1)),
   nsd = http_or_default("nsd", int(1));  
 const quantity<si::time, real_t> 
-  t_max = 20 * si::seconds, // 4 * 3600
-  dt_out = real_t(5) * si::seconds; // 300
+  t_max = 1000 * si::seconds, // 4 * 3600
+  dt_out = real_t(3) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = http_or_default("w_max", real_t(.6)) * si::metres / si::second; // .6 TODO: check it!
 const quantity<si::mass_density, real_t>
@@ -119,9 +119,9 @@ bool
   sdm_cond = true,
   sdm_coal = false,
   sdm_sedi = false,
-  sdm_chem = true;
+  sdm_chem = false;
 real_t 
-  sd_conc_mean = 10,
+  sd_conc_mean = 256,
   mean_rd1 = .04e-6,
   mean_rd2 = .15e-6,
   sdev_rd1 = 1.4,
