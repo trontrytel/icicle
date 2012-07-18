@@ -42,7 +42,9 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
   real_t sdev_rd2,
   real_t n1_tot,
   real_t n2_tot,
-  real_t kappa
+  real_t kappa,
+  map<enum sdm::chem_gas, quantity<phc::mixing_ratio, real_t>> opt_gas,
+  map<enum sdm::chem_aq, quantity<divide_typeof_helper<si::amount, si::volume>::type, real_t>> opt_aq
 ) : eqs_todo<real_t>(grid, &this->par), 
   opts(opts), 
   grid(grid), 
@@ -108,8 +110,16 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
     vector<int>({0, 0, 0})
   }));
 
+  // auxliary variable for mean SO2 density within a droplet
+  ptr_map_insert(this->aux)("c_SO3", typename eqs<real_t>::axv({
+    "c_SO3", "<c_SO3> for r > r_min", this->quan2str(si::kilograms / si::cubic_metres),
+    typename eqs<real_t>::invariable(false),
+    vector<int>({0, 0, 0})
+  }));
+
   // initialising super-droplets
-  sd_init(min_rd, max_rd, mean_rd1, mean_rd2, sdev_rd1, sdev_rd2, n1_tot, n2_tot, sd_conc_mean, kappa);
+  sd_init(min_rd, max_rd, mean_rd1, mean_rd2, sdev_rd1, sdev_rd2, n1_tot, n2_tot, sd_conc_mean, kappa, 
+          opt_gas, opt_aq);
 
  typedef odeint::euler<
       thrust::device_vector<real_t>, // state type
@@ -210,34 +220,32 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
     break;
     default: assert(false);
   }
-// TODO !!! TODO
-real_t c1 = 100, c2 = 200, c3 = 300, c4 = 400;
   switch (chem_algo) // chemistry
   {
     case euler : switch (xi_dfntn)
     {
-      case id : F_chem.reset(new sdm::ode_chem<real_t,algo_euler,sdm::xi_id<real_t>>(stat, envi, c1, c2, c3, c4)); break;
-      case ln : F_chem.reset(new sdm::ode_chem<real_t,algo_euler,sdm::xi_ln<real_t>>(stat, envi, c1, c2, c3, c4)); break;
-      case p2 : F_chem.reset(new sdm::ode_chem<real_t,algo_euler,sdm::xi_p2<real_t>>(stat, envi, c1, c2, c3, c4)); break;
-      case p3 : F_chem.reset(new sdm::ode_chem<real_t,algo_euler,sdm::xi_p3<real_t>>(stat, envi, c1, c2, c3, c4)); break;
+      case id : F_chem.reset(new sdm::ode_chem<real_t,algo_euler,sdm::xi_id<real_t>>(stat, envi, opt_gas, opt_aq)); break;
+      case ln : F_chem.reset(new sdm::ode_chem<real_t,algo_euler,sdm::xi_ln<real_t>>(stat, envi, opt_gas, opt_aq)); break;
+      case p2 : F_chem.reset(new sdm::ode_chem<real_t,algo_euler,sdm::xi_p2<real_t>>(stat, envi, opt_gas, opt_aq)); break;
+      case p3 : F_chem.reset(new sdm::ode_chem<real_t,algo_euler,sdm::xi_p3<real_t>>(stat, envi, opt_gas, opt_aq)); break;
       default: assert(false);
     }
     break;
     case mmid: switch (xi_dfntn)
     {
-      case id : F_chem.reset(new sdm::ode_chem<real_t,algo_mmid,  sdm::xi_id<real_t>>(stat, envi, c1, c2, c3, c4)); break;
-      case ln : F_chem.reset(new sdm::ode_chem<real_t,algo_mmid,  sdm::xi_ln<real_t>>(stat, envi, c1, c2, c3, c4)); break;
-      case p2 : F_chem.reset(new sdm::ode_chem<real_t,algo_mmid,  sdm::xi_p2<real_t>>(stat, envi, c1, c2, c3, c4)); break;
-      case p3 : F_chem.reset(new sdm::ode_chem<real_t,algo_mmid,  sdm::xi_p3<real_t>>(stat, envi, c1, c2, c3, c4)); break;
+      case id : F_chem.reset(new sdm::ode_chem<real_t,algo_mmid,  sdm::xi_id<real_t>>(stat, envi, opt_gas, opt_aq)); break;
+      case ln : F_chem.reset(new sdm::ode_chem<real_t,algo_mmid,  sdm::xi_ln<real_t>>(stat, envi, opt_gas, opt_aq)); break;
+      case p2 : F_chem.reset(new sdm::ode_chem<real_t,algo_mmid,  sdm::xi_p2<real_t>>(stat, envi, opt_gas, opt_aq)); break;
+      case p3 : F_chem.reset(new sdm::ode_chem<real_t,algo_mmid,  sdm::xi_p3<real_t>>(stat, envi, opt_gas, opt_aq)); break;
       default: assert(false);
     }
     break;
     case rk4   : switch (xi_dfntn)
     {
-      case id : F_chem.reset(new sdm::ode_chem<real_t,algo_rk4,  sdm::xi_id<real_t>>(stat, envi, c1, c2, c3, c4)); break;
-      case ln : F_chem.reset(new sdm::ode_chem<real_t,algo_rk4,  sdm::xi_ln<real_t>>(stat, envi, c1, c2, c3, c4)); break;
-      case p2 : F_chem.reset(new sdm::ode_chem<real_t,algo_rk4,  sdm::xi_p2<real_t>>(stat, envi, c1, c2, c3, c4)); break;
-      case p3 : F_chem.reset(new sdm::ode_chem<real_t,algo_rk4,  sdm::xi_p3<real_t>>(stat, envi, c1, c2, c3, c4)); break;
+      case id : F_chem.reset(new sdm::ode_chem<real_t,algo_rk4,  sdm::xi_id<real_t>>(stat, envi, opt_gas, opt_aq)); break;
+      case ln : F_chem.reset(new sdm::ode_chem<real_t,algo_rk4,  sdm::xi_ln<real_t>>(stat, envi, opt_gas, opt_aq)); break;
+      case p2 : F_chem.reset(new sdm::ode_chem<real_t,algo_rk4,  sdm::xi_p2<real_t>>(stat, envi, opt_gas, opt_aq)); break;
+      case p3 : F_chem.reset(new sdm::ode_chem<real_t,algo_rk4,  sdm::xi_p3<real_t>>(stat, envi, opt_gas, opt_aq)); break;
       default: assert(false);
     }
     break;
@@ -253,7 +261,9 @@ void eqs_todo_sdm<real_t>::sd_init(
   const real_t sdev_rd1, const real_t sdev_rd2,
   const real_t n1_tot, const real_t n2_tot, 
   const real_t sd_conc_mean,
-  const real_t kappa
+  const real_t kappa,
+  map<enum sdm::chem_gas, quantity<phc::mixing_ratio, real_t>> opt_gas,
+  map<enum sdm::chem_aq, quantity<divide_typeof_helper<si::amount, si::volume>::type, real_t>> opt_aq
 )
 {
   real_t seed = 1234.;
@@ -298,6 +308,43 @@ void eqs_todo_sdm<real_t>::sd_init(
 
   // initialise kappas
   thrust::fill(stat.kpa.begin(), stat.kpa.end(), kappa);
+
+  // initialise chemical components
+  thrust::fill(
+    stat.c_aq.begin() +  sdm::H      * stat.n_part, 
+    stat.c_aq.begin() + (sdm::H + 1) * stat.n_part, 
+    opt_aq[sdm::H] * si::cubic_metres / si::moles
+  );
+  thrust::fill(
+    stat.c_aq.begin() +  sdm::OH      * stat.n_part, 
+    stat.c_aq.begin() + (sdm::OH + 1) * stat.n_part, 
+    opt_aq[sdm::OH] * si::cubic_metres / si::moles
+  );
+  thrust::fill(
+    stat.c_aq.begin() +  sdm::SO2      * stat.n_part, 
+    stat.c_aq.begin() + (sdm::SO2 + 1) * stat.n_part, 
+    opt_aq[sdm::SO2] * si::cubic_metres / si::moles
+  );
+  thrust::fill(
+    stat.c_aq.begin() +  sdm::O3      * stat.n_part,  
+    stat.c_aq.begin() + (sdm::O3 + 1) * stat.n_part, 
+    opt_aq[sdm::O3] * si::cubic_metres / si::moles
+  );
+  thrust::fill(
+    stat.c_aq.begin() +  sdm::H2O2      * stat.n_part, 
+    stat.c_aq.begin() + (sdm::H2O2 + 1) * stat.n_part, 
+    opt_aq[sdm::H2O2] * si::cubic_metres / si::moles
+  );
+  thrust::fill(
+    stat.c_aq.begin() +  sdm::HSO3      * stat.n_part,
+    stat.c_aq.begin() + (sdm::HSO3 + 1) * stat.n_part,
+    opt_aq[sdm::HSO3] * si::cubic_metres / si::moles
+  );
+  thrust::fill(
+    stat.c_aq.begin() +  sdm::SO3      * stat.n_part,
+    stat.c_aq.begin() + (sdm::SO3 + 1) * stat.n_part, 
+    opt_aq[sdm::SO3] * si::cubic_metres / si::moles
+  );
 }
 
 // sorting out which particle belongs to which grid cell
@@ -484,7 +531,7 @@ void eqs_todo_sdm<real_t>::sd_diag(ptr_unordered_map<string, mtx::arr<real_t>> &
           sdm::moment_counter<real_t, sdm::xi_p2<real_t>>,
           decltype(stat.sorted_id.begin()),
           real_t
-        >(stat.sorted_id.begin(), sdm::moment_counter<real_t, sdm::xi_p2<real_t>>(stat, real_t(500e-9), k)),//
+        >(stat.sorted_id.begin(), sdm::moment_counter<real_t, sdm::xi_p2<real_t>>(stat, real_t(500e-9), k)),// TODO:!!! 500e-9 as an option!!!
         tmp_shrt.begin(), // will store the grid cell indices
         tmp_real.begin()  // will store the concentrations per grid cell
       );
@@ -506,7 +553,44 @@ void eqs_todo_sdm<real_t>::sd_diag(ptr_unordered_map<string, mtx::arr<real_t>> &
     );
   }
 
-  // 
+  // calculating chemical stuff
+  if (true/* TODO opt[chem]*/)
+  {
+    typedef pair<enum sdm::chem_aq, string> keyval;
+    for (keyval &kv : list<keyval>({{sdm::SO3,"c_SO3"}}))
+    {
+      // zeroing the temporary var
+      thrust::fill(tmp_real.begin(), tmp_real.end(), 0); // TODO: is it needed
+
+      // doing the reduction, i.e. 
+      thrust::pair<
+        decltype(tmp_shrt.begin()),
+        decltype(tmp_real.begin())
+      > n;
+
+      n = thrust::reduce_by_key(
+        stat.sorted_ij.begin(), stat.sorted_ij.end(),
+        thrust::transform_iterator<
+          sdm::chem_counter<real_t>,
+          decltype(stat.sorted_id.begin()),
+          real_t
+        >(stat.sorted_id.begin(), sdm::chem_counter<real_t>(stat, kv.first)),
+        tmp_shrt.begin(), // will store the grid cell indices
+        tmp_real.begin()  // will store the concentrations per grid cell
+      );
+
+      // writing to aux
+      mtx::arr<real_t> &out = aux.at(kv.second);
+      out(out.ijk) = real_t(0); // as some grid cells could be void of particles
+      thrust::counting_iterator<thrust_size_t> iter(0);
+      thrust::for_each(iter, iter + (n.first - tmp_shrt.begin()),
+        sdm::thrust2blitz<real_t>(
+          grid.nx(), tmp_shrt, tmp_real, out,
+          real_t(1) / grid.dx() / grid.dy() / grid.dz() * si::cubic_metres
+        )
+      );
+    }
+  }
 }
 
 template <typename real_t>
@@ -585,8 +669,8 @@ void eqs_todo_sdm<real_t>::sd_chem(
   const quantity<si::time, real_t> dt
 )
 {
-  F_chem->advance(stat.c, dt); 
-  assert(*thrust::min_element(stat.c.begin(), stat.c.end()) >= 0);
+  F_chem->advance(stat.c_aq, dt); 
+  assert(*thrust::min_element(stat.c_aq.begin(), stat.c_aq.end()) >= 0);
 }
 #endif
 

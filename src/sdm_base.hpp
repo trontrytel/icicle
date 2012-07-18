@@ -72,7 +72,8 @@ namespace sdm
     typename thrust::device_vector<real_t>::iterator x_begin, x_end, y_begin, y_end;
 
     // SD parameters that are constant from the ODE point of view (n,rd3,i,j)
-    thrust::device_vector<real_t> rd3, kpa, c; // rd3 -> dry radius to the third power 
+    thrust::device_vector<real_t> rd3, kpa; // rd3 -> dry radius to the third power 
+    thrust::device_vector<real_t> c_aq; // concentrations of chemical components     
     thrust::device_vector<thrust_size_t> sorted_id, n; // n -> number of real droplets in a super-droplet
     thrust::device_vector<int> i, j, ij, sorted_ij; // location of super-droplet within the grid
 
@@ -88,7 +89,7 @@ namespace sdm
       j.resize(n_part);      // particle's grid cell j
       ij.resize(n_part);     // partcile's grid cell id = i*nx+j 
       n.resize(n_part);      // particle's multiplicity
-      c.resize(4 * n_part);  // particle's chemical stuff // TODO-AJ: to 4 odpowiada czterem stężeniom
+      c_aq.resize(7 * n_part);  // particle's aq. phase concentrations (H+, OH-, SO2*H2O, O3*H2O, H2O2*H20, HSO3-, SO3--)
 
       sorted_ij.resize(n_part);
       sorted_id.resize(n_part);
