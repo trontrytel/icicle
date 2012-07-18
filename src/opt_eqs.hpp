@@ -56,6 +56,21 @@ inline void opt_eqs_desc(po::options_description &desc)
     ("eqs.todo_sdm.n1_tot", po::value<string>(), "first mode total concentration [m-3]") 
     ("eqs.todo_sdm.n2_tot", po::value<string>(), "second mode total concentration [m-3]")
     ("eqs.todo_sdm.kappa", po::value<string>(), "dolubility parameter kappa [1]")
+
+    // initial parameters of chemical compounds:
+    // gas phase in the air
+    ("eqs.todo_sdm.chem.env_SO2", po::value<string>()->default_value("5"), "volume mixing ratio of SO2 [1]")
+    ("eqs.todo_sdm.chem.env_O3", po::value<string>()->default_value("1e-10"), "volume mixing ratio of O3 [1]")
+    ("eqs.todo_sdm.chem.env_H2O2", po::value<string>()->default_value("1e-10"), "volume mixing ratio of H2O2 [1]")
+    // aqueous phase in the droplets
+    //TODO initial conditions calculated to be consistent with environment and kappa!!!
+    ("eqs.todo_sdm.chem.ini_c_H", po::value<string>()->default_value("1e-4"), "initial concentration of H+ [mol/m3]") //dissociation of pure water
+    ("eqs.todo_sdm.chem.ini_c_OH", po::value<string>()->default_value("1e-4"), "initial concentration of OH- [mol/m3]") //dissociation of pure water
+    ("eqs.todo_sdm.chem.ini_c_SO2", po::value<string>()->default_value("0"), "initial concentration of SO2*H2O [mol/m3]")
+    ("eqs.todo_sdm.chem.ini_c_O3", po::value<string>()->default_value("0"), "initial concentration of O3*H2O2 [mol/m3]")
+    ("eqs.todo_sdm.chem.ini_c_H2O2", po::value<string>()->default_value("0"), "initial concentration of H2O2*H2O [mol/m3]")
+    ("eqs.todo_sdm.chem.ini_c_HSO3", po::value<string>()->default_value("0"), "initial concentration of HSO3- [mol/m3]")
+    ("eqs.todo_sdm.chem.ini_c_SO3", po::value<string>()->default_value("0"), "initial concentration of SO3-- [mol/m3]")
     ;
 }
 
@@ -138,7 +153,21 @@ eqs<real_t> *opt_eqs(
       real_cast<real_t>(vm, "eqs.todo_sdm.sdev_rd2"),
       real_cast<real_t>(vm, "eqs.todo_sdm.n1_tot"), 
       real_cast<real_t>(vm, "eqs.todo_sdm.n2_tot"),
-      real_cast<real_t>(vm, "eqs.todo_sdm.kappa")
+      real_cast<real_t>(vm, "eqs.todo_sdm.kappa"),
+      map<enum sdm::chem_gas, quantity<phc::mixing_ratio, real_t>> ({
+        {sdm::gSO2,  real_cast<real_t>(vm, "eqs.todo_sdm.chem.env_SO2")},
+        {sdm::gO3,   real_cast<real_t>(vm, "eqs.todo_sdm.chem.env_O3")},
+        {sdm::gH2O2, real_cast<real_t>(vm, "eqs.todo_sdm.chem.env_H2O2")},
+      }),
+      map<enum sdm::chem_aq, quantity<divide_typeof_helper<si::amount, si::volume>::type, real_t>> ({
+        {sdm::H,    real_cast<real_t>(vm, "eqs.todo_sdm.chem.ini_c_H")   *si::moles/si::cubic_metres},
+        {sdm::OH,    real_cast<real_t>(vm, "eqs.todo_sdm.chem.ini_c_OH") *si::moles/si::cubic_metres},
+        {sdm::SO2,  real_cast<real_t>(vm, "eqs.todo_sdm.chem.ini_c_SO2") *si::moles/si::cubic_metres},
+        {sdm::O3,   real_cast<real_t>(vm, "eqs.todo_sdm.chem.ini_c_O3")  *si::moles/si::cubic_metres},
+        {sdm::H2O2, real_cast<real_t>(vm, "eqs.todo_sdm.chem.ini_c_H2O2")*si::moles/si::cubic_metres},
+        {sdm::HSO3, real_cast<real_t>(vm, "eqs.todo_sdm.chem.ini_c_HSO3")*si::moles/si::cubic_metres},
+        {sdm::SO3,  real_cast<real_t>(vm, "eqs.todo_sdm.chem.ini_c_SO3") *si::moles/si::cubic_metres}
+      })
     );
   }
   else 

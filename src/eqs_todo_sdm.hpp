@@ -23,6 +23,13 @@
 /// implementation of the Super-Droplet Method (@copydetails Shima_et_al_2009, QJRMS, 135)
 /// with kappa-Koehler parameterisation of aerosol solubility (@copydetails Petters_and_Kreidenweis_2007, ACP, 7)
 /// and ...
+
+namespace sdm 
+{
+  enum chem_gas {gSO2, gO3, gH2O2};
+  enum chem_aq {H, OH, SO2, O3, H2O2, HSO3, SO3};
+};
+
 template <typename real_t>
 class eqs_todo_sdm : public eqs_todo<real_t> 
 {
@@ -30,7 +37,6 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   public: enum processes {adve, cond, sedi, coal, chem};
   public: enum ode_algos {euler, mmid, rk4};
   public: enum xi_dfntns {id, ln, p2, p3};
-
   private: typename eqs_todo<real_t>::params par;
   private: enum xi_dfntns xi_dfntn;
 
@@ -53,7 +59,10 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     real_t sdev_rd2,
     real_t n1_tot,
     real_t n2_tot,
-    real_t kappa
+    real_t kappa,
+    //initial chemical conditions (in air and droplets)
+    map<enum sdm::chem_gas, quantity<phc::mixing_ratio, real_t>> opt_gas, 
+    map<enum sdm::chem_aq, quantity<divide_typeof_helper<si::amount, si::volume>::type, real_t>> opt_aq 
   )
 #if !defined(USE_BOOST_ODEINT) || !defined(USE_THRUST)
 : eqs_todo<real_t>(grid, &this->par)
@@ -74,7 +83,9 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     const real_t sdev_rd1, const real_t sdev_rd2,
     const real_t n1_tot, const real_t n2_tot, 
     const real_t sd_conc_mean,
-    const real_t kappa
+    const real_t kappa,
+    map<enum sdm::chem_gas, quantity<phc::mixing_ratio, real_t>> opt_gas, 
+    map<enum sdm::chem_aq, quantity<divide_typeof_helper<si::amount, si::volume>::type, real_t>> opt_aq
   );
 
   private: void sd_sync_in(
@@ -121,10 +132,8 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   private: const grd<real_t> &grid;
 
   // private fields for ODE machinery
-  private: unique_ptr<sdm::ode<real_t>> F_adve;
-  private: unique_ptr<sdm::ode<real_t>> F_cond; 
-  private: unique_ptr<sdm::ode<real_t>> F_sedi; 
-  private: unique_ptr<sdm::ode<real_t>> F_chem; 
+  private: unique_ptr<sdm::ode<real_t>> 
+    F_adve, F_cond, F_sedi, F_chem;
 
   // private fields with super droplet structures
   private: sdm::stat_t<real_t> stat;

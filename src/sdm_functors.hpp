@@ -137,19 +137,8 @@ namespace sdm {
     }
   };
 
-/*
-  template <typename real_t>
-  class moment_counter
-  {
-    public: virtual real_t operator()(const thrust_size_t id) const 
-    {
-      assert(false); // ptr_vector would not accept an abstract type hence not marking pure
-    }
-  };
-*/
-
   template <typename real_t, class xi>
-  class moment_counter //: public moment_counter<real_t>
+  class moment_counter
   { 
     private: const sdm::stat_t<real_t> &stat;
     private: const real_t threshold;
@@ -169,6 +158,21 @@ namespace sdm {
         case 3: return stat.xi[id] > threshold ? (stat.n[id] * xi::rw3_of_xi(stat.xi[id])) : 0;
         default: return stat.xi[id] > threshold ? (stat.n[id] * pow(xi::rw_of_xi(stat.xi[id]), k)) : 0;
       }
+    }
+  };
+
+  template <typename real_t>
+  class chem_counter 
+  { 
+    private: const sdm::stat_t<real_t> &stat;
+    private: const int spec;
+    public: chem_counter(
+      const sdm::stat_t<real_t> &stat,
+      const int spec
+    ) : stat(stat), spec(spec) {}
+    public: real_t operator()(const thrust_size_t id) const
+    {   
+      return stat.n[id] * stat.c_aq[spec * stat.n_part + id]; // TODO: assumed c_aq
     }
   };
 
