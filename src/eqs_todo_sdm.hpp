@@ -39,6 +39,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   public: enum xi_dfntns {id, ln, p2, p3};
   private: typename eqs_todo<real_t>::params par;
   private: enum xi_dfntns xi_dfntn;
+  private: real_t seed = 1234.;
 
   // ctor of eqs_todo_sdm
   public: eqs_todo_sdm(
@@ -120,8 +121,14 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     const quantity<si::time, real_t> dt
   );
 
+  private: void sd_coalescence(
+    const quantity<si::time, real_t> dt
+  );
+
   private: void sd_periodic_x();
   private: void sd_periodic_y();
+  private: void sd_sort();
+  private: void sd_shuffle_and_sort();
 
   // sorting out which particle belongs to which grid cell
   private: void sd_ij();
@@ -141,8 +148,8 @@ class eqs_todo_sdm : public eqs_todo<real_t>
 
   // private field with temporary space
   thrust::device_vector<int> tmp_shrt; // e.g. for grid cell indices
-  thrust::device_vector<thrust_size_t> tmp_long; // e.g. for particle concentrations
-  thrust::device_vector<real_t> tmp_real; // e.g. for particle concentrations
+  thrust::device_vector<thrust_size_t> tmp_long, tmp_long_id; 
+  thrust::device_vector<real_t> tmp_real, tmp_real_id; 
 
   public: void adjustments(
     int n, // TODO: mo¿e jednak bez n...
@@ -152,7 +159,6 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     const quantity<si::time, real_t> dt
   )
   {
-cerr << "adjustments..." << endl;
     //assert(sd_conc.lbound(mtx::k) == sd_conc.ubound(mtx::k)); // 2D
 
     // TODO: substepping with different timesteps as an option
@@ -178,11 +184,20 @@ cerr << "adjustments..." << endl;
       sd_ij();
     }
     if (opts[chem]) sd_chem(dt);
-//    sd_coalescence(dt);
-//    sd_breakup(dt);
+    if (opts[coal])
+    {
+      int n_steps = 5;
+      for (int i = 0; i < n_steps; ++i)
+      {
+        sd_shuffle_and_sort();
+        sd_coalescence(dt / real_t(n_steps));
+      }
+    }
+    else sd_sort();
     sd_diag(aux); // TODO: only when recording???
     sd_sync_out(rhod_th, rhod_rv); // TODO: could be placed just after condensation?
 
+    //    sd_breakup(dt); TODO
     // TODO: transfer new rhod_rv and rhod_th back to Blitz
   }
 #endif
