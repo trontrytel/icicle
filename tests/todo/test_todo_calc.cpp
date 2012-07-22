@@ -87,8 +87,8 @@ const int
   iord = http_or_default("iord", int(1)),
   nsd = http_or_default("nsd", int(1));  
 const quantity<si::time, real_t> 
-  t_max = 47 * si::seconds, // 4 * 3600
-  dt_out = real_t(3) * si::seconds; // 300
+  t_max = 1500 * si::seconds, // 4 * 3600
+  dt_out = real_t(30) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = http_or_default("w_max", real_t(.6)) * si::metres / si::second; // .6 TODO: check it!
 const quantity<si::mass_density, real_t>
@@ -265,7 +265,7 @@ int main(int argc, char **argv)
     << " --out netcdf" 
     << " --out.netcdf.file " << dir << "/out.nc"
     << " --slv serial"
-    //<< " --slv openmp --nsd " << nsd
+//    << " --slv openmp --nsd " << nsd
     ;
     if (micro == "bulk") cmd << " --eqs todo_bulk"
       << " --eqs.todo_bulk.cevp " << blk_cevp

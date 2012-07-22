@@ -463,7 +463,6 @@ void eqs_todo_sdm<real_t>::sd_sort()
 template <typename real_t>
 void eqs_todo_sdm<real_t>::sd_shuffle_and_sort()
 {
-cerr << "shuffling..." << endl;
   // filling-in sorted_id with a random sequence 
   // that's a try to get the std::random_shuffle functionality using parallelisable Thrust calls
   {
@@ -492,26 +491,6 @@ cerr << "shuffling..." << endl;
     stat.sorted_ij.begin(), stat.sorted_ij.end(),
     stat.sorted_id.begin()
   );
-cerr << real_t(stat.sorted_id[0]) << " -> " << real_t(stat.sorted_ij[0]) << endl;
-cerr << real_t(stat.sorted_id[1]) << " -> " << real_t(stat.sorted_ij[1]) << endl;
-cerr << real_t(stat.sorted_id[2]) << " -> " << real_t(stat.sorted_ij[2]) << endl;
-cerr << real_t(stat.sorted_id[3]) << " -> " << real_t(stat.sorted_ij[3]) << endl;
-cerr << real_t(stat.sorted_id[4]) << " -> " << real_t(stat.sorted_ij[4]) << endl;
-cerr << real_t(stat.sorted_id[5]) << " -> " << real_t(stat.sorted_ij[5]) << endl;
-cerr << real_t(stat.sorted_id[6]) << " -> " << real_t(stat.sorted_ij[6]) << endl;
-cerr << real_t(stat.sorted_id[7]) << " -> " << real_t(stat.sorted_ij[7]) << endl;
-cerr << real_t(stat.sorted_id[8]) << " -> " << real_t(stat.sorted_ij[8]) << endl;
-cerr << real_t(stat.sorted_id[9]) << " -> " << real_t(stat.sorted_ij[9]) << endl;
-cerr << real_t(stat.sorted_id[10]) << " -> " << real_t(stat.sorted_ij[10]) << endl;
-cerr << real_t(stat.sorted_id[11]) << " -> " << real_t(stat.sorted_ij[11]) << endl;
-cerr << real_t(stat.sorted_id[12]) << " -> " << real_t(stat.sorted_ij[12]) << endl;
-cerr << real_t(stat.sorted_id[13]) << " -> " << real_t(stat.sorted_ij[13]) << endl;
-cerr << real_t(stat.sorted_id[14]) << " -> " << real_t(stat.sorted_ij[14]) << endl;
-cerr << real_t(stat.sorted_id[15]) << " -> " << real_t(stat.sorted_ij[15]) << endl;
-cerr << real_t(stat.sorted_id[16]) << " -> " << real_t(stat.sorted_ij[16]) << endl;
-cerr << real_t(stat.sorted_id[17]) << " -> " << real_t(stat.sorted_ij[17]) << endl;
-cerr << real_t(stat.sorted_id[18]) << " -> " << real_t(stat.sorted_ij[18]) << endl;
-cerr << real_t(stat.sorted_id[19]) << " -> " << real_t(stat.sorted_ij[19]) << endl;
 }
 
 // computing diagnostics
@@ -736,7 +715,100 @@ void eqs_todo_sdm<real_t>::sd_chem(
   assert(*thrust::min_element(stat.c_aq.begin(), stat.c_aq.end()) >= 0);
 }
 
-#include <thrust/iterator/discard_iterator.h>
+template <typename real_t>
+struct eqs_todo_sdm<real_t>::detail
+{
+  // 
+  template <class xi>
+  struct collider : xi
+  { 
+    // member fields
+    eqs_todo_sdm<real_t> &nest;
+    const quantity<si::time, real_t> dt;
+    const quantity<si::volume, real_t> dv;
+    sdm::uniform_random_real<real_t> rand;
+
+    // ctor
+    collider(
+      eqs_todo_sdm<real_t> &nest,
+      const quantity<si::time, real_t> dt
+    ) : 
+      nest(nest), 
+      dt(dt),
+      dv(nest.grid.dx() * nest.grid.dy() * nest.grid.dz()),
+      rand(0, 1, nest.seed)
+    {}
+   
+    // dtor
+    ~collider()
+    {
+      nest.seed = rand();
+    }
+
+    // overloaded operator invoked by Thrust
+    void operator()(sdm::thrust_size_t key)
+    {
+      // we take into account every second droplet
+      if (key % 2 != 0) return; 
+
+      // and we only work with droplets within the same cell
+      if (nest.stat.sorted_ij[key] != nest.stat.sorted_ij[key+1]) return;
+
+      // we get the id-s and ij-s from the sorted random permutation
+      sdm::thrust_size_t
+        id1 = nest.stat.sorted_id[key],
+        id2 = nest.stat.sorted_id[key+1],
+        ij = nest.stat.sorted_ij[key];
+
+      // chosing id1 to correspond to the higher multiplicity
+      if (nest.stat.n[id1] < nest.stat.n[id2]) std::swap(id1, id2);
+
+      // evaluating the probability
+      real_t prob = 
+        real_t(nest.stat.n[id1]) // max(n1,n2) multiplicity (targe/projectile configuration)
+        * real_t(nest.tmp_real[ij]) // scaling factor
+        * abs(
+          phc::vt<real_t>(
+            this->rw_of_xi(nest.stat.xi[id1]) * si::metres,
+            nest.envi.T[ij] * si::kelvins,
+            nest.envi.rhod[ij] * si::kilograms / si::cubic_metres // that's the dry air density
+          ) -
+          phc::vt<real_t>(
+            this->rw_of_xi(nest.stat.xi[id2]) * si::metres,
+            nest.envi.T[ij] * si::kelvins,
+            nest.envi.rhod[ij] * si::kilograms / si::cubic_metres // that's the dry air density
+          )
+        ) // velocity difference
+        * dt // timestep
+        / dv // volume
+        * si::square_metres * phc::pi<real_t>() * pow(this->rw_of_xi(nest.stat.xi[id1]) + this->rw_of_xi(nest.stat.xi[id2]), 2) // geometrical cross-section
+        * real_t(1); // collection efficiency TODO!!!
+      assert(prob < 1);
+
+      // tossing a random number and returning if unlucky
+      if (prob < rand()) return;
+
+      // performing the coalescence event if lucky
+      if (nest.stat.n[id1] != nest.stat.n[id2])
+      {
+        // multiplicity change (eq. 12 in Shima et al. 2009)
+        nest.stat.n[id1] -= nest.stat.n[id2]; 
+        // wet radius change (eq. 13 in Shima et al. 2009)
+        nest.stat.xi[id2] = this->xi_of_rw3(
+          this->rw3_of_xi(nest.stat.xi[id1]) + 
+          this->rw3_of_xi(nest.stat.xi[id2])
+        ); 
+        // dry radius change (eq. 13 in Shima et al. 2009)
+        nest.stat.rd3[id2] = nest.stat.rd3[id1] + nest.stat.rd3[id2];
+      }
+      else
+      {
+        // TODO: eqs. 16-19 in Shima et al. 2009
+        assert(false);
+      }
+    }
+  };
+};
 
 template <typename real_t>
 void eqs_todo_sdm<real_t>::sd_coalescence(
@@ -775,11 +847,6 @@ void eqs_todo_sdm<real_t>::sd_coalescence(
       }
     };
     thrust::for_each(zero, zero + (n.first - tmp_shrt.begin()), scale_factor(*this));
-cerr << "sf[0]=" << tmp_real[0] << endl;
-cerr << "sf[1]=" << tmp_real[1] << endl;
-cerr << "sf[2]=" << tmp_real[2] << endl;
-cerr << "sf[3]=" << tmp_real[3] << endl;
-cerr << "sf[4]=" << tmp_real[4] << endl;
   }
 
   // getting particle number in a sequence through a segmented prefix sum 
@@ -789,45 +856,14 @@ cerr << "sf[4]=" << tmp_real[4] << endl;
     tmp_long_id.begin() 
   );
 
-  // 
-  struct collide 
-  { 
-    eqs_todo_sdm<real_t> &nest;
-    collide(eqs_todo_sdm<real_t> &nest) : nest(nest) {}
-    void operator()(thrust_size_t key)
-    {
-      // we take into account every second droplet
-      if (key % 2 != 0) return; 
-
-      // and we only work with droplets within the same cell
-      if (nest.stat.sorted_ij[key] != nest.stat.sorted_ij[key+1]) return;
-
-      // we get the id-s and ij-s from the sorted random permutation
-      thrust_size_t
-        id1 = nest.stat.sorted_id[key],
-        id2 = nest.stat.sorted_id[key+1],
-        ij = nest.stat.sorted_ij[key];
-
-if (key < 10) cerr << "trying with " << id1 << " and " << id2 << " in grid cell no." << ij << endl;
-      // evaluating the probability
-      //real_t prob = tmp_real[ij] // scaling factor
-      //  * abs(vt[id1] - vt[id2]) ...
-
-      // tossing a random number
-
-      // performing the coalescence event if lucky
-      if (nest.stat.n[id1] != nest.stat.n[id2])
-      {
-        if (nest.stat.n[id1] < nest.stat.n[id2]) std::swap(id1, id2);
-        nest.stat.n[id1] -= nest.stat.n[id2]; // eq. 12 in Shima et al. 2009
-        nest.stat.xi[id2] = nest.stat.xi[id1] + nest.stat.xi[id2]; // TODO!!!!!!!!!!!
-      }
-      else
-      {
-      }
-    }
-  };
-  thrust::for_each(zero, zero + stat.n_part - 1, collide(*this));
+  switch (xi_dfntn)
+  {
+    case p2:
+      // the collider uses n and n+1, hence stopping at n_part - 1
+      thrust::for_each(zero, zero + stat.n_part - 1, typename detail::collider<sdm::xi_p2<real_t>>(*this, dt));
+      break;
+    default: assert(false); //TODO: ln, p3, id, ...
+  }
 }
 #endif
 

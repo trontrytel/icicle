@@ -40,6 +40,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   private: typename eqs_todo<real_t>::params par;
   private: enum xi_dfntns xi_dfntn;
   private: real_t seed = 1234.;
+  private: struct detail;
 
   // ctor of eqs_todo_sdm
   public: eqs_todo_sdm(
@@ -159,8 +160,8 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     const quantity<si::time, real_t> dt
   )
   {
-    //assert(sd_conc.lbound(mtx::k) == sd_conc.ubound(mtx::k)); // 2D
-
+    // TODO: assert(sd_conc.lbound(mtx::k) == sd_conc.ubound(mtx::k)); // 2D
+    // TODO: sd_breakup(dt); 
     // TODO: substepping with different timesteps as an option
     // TODO: which order would be best? (i.e. cond, chem, coal, ...)
     const mtx::arr<real_t> &rhod = aux.at("rhod");
@@ -194,11 +195,9 @@ class eqs_todo_sdm : public eqs_todo<real_t>
       }
     }
     else sd_sort();
-    sd_diag(aux); // TODO: only when recording???
-    sd_sync_out(rhod_th, rhod_rv); // TODO: could be placed just after condensation?
-
-    //    sd_breakup(dt); TODO
-    // TODO: transfer new rhod_rv and rhod_th back to Blitz
+    sd_diag(aux); // TODO: only when recording!
+    // transfer new rhod_rv and rhod_th back to Blitz
+    sd_sync_out(rhod_th, rhod_rv); // has to be placed after condensation?
   }
 #endif
 };
