@@ -127,7 +127,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
   );
 
   private: void sd_periodic_x();
-  private: void sd_periodic_y();
+  private: void sd_recycle();
   private: void sd_sort();
   private: void sd_shuffle_and_sort();
 
@@ -173,17 +173,15 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     if (opts[cond]) sd_condevap(dt); // does init() at first time step - has to be placed after sync, and before others
     if (opts[adve]) 
     {
-      sd_advection(dt, C[0], C[1]); // includes periodic boundary for super droplets!
-      sd_periodic_x();
-      sd_periodic_y();
-      sd_ij();
+      sd_advection(dt, C[0], C[1]); 
     }
     if (opts[sedi]) 
     {
       sd_sedimentation(dt, aux.at("rhod")); // TODO: SD recycling!
-      sd_periodic_y();
-      sd_ij();
     }
+    sd_periodic_x();
+    sd_recycle();
+    sd_ij();
     if (opts[chem]) sd_chem(dt);
     if (opts[coal])
     {

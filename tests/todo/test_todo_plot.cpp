@@ -115,7 +115,9 @@ int main(int argc, char **argv)
   notice_macro("setting-up plot parameters")
   Gnuplot gp;
 
-  for (size_t t = 0 ; t < nt; ++t) for (string &ext : list<string>({"eps","png"}))
+  //for (size_t t = 0 ; t < nt; ++t) for (string &ext : list<string>({"eps","png"}))
+// TEMP!!!!
+  for (size_t t = 0 ; t < 3*nt/5; ++t) for (string &ext : list<string>({"eps","png"}))
   {
     notice_macro("generating frame at t=" << t)
     gp << "reset" << endl;
@@ -136,7 +138,7 @@ int main(int argc, char **argv)
 
     // TODO...
     string micro = nf.getVar("m_0").isNull() ? "bulk" : "sdm";
-    int rows = micro == "bulk" ? 2 : 3;
+    int rows = 2; //micro == "bulk" ? 2 : 3;
 
     if (ext == "png")
       gp << "set term png enhanced size 1000," << rows * 500 << endl;
@@ -186,14 +188,16 @@ int main(int argc, char **argv)
     else if (micro == "sdm")
     {
       // sdm-relevant plots:
+/*
       gp << "set title 'super-droplet conc. [1/dx/dy/dz]'" << endl;
       gp << "set cbrange [0:512]" << endl;
       nf.getVar("sd_conc").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
       gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";
       gp << endl;
       gp.sendBinary(tmp0);
+*/
 
-      gp << "set title 'cloud droplet conc. [1/cm^3]'" << endl;
+      gp << "set title 'particle (> 1 um) concentration [1/cm^3]'" << endl;
       gp << "set cbrange [0:150]" << endl;
       nf.getVar("m_0").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
       tmp0 /= 1e6;
@@ -201,6 +205,7 @@ int main(int argc, char **argv)
       gp << endl;
       gp.sendBinary(tmp0);
 
+/*
       gp << "set title 'mean SO3 concentration [?]'" << endl;
       //gp << "set cbrange [0:4.444]" << endl;
       gp << "set autoscale cb" << endl;
@@ -210,10 +215,12 @@ int main(int argc, char **argv)
       gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";
       gp << endl;
       gp.sendBinary(tmp0);
+*/
 
       //gp << "set title 'cloud droplet effective radius [{/Symbol m}m]'" << endl;
-      gp << "set title 'cloud droplet effective radius [um]'" << endl;
-      gp << "set cbrange [0:20]" << endl;
+      gp << "set title 'effective radius [um] (particles > 1 um)'" << endl;
+      gp << "set logscale cb" << endl;
+      gp << "set cbrange [1:500]" << endl;
       nf.getVar("m_3").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
       nf.getVar("m_2").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp1.data()); 
       tmp0 /= tmp1;

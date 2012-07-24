@@ -686,14 +686,35 @@ void eqs_todo_sdm<real_t>::sd_periodic_x()
 }
 
 template <typename real_t>
-void eqs_todo_sdm<real_t>::sd_periodic_y() // TODO: that's a physical non-sense!!! :)
+void eqs_todo_sdm<real_t>::sd_recycle() 
 {
-  // periodic boundary condition (in-place transforms)
-  thrust::transform(stat.y_begin, stat.y_end, stat.y_begin, 
-    sdm::modulo<real_t>(
-      grid.ny() * (grid.dy() / si::metres)
-    )
-  );
+  // invalidate out-of-domain droplets
+  struct invalidate
+  {
+    // member fields
+    eqs_todo_sdm<real_t> &nest;
+    const real_t Y;
+    // ctor
+    invalidate(eqs_todo_sdm<real_t> &nest) :
+      nest(nest), Y(nest.grid.nx() * (nest.grid.dx() / si::metres))
+    {}
+    // overloaded operator invoked by Thrust
+    void operator()(thrust_size_t id)
+    {
+      if (
+        nest.stat.xy[nest.stat.n_part + id] < 0 || 
+        nest.stat.xy[nest.stat.n_part + id] > Y
+      ) 
+      {
+        nest.stat.xy[nest.stat.n_part + id] = Y/2.; // TODO
+        nest.stat.n[id] = 0; // invalidating
+      }
+    }
+  };
+  thrust::counting_iterator<thrust_size_t> zero(0);
+  thrust::for_each(zero, zero + stat.n_part, invalidate(*this));
+
+  // TODO: recycle droplets!
 }
   
 template <typename real_t>
@@ -702,7 +723,7 @@ void eqs_todo_sdm<real_t>::sd_condevap(
 )
 {
   // growing/shrinking the droplets
-  F_cond->advance(stat.xi, dt, 10); // TODO: maximal timestep as an option!
+  F_cond->advance(stat.xi, dt, 50); // TODO: maximal timestep as an option!
   assert(*thrust::min_element(stat.xi.begin(), stat.xi.end()) > 0);
 }
 
@@ -782,7 +803,7 @@ struct eqs_todo_sdm<real_t>::detail
         * dt // timestep
         / dv // volume
         * si::square_metres * phc::pi<real_t>() * pow(this->rw_of_xi(nest.stat.xi[id1]) + this->rw_of_xi(nest.stat.xi[id2]), 2) // geometrical cross-section
-        * real_t(1); // collection efficiency TODO!!!
+        * real_t(10); // collection efficiency TODO!!!
       assert(prob < 1);
 
       // tossing a random number and returning if unlucky
