@@ -27,7 +27,7 @@
 namespace sdm 
 {
   enum chem_gas {gSO2, gO3, gH2O2};
-  enum chem_aq {H, OH, SO2, O3, H2O2, HSO3, SO3};
+  enum chem_aq {H, OH, SO2, O3, H2O2, HSO3, SO3, HSO4, SO4};
 };
 
 template <typename real_t>
@@ -62,7 +62,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     real_t kappa,
     //initial chemical conditions (in air and droplets)
     map<enum sdm::chem_gas, quantity<phc::mixing_ratio, real_t>> opt_gas, 
-    map<enum sdm::chem_aq, quantity<divide_typeof_helper<si::amount, si::volume>::type, real_t>> opt_aq 
+    map<enum sdm::chem_aq, quantity<si::mass, real_t>> opt_aq 
   )
 #if !defined(USE_BOOST_ODEINT) || !defined(USE_THRUST)
 : eqs_todo<real_t>(grid, &this->par)
@@ -85,7 +85,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     const real_t sd_conc_mean,
     const real_t kappa,
     map<enum sdm::chem_gas, quantity<phc::mixing_ratio, real_t>> opt_gas, 
-    map<enum sdm::chem_aq, quantity<divide_typeof_helper<si::amount, si::volume>::type, real_t>> opt_aq
+    map<enum sdm::chem_aq, quantity<si::mass, real_t>> opt_aq
   );
 
   private: void sd_sync_in(
