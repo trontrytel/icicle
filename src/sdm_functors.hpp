@@ -20,12 +20,21 @@ namespace sdm {
   // TODO: random seed as an option
   // TODO: RNG engine as an option
   template <typename real_t> 
-  class rng 
+  class uniform_random_real 
   {
-    private: thrust::random::taus88 engine; 
+    private: thrust::random::taus88 engine;
     private: thrust::uniform_real_distribution<real_t> dist;
-    public: rng(real_t a, real_t b, real_t seed) : dist(a, b), engine(seed) {}
+    public: uniform_random_real(real_t a, real_t b, real_t seed) : dist(a, b), engine(seed) {} // TODO: shouldn't the seed be uint?
     public: real_t operator()() { return dist(engine); }
+  };
+
+  template <typename int_t> 
+  class uniform_random_int 
+  {
+    private: thrust::random::taus88 engine;
+    private: thrust::uniform_int_distribution<int_t> dist;
+    public: uniform_random_int(int_t a, int_t b, int_t seed) : dist(a, b), engine(seed) {}
+    public: int_t operator()() { return dist(engine); }
   };
 
   /// @brief a functor that divides by real constant and cast to int

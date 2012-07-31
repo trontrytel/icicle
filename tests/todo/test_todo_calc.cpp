@@ -87,8 +87,8 @@ const int
   iord = http_or_default("iord", int(1)),
   nsd = http_or_default("nsd", int(1));  
 const quantity<si::time, real_t> 
-  t_max = 20 * si::seconds, // 4 * 3600
-  dt_out = real_t(5) * si::seconds; // 300
+  t_max = 300 * si::seconds, // 4 * 3600
+  dt_out = real_t(3) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = http_or_default("w_max", real_t(.6)) * si::metres / si::second; // .6 TODO: check it!
 const quantity<si::mass_density, real_t>
@@ -101,11 +101,11 @@ std::string micro = http_or_default("micro", string("sdm")); // sdm | bulk
 
 // blk parameters
 bool 
-  blk_cevp = http_or_default("cevp", true),
-  blk_conv = http_or_default("conv", true),
-  blk_clct = http_or_default("clct", true),
-  blk_sedi = http_or_default("sedi", true),
-  blk_revp = http_or_default("revp", true);
+  blk_cevp = http_or_default("blk_cevp", true),
+  blk_conv = http_or_default("blk_conv", true),
+  blk_clct = http_or_default("blk_clct", true),
+  blk_sedi = http_or_default("blk_sedi", true),
+  blk_revp = http_or_default("blk_revp", true);
 
 // sdm parameters
 std::string
@@ -115,13 +115,13 @@ std::string
   sdm_ode_algo_cond = "euler",
   sdm_ode_algo_chem = "euler";
 bool 
-  sdm_adve = true,
-  sdm_cond = true,
-  sdm_coal = false,
-  sdm_sedi = false,
-  sdm_chem = true;
+  sdm_adve = http_or_default("sdm_adve", true),
+  sdm_cond = http_or_default("sdm_cond", true),
+  sdm_coal = http_or_default("sdm_coal", true),
+  sdm_sedi = http_or_default("sdm_sedi", true),
+  sdm_chem = http_or_default("sdm_chem", false);
 real_t 
-  sd_conc_mean = 100,
+  sd_conc_mean = http_or_default("sd_conc_mean", 32),
   mean_rd1 = .04e-6,
   mean_rd2 = .15e-6,
   sdev_rd1 = 1.4,
@@ -263,10 +263,11 @@ int main(int argc, char **argv)
     << " --dt " << "auto" 
     << " --dt_out " << real_t(dt_out / si::seconds)
     << " --out netcdf" 
-    << " --out.netcdf.file " << dir << "/out.nc"
-    << " --slv serial"
-    //<< " --slv openmp --nsd " << nsd
-    ;
+    << " --out.netcdf.file " << dir << "/out.nc";
+    if (micro == "bulk") 
+      cmd << " --slv openmp --nsd " << nsd;
+    else 
+      cmd << " --slv serial";
     if (micro == "bulk") cmd << " --eqs todo_bulk"
       << " --eqs.todo_bulk.cevp " << blk_cevp
       << " --eqs.todo_bulk.conv " << blk_conv

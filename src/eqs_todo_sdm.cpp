@@ -14,6 +14,7 @@
 #if defined(USE_BOOST_ODEINT) && defined(USE_THRUST)
 
 #  include "phc_lognormal.hpp" // TODO: not here?
+#  include "phc_terminal_vel.hpp" // TODO: not here?
 #  include "phc_kappa_koehler.hpp" // TODO: not here?
 
 #  include "sdm_ode_cond.hpp"
@@ -57,9 +58,14 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
   // TODO: random seed as an option
   // TODO: option: number of cores to use (via Thrust)
 
+  // temporary space with nx * ny size
   tmp_shrt.resize(grid.nx() * grid.ny());
-  tmp_long.resize(grid.nx() * grid.ny()); // is it used anyehere??? TODO
+  tmp_long.resize(grid.nx() * grid.ny()); 
   tmp_real.resize(grid.nx() * grid.ny());
+
+  // temporary space with n_part size
+  tmp_long_id.resize(stat.n_part);
+  tmp_real_id.resize(stat.n_part);
 
   // auxliary variable for super-droplet conc
   ptr_map_insert(this->aux)("sd_conc", typename eqs<real_t>::axv({
@@ -266,16 +272,14 @@ void eqs_todo_sdm<real_t>::sd_init(
   map<enum sdm::chem_aq, quantity<si::mass, real_t>> opt_aq
 )
 {
-  real_t seed = 1234.;
-
   // initialise particle coordinates
   {
-    sdm::rng<real_t> rand_x(0, grid.nx() * (grid.dx() / si::metres), seed);
+    sdm::uniform_random_real<real_t> rand_x(0, grid.nx() * (grid.dx() / si::metres), seed);
     thrust::generate(stat.x_begin, stat.x_end, rand_x);
     seed = rand_x();
   }
   {
-    sdm::rng<real_t> rand_y(0, grid.ny() * (grid.dy() / si::metres), seed);
+    sdm::uniform_random_real<real_t> rand_y(0, grid.ny() * (grid.dy() / si::metres), seed);
     thrust::generate(stat.y_begin, stat.y_end, rand_y);
     seed = rand_y();
   }
@@ -284,7 +288,7 @@ void eqs_todo_sdm<real_t>::sd_init(
   // TODO: assert that the distribution is < epsilon at rd_min and rd_max
   thrust::generate( // rd3 temporarily means logarithms of radius!
     stat.rd3.begin(), stat.rd3.end(), 
-    sdm::rng<real_t>(log(min_rd), log(max_rd), seed) 
+    sdm::uniform_random_real<real_t>(log(min_rd), log(max_rd), seed) 
   ); 
   {
     real_t multi = log(max_rd/min_rd) / sd_conc_mean 
@@ -452,28 +456,66 @@ void eqs_todo_sdm<real_t>::sd_sync_out(
   );
 }
 
-// computing diagnostics
 template <typename real_t>
-void eqs_todo_sdm<real_t>::sd_diag(ptr_unordered_map<string, mtx::arr<real_t>> &aux)
+void eqs_todo_sdm<real_t>::sd_sort()
 {
+  // filling-in stat.sorted_id with a sequence
+  thrust::sequence(stat.sorted_id.begin(), stat.sorted_id.end());
   // making a copy of ij
   thrust::copy(stat.ij.begin(), stat.ij.end(), stat.sorted_ij.begin());
-  // filling-in stat.sorted_id
-  thrust::sequence(stat.sorted_id.begin(), stat.sorted_id.end());
   // sorting stat.ij and stat.sorted_id
   thrust::sort_by_key(
     stat.sorted_ij.begin(), stat.sorted_ij.end(),
     stat.sorted_id.begin()
   );
+}
 
+template <typename real_t>
+void eqs_todo_sdm<real_t>::sd_shuffle_and_sort()
+{
+  // filling-in sorted_id with a random sequence 
+  // that's a try to get the std::random_shuffle functionality using parallelisable Thrust calls
+  {
+    // filling-in stat.sorted_id with a sequence (TODO: is it neccesarry here?)
+    thrust::sequence(stat.sorted_id.begin(), stat.sorted_id.end());
+    // using sorted_ij as temporary space for the random key
+    thrust::device_vector<int> &random_key = stat.sorted_ij; 
+    {
+      sdm::uniform_random_int<int> rand(INT_MIN, INT_MAX, seed); // TODO: c++ version of INT_MIN/INT_MAX
+      thrust::generate(random_key.begin(), random_key.end(), rand);
+      seed = rand();
+    }
+    thrust::stable_sort_by_key( // sorting with random key!
+      random_key.begin(), random_key.end(),
+      stat.sorted_id.begin()
+    );
+  }
+  // making a permutated copy of ij
+  thrust::permutation_iterator<
+    decltype(stat.ij.begin()), // values
+    decltype(stat.sorted_id.begin()) // indices
+  > perm(stat.ij.begin(), stat.sorted_id.begin());
+  thrust::copy(perm, perm + stat.n_part, stat.sorted_ij.begin()); 
+  // sorting stat.ij and stat.sorted_id
+  thrust::stable_sort_by_key( // TODO is stable needed?
+    stat.sorted_ij.begin(), stat.sorted_ij.end(),
+    stat.sorted_id.begin()
+  );
+}
+
+// computing diagnostics
+template <typename real_t>
+void eqs_todo_sdm<real_t>::sd_diag(ptr_unordered_map<string, mtx::arr<real_t>> &aux)
+{
   // calculating super-droplet concentration (per grid cell)
   {
+    // TODO: repeated in sd_coalescence!
     // zeroing the temporary var 
     thrust::fill(tmp_long.begin(), tmp_long.end(), 0); // TODO: is it needed?
     // doing the reduction
     thrust::pair<
-      thrust::device_vector<int>::iterator, 
-      thrust::device_vector<thrust_size_t>::iterator
+      decltype(tmp_shrt.begin()), 
+      decltype(tmp_long.begin())
     > n = thrust::reduce_by_key(
       stat.sorted_ij.begin(), stat.sorted_ij.end(),
       thrust::make_constant_iterator(1),
@@ -483,8 +525,8 @@ void eqs_todo_sdm<real_t>::sd_diag(ptr_unordered_map<string, mtx::arr<real_t>> &
     // writing to aux
     mtx::arr<real_t> &sd_conc = aux.at("sd_conc");
     sd_conc(sd_conc.ijk) = real_t(0); // as some grid cells could be void of particles
-    thrust::counting_iterator<thrust_size_t> iter(0);
-    thrust::for_each(iter, iter + (n.first - tmp_shrt.begin()), 
+    thrust::counting_iterator<thrust_size_t> zero(0);
+    thrust::for_each(zero, zero + (n.first - tmp_shrt.begin()), 
       sdm::thrust2blitz<real_t>(
         grid.nx(), tmp_shrt, tmp_long, sd_conc 
       )
@@ -654,14 +696,35 @@ void eqs_todo_sdm<real_t>::sd_periodic_x()
 }
 
 template <typename real_t>
-void eqs_todo_sdm<real_t>::sd_periodic_y()
+void eqs_todo_sdm<real_t>::sd_recycle() 
 {
-  // periodic boundary condition (in-place transforms)
-  thrust::transform(stat.y_begin, stat.y_end, stat.y_begin, 
-    sdm::modulo<real_t>(
-      grid.ny() * (grid.dy() / si::metres)
-    )
-  );
+  // invalidate out-of-domain droplets
+  struct invalidate
+  {
+    // member fields
+    eqs_todo_sdm<real_t> &nest;
+    const real_t Y;
+    // ctor
+    invalidate(eqs_todo_sdm<real_t> &nest) :
+      nest(nest), Y(nest.grid.nx() * (nest.grid.dx() / si::metres))
+    {}
+    // overloaded operator invoked by Thrust
+    void operator()(thrust_size_t id)
+    {
+      if (
+        nest.stat.xy[nest.stat.n_part + id] < 0 || 
+        nest.stat.xy[nest.stat.n_part + id] > Y
+      ) 
+      {
+        nest.stat.xy[nest.stat.n_part + id] = Y/2.; // TODO
+        nest.stat.n[id] = 0; // invalidating
+      }
+    }
+  };
+  thrust::counting_iterator<thrust_size_t> zero(0);
+  thrust::for_each(zero, zero + stat.n_part, invalidate(*this));
+
+  // TODO: recycle droplets!
 }
   
 template <typename real_t>
@@ -670,7 +733,7 @@ void eqs_todo_sdm<real_t>::sd_condevap(
 )
 {
   // growing/shrinking the droplets
-  F_cond->advance(stat.xi, dt, 10); // TODO: maximal timestep as an option!
+  F_cond->advance(stat.xi, dt, 50); // TODO: maximal timestep as an option!
   assert(*thrust::min_element(stat.xi.begin(), stat.xi.end()) > 0);
 }
 
@@ -681,6 +744,157 @@ void eqs_todo_sdm<real_t>::sd_chem(
 {
   F_chem->advance(stat.c_aq, dt, 10); // TODO !!!!!
   assert(*thrust::min_element(stat.c_aq.begin(), stat.c_aq.end()) >= 0);
+}
+
+template <typename real_t>
+struct eqs_todo_sdm<real_t>::detail
+{
+  // 
+  template <class xi>
+  struct collider : xi
+  { 
+    // member fields
+    eqs_todo_sdm<real_t> &nest;
+    const quantity<si::time, real_t> dt;
+    const quantity<si::volume, real_t> dv;
+    sdm::uniform_random_real<real_t> rand;
+
+    // ctor
+    collider(
+      eqs_todo_sdm<real_t> &nest,
+      const quantity<si::time, real_t> dt
+    ) : 
+      nest(nest), 
+      dt(dt),
+      dv(nest.grid.dx() * nest.grid.dy() * nest.grid.dz()),
+      rand(0, 1, nest.seed)
+    {}
+   
+    // dtor
+    ~collider()
+    {
+      nest.seed = rand();
+    }
+
+    // overloaded operator invoked by Thrust
+    void operator()(sdm::thrust_size_t key)
+    {
+      // we take into account every second droplet
+      if (key % 2 != 0) return; 
+
+      // and we only work with droplets within the same cell
+      if (nest.stat.sorted_ij[key] != nest.stat.sorted_ij[key+1]) return;
+
+      // we get the id-s and ij-s from the sorted random permutation
+      sdm::thrust_size_t
+        id1 = nest.stat.sorted_id[key],
+        id2 = nest.stat.sorted_id[key+1],
+        ij = nest.stat.sorted_ij[key];
+
+      // chosing id1 to correspond to the higher multiplicity
+      if (nest.stat.n[id1] < nest.stat.n[id2]) std::swap(id1, id2);
+
+      // evaluating the probability
+      real_t prob = 
+        real_t(nest.stat.n[id1]) // max(n1,n2) multiplicity (targe/projectile configuration)
+        * real_t(nest.tmp_real[ij]) // scaling factor
+        * abs(
+          phc::vt<real_t>(
+            this->rw_of_xi(nest.stat.xi[id1]) * si::metres,
+            nest.envi.T[ij] * si::kelvins,
+            nest.envi.rhod[ij] * si::kilograms / si::cubic_metres // that's the dry air density
+          ) -
+          phc::vt<real_t>(
+            this->rw_of_xi(nest.stat.xi[id2]) * si::metres,
+            nest.envi.T[ij] * si::kelvins,
+            nest.envi.rhod[ij] * si::kilograms / si::cubic_metres // that's the dry air density
+          )
+        ) // velocity difference
+        * dt // timestep
+        / dv // volume
+        * si::square_metres * phc::pi<real_t>() * pow(this->rw_of_xi(nest.stat.xi[id1]) + this->rw_of_xi(nest.stat.xi[id2]), 2) // geometrical cross-section
+        * real_t(10); // collection efficiency TODO!!!
+      assert(prob < 1);
+
+      // tossing a random number and returning if unlucky
+      if (prob < rand()) return;
+
+      // performing the coalescence event if lucky
+      if (nest.stat.n[id1] != nest.stat.n[id2])
+      {
+        // multiplicity change (eq. 12 in Shima et al. 2009)
+        nest.stat.n[id1] -= nest.stat.n[id2]; 
+        // wet radius change (eq. 13 in Shima et al. 2009)
+        nest.stat.xi[id2] = this->xi_of_rw3(
+          this->rw3_of_xi(nest.stat.xi[id1]) + 
+          this->rw3_of_xi(nest.stat.xi[id2])
+        ); 
+        // dry radius change (eq. 13 in Shima et al. 2009)
+        nest.stat.rd3[id2] = nest.stat.rd3[id1] + nest.stat.rd3[id2];
+      }
+      else
+      {
+        // TODO: eqs. 16-19 in Shima et al. 2009
+        assert(false);
+      }
+    }
+  };
+};
+
+template <typename real_t>
+void eqs_todo_sdm<real_t>::sd_coalescence(
+  const quantity<si::time, real_t> dt
+)
+{
+  thrust::counting_iterator<thrust_size_t> zero(0);
+
+  // first getting the number of super-droplets per cell, 
+  // a list of cells to consider, and probability scale-factors
+  {
+    // zeroing the temporary var 
+    thrust::fill(tmp_long.begin(), tmp_long.end(), 0); // TODO: is it needed?
+    // doing the reduction
+    thrust::pair<
+      decltype(tmp_shrt.begin()), 
+      decltype(tmp_long.begin())
+    > n = thrust::reduce_by_key(
+      stat.sorted_ij.begin(), stat.sorted_ij.end(),
+      thrust::make_constant_iterator(1),
+      tmp_shrt.begin(), // will store the grid cell indices
+      tmp_long.begin()  // will store the concentrations per grid cell
+    ); 
+  
+    // filling tmp_real with (n*(n-1)/2)/floor(n/2) for given ij
+    thrust::fill(tmp_real.begin(), tmp_real.end(), real_t(0));
+
+    struct scale_factor  
+    {
+      eqs_todo_sdm<real_t> &nest;
+      scale_factor(eqs_todo_sdm<real_t> &nest) : nest(nest) {}
+      inline real_t sf(thrust_size_t n) { return real_t((n*(n-1))/2) / (n/2); }
+      void operator()(thrust_size_t i)
+      {
+        nest.tmp_real[nest.tmp_shrt[i]] = sf(nest.tmp_long[i]);
+      }
+    };
+    thrust::for_each(zero, zero + (n.first - tmp_shrt.begin()), scale_factor(*this));
+  }
+
+  // getting particle number in a sequence through a segmented prefix sum 
+  thrust::exclusive_scan_by_key(
+    stat.sorted_ij.begin(), stat.sorted_ij.end(),
+    stat.sorted_id.begin(),
+    tmp_long_id.begin() 
+  );
+
+  switch (xi_dfntn)
+  {
+    case p2:
+      // the collider uses n and n+1, hence stopping at n_part - 1
+      thrust::for_each(zero, zero + stat.n_part - 1, typename detail::collider<sdm::xi_p2<real_t>>(*this, dt));
+      break;
+    default: assert(false); //TODO: ln, p3, id, ...
+  }
 }
 #endif
 
