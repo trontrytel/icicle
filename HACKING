@@ -37,3 +37,5 @@ References:
   http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml
 [GNU] - GNU Coding Standards
   http://www.gnu.org/prep/standards/
+[GCC] - GCC C++ Coding Conventions
+  http://gcc.gnu.org/wiki/CppConventions
