@@ -45,7 +45,7 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
   real_t n2_tot,
   real_t kappa,
   map<enum sdm::chem_gas, quantity<phc::mixing_ratio, real_t>> opt_gas,
-  map<enum sdm::chem_aq, quantity<divide_typeof_helper<si::amount, si::volume>::type, real_t>> opt_aq
+  map<enum sdm::chem_aq, quantity<si::mass, real_t>> opt_aq
 ) : eqs_todo<real_t>(grid, &this->par), 
   opts(opts), 
   grid(grid), 
@@ -116,9 +116,9 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
     vector<int>({0, 0, 0})
   }));
 
-  // auxliary variable for mean SO2 density within a droplet
-  ptr_map_insert(this->aux)("c_SO3", typename eqs<real_t>::axv({
-    "c_SO3", "<c_SO3> for r > r_min", this->quan2str(si::kilograms / si::cubic_metres),
+  // auxliary variable for mean H density within a droplet
+  ptr_map_insert(this->aux)("c_H", typename eqs<real_t>::axv({
+    "c_H", "<c_H> for r > r_min", this->quan2str(si::kilograms / si::cubic_metres),
     typename eqs<real_t>::invariable(false),
     vector<int>({0, 0, 0})
   }));
@@ -269,7 +269,7 @@ void eqs_todo_sdm<real_t>::sd_init(
   const real_t sd_conc_mean,
   const real_t kappa,
   map<enum sdm::chem_gas, quantity<phc::mixing_ratio, real_t>> opt_gas,
-  map<enum sdm::chem_aq, quantity<divide_typeof_helper<si::amount, si::volume>::type, real_t>> opt_aq
+  map<enum sdm::chem_aq, quantity<si::mass, real_t>> opt_aq
 )
 {
   // initialise particle coordinates
@@ -317,37 +317,47 @@ void eqs_todo_sdm<real_t>::sd_init(
   thrust::fill(
     stat.c_aq.begin() +  sdm::H      * stat.n_part, 
     stat.c_aq.begin() + (sdm::H + 1) * stat.n_part, 
-    opt_aq[sdm::H] * si::cubic_metres / si::moles
+    opt_aq[sdm::H] / si::kilograms
   );
   thrust::fill(
     stat.c_aq.begin() +  sdm::OH      * stat.n_part, 
     stat.c_aq.begin() + (sdm::OH + 1) * stat.n_part, 
-    opt_aq[sdm::OH] * si::cubic_metres / si::moles
+    opt_aq[sdm::OH] / si::kilograms
   );
   thrust::fill(
     stat.c_aq.begin() +  sdm::SO2      * stat.n_part, 
     stat.c_aq.begin() + (sdm::SO2 + 1) * stat.n_part, 
-    opt_aq[sdm::SO2] * si::cubic_metres / si::moles
+    opt_aq[sdm::SO2] / si::kilograms
   );
   thrust::fill(
     stat.c_aq.begin() +  sdm::O3      * stat.n_part,  
     stat.c_aq.begin() + (sdm::O3 + 1) * stat.n_part, 
-    opt_aq[sdm::O3] * si::cubic_metres / si::moles
+    opt_aq[sdm::O3] / si::kilograms
   );
   thrust::fill(
     stat.c_aq.begin() +  sdm::H2O2      * stat.n_part, 
     stat.c_aq.begin() + (sdm::H2O2 + 1) * stat.n_part, 
-    opt_aq[sdm::H2O2] * si::cubic_metres / si::moles
+    opt_aq[sdm::H2O2] / si::kilograms
   );
   thrust::fill(
     stat.c_aq.begin() +  sdm::HSO3      * stat.n_part,
     stat.c_aq.begin() + (sdm::HSO3 + 1) * stat.n_part,
-    opt_aq[sdm::HSO3] * si::cubic_metres / si::moles
+    opt_aq[sdm::HSO3] / si::kilograms
   );
   thrust::fill(
     stat.c_aq.begin() +  sdm::SO3      * stat.n_part,
     stat.c_aq.begin() + (sdm::SO3 + 1) * stat.n_part, 
-    opt_aq[sdm::SO3] * si::cubic_metres / si::moles
+    opt_aq[sdm::SO3]  / si::kilograms
+  );
+  thrust::fill(
+    stat.c_aq.begin() +  sdm::HSO4      * stat.n_part,
+    stat.c_aq.begin() + (sdm::HSO4 + 1) * stat.n_part, 
+    0. //TODO?
+  );
+  thrust::fill(
+    stat.c_aq.begin() +  sdm::SO4      * stat.n_part,
+    stat.c_aq.begin() + (sdm::SO4 + 1) * stat.n_part, 
+    0.//TODO?
   );
 }
 
@@ -599,7 +609,7 @@ void eqs_todo_sdm<real_t>::sd_diag(ptr_unordered_map<string, mtx::arr<real_t>> &
   if (true/* TODO opt[chem]*/)
   {
     typedef pair<enum sdm::chem_aq, string> keyval;
-    for (keyval &kv : list<keyval>({{sdm::SO3,"c_SO3"}}))
+    for (keyval &kv : list<keyval>({{sdm::H,"c_H"}}))
     {
       // zeroing the temporary var
       thrust::fill(tmp_real.begin(), tmp_real.end(), 0); // TODO: is it needed
@@ -732,7 +742,7 @@ void eqs_todo_sdm<real_t>::sd_chem(
   const quantity<si::time, real_t> dt
 )
 {
-  F_chem->advance(stat.c_aq, dt); 
+  F_chem->advance(stat.c_aq, dt, 10); // TODO !!!!!
   assert(*thrust::min_element(stat.c_aq.begin(), stat.c_aq.end()) >= 0);
 }
 

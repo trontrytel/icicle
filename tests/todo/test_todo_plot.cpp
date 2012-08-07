@@ -115,9 +115,7 @@ int main(int argc, char **argv)
   notice_macro("setting-up plot parameters")
   Gnuplot gp;
 
-  //for (size_t t = 0 ; t < nt; ++t) for (string &ext : list<string>({"eps","png"}))
-// TEMP!!!!
-  for (size_t t = 0 ; t < 3*nt/5; ++t) for (string &ext : list<string>({"eps","png"}))
+  for (size_t t = 0 ; t < nt; ++t) for (string &ext : list<string>({"eps","png"}))
   {
     notice_macro("generating frame at t=" << t)
     gp << "reset" << endl;
@@ -206,10 +204,10 @@ int main(int argc, char **argv)
       gp.sendBinary(tmp0);
 
 /*
-      gp << "set title 'mean SO3 concentration [?]'" << endl;
-      //gp << "set cbrange [0:4.444]" << endl;
+      gp << "set title 'mean H+ mass in the droplet" << endl;
+      gp << "set cbrange [1e-4:1*1e-3]" << endl;
       gp << "set autoscale cb" << endl;
-      nf.getVar("c_SO3").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
+      nf.getVar("c_H").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
       nf.getVar("n_tot").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp1.data());     
       tmp0 = tmp0 / tmp1;
       gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";
@@ -236,7 +234,7 @@ int main(int argc, char **argv)
   }
 
   string cmd="convert -monitor -delay 10 -loop 1 " + dir + "/test_*.png " + dir + "/todo.gif 1>&2";
-  system(cmd.c_str());
+  int status = system(cmd.c_str());
   notice_macro("done.")
 }
 
