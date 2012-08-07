@@ -21,10 +21,11 @@ set(CMAKE_CXX_FLAGS_RELEASE "${TMP} -DNDEBUG -Wfatal-errors" CACHE STRING "Relea
 set(CMAKE_CXX_FLAGS_DEBUG "${TMP} -DBZ_DEBUG" CACHE STRING "Debug options." FORCE)
 unset(TMP)
 
-if(NOT (
-  "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" OR 
-  "${CMAKE_BUILD_TYPE}" STREQUAL "Release" 
-))
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+  # TODO: use the actual flags for tests
+elseif ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+  # TODO: use the actual flags for tests
+else()
   message(FATAL_ERROR "Please specify the build type, i.e.:
     \$ cmake . -DCMAKE_BUILD_TYPE=Debug   \# (CXX_FLAGS=\"\$CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS_DEBUG}\")
     or
@@ -104,10 +105,6 @@ icicle_option(LDOUBLE "'long double' type support (compiler-dependent, 80 bits f
 #icicle_option(FLOAT128 "'__float128' type support (GNU extension, 128 bits)" ON) #TODO: check if __float128 is actually supported by the compiler...
 
 set(tmp "")
-set(tmp "${tmp};src/adv_leapfrog.cpp")
-set(tmp "${tmp};src/adv_upstream.cpp")
-set(tmp "${tmp};src/adv_mpdata.cpp")
-set(tmp "${tmp};src/adv_mpdata_fct.cpp")
 set(tmp "${tmp};src/slv_serial.cpp")
 set(tmp "${tmp};src/slv_parallel_serial.cpp")
 set(tmp "${tmp};src/slv_parallel_openmp.cpp")
@@ -120,6 +117,10 @@ set(tmp "${tmp};src/eqs_scalar_advection.cpp")
 set(tmp "${tmp};src/eqs_isentropic.cpp")
 set(tmp "${tmp};src/eqs_todo_sdm.cpp")
 set(tmp "${tmp};src/eqs_todo_bulk_ode.cpp")
+set(tmp "${tmp};src/adv_leapfrog.cpp")
+set(tmp "${tmp};src/adv_upstream.cpp")
+set(tmp "${tmp};src/adv_mpdata.cpp")
+set(tmp "${tmp};src/adv_mpdata_fct.cpp")
 set(tmp "${tmp};src/vel_momeq_extrapol.cpp")
 set(tmp "${tmp};src/vel_func_test.cpp")
 set(tmp "${tmp};src/vel_func_stream_rasinski.cpp")
@@ -159,7 +160,7 @@ endif()
 add_executable(icicle ${tmp})
 
 # Blitz++ (mandatory)
-target_link_libraries(icicle debug "-lblitz") # TODO: check if debugging actually works, if not suggest recompiling blitz with --enable-shared
+target_link_libraries(icicle debug "-lblitz -libboost_system.so.1.50.0") # TODO: check if debugging actually works, if not suggest recompiling blitz with --enable-shared
 icicle_check(status "blitz" FATAL_ERROR ""
   "#include <blitz/array.h>\n int main() {}"
 )
@@ -242,6 +243,13 @@ else()
     "#include <boost/numeric/odeint.hpp>\n int main() {}" 
   )
   set(USE_BOOST_ODEINT ${status})
+  set(TMP ${CMAKE_CXX_FLAGS}) 
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+  icicle_check(status "boost_fusion" WARNING 
+    "Boost.fusion seems not functional (buggy Boost 1.50?)"
+    "#include <boost/fusion/container.hpp>\n int main() {}" 
+  )
+  set(CMAKE_CXX_FLAGS ${TMP}) 
 endif()
 icicle_option(ODEINT "ODE integration with Boost.odeint" "${status}")
 
@@ -301,7 +309,7 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
 elseif("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
   set(INFO_CXX_FLAGS "${CMAKE_CXX_FLAGS_RELEASE} ${CMAKE_CXX_FLAGS}")
 else()
-  set(INFO_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+  #TODO: assert false...
 endif()
 execute_process(COMMAND "whoami" OUTPUT_VARIABLE INFO_WHOAMI OUTPUT_STRIP_TRAILING_WHITESPACE)
 execute_process(COMMAND "hostname" OUTPUT_VARIABLE INFO_HOSTNAME OUTPUT_STRIP_TRAILING_WHITESPACE)

@@ -19,8 +19,9 @@
  * 
  * where
  *
- * \f$ \psi = [\psi_1, \psi_2, \ldots ] \f$, \f$ R = [R_1, R_2, \ldots ] \f$ 
- * and \f$ \vec{v} = [u, v, w] \f$
+ * \f$ \psi = [\psi_1, \psi_2, \ldots ] \f$ is a set of conservative dependent variables, 
+ * \f$ R = [R_1, R_2, \ldots ] \f$ are the forcing terms, 
+ * and \f$ \vec{v} = [u, v, w] \f$ is the velocity field.
  *
  * In most numerical aspects icicle follows the design of the MPDATA-based NFT
  * solvers of Smolarkiewicz et al., for a review and list of references consult:

@@ -11,6 +11,7 @@
 
 #include "eqs_todo.hpp" 
 #include "vel.hpp"
+#include "phc.hpp"
 
 # if defined(USE_BOOST_ODEINT) && defined(USE_THRUST)
 #  include "sdm_functors.hpp"
