@@ -10,6 +10,9 @@
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
 
+#include <string>
+using std::string;
+
 template <typename real_t>
 real_t real_cast(const po::variables_map& vm, const string &name) 
 {

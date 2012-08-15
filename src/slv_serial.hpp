@@ -8,7 +8,10 @@
 #pragma once
 #include "slv.hpp"
 #include "stp.hpp"
-#include "tmp.hpp"
+#include "tmp.hpp" // TODO: get rid of it!
+
+#  include <memory>
+using std::unique_ptr;
 
 template <typename real_t>
 class slv_serial : public slv<real_t>

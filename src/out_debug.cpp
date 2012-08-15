@@ -29,9 +29,9 @@ void out_debug<real_t>::record(
         << ijk.lbound(1) << "..." << ijk.ubound(1) << "," 
         << ijk.lbound(2) << "..." << ijk.ubound(2) << "," 
       << "] @ t/dt=" << t
-      << endl
+      << std::endl
       << psi(ijk) 
-      << endl;
+      << std::endl;
     std::cerr << tmp.str(); // non-buffered?
 }
 

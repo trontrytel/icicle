@@ -8,6 +8,15 @@
 #pragma once
 #include "vel_func.hpp" 
 
+#include <map>
+using std::map;
+
+#include <string>
+using std::string;
+
+#include <vector>
+using std::vector;
+
 template <typename real_t>
 class vel_func_stream : public vel_func<real_t>
 {

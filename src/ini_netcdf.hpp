@@ -8,6 +8,9 @@
 #pragma once
 #include "ini.hpp"
 
+#include <memory>
+using std::unique_ptr; // TODO: detail
+
 template <typename real_t>
 class ini_netcdf : public ini<real_t>
 {

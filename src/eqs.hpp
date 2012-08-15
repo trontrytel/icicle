@@ -7,8 +7,18 @@
  *  @brief definition of the @ref eqs class - a base class for all transport equation systems
  */
 #pragma once
-#include "cmn.hpp"
+#include "cmn.hpp" // TODO: get rid of it
 #include "rhs.hpp"
+
+#include <vector>
+using std::vector;
+
+#include <map>
+using std::map;
+using std::pair;
+
+#include <sstream>
+using std::ostringstream;
 
 /// @brief a class defining a system of generalised transport equations
 template <typename real_t>

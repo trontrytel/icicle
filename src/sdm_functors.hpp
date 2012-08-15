@@ -109,7 +109,7 @@ namespace sdm {
     public: blitz2thrust(int n,
       const mtx::arr<blitz_real_t> &from,
       thrust::device_vector<real_t> &to,
-      real_t scl = real_t(1)
+      const real_t scl = real_t(1)
     ) : n(n), from(from), to(to), scl(scl) {}
 
     public: void operator()(int ij)

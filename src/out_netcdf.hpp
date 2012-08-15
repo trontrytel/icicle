@@ -13,10 +13,14 @@
 #  include "stp.hpp"
 #  include "grd.hpp"
 
+#  include <memory>    // TODO: move into detail
+using std::unique_ptr; // 
+
 template <typename real_t>
 class out_netcdf : public out<real_t>
 {
-  private: unique_ptr<NcFile> f;
+  // TODO: move into detail
+  private: unique_ptr<NcFile> f; 
   private: map<string, NcVar> vars;
   private: inf info;
 

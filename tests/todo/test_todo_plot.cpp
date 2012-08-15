@@ -47,7 +47,6 @@ using blitz::Range;
 #include "../../src/cmn.hpp"
 #include "../../src/phc.hpp"
 
-#define notice_macro(msg) { cerr << msg << endl; }
 typedef float real_t;
 
 std::string zeropad(int n)
@@ -115,9 +114,7 @@ int main(int argc, char **argv)
   notice_macro("setting-up plot parameters")
   Gnuplot gp;
 
-  //for (size_t t = 0 ; t < nt; ++t) for (string &ext : list<string>({"eps","png"}))
-// TEMP!!!!
-  for (size_t t = 0 ; t < 3*nt/5; ++t) for (string &ext : list<string>({"eps","png"}))
+  for (size_t t = 0 ; t < nt; ++t) for (string &ext : list<string>({"eps","png"}))
   {
     notice_macro("generating frame at t=" << t)
     gp << "reset" << endl;

@@ -120,24 +120,24 @@ eqs<real_t> *opt_eqs(
   else 
   if (initype == "todo_sdm")
   {
-    map<string, enum eqs_todo_sdm<real_t>::ode_algos> map_algo({
-      {"euler", eqs_todo_sdm<real_t>::euler},
-      {"mmid",  eqs_todo_sdm<real_t>::mmid},
-      {"rk4",   eqs_todo_sdm<real_t>::rk4}
+    map<string, enum sdm::ode_algos> map_algo({
+      {"euler", sdm::euler},
+      {"mmid",  sdm::mmid},
+      {"rk4",   sdm::rk4}
     });
-    map<string, enum eqs_todo_sdm<real_t>::xi_dfntns> map_xid({
-      {"id", eqs_todo_sdm<real_t>::id},
-      {"ln", eqs_todo_sdm<real_t>::ln},
-      {"p2", eqs_todo_sdm<real_t>::p2},
-      {"p3", eqs_todo_sdm<real_t>::p3}
+    map<string, enum sdm::xi_dfntns> map_xid({
+      {"id", sdm::id},
+      {"ln", sdm::ln},
+      {"p2", sdm::p2},
+      {"p3", sdm::p3}
     });
-    return new eqs_todo_sdm<real_t>(grid, velocity,
-      map<enum eqs_todo_sdm<real_t>::processes, bool>({
-        {eqs_todo_sdm<real_t>::adve, vm["eqs.todo_sdm.adve"].as<bool>()},
-        {eqs_todo_sdm<real_t>::cond, vm["eqs.todo_sdm.cond"].as<bool>()},
-        {eqs_todo_sdm<real_t>::sedi, vm["eqs.todo_sdm.sedi"].as<bool>()},
-        {eqs_todo_sdm<real_t>::coal, vm["eqs.todo_sdm.coal"].as<bool>()},
-        {eqs_todo_sdm<real_t>::chem, vm["eqs.todo_sdm.chem"].as<bool>()},
+    return new eqs_todo_sdm<real_t, THRUST_DEVICE_SYSTEM_OMP>(grid, velocity,
+      map<enum sdm::processes, bool>({
+        {sdm::adve, vm["eqs.todo_sdm.adve"].as<bool>()},
+        {sdm::cond, vm["eqs.todo_sdm.cond"].as<bool>()},
+        {sdm::sedi, vm["eqs.todo_sdm.sedi"].as<bool>()},
+        {sdm::coal, vm["eqs.todo_sdm.coal"].as<bool>()},
+        {sdm::chem, vm["eqs.todo_sdm.chem"].as<bool>()},
       }),
       map_xid.at(vm["eqs.todo_sdm.xi"].as<string>()),
       map_algo.at(vm["eqs.todo_sdm.adve.algo"].as<string>()),

@@ -10,6 +10,9 @@
 #include "cmn.hpp" 
 #include "mtx.hpp"
 
+#include <string>
+using std::string;
+
 /** @brief TODO
  *
  * a right-hand-side (RHS) of a generalised transport equation: 
