@@ -13,6 +13,7 @@
 #  include "eqs_isentropic.hpp"
 #  include "eqs_harmonic_oscillator.hpp"
 #  include "eqs_todo_bulk_ode.hpp"
+#  include "eqs_todo_mm.hpp"
 #  include "eqs_todo_sdm.hpp"
 
 inline void opt_eqs_desc(po::options_description &desc)
@@ -34,6 +35,19 @@ inline void opt_eqs_desc(po::options_description &desc)
     ("eqs.todo_bulk.clct", po::value<bool>()->default_value(true), "collection of cloud water by rain [on/off]")
     ("eqs.todo_bulk.sedi", po::value<bool>()->default_value(true), "rain water sedimentation [on/off]")
     ("eqs.todo_bulk.revp", po::value<bool>()->default_value(true), "rain water evaporation [on/off]")
+
+    ("eqs.todo_mm.act",  po::value<bool>()->default_value(true), "cloud water activation [on/off]")
+    ("eqs.todo_mm.cond", po::value<bool>()->default_value(true), "condensation/evaporation [on/off]")
+    ("eqs.todo_mm.acc",  po::value<bool>()->default_value(true), "collection of cloud water by rain [on/off]")
+    ("eqs.todo_mm.autoc",po::value<bool>()->default_value(true), "autoconversion of cloud water by rain [on/off]")
+    ("eqs.todo_mm.self", po::value<bool>()->default_value(true), "selfcollection of cloud water and rain [on/off]")
+    ("eqs.todo_mm.turb", po::value<bool>()->default_value(true), "horizontal diffusion (turbulent mixing) [on/off]")
+    ("eqs.todo_mm.sedi", po::value<bool>()->default_value(true), "sedimentation [on/off]")
+    //assumed initial aerosol parameters (for activation parametrisation only)
+    ("eqs.todo_mm.mean_rd", po::value<string>(), "dry aerosol mean radii [m]") 
+    ("eqs.todo_mm.sdev_rd", po::value<string>(), "geometric standard deviation [1]") 
+    ("eqs.todo_mm.n_tot", po::value<string>(), "total concentration [m-3]") 
+    ("eqs.todo_mm.chem_b", po::value<string>(), "chemical composition parameter [1]")
 
     ("eqs.todo_sdm.adve", po::value<bool>()->default_value(true), "advection [on/off]")
     ("eqs.todo_sdm.cond", po::value<bool>()->default_value(true), "condensation/evaporation [on/off]")
@@ -59,18 +73,18 @@ inline void opt_eqs_desc(po::options_description &desc)
 
     // initial parameters of chemical compounds:
     // gas phase in the air
-    ("eqs.todo_sdm.chem.env_SO2", po::value<string>()->default_value("5"), "volume mixing ratio of SO2 [1]")
+    ("eqs.todo_sdm.chem.env_SO2", po::value<string>()->default_value("1e-10"), "volume mixing ratio of SO2 [1]")
     ("eqs.todo_sdm.chem.env_O3", po::value<string>()->default_value("1e-10"), "volume mixing ratio of O3 [1]")
     ("eqs.todo_sdm.chem.env_H2O2", po::value<string>()->default_value("1e-10"), "volume mixing ratio of H2O2 [1]")
     // aqueous phase in the droplets
     //TODO initial conditions calculated to be consistent with environment and kappa!!!
-    ("eqs.todo_sdm.chem.ini_c_H", po::value<string>()->default_value("1e-4"), "initial concentration of H+ [mol/m3]") //dissociation of pure water
-    ("eqs.todo_sdm.chem.ini_c_OH", po::value<string>()->default_value("1e-4"), "initial concentration of OH- [mol/m3]") //dissociation of pure water
-    ("eqs.todo_sdm.chem.ini_c_SO2", po::value<string>()->default_value("0"), "initial concentration of SO2*H2O [mol/m3]")
-    ("eqs.todo_sdm.chem.ini_c_O3", po::value<string>()->default_value("0"), "initial concentration of O3*H2O2 [mol/m3]")
-    ("eqs.todo_sdm.chem.ini_c_H2O2", po::value<string>()->default_value("0"), "initial concentration of H2O2*H2O [mol/m3]")
-    ("eqs.todo_sdm.chem.ini_c_HSO3", po::value<string>()->default_value("0"), "initial concentration of HSO3- [mol/m3]")
-    ("eqs.todo_sdm.chem.ini_c_SO3", po::value<string>()->default_value("0"), "initial concentration of SO3-- [mol/m3]")
+    ("eqs.todo_sdm.chem.ini_c_H", po::value<string>()->default_value("1e-22"), "initial mass of H+ [kg]") //dissociation of pure water: 1e-4
+    ("eqs.todo_sdm.chem.ini_c_OH", po::value<string>()->default_value("1e-25"), "initial mass of OH- [kg]") //dissociation of pure water:1e-4
+    ("eqs.todo_sdm.chem.ini_c_SO2", po::value<string>()->default_value("0"), "initial mass of SO2*H2O [kg]")
+    ("eqs.todo_sdm.chem.ini_c_O3", po::value<string>()->default_value("0"), "initial mass of O3*H2O2 [kg]")
+    ("eqs.todo_sdm.chem.ini_c_H2O2", po::value<string>()->default_value("0"), "initial mass of H2O2*H2O [kg]")
+    ("eqs.todo_sdm.chem.ini_c_HSO3", po::value<string>()->default_value("0"), "initial mass of HSO3- [kg]")
+    ("eqs.todo_sdm.chem.ini_c_SO3", po::value<string>()->default_value("0"), "initial mass of SO3-- [kg]")
     ;
 }
 
@@ -117,6 +131,23 @@ eqs<real_t> *opt_eqs(
         {eqs_todo_bulk<real_t>::revp, vm["eqs.todo_bulk.revp"].as<bool>()}
       })
     );
+  else
+  if (initype == "todo_mm")
+    return new eqs_todo_mm<real_t>(grid, 
+       map<enum eqs_todo_mm<real_t>::processes, bool>({
+        {eqs_todo_mm<real_t>::act,   vm["eqs.todo_mm.act"].as<bool>()},
+        {eqs_todo_mm<real_t>::cond,  vm["eqs.todo_mm.cond"].as<bool>()},
+        {eqs_todo_mm<real_t>::acc,   vm["eqs.todo_mm.acc"].as<bool>()},
+        {eqs_todo_mm<real_t>::autoc, vm["eqs.todo_mm.autoc"].as<bool>()},
+        {eqs_todo_mm<real_t>::self,  vm["eqs.todo_mm.self"].as<bool>()},
+        {eqs_todo_mm<real_t>::turb,  vm["eqs.todo_mm.turb"].as<bool>()},
+        {eqs_todo_mm<real_t>::sedi,  vm["eqs.todo_mm.sedi"].as<bool>()}
+      }),
+      real_cast<real_t>(vm, "eqs.todo_mm.mean_rd"), 
+      real_cast<real_t>(vm, "eqs.todo_mm.sdev_rd"), 
+      real_cast<real_t>(vm, "eqs.todo_mm.n_tot"), 
+      real_cast<real_t>(vm, "eqs.todo_mm.chem_b")
+    );
   else 
   if (initype == "todo_sdm")
   {
@@ -131,6 +162,9 @@ eqs<real_t> *opt_eqs(
       {"p2", sdm::p2},
       {"p3", sdm::p3}
     });
+#if !defined(USE_THRUST) // TODO!!!!
+#  define THRUST_DEVICE_SYSTEM_OMP 0
+#endif
     return new eqs_todo_sdm<real_t, THRUST_DEVICE_SYSTEM_OMP>(grid, velocity,
       map<enum sdm::processes, bool>({
         {sdm::adve, vm["eqs.todo_sdm.adve"].as<bool>()},
@@ -159,14 +193,14 @@ eqs<real_t> *opt_eqs(
         {sdm::gO3,   real_cast<real_t>(vm, "eqs.todo_sdm.chem.env_O3")},
         {sdm::gH2O2, real_cast<real_t>(vm, "eqs.todo_sdm.chem.env_H2O2")},
       }),
-      map<enum sdm::chem_aq, quantity<divide_typeof_helper<si::amount, si::volume>::type, real_t>> ({
-        {sdm::H,    real_cast<real_t>(vm, "eqs.todo_sdm.chem.ini_c_H")   *si::moles/si::cubic_metres},
-        {sdm::OH,    real_cast<real_t>(vm, "eqs.todo_sdm.chem.ini_c_OH") *si::moles/si::cubic_metres},
-        {sdm::SO2,  real_cast<real_t>(vm, "eqs.todo_sdm.chem.ini_c_SO2") *si::moles/si::cubic_metres},
-        {sdm::O3,   real_cast<real_t>(vm, "eqs.todo_sdm.chem.ini_c_O3")  *si::moles/si::cubic_metres},
-        {sdm::H2O2, real_cast<real_t>(vm, "eqs.todo_sdm.chem.ini_c_H2O2")*si::moles/si::cubic_metres},
-        {sdm::HSO3, real_cast<real_t>(vm, "eqs.todo_sdm.chem.ini_c_HSO3")*si::moles/si::cubic_metres},
-        {sdm::SO3,  real_cast<real_t>(vm, "eqs.todo_sdm.chem.ini_c_SO3") *si::moles/si::cubic_metres}
+      map<enum sdm::chem_aq, quantity<si::mass, real_t>> ({
+        {sdm::H,    real_cast<real_t>(vm, "eqs.todo_sdm.chem.ini_c_H")   *si::kilograms},
+        {sdm::OH,    real_cast<real_t>(vm, "eqs.todo_sdm.chem.ini_c_OH") *si::kilograms},
+        {sdm::SO2,  real_cast<real_t>(vm, "eqs.todo_sdm.chem.ini_c_SO2") *si::kilograms},
+        {sdm::O3,   real_cast<real_t>(vm, "eqs.todo_sdm.chem.ini_c_O3")  *si::kilograms},
+        {sdm::H2O2, real_cast<real_t>(vm, "eqs.todo_sdm.chem.ini_c_H2O2")*si::kilograms},
+        {sdm::HSO3, real_cast<real_t>(vm, "eqs.todo_sdm.chem.ini_c_HSO3")*si::kilograms},
+        {sdm::SO3,  real_cast<real_t>(vm, "eqs.todo_sdm.chem.ini_c_SO3") *si::kilograms}
       })
     );
   }

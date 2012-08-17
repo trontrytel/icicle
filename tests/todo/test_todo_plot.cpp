@@ -133,8 +133,17 @@ int main(int argc, char **argv)
 
     gp << "set label 't = " << int(real_t(t) * dt_out / si::seconds) << " s' at screen .48,.96 left" << endl;
 
-    // TODO...
-    string micro = nf.getVar("m_0").isNull() ? "bulk" : "sdm";
+    string micro, cmdline;
+    nf.getAtt("command_line").getValues(cmdline); 
+    if (cmdline.find("--eqs todo_mm") != string::npos)
+      micro = "mm";
+    else if (cmdline.find("--eqs todo_bulk") != string::npos)
+      micro = "bulk";
+    else if (cmdline.find("--eqs todo_sdm") != string::npos)
+      micro = "sdm";
+    else 
+      assert(false);
+
     int rows = 2; //micro == "bulk" ? 2 : 3;
 
     if (ext == "png")
@@ -182,17 +191,38 @@ int main(int argc, char **argv)
       gp << endl;
       gp.sendBinary(tmp0);
     }
+    else if (micro == "mm")
+    {
+      gp << "set title 'liquid water mixing ratio [g/kg]'" << endl;
+//      gp << "set cbrange [0:1]" << endl;
+      gp << "set autoscale cb" <<endl;
+      nf.getVar("rhod_rl").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
+      tmp0 /= rhod;
+      gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using ($1*1000) with image notitle";
+      gp << endl;
+      gp.sendBinary(tmp0);
+
+      gp << "set title 'rain water number concentration [?]'" << endl;
+      gp << "set cbrange [0.:1000]" << endl;
+      gp << "set cbtics .1" << endl;
+      nf.getVar("rhod_nl").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
+      tmp0 /= rhod;
+      gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using ($1) with image notitle";
+      gp << endl;
+      gp.sendBinary(tmp0);
+
+    }
     else if (micro == "sdm")
     {
       // sdm-relevant plots:
-/*
+
       gp << "set title 'super-droplet conc. [1/dx/dy/dz]'" << endl;
       gp << "set cbrange [0:512]" << endl;
       nf.getVar("sd_conc").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
       gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";
       gp << endl;
       gp.sendBinary(tmp0);
-*/
+
 
       gp << "set title 'particle (> 1 um) concentration [1/cm^3]'" << endl;
       gp << "set cbrange [0:150]" << endl;
@@ -202,9 +232,10 @@ int main(int argc, char **argv)
       gp << endl;
       gp.sendBinary(tmp0);
 
-/*
-      gp << "set title 'mean SO3 concentration [?]'" << endl;
-      //gp << "set cbrange [0:4.444]" << endl;
+
+      gp << "set title 'mean SO3 mass in the droplet" << endl;
+//      gp << "set cbrange [0:1*1e-16]" << endl;
+//      gp << "set cbrange [0:1*1e-21]" << endl;
       gp << "set autoscale cb" << endl;
       nf.getVar("c_SO3").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
       nf.getVar("n_tot").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp1.data());     
@@ -212,7 +243,7 @@ int main(int argc, char **argv)
       gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";
       gp << endl;
       gp.sendBinary(tmp0);
-*/
+
 
       //gp << "set title 'cloud droplet effective radius [{/Symbol m}m]'" << endl;
       gp << "set title 'effective radius [um] (particles > 1 um)'" << endl;
@@ -233,7 +264,7 @@ int main(int argc, char **argv)
   }
 
   string cmd="convert -monitor -delay 10 -loop 1 " + dir + "/test_*.png " + dir + "/todo.gif 1>&2";
-  system(cmd.c_str());
+  int status = system(cmd.c_str());
   notice_macro("done.")
 }
 

@@ -85,7 +85,6 @@ void eqs_todo_bulk_ode<real_t>::condevap(
 #  if !defined(USE_BOOST_ODEINT)
     error_macro("eqs_todo_bulk requires icicle to be compiled with Boost.odeint");
 #  else
-
     // odeint::euler< // TODO: opcja?
     odeint::runge_kutta4<
       quantity<multiply_typeof_helper<si::mass_density, si::temperature>::type, real_t>, // state_type

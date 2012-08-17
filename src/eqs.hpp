@@ -240,10 +240,11 @@ class eqs
   public: bool aux_tobeoutput(const string &v) const
   {
     assert(auxvars().count(v));
-    return (!aux_const(v) 
-      && auxvars().at(v).dimspan[0] == axv::span
-      && auxvars().at(v).dimspan[0] == axv::span
-      && auxvars().at(v).dimspan[0] == axv::span);
+    // writing to the output file only those aux vars ...
+    return (!aux_const(v)                         // ... which are not constant in time ...
+      && auxvars().at(v).dimspan[0] == axv::span  // ... and which have the same dimensionality as psi_i
+      && auxvars().at(v).dimspan[1] == axv::span  // ... TODO: add a simple flag: output or not!
+      && auxvars().at(v).dimspan[2] == axv::span);// ...
   }
 
   public: string aux_desc(const string &v) const

@@ -103,7 +103,7 @@ class slv_parallel : public slv<real_t>
       slvs[sd].copy(n, n + 1); // TODO: only "dynamic" variables
 
     // first guess for forcing terms at t=0
-    if (!allhomo) slvs[sd].update_forcings(n, 0 * si::seconds);
+    if (!allhomo) slvs[sd].update_forcings(n/*, 0 * si::seconds*/);
 
     // time stepping
     for (unsigned long t = 0; t < setup.nt; ++t) 
@@ -152,7 +152,7 @@ class slv_parallel : public slv<real_t>
       {
         for (int e = 0; e < setup.eqsys.n_vars(); ++e) 
           fill_halos(sd, e, n + 1); 
-        slvs[sd].update_forcings(n + 1, real_t(t + .5) * setup.dt);
+        slvs[sd].update_forcings(n + 1/*, real_t(t + .5) * setup.dt*/);
         for (int e = 0; e < setup.eqsys.n_vars(); ++e)
           if (!homo[e]) slvs[sd].apply_forcings(e, n + 1, real_t(.5) * setup.dt);
       } 

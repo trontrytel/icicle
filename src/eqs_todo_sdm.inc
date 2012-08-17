@@ -45,11 +45,10 @@ eqs_todo_sdm<real_t, thrust_device_system>::eqs_todo_sdm(
   const real_t n2_tot,
   const real_t kappa,
   map<enum sdm::chem_gas, quantity<phc::mixing_ratio, real_t>> opt_gas,
-  map<enum sdm::chem_aq, quantity<divide_typeof_helper<si::amount, si::volume>::type, real_t>> opt_aq
-) : 
-  eqs_todo<real_t>(grid, &this->par), 
-  opts(opts),
-  grid(grid),
+  map<enum sdm::chem_aq, quantity<si::mass, real_t>> opt_aq
+) : eqs_todo<real_t>(grid, &this->par), 
+  opts(opts), 
+  grid(grid), 
   constant_velocity(velocity.is_constant()),
   stat(grid.nx(), grid.ny(), sd_conc_mean),
   envi(grid.nx(), grid.ny()),
@@ -65,10 +64,6 @@ eqs_todo_sdm<real_t, thrust_device_system>::eqs_todo_sdm(
   tmp_shrt.resize(grid.nx() * grid.ny());
   tmp_long.resize(grid.nx() * grid.ny()); 
   tmp_real.resize(grid.nx() * grid.ny());
-
-  // temporary space with n_part size
-  //tmp_long_id.resize(stat.n_part);
-  //tmp_real_id.resize(stat.n_part);
 
   typedef odeint::euler<
       thrust::device_vector<real_t>, // state type
@@ -662,7 +657,7 @@ static void sd_chem(
   const quantity<si::time, real_t> dt
 )
 {
-  F_chem.advance(stat.c_aq, dt); 
+  F_chem.advance(stat.c_aq, dt, 10); // TODO !!!!!
   assert(*thrust::min_element(stat.c_aq.begin(), stat.c_aq.end()) >= 0);
 }
 
@@ -678,7 +673,7 @@ static void sd_chem(
     const real_t sd_conc_mean,
     const real_t kappa,
     map<enum sdm::chem_gas, quantity<phc::mixing_ratio, real_t>> opt_gas,
-    map<enum sdm::chem_aq, quantity<divide_typeof_helper<si::amount, si::volume>::type, real_t>> opt_aq
+    map<enum sdm::chem_aq, quantity<si::mass, real_t>> opt_aq
   )
   {
     // initialise particle coordinates
@@ -722,42 +717,52 @@ static void sd_chem(
     // initialise kappas
     thrust::fill(stat.kpa.begin(), stat.kpa.end(), kappa);
 
-    // initialise chemical components
-    thrust::fill(
-      stat.c_aq.begin() +  sdm::H      * stat.n_part, 
-      stat.c_aq.begin() + (sdm::H + 1) * stat.n_part, 
-      opt_aq[sdm::H] * si::cubic_metres / si::moles
-    );
-    thrust::fill(
-      stat.c_aq.begin() +  sdm::OH      * stat.n_part, 
-      stat.c_aq.begin() + (sdm::OH + 1) * stat.n_part, 
-      opt_aq[sdm::OH] * si::cubic_metres / si::moles
-    );
-    thrust::fill(
-      stat.c_aq.begin() +  sdm::SO2      * stat.n_part, 
-      stat.c_aq.begin() + (sdm::SO2 + 1) * stat.n_part, 
-      opt_aq[sdm::SO2] * si::cubic_metres / si::moles
-    );
-    thrust::fill(
-      stat.c_aq.begin() +  sdm::O3      * stat.n_part,  
-      stat.c_aq.begin() + (sdm::O3 + 1) * stat.n_part, 
-      opt_aq[sdm::O3] * si::cubic_metres / si::moles
-    );
-    thrust::fill(
-      stat.c_aq.begin() +  sdm::H2O2      * stat.n_part, 
-      stat.c_aq.begin() + (sdm::H2O2 + 1) * stat.n_part, 
-      opt_aq[sdm::H2O2] * si::cubic_metres / si::moles
-    );
-    thrust::fill(
-      stat.c_aq.begin() +  sdm::HSO3      * stat.n_part,
-      stat.c_aq.begin() + (sdm::HSO3 + 1) * stat.n_part,
-      opt_aq[sdm::HSO3] * si::cubic_metres / si::moles
-    );
-    thrust::fill(
-      stat.c_aq.begin() +  sdm::SO3      * stat.n_part,
-      stat.c_aq.begin() + (sdm::SO3 + 1) * stat.n_part, 
-      opt_aq[sdm::SO3] * si::cubic_metres / si::moles
-    );
+  // initialise chemical components
+  thrust::fill(
+    stat.c_aq.begin() +  sdm::H      * stat.n_part, 
+    stat.c_aq.begin() + (sdm::H + 1) * stat.n_part, 
+    opt_aq[sdm::H] / si::kilograms
+  );
+  thrust::fill(
+    stat.c_aq.begin() +  sdm::OH      * stat.n_part, 
+    stat.c_aq.begin() + (sdm::OH + 1) * stat.n_part, 
+    opt_aq[sdm::OH] / si::kilograms
+  );
+  thrust::fill(
+    stat.c_aq.begin() +  sdm::SO2      * stat.n_part, 
+    stat.c_aq.begin() + (sdm::SO2 + 1) * stat.n_part, 
+    opt_aq[sdm::SO2] / si::kilograms
+  );
+  thrust::fill(
+    stat.c_aq.begin() +  sdm::O3      * stat.n_part,  
+    stat.c_aq.begin() + (sdm::O3 + 1) * stat.n_part, 
+    opt_aq[sdm::O3] / si::kilograms
+  );
+  thrust::fill(
+    stat.c_aq.begin() +  sdm::H2O2      * stat.n_part, 
+    stat.c_aq.begin() + (sdm::H2O2 + 1) * stat.n_part, 
+    opt_aq[sdm::H2O2] / si::kilograms
+  );
+  thrust::fill(
+    stat.c_aq.begin() +  sdm::HSO3      * stat.n_part,
+    stat.c_aq.begin() + (sdm::HSO3 + 1) * stat.n_part,
+    opt_aq[sdm::HSO3] / si::kilograms
+  );
+  thrust::fill(
+    stat.c_aq.begin() +  sdm::SO3      * stat.n_part,
+    stat.c_aq.begin() + (sdm::SO3 + 1) * stat.n_part, 
+    opt_aq[sdm::SO3]  / si::kilograms
+  );
+  thrust::fill(
+    stat.c_aq.begin() +  sdm::HSO4      * stat.n_part,
+    stat.c_aq.begin() + (sdm::HSO4 + 1) * stat.n_part, 
+    0. //TODO?
+  );
+  thrust::fill(
+    stat.c_aq.begin() +  sdm::SO4      * stat.n_part,
+    stat.c_aq.begin() + (sdm::SO4 + 1) * stat.n_part, 
+    0.//TODO?
+  );
   }
 
   // 
