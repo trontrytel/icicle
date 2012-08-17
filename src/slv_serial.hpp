@@ -66,7 +66,7 @@ class slv_serial : public slv<real_t>
   public: void update_courants(const int g, const int nm1, const int nm0);
 
   /// \param n the time level to use for updating the forcings
-  public: void update_forcings(int n, const quantity<si::time, real_t> t);
+  public: void update_forcings(int n /*, const quantity<si::time, real_t> t*/);
 
   public: void apply_forcings(int e, int n, quantity<si::time, real_t> dt);
 

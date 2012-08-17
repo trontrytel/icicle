@@ -13,6 +13,7 @@
 #  include "eqs_isentropic.hpp"
 #  include "eqs_harmonic_oscillator.hpp"
 #  include "eqs_todo_bulk_ode.hpp"
+#  include "eqs_todo_mm.hpp"
 #  include "eqs_todo_sdm.hpp"
 
 inline void opt_eqs_desc(po::options_description &desc)
@@ -34,6 +35,19 @@ inline void opt_eqs_desc(po::options_description &desc)
     ("eqs.todo_bulk.clct", po::value<bool>()->default_value(true), "collection of cloud water by rain [on/off]")
     ("eqs.todo_bulk.sedi", po::value<bool>()->default_value(true), "rain water sedimentation [on/off]")
     ("eqs.todo_bulk.revp", po::value<bool>()->default_value(true), "rain water evaporation [on/off]")
+
+    ("eqs.todo_mm.act",  po::value<bool>()->default_value(true), "cloud water activation [on/off]")
+    ("eqs.todo_mm.cond", po::value<bool>()->default_value(true), "condensation/evaporation [on/off]")
+    ("eqs.todo_mm.acc",  po::value<bool>()->default_value(true), "collection of cloud water by rain [on/off]")
+    ("eqs.todo_mm.autoc",po::value<bool>()->default_value(true), "autoconversion of cloud water by rain [on/off]")
+    ("eqs.todo_mm.self", po::value<bool>()->default_value(true), "selfcollection of cloud water and rain [on/off]")
+    ("eqs.todo_mm.turb", po::value<bool>()->default_value(true), "horizontal diffusion (turbulent mixing) [on/off]")
+    ("eqs.todo_mm.sedi", po::value<bool>()->default_value(true), "sedimentation [on/off]")
+    //assumed initial aerosol parameters (for activation parametrisation only)
+    ("eqs.todo_mm.mean_rd", po::value<string>(), "dry aerosol mean radii [m]") 
+    ("eqs.todo_mm.sdev_rd", po::value<string>(), "geometric standard deviation [1]") 
+    ("eqs.todo_mm.n_tot", po::value<string>(), "total concentration [m-3]") 
+    ("eqs.todo_mm.chem_b", po::value<string>(), "chemical composition parameter [1]")
 
     ("eqs.todo_sdm.adve", po::value<bool>()->default_value(true), "advection [on/off]")
     ("eqs.todo_sdm.cond", po::value<bool>()->default_value(true), "condensation/evaporation [on/off]")
@@ -116,6 +130,23 @@ eqs<real_t> *opt_eqs(
         {eqs_todo_bulk<real_t>::sedi, vm["eqs.todo_bulk.sedi"].as<bool>()},
         {eqs_todo_bulk<real_t>::revp, vm["eqs.todo_bulk.revp"].as<bool>()}
       })
+    );
+  else
+  if (initype == "todo_mm")
+    return new eqs_todo_mm<real_t>(grid, 
+       map<enum eqs_todo_mm<real_t>::processes, bool>({
+        {eqs_todo_mm<real_t>::act,   vm["eqs.todo_mm.act"].as<bool>()},
+        {eqs_todo_mm<real_t>::cond,  vm["eqs.todo_mm.cond"].as<bool>()},
+        {eqs_todo_mm<real_t>::acc,   vm["eqs.todo_mm.acc"].as<bool>()},
+        {eqs_todo_mm<real_t>::autoc, vm["eqs.todo_mm.autoc"].as<bool>()},
+        {eqs_todo_mm<real_t>::self,  vm["eqs.todo_mm.self"].as<bool>()},
+        {eqs_todo_mm<real_t>::turb,  vm["eqs.todo_mm.turb"].as<bool>()},
+        {eqs_todo_mm<real_t>::sedi,  vm["eqs.todo_mm.sedi"].as<bool>()}
+      }),
+      real_cast<real_t>(vm, "eqs.todo_mm.mean_rd"), 
+      real_cast<real_t>(vm, "eqs.todo_mm.sdev_rd"), 
+      real_cast<real_t>(vm, "eqs.todo_mm.n_tot"), 
+      real_cast<real_t>(vm, "eqs.todo_mm.chem_b")
     );
   else 
   if (initype == "todo_sdm")

@@ -300,7 +300,7 @@ void slv_serial<real_t>::update_courants(const int g, const int nm1, const int n
 
   /// \param n the time level to use for updating the forcings
 template <typename real_t>
-void slv_serial<real_t>::update_forcings(int n, const quantity<si::time, real_t> t)
+void slv_serial<real_t>::update_forcings(int n /*, const quantity<si::time, real_t> t */)
 {
     for (int e = 0; e < setup.eqsys.n_vars(); ++e) tmpvec[e] = psi[e].c_array()[n];
 
@@ -312,7 +312,7 @@ void slv_serial<real_t>::update_forcings(int n, const quantity<si::time, real_t>
         for (int i = 0; i < setup.eqsys.var_n_rhs_terms(e); ++i)
         {
            // TODO: is the &tmpvec[0] guaranteed to work???
-           setup.eqsys.var_rhs_term(e, i).explicit_part(rhs_R[e], aux, &tmpvec[0], t);
+           setup.eqsys.var_rhs_term(e, i).explicit_part(rhs_R[e], aux, &tmpvec[0], setup.dt);
            assert(isfinite(sum((rhs_R[e])(rhs_R[e].ijk))));
         }
       }

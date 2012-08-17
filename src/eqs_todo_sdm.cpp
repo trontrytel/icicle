@@ -116,9 +116,9 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
     vector<int>({0, 0, 0})
   }));
 
-  // auxliary variable for mean H density within a droplet
-  ptr_map_insert(this->aux)("c_H", typename eqs<real_t>::axv({
-    "c_H", "<c_H> for r > r_min", this->quan2str(si::kilograms / si::cubic_metres),
+  // auxliary variable for mean SO3 density within a droplet
+  ptr_map_insert(this->aux)("c_SO3", typename eqs<real_t>::axv({
+    "c_SO3", "<c_SO3> for r > r_min", this->quan2str(si::kilograms / si::cubic_metres),
     typename eqs<real_t>::invariable(false),
     vector<int>({0, 0, 0})
   }));
@@ -609,7 +609,7 @@ void eqs_todo_sdm<real_t>::sd_diag(ptr_unordered_map<string, mtx::arr<real_t>> &
   if (true/* TODO opt[chem]*/)
   {
     typedef pair<enum sdm::chem_aq, string> keyval;
-    for (keyval &kv : list<keyval>({{sdm::H,"c_H"}}))
+    for (keyval &kv : list<keyval>({{sdm::SO3,"c_SO3"}}))
     {
       // zeroing the temporary var
       thrust::fill(tmp_real.begin(), tmp_real.end(), 0); // TODO: is it needed

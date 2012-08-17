@@ -77,6 +77,10 @@ const quantity<si::pressure, real_t>
 const quantity<si::dimensionless, real_t>
   kappa = 0.61; // ammonium sulphate
   //kappa = 1.28; // sodium chloride
+const quantity<si::dimensionless, real_t>// equivalent of kappa for 2 moment param. (assuming no insoluable aerosol core)
+  //TODO? calculate from kappa?
+  chem_b = 0.505; // ammonium sluphate
+  //chem_b = 1.33; // sodium chloride
 
 // other parameters deduced from the Fortran code published at:
 // http://www.rap.ucar.edu/~gthompsn/workshop2012/case1/kinematic_wrain.vocals.v3.for
@@ -87,8 +91,8 @@ const int
   iord = http_or_default("iord", int(1)),
   nsd = http_or_default("nsd", int(1));  
 const quantity<si::time, real_t> 
-  t_max = 300 * si::seconds, // 4 * 3600
-  dt_out = real_t(3) * si::seconds; // 300
+  t_max = 1000 * si::seconds, // 4 * 3600
+  dt_out = real_t(10) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = http_or_default("w_max", real_t(.6)) * si::metres / si::second; // .6 TODO: check it!
 const quantity<si::mass_density, real_t>
@@ -97,7 +101,7 @@ const quantity<divide_typeof_helper<si::momentum, si::area>::type, real_t>
   ampl = rho_0 * w_max * (real_t(nx) * dx) / real_t(4*atan(1));
 
 // options for microphysics
-std::string micro = http_or_default("micro", string("sdm")); // sdm | bulk
+std::string micro = http_or_default("micro", string("mm")); // sdm | bulk | mm
 
 // blk parameters
 bool 
@@ -106,6 +110,20 @@ bool
   blk_clct = http_or_default("blk_clct", true),
   blk_sedi = http_or_default("blk_sedi", true),
   blk_revp = http_or_default("blk_revp", true);
+
+// mm parameters
+bool
+  mm_act   = "true",
+  mm_cond  = "false",
+  mm_acc   = "false",
+  mm_autoc = "false",
+  mm_self  = "false",
+  mm_turb  = "false",
+  mm_sedi  = "false";
+real_t
+  mean_rd = .04e-6,  //TODO - bimodal aerosol size spectrum
+  sdev_rd = 1.4,
+  n_tot = 60e6;
 
 // sdm parameters
 std::string
@@ -119,7 +137,7 @@ bool
   sdm_cond = http_or_default("sdm_cond", true),
   sdm_coal = http_or_default("sdm_coal", true),
   sdm_sedi = http_or_default("sdm_sedi", true),
-  sdm_chem = http_or_default("sdm_chem", false);
+  sdm_chem = http_or_default("sdm_chem", true);
 real_t 
   sd_conc_mean = http_or_default("sd_conc_mean", 32),
   mean_rd1 = .04e-6,
@@ -205,13 +223,20 @@ int main(int argc, char **argv)
     NcVar nvrhod_rl = nf.addVar("rhod_rl", ncFloat, vector<NcDim>({ndx,ndy,ndz}));
     NcVar nvrhod_rr = nf.addVar("rhod_rr", ncFloat, vector<NcDim>({ndx,ndy,ndz}));
     NcVar nvrhod_th = nf.addVar("rhod_th", ncFloat, vector<NcDim>({ndx,ndy,ndz}));
-
+    
+    NcVar nvrhod_nl, nvrhod_nr;
+    if (micro == "mm")
+    {
+      nvrhod_nl = nf.addVar("rhod_nl", ncFloat, vector<NcDim>({ndx,ndy,ndz}));
+      nvrhod_nr = nf.addVar("rhod_nr", ncFloat, vector<NcDim>({ndx,ndy,ndz}));
+    }
     // auxiliary fields
     NcVar nvrhod = nf.addVar("rhod", ncFloat, vector<NcDim>({ndx,ndy,ndz}));
 
     // initial values: (assuming no liquid and rain water -> to be adjusted by the model)
     Array<real_t, 1> arr_rhod(ny), arr_z(ny), arr_rhod_rl(ny), 
-                     arr_rhod_rv(ny), arr_rhod_rr(ny), arr_rhod_th(ny);
+                     arr_rhod_rv(ny), arr_rhod_rr(ny), arr_rhod_th(ny),
+                     arr_rhod_nl(ny), arr_rhod_nr(ny);
     for (int j = 0; j < ny; ++j) 
     {
       quantity<si::length, real_t> z = real_t(j + .5) * dy;
@@ -230,6 +255,10 @@ int main(int argc, char **argv)
       arr_rhod_rr(j) = 0; // to be adjusted by the model
       arr_rhod_rv(j) = arr_rhod(j) * rt_0;
       arr_rhod_th(j) = arr_rhod(j) * th / si::kelvins;
+      if (micro == "mm"){
+        arr_rhod_nl(j)=0; // to be adjusted by the model
+        arr_rhod_nr(j)=0; // to be adjusted by the model
+      }    
     }
 
     // writing the profiles to the netCDF 
@@ -239,6 +268,10 @@ int main(int argc, char **argv)
     nvrhod_rl.putVar(arr_rhod_rl.data());
     nvrhod_rr.putVar(arr_rhod_rr.data());
     nvrhod_th.putVar(arr_rhod_th.data());
+    if (micro == "mm"){
+      nvrhod_nl.putVar(arr_rhod_nl.data());
+      nvrhod_nr.putVar(arr_rhod_nr.data());
+    }
   }
   
   notice_macro("calling the solver ...")
@@ -274,6 +307,19 @@ int main(int argc, char **argv)
       << " --eqs.todo_bulk.clct " << blk_clct
       << " --eqs.todo_bulk.sedi " << blk_sedi
       << " --eqs.todo_bulk.revp " << blk_revp
+    ;
+    else if (micro == "mm") cmd << " --eqs todo_mm"
+      << " --eqs.todo_mm.act "   << mm_act
+      << " --eqs.todo_mm.cond "  << mm_cond
+      << " --eqs.todo_mm.acc "   << mm_acc
+      << " --eqs.todo_mm.autoc " << mm_autoc
+      << " --eqs.todo_mm.self "  << mm_self
+      << " --eqs.todo_mm.turb "  << mm_turb
+      << " --eqs.todo_mm.sedi "  << mm_sedi
+      << " --eqs.todo_mm.mean_rd " << mean_rd
+      << " --eqs.todo_mm.sdev_rd " << sdev_rd
+      << " --eqs.todo_mm.n_tot "   << n_tot
+      << " --eqs.todo_mm.chem_b "    << chem_b
     ;
     else if (micro == "sdm") cmd << " --eqs todo_sdm"
       << " --eqs.todo_sdm.xi " << sdm_xi

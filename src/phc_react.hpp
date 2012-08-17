@@ -13,7 +13,7 @@ namespace phc
   namespace react
   {
   // reactivity constants for S(IV) -> S(VI) chemical reactions
-  // Seinfeld & Pandis
+  // Seinfeld & Pandis 1997
 
     phc_declare_const_macro(R_S_H2O2_k, 7.5  * 1e7  *1e-6, si::cubic_metres*si::cubic_metres/si::moles/si::moles/si::seconds) 
     phc_declare_const_macro(R_S_H2O2_K, 13.         *1e-6, si::cubic_metres/si::moles) 

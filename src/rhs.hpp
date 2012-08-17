@@ -63,7 +63,7 @@ class rhs
     mtx::arr<real_t> &R, 
     const ptr_unordered_map<string, mtx::arr<real_t>> &aux,
     const mtx::arr<real_t> * const * const psi, 
-    const quantity<si::time, real_t> t
+    const quantity<si::time, real_t> dt
   ) const
   {
     assert(false);
