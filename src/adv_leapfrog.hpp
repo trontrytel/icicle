@@ -11,6 +11,9 @@
 #include "grd.hpp"
 #include "adv_upstream.hpp"
 
+#include <memory>
+using std::unique_ptr;
+
 /// @brief an implementation of the leapfrog advection scheme
 template <typename real_t> 
 class adv_leapfrog : public adv<real_t> 

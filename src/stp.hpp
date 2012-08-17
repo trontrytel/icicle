@@ -71,10 +71,10 @@ struct stp
       dt = dt_out / real_t(++nout);
     }
     if (cmax*dt/si::seconds < advsch.courant_min()) 
-      error_macro("failed to calculate a reasonable time step for" << endl
-        << "t_max=" << t_max << endl
-        << "dt_out=" << dt_out << endl
-        << "cmax = " << cmax
+      error_macro("failed to auto-find time step (" 
+        << "t_max=" << t_max 
+        << "dt_out=" << dt_out 
+        << "cmax = " << cmax << ")"
       ) 
     if (!velocity.is_constant())  
       warning_macro("velocity field is not const -> calculated time step may change") 

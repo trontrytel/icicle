@@ -18,11 +18,13 @@ using netCDF::ncFloat;
 typedef vector<size_t> start;
 typedef vector<size_t> count;
 
+#include <string>
+using std::string;
+
 #include <iostream>
 using std::ostringstream;
 using std::cerr;
 using std::endl;
-#define notice_macro(msg) { cerr << msg << endl; }
 
 #include <blitz/array.h>
 using blitz::Array;
@@ -91,8 +93,8 @@ const int
   iord = http_or_default("iord", int(1)),
   nsd = http_or_default("nsd", int(1));  
 const quantity<si::time, real_t> 
-  t_max = 1000 * si::seconds, // 4 * 3600
-  dt_out = real_t(10) * si::seconds; // 300
+  t_max = 400 * si::seconds, // 4 * 3600
+  dt_out = real_t(3) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = http_or_default("w_max", real_t(.6)) * si::metres / si::second; // .6 TODO: check it!
 const quantity<si::mass_density, real_t>

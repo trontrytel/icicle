@@ -9,6 +9,9 @@
 #ifdef USE_NETCDF
 #  include "ini_netcdf.hpp"
 
+#  include <vector>
+using std::vector;
+
 template <typename real_t>
 ini_netcdf<real_t>::ini_netcdf(const grd<real_t> &grid, const string filename)
     : filename(filename), grid(&grid)

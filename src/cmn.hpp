@@ -9,30 +9,6 @@
 
 #pragma once
 
-// STL includes
-#  include <cmath>
-using std::cos;
-using std::sin;
-using std::log;
-using std::isfinite;
-using std::copysign;
-#  include <vector>
-using std::vector;
-#  include <iostream>
-using std::cout;
-using std::cerr;
-using std::endl;
-#  include <string>
-using std::string;
-using std::ostringstream; // TODO: header?
-#  include <map>
-using std::map;
-using std::pair;
-#  include <memory>
-using std::unique_ptr;
-#  include <exception>
-using std::exception;
-
 // the Lynton Appel's netCDF-4 C++ API (since netCDF 4.1.1)
 #    ifdef USE_BOOST_MPI 
 // fixes preprocessor macro redefinition conflict with MPI
@@ -48,14 +24,20 @@ using netCDF::ncFloat;
 using netCDF::exceptions::NcException;
 
 // error reporting
+#  include <exception>
+using std::exception;
 #  define error_macro(msg) \
 { \
-  cerr << "-- error: " << msg << endl; \
+  std::cerr << "-- error: " << msg << std::endl; \
   throw exception(); \
 }
 #  define warning_macro(msg) \
 { \
-  cerr << "-- warning: " << msg << endl; \
+  std::cerr << "-- warning: " << msg << std::endl; \
+}
+#  define notice_macro(msg) \
+{ \
+  std::cerr << "-- notice: " << msg << std::endl; \
 }
 
 // Boost.Units

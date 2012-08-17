@@ -108,7 +108,7 @@ class slv_parallel : public slv<real_t>
     // time stepping
     for (unsigned long t = 0; t < setup.nt; ++t) 
     {   
-      if (sd == 0) cerr << "t/dt=" << t << " (t=" << real_t(t) * setup.dt << ")" << endl;
+      if (sd == 0) notice_macro("t/dt=" << t << " (t=" << real_t(t) * setup.dt << ")");
 
       assert(setup.advsch.time_levels() <= 3); // TODO: support for other values
       bool fallback = (t == 0 && setup.advsch.time_levels() == 3);

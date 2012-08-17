@@ -8,6 +8,7 @@
 
 # http://www.cmake.org/Wiki/CMake_Version_Compatibility_Matrix/StandardCMakeModules
 # cmake_minimum_required(VERSION 2.6) # for simplified if-constructs
+# cmake_minimum_required(VERSION 2.8) # for FindCuda
 cmake_minimum_required(VERSION 2.8.6) # for CMakePushCheckState
 
 # TODO: -fprofile-use, -fprofile-generate
@@ -104,6 +105,16 @@ icicle_option(DOUBLE "'double' type support (i.e. double precision, 64 bits)" ON
 icicle_option(LDOUBLE "'long double' type support (compiler-dependent, 80 bits for GCC on x86_64)" ON)
 #icicle_option(FLOAT128 "'__float128' type support (GNU extension, 128 bits)" ON) #TODO: check if __float128 is actually supported by the compiler...
 
+# CUDA (optional)
+if (DEFINED CUDA AND NOT CUDA)
+  message(STATUS "Building without CUDA support (-DCUDA=NO specified)")
+else()
+  find_package(CUDA)
+  set(CUDA_PROPAGATE_HOST_FLAGS OFF)
+  set(USE_CUDA ${CUDA_FOUND})
+endif()
+icicle_option(CUDA "GPU calculations using CUDA" "${USE_CUDA}")
+
 set(tmp "")
 set(tmp "${tmp};src/slv_serial.cpp")
 set(tmp "${tmp};src/slv_parallel_serial.cpp")
@@ -115,7 +126,7 @@ set(tmp "${tmp};src/eqs_harmonic_oscillator.cpp")
 set(tmp "${tmp};src/eqs_shallow_water.cpp")
 set(tmp "${tmp};src/eqs_scalar_advection.cpp")
 set(tmp "${tmp};src/eqs_isentropic.cpp")
-set(tmp "${tmp};src/eqs_todo_sdm.cpp")
+set(tmp "${tmp};src/eqs_todo_sdm_openmp.cpp")
 set(tmp "${tmp};src/eqs_todo_bulk_ode.cpp")
 set(tmp "${tmp};src/adv_leapfrog.cpp")
 set(tmp "${tmp};src/adv_upstream.cpp")
@@ -157,10 +168,17 @@ endif()
 if("${tmp}" STREQUAL "src/icicle.cpp")
   message(FATAL_ERROR "-DFLOAD=NO -DDOUBLE=NO -DLDBOULBE=NO and -DFLOAT128=NO may not be specified all at once!")
 endif() 
-add_executable(icicle ${tmp})
+if(USE_CUDA)
+  set(tmp "${tmp};src/eqs_todo_sdm_cuda.cu")
+  cuda_add_executable(icicle ${tmp})
+else()
+  add_executable(icicle ${tmp})
+endif()
+
+
 
 # Blitz++ (mandatory)
-target_link_libraries(icicle debug "-lblitz -libboost_system.so.1.50.0") # TODO: check if debugging actually works, if not suggest recompiling blitz with --enable-shared
+target_link_libraries(icicle debug "-lblitz") # -libboost_system.so.1.50.0") # TODO: check if debugging actually works, if not suggest recompiling blitz with --enable-shared
 icicle_check(status "blitz" FATAL_ERROR ""
   "#include <blitz/array.h>\n int main() {}"
 )
@@ -302,6 +320,7 @@ else()
   set(THRUST_DEVICE_SYSTEM THRUST_DEVICE_SYSTEM_OMP) #TODO: use somehow the information on OpenMP availability!
 endif() 
 icicle_option(THRUST "Thrust (OpenMP/CUDA parallelisation)" "${status}")
+
 
 # TODO: document
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug") 

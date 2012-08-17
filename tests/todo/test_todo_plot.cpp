@@ -47,7 +47,6 @@ using blitz::Range;
 #include "../../src/cmn.hpp"
 #include "../../src/phc.hpp"
 
-#define notice_macro(msg) { cerr << msg << endl; }
 typedef float real_t;
 
 std::string zeropad(int n)

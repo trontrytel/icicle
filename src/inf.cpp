@@ -12,6 +12,9 @@
 #include <sys/utsname.h> // uname 
 #include <unistd.h> // getlogin
 
+#include <sstream>
+using std::ostringstream;
+
 map<string,string> inf::get_map()
 {
   map<string,string> im;

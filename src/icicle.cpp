@@ -12,7 +12,7 @@
 
 int main(int ac, char* av[])
 {
-  cerr << "-- init: icicle starting (built on " << __DATE__ << ")" << endl;
+  notice_macro("icicle starting (built on " << __DATE__ << ")")
 #if defined(__GNUC__) && !defined(__FAST_MATH__)
   warning_macro("GCC was used without the -ffast-math flag!")
 #endif
@@ -38,30 +38,30 @@ int main(int ac, char* av[])
     // --help or no argument case
     if (vm.count("help") || ac == 1)
     {
-      cerr << desc << endl;
+      std::cerr << desc << std::endl;
       exit(EXIT_SUCCESS); // this is what GNU coding standards suggest
     }
 
     // --slv list
     if (vm.count("slv") && vm["slv"].as<string>() == "list")
     {
-      cout << "serial fork";
+      std::cout << "serial fork";
 #ifdef _OPENMP
-      cout << " openmp fork+openmp";
+      std::cout << " openmp fork+openmp";
 #endif
 #ifdef USE_BOOST_THREAD
-      cout << " threads fork+threads";
+      std::cout << " threads fork+threads";
 #endif
 #ifdef USE_BOOST_MPI
-      cout << " mpi";
+      std::cout << " mpi";
 #  ifdef USE_BOOST_THREAD
-      cout << " mpi+threads";
+      std::cout << " mpi+threads";
 #  endif
 #  ifdef _OPENMP
-      cout << " mpi+openmp";
+      std::cout << " mpi+openmp";
 #  endif
 #endif
-      cout << endl;
+      std::cout << std::endl;
       exit(EXIT_FAILURE);
     }
 
@@ -96,10 +96,10 @@ int main(int ac, char* av[])
   }
   catch (exception &e)
   {
-    cerr << "-- exception cought: " << e.what() << endl;
-    cerr << "-- exit: KO" << endl;
+    std::cerr << "-- exception cought: " << e.what() << std::endl;
+    std::cerr << "-- exit: KO" << std::endl;
     exit(EXIT_FAILURE);
   }
-  cerr << "-- exit: OK" << endl;
+  std::cerr << "-- exit: OK" << std::endl;
   exit(EXIT_SUCCESS);
 }
