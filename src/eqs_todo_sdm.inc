@@ -196,32 +196,6 @@ eqs_todo_sdm<real_t, thrust_device_system>::eqs_todo_sdm(
     default: assert(false);
   }
 
-<<<<<<< HEAD:src/eqs_todo_sdm.cpp
-// initialising particle positions, numbers and dry radii
-template <typename real_t>
-void eqs_todo_sdm<real_t>::sd_init(
-  const real_t min_rd, const real_t max_rd,
-  const real_t mean_rd1, const real_t mean_rd2,
-  const real_t sdev_rd1, const real_t sdev_rd2,
-  const real_t n1_tot, const real_t n2_tot, 
-  const real_t sd_conc_mean,
-  const real_t kappa,
-  map<enum sdm::chem_gas, quantity<phc::mixing_ratio, real_t>> opt_gas,
-  map<enum sdm::chem_aq, quantity<si::mass, real_t>> opt_aq
-)
-{
-  // initialise particle coordinates
-  {
-    sdm::uniform_random_real<real_t> rand_x(0, grid.nx() * (grid.dx() / si::metres), seed);
-    thrust::generate(stat.x_begin, stat.x_end, rand_x);
-    seed = rand_x();
-  }
-  {
-    sdm::uniform_random_real<real_t> rand_y(0, grid.ny() * (grid.dy() / si::metres), seed);
-    thrust::generate(stat.y_begin, stat.y_end, rand_y);
-    seed = rand_y();
-  }
-
   // auxliary variable for super-droplet conc
   ptr_map_insert(this->aux)("sd_conc", typename eqs<real_t>::axv({
     "sd_conc", "super-droplet cencentration", this->quan2str(real_t(1)/grid.dx()/grid.dy()/grid.dz()),
@@ -699,7 +673,7 @@ static void sd_chem(
     const real_t sd_conc_mean,
     const real_t kappa,
     map<enum sdm::chem_gas, quantity<phc::mixing_ratio, real_t>> opt_gas,
-    map<enum sdm::chem_aq, quantity<divide_typeof_helper<si::amount, si::volume>::type, real_t>> opt_aq
+    map<enum sdm::chem_aq, quantity<si::mass, real_t>> opt_aq
   )
   {
     // initialise particle coordinates
@@ -789,6 +763,7 @@ static void sd_chem(
     stat.c_aq.begin() + (sdm::SO4 + 1) * stat.n_part, 
     0.//TODO?
   );
+  }
 
   // 
   template <class xi>
