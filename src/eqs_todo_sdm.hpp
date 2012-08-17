@@ -50,7 +50,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     real_t min_rd,
     real_t max_rd, 
     real_t mean_rd1, // dry aerosol initial distribution parameters
-    real_t mean_rd2,
+    real_t mean_rd2, // TODO: encapsulate in a map/enum
     real_t sdev_rd1,
     real_t sdev_rd2,
     real_t n1_tot,
