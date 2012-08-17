@@ -162,6 +162,9 @@ eqs<real_t> *opt_eqs(
       {"p2", sdm::p2},
       {"p3", sdm::p3}
     });
+#if !defined(USE_THRUST) // TODO!!!!
+#  define THRUST_DEVICE_SYSTEM_OMP 0
+#endif
     return new eqs_todo_sdm<real_t, THRUST_DEVICE_SYSTEM_OMP>(grid, velocity,
       map<enum sdm::processes, bool>({
         {sdm::adve, vm["eqs.todo_sdm.adve"].as<bool>()},

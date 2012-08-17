@@ -657,7 +657,7 @@ static void sd_chem(
   const quantity<si::time, real_t> dt
 )
 {
-  F_chem->advance(stat.c_aq, dt, 10); // TODO !!!!!
+  F_chem.advance(stat.c_aq, dt, 10); // TODO !!!!!
   assert(*thrust::min_element(stat.c_aq.begin(), stat.c_aq.end()) >= 0);
 }
 

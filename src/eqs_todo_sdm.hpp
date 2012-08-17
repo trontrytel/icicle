@@ -15,9 +15,9 @@
 
 # if defined(USE_BOOST_ODEINT) && defined(USE_THRUST)
 #  include "sdm_functors.hpp"
-#  include "sdm_enums.hpp"
 #  include "sdm_ode.hpp"
 #endif
+#include "sdm_enums.hpp"
 
 #include <memory>
 using std::unique_ptr;
