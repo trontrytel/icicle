@@ -12,8 +12,11 @@ namespace phc
 {
   namespace kelvin
   {
+    // water surface tension (Petters and Kreidenweis 2007 //TODO - check)
     phc_declare_const_macro(sg_surf, 0.072, si::newton/si::metres);
 
+
+    // Kelvin term (for exapmle Kvorostyanov and Curry 2006)
     phc_declare_funct_macro quantity<si::length, real_t> A(
       quantity<si::temperature, real_t> T
     )
