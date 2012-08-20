@@ -194,20 +194,20 @@ int main(int argc, char **argv)
     else if (micro == "mm")
     {
       gp << "set title 'liquid water mixing ratio [g/kg]'" << endl;
-//      gp << "set cbrange [0:1]" << endl;
-      gp << "set autoscale cb" <<endl;
+      gp << "set cbrange [0:0.0005]" << endl;
       nf.getVar("rhod_rl").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
       tmp0 /= rhod;
       gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using ($1*1000) with image notitle";
       gp << endl;
       gp.sendBinary(tmp0);
 
-      gp << "set title 'rain water number concentration [?]'" << endl;
-      gp << "set cbrange [0.:1000]" << endl;
-      gp << "set cbtics .1" << endl;
+      gp << "set title 'cloud water number concentration [1/cm3]'" << endl;
+      gp << "set autoscale cb" << endl;
+      gp << "set cbrange [0.:100]" << endl;
+      gp << "set cbtics 10" << endl;
       nf.getVar("rhod_nl").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
       tmp0 /= rhod;
-      gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using ($1) with image notitle";
+      gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using ($1*1e-6) with image notitle";
       gp << endl;
       gp.sendBinary(tmp0);
 

@@ -5,12 +5,11 @@
  *  @date August 2012
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
+ @  @brief contains definitions of eqs_todo_mm class - 2 moment parametrisation of warm rain microphysics
  */
+
 #pragma once
 #include "eqs_todo.hpp"
-//#include "phc.hpp"
-//#include "phc_theta.hpp"
-//#include "phc_kelvin_term.hpp"
 
 template <typename real_t>
 class eqs_todo_mm : public eqs_todo<real_t> 
@@ -29,6 +28,8 @@ class eqs_todo_mm : public eqs_todo<real_t>
 
   // nested class
   private: template <bool fill_tmp> class activation;
+  private: class cond_evap;
+
 
   // ctor
   public: eqs_todo_mm(
