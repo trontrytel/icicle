@@ -8,7 +8,7 @@
  */
 #pragma once
 #include "sdm_ode.hpp"
-#include "phc_terminal_vel.hpp"
+#include "../phc_terminal_vel.hpp"
 
 namespace sdm
 {

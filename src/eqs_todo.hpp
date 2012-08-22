@@ -6,10 +6,13 @@
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
 #pragma once
-#include "cmn.hpp"
+
 #include "eqs.hpp"
 #include "rhs_explicit.hpp"
 #include "grd.hpp"
+
+#include <boost/assign/ptr_map_inserter.hpp>
+using boost::assign::ptr_map_insert;
 
 template <typename real_t>
 class eqs_todo : public eqs<real_t>  // TODO: rename to moist?

@@ -9,18 +9,18 @@
  */
 #pragma once
 
+#include "cfg/cfg_boost_odeint.hpp"
+#include "cfg/cfg_thrust.hpp"
+
 #include "eqs_todo.hpp" 
 #include "vel.hpp"
 #include "phc.hpp"
-
-# if defined(USE_BOOST_ODEINT) && defined(USE_THRUST)
-#  include "sdm_functors.hpp"
-#  include "sdm_ode.hpp"
-#endif
-#include "sdm_enums.hpp"
+#include "sdm/sdm_enums.hpp"
 
 #include <memory>
 using std::unique_ptr;
+
+#include "cmn/cmn_error.hpp"
 
 // TODO: option to set the number of threads to use!
 
@@ -29,12 +29,11 @@ using std::unique_ptr;
 /// with kappa-Koehler parameterisation of aerosol solubility (@copydetails Petters_and_Kreidenweis_2007, ACP, 7)
 /// and ...
 
-template <typename real_t, int thrust_device_system>
+template <typename real_t>
 class eqs_todo_sdm : public eqs_todo<real_t> 
 {
   // a container for storing options (i.e. which processes ar on/off)
   private: typename eqs_todo<real_t>::params par;
-  private: struct detail;
 
   // ctor of eqs_todo_sdm
   public: eqs_todo_sdm(
@@ -61,44 +60,27 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     map<enum sdm::chem_aq, quantity<si::mass, real_t>> opt_aq 
   )
 #if !defined(USE_BOOST_ODEINT) || !defined(USE_THRUST)
-: eqs_todo<real_t>(grid, &this->par)
-{
-  error_macro("eqs_todo_sdm requires icicle to be compiled with support for Boost.odeint and Thrust");
-}
+  : eqs_todo<real_t>(grid, &this->par)
+  {
+    error_macro("eqs_todo_sdm requires icicle to be compiled with support for Boost.odeint and Thrust");
+  }
 #else
-; 
+  ; 
+  // pimpl
+  private: struct detail;
+  private: unique_ptr<detail> pimpl;
 #endif
 
-#if defined(USE_BOOST_ODEINT) && defined(USE_THRUST)
-  typedef thrust::device_vector<int>::size_type thrust_size_t;
-
-  // private fields of eqs_todo_sdm
-  private: map<enum sdm::processes, bool> opts;
-  private: bool constant_velocity;
-  private: const grd<real_t> &grid;
-
-  // private fields for ODE machinery
-  private: unique_ptr<sdm::ode<real_t>> 
-    F_adve, F_cond, F_sedi, F_chem;
-
-  // private fields with super droplet structures
-  private: sdm::stat_t<real_t> stat;
-  private: sdm::envi_t<real_t> envi;
-
-  private: enum sdm::xi_dfntns xi_dfntn;
-  private: real_t seed = 1234.;// TODO: option!
-
-  // private field with temporary space
-  thrust::device_vector<int> tmp_shrt; // e.g. for grid cell indices
-  thrust::device_vector<thrust_size_t> tmp_long;
-  thrust::device_vector<real_t> tmp_real;
-
-  public: void adjustments(
+  void adjustments(
     int n, // TODO: mo¿e jednak bez n...
     vector<ptr_vector<mtx::arr<real_t>>> &psi,
     ptr_unordered_map<string, mtx::arr<real_t>> &aux, 
     const ptr_vector<mtx::arr<real_t>> C,
     const quantity<si::time, real_t> dt
-  );
+  )
+#if !defined(USE_BOOST_ODEINT) || !defined(USE_THRUST)
+  { assert(false); }
+#else
+  ;
 #endif
 };

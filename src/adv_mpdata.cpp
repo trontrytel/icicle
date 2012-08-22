@@ -8,7 +8,6 @@
  *  @brief definition of the adv_mpdata class with an implementation of the MPDATA advection scheme
  */
 
-#include "cfg.hpp"
 #include "adv_mpdata.hpp"
 
 template <typename real_t>
@@ -34,6 +33,7 @@ typename adv<real_t>::op3D *adv_mpdata<real_t>::factory(
 }
 
 // explicit instantiations
+#include "cfg/cfg_types.hpp"
 #if defined(USE_FLOAT)
 template class adv_mpdata<float>;
 #endif

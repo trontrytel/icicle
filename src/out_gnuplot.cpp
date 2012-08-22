@@ -5,8 +5,8 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#include "cfg.hpp"
 #include "out_gnuplot.hpp"
+#include "cmn/cmn_error.hpp"
 
 template <typename real_t> 
 out_gnuplot<real_t>::out_gnuplot(const grd<real_t> &grid, string usng) 
@@ -70,6 +70,7 @@ void out_gnuplot<real_t>::record_helper(const mtx::arr<real_t> &psi, const mtx::
 }
 
 // explicit instantiations
+#include "cfg/cfg_types.hpp"
 #if defined(USE_FLOAT)
 template class out_gnuplot<float>;
 #endif

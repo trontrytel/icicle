@@ -7,7 +7,7 @@
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
 
-#include "cfg.hpp"
+#include "cfg/cfg_boost_odeint.hpp"
 #include "eqs_todo_bulk_ode.hpp"
 
 #if defined(USE_BOOST_ODEINT)
@@ -178,6 +178,7 @@ void eqs_todo_bulk_ode<real_t>::condevap(
 }
 
 // explicit instantiations
+#include "cfg/cfg_types.hpp"
 #if defined(USE_FLOAT)
 template class eqs_todo_bulk_ode<float>;
 #endif

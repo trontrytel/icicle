@@ -9,7 +9,7 @@
 
 #include "sdm_base.hpp"
 
-#if defined(USE_THRUST) && defined(USE_BOOST_ODEINT)
+//#if defined(USE_THRUST) && defined(USE_BOOST_ODEINT) TODO!
 #  include <boost/numeric/odeint.hpp>
 #  include <boost/numeric/odeint/external/thrust/thrust_algebra.hpp>
 #  include <boost/numeric/odeint/external/thrust/thrust_operations.hpp>
@@ -77,4 +77,4 @@ namespace sdm
     }
   };
 }
-#endif
+//#endif

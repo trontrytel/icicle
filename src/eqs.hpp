@@ -7,7 +7,6 @@
  *  @brief definition of the @ref eqs class - a base class for all transport equation systems
  */
 #pragma once
-#include "cmn.hpp" // TODO: get rid of it
 #include "rhs.hpp"
 
 #include <vector>
@@ -19,6 +18,9 @@ using std::pair;
 
 #include <sstream>
 using std::ostringstream;
+
+#include <boost/ptr_container/ptr_vector.hpp>
+using boost::ptr_vector;
 
 /// @brief a class defining a system of generalised transport equations
 template <typename real_t>

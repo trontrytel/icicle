@@ -5,7 +5,6 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#include "cfg.hpp"
 #include "out_debug.hpp"
 
 extern "C" {
@@ -36,6 +35,7 @@ void out_debug<real_t>::record(
 }
 
 // explicit instantiations
+#include "cfg/cfg_types.hpp"
 #if defined(USE_FLOAT)
 template class out_debug<float>;
 #endif

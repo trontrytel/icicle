@@ -7,7 +7,7 @@
  */
 #pragma once
 
-#if defined(USE_THRUST) 
+// #if defined(USE_THRUST)  // TODO
 #  include <thrust/device_vector.h>
 #  include <thrust/random.h> // TODO: random is not used in this file...
 #  include <thrust/sequence.h>
@@ -101,4 +101,4 @@ namespace sdm
     }
   };
 }
-#endif
+//#endif

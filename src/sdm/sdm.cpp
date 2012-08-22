@@ -8,32 +8,42 @@
  *  @brief definition of the eqs_todo_sdm class
  */
 
-#include "cfg.hpp"
-#include "eqs_todo_sdm.hpp"
+#include "../phc_lognormal.hpp" // TODO: not here?
+#include "../phc_terminal_vel.hpp" // TODO: not here?
+#include "../phc_kappa_koehler.hpp" // TODO: not here?
 
-#if defined(USE_BOOST_ODEINT) && defined(USE_THRUST)
+#include "sdm.hpp"
+#include "sdm_base.hpp"
+#include "sdm_functors.hpp"
+#include "sdm_ode.hpp"
+#include "sdm_ode_cond.hpp"
+#include "sdm_ode_adve.hpp"
+#include "sdm_ode_sedi.hpp"
+#include "sdm_ode_chem.hpp"
 
-#  include "phc_lognormal.hpp" // TODO: not here?
-#  include "phc_terminal_vel.hpp" // TODO: not here?
-#  include "phc_kappa_koehler.hpp" // TODO: not here?
-
-#  include "sdm_ode_cond.hpp"
-#  include "sdm_ode_adve.hpp"
-#  include "sdm_ode_sedi.hpp"
-#  include "sdm_ode_chem.hpp"
-#  include <list>
+#include <list>
 using std::list;
 
+#include <sstream>
+using std::ostringstream;
+
+#include <map>
+using std::map;
+using std::pair;
+
+namespace sdm
+{
+
 template <typename real_t, int thrust_device_system>
-eqs_todo_sdm<real_t, thrust_device_system>::eqs_todo_sdm(
+sdm<real_t, thrust_device_system>::sdm(
   const grd<real_t> &grid, 
   const vel<real_t> &velocity,
-  map<enum sdm::processes, bool> opts,
-  const enum sdm::xi_dfntns xi_dfntn,
-  const enum sdm::ode_algos xy_algo,
-  const enum sdm::ode_algos sd_algo,
-  const enum sdm::ode_algos xi_algo,
-  const enum sdm::ode_algos chem_algo,
+  map<enum processes, bool> opts,
+  const enum xi_dfntns xi_dfntn,
+  const enum ode_algos xy_algo,
+  const enum ode_algos sd_algo,
+  const enum ode_algos xi_algo,
+  const enum ode_algos chem_algo,
   const real_t sd_conc_mean,
   const real_t min_rd,
   const real_t max_rd, 
@@ -44,15 +54,15 @@ eqs_todo_sdm<real_t, thrust_device_system>::eqs_todo_sdm(
   const real_t n1_tot,
   const real_t n2_tot,
   const real_t kappa,
-  map<enum sdm::chem_gas, quantity<phc::mixing_ratio, real_t>> opt_gas,
-  map<enum sdm::chem_aq, quantity<si::mass, real_t>> opt_aq
-) : eqs_todo<real_t>(grid, &this->par), 
-  opts(opts), 
-  grid(grid), 
-  constant_velocity(velocity.is_constant()),
-  stat(grid.nx(), grid.ny(), sd_conc_mean),
-  envi(grid.nx(), grid.ny()),
-  xi_dfntn(xi_dfntn)
+  map<enum chem_gas, quantity<phc::mixing_ratio, real_t>> opt_gas,
+  map<enum chem_aq, quantity<si::mass, real_t>> opt_aq
+) : pimpl(new detail(
+  grid, 
+  velocity,
+  opts,
+  xi_dfntn,
+  sd_conc_mean
+))
 {
   // TODO: assert that we use no paralellisation or allow some parallelism!
   // TODO: random seed as an option
@@ -61,9 +71,9 @@ eqs_todo_sdm<real_t, thrust_device_system>::eqs_todo_sdm(
   // TODO? embed tmp_* in a temp_t?
 
   // temporary space with nx * ny size
-  tmp_shrt.resize(grid.nx() * grid.ny());
-  tmp_long.resize(grid.nx() * grid.ny()); 
-  tmp_real.resize(grid.nx() * grid.ny());
+  pimpl->tmp_shrt.resize(grid.nx() * grid.ny());
+  pimpl->tmp_long.resize(grid.nx() * grid.ny()); 
+  pimpl->tmp_real.resize(grid.nx() * grid.ny());
 
   typedef odeint::euler<
       thrust::device_vector<real_t>, // state type
@@ -97,37 +107,37 @@ eqs_todo_sdm<real_t, thrust_device_system>::eqs_todo_sdm(
   // initialising ODE right-hand-sides
   switch (xy_algo) // advection
   {
-    case sdm::euler: F_adve.reset(new sdm::ode_adve<real_t, algo_euler>(stat, envi)); break;
-    case sdm::mmid : F_adve.reset(new sdm::ode_adve<real_t, algo_mmid >(stat, envi)); break;
-    case sdm::rk4  : F_adve.reset(new sdm::ode_adve<real_t, algo_rk4  >(stat, envi)); break;
+    case euler: pimpl->F_adve.reset(new ode_adve<real_t, algo_euler>(pimpl->stat, pimpl->envi)); break;
+    case mmid : pimpl->F_adve.reset(new ode_adve<real_t, algo_mmid >(pimpl->stat, pimpl->envi)); break;
+    case rk4  : pimpl->F_adve.reset(new ode_adve<real_t, algo_rk4  >(pimpl->stat, pimpl->envi)); break;
     default: assert(false);
   }
   switch (xi_algo) // condensation/evaporation
   {
-    case sdm::euler: switch (xi_dfntn)
+    case euler: switch (xi_dfntn)
     {
-      case sdm::id : F_cond.reset(new sdm::ode_cond<real_t, algo_euler, sdm::xi_id<real_t>>(stat, envi, grid)); break;
-      case sdm::ln : F_cond.reset(new sdm::ode_cond<real_t, algo_euler, sdm::xi_ln<real_t>>(stat, envi, grid)); break;
-      case sdm::p2 : F_cond.reset(new sdm::ode_cond<real_t, algo_euler, sdm::xi_p2<real_t>>(stat, envi, grid)); break;
-      case sdm::p3 : F_cond.reset(new sdm::ode_cond<real_t, algo_euler, sdm::xi_p3<real_t>>(stat, envi, grid)); break;
+      case id : pimpl->F_cond.reset(new ode_cond<real_t, algo_euler, xi_id<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid)); break;
+      case ln : pimpl->F_cond.reset(new ode_cond<real_t, algo_euler, xi_ln<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid)); break;
+      case p2 : pimpl->F_cond.reset(new ode_cond<real_t, algo_euler, xi_p2<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid)); break;
+      case p3 : pimpl->F_cond.reset(new ode_cond<real_t, algo_euler, xi_p3<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid)); break;
       default: assert(false);
     } 
     break;
-    case sdm::mmid: switch (xi_dfntn)
+    case mmid: switch (xi_dfntn)
     {
-      case sdm::id : F_cond.reset(new sdm::ode_cond<real_t, algo_mmid, sdm::xi_id<real_t>>(stat, envi, grid)); break;
-      case sdm::ln : F_cond.reset(new sdm::ode_cond<real_t, algo_mmid, sdm::xi_ln<real_t>>(stat, envi, grid)); break;
-      case sdm::p2 : F_cond.reset(new sdm::ode_cond<real_t, algo_mmid, sdm::xi_p2<real_t>>(stat, envi, grid)); break;
-      case sdm::p3 : F_cond.reset(new sdm::ode_cond<real_t, algo_mmid, sdm::xi_p3<real_t>>(stat, envi, grid)); break;
+      case id : pimpl->F_cond.reset(new ode_cond<real_t, algo_mmid, xi_id<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid)); break;
+      case ln : pimpl->F_cond.reset(new ode_cond<real_t, algo_mmid, xi_ln<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid)); break;
+      case p2 : pimpl->F_cond.reset(new ode_cond<real_t, algo_mmid, xi_p2<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid)); break;
+      case p3 : pimpl->F_cond.reset(new ode_cond<real_t, algo_mmid, xi_p3<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid)); break;
       default: assert(false);
     } 
     break;
-    case sdm::rk4  : switch (xi_dfntn) 
+    case rk4  : switch (xi_dfntn) 
     {
-      case sdm::id : F_cond.reset(new sdm::ode_cond<real_t, algo_rk4,   sdm::xi_id<real_t>>(stat, envi, grid)); break;
-      case sdm::ln : F_cond.reset(new sdm::ode_cond<real_t, algo_rk4,   sdm::xi_ln<real_t>>(stat, envi, grid)); break;
-      case sdm::p2 : F_cond.reset(new sdm::ode_cond<real_t, algo_rk4,   sdm::xi_p2<real_t>>(stat, envi, grid)); break;
-      case sdm::p3 : F_cond.reset(new sdm::ode_cond<real_t, algo_rk4,   sdm::xi_p3<real_t>>(stat, envi, grid)); break;
+      case id : pimpl->F_cond.reset(new ode_cond<real_t, algo_rk4,   xi_id<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid)); break;
+      case ln : pimpl->F_cond.reset(new ode_cond<real_t, algo_rk4,   xi_ln<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid)); break;
+      case p2 : pimpl->F_cond.reset(new ode_cond<real_t, algo_rk4,   xi_p2<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid)); break;
+      case p3 : pimpl->F_cond.reset(new ode_cond<real_t, algo_rk4,   xi_p3<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid)); break;
       default: assert(false);
     }
     break;
@@ -135,30 +145,30 @@ eqs_todo_sdm<real_t, thrust_device_system>::eqs_todo_sdm(
   } 
   switch (sd_algo) // sedimentation
   {
-    case sdm::euler : switch (xi_dfntn)
+    case euler : switch (xi_dfntn)
     {
-      case sdm::id : F_sedi.reset(new sdm::ode_sedi<real_t,algo_euler,sdm::xi_id<real_t>>(stat, envi)); break;
-      case sdm::ln : F_sedi.reset(new sdm::ode_sedi<real_t,algo_euler,sdm::xi_ln<real_t>>(stat, envi)); break;
-      case sdm::p2 : F_sedi.reset(new sdm::ode_sedi<real_t,algo_euler,sdm::xi_p2<real_t>>(stat, envi)); break;
-      case sdm::p3 : F_sedi.reset(new sdm::ode_sedi<real_t,algo_euler,sdm::xi_p3<real_t>>(stat, envi)); break;
+      case id : pimpl->F_sedi.reset(new ode_sedi<real_t,algo_euler,xi_id<real_t>>(pimpl->stat, pimpl->envi)); break;
+      case ln : pimpl->F_sedi.reset(new ode_sedi<real_t,algo_euler,xi_ln<real_t>>(pimpl->stat, pimpl->envi)); break;
+      case p2 : pimpl->F_sedi.reset(new ode_sedi<real_t,algo_euler,xi_p2<real_t>>(pimpl->stat, pimpl->envi)); break;
+      case p3 : pimpl->F_sedi.reset(new ode_sedi<real_t,algo_euler,xi_p3<real_t>>(pimpl->stat, pimpl->envi)); break;
       default: assert(false);
     }
     break;
-    case sdm::mmid: switch (xi_dfntn)
+    case mmid: switch (xi_dfntn)
     {
-      case sdm::id : F_sedi.reset(new sdm::ode_sedi<real_t,algo_mmid,  sdm::xi_id<real_t>>(stat, envi)); break;
-      case sdm::ln : F_sedi.reset(new sdm::ode_sedi<real_t,algo_mmid,  sdm::xi_ln<real_t>>(stat, envi)); break;
-      case sdm::p2 : F_sedi.reset(new sdm::ode_sedi<real_t,algo_mmid,  sdm::xi_p2<real_t>>(stat, envi)); break;
-      case sdm::p3 : F_sedi.reset(new sdm::ode_sedi<real_t,algo_mmid,  sdm::xi_p3<real_t>>(stat, envi)); break;
+      case id : pimpl->F_sedi.reset(new ode_sedi<real_t,algo_mmid,  xi_id<real_t>>(pimpl->stat, pimpl->envi)); break;
+      case ln : pimpl->F_sedi.reset(new ode_sedi<real_t,algo_mmid,  xi_ln<real_t>>(pimpl->stat, pimpl->envi)); break;
+      case p2 : pimpl->F_sedi.reset(new ode_sedi<real_t,algo_mmid,  xi_p2<real_t>>(pimpl->stat, pimpl->envi)); break;
+      case p3 : pimpl->F_sedi.reset(new ode_sedi<real_t,algo_mmid,  xi_p3<real_t>>(pimpl->stat, pimpl->envi)); break;
       default: assert(false);
     }
     break;
-    case sdm::rk4   : switch (xi_dfntn)
+    case rk4   : switch (xi_dfntn)
     {
-      case sdm::id : F_sedi.reset(new sdm::ode_sedi<real_t,algo_rk4,  sdm::xi_id<real_t>>(stat, envi)); break;
-      case sdm::ln : F_sedi.reset(new sdm::ode_sedi<real_t,algo_rk4,  sdm::xi_ln<real_t>>(stat, envi)); break;
-      case sdm::p2 : F_sedi.reset(new sdm::ode_sedi<real_t,algo_rk4,  sdm::xi_p2<real_t>>(stat, envi)); break;
-      case sdm::p3 : F_sedi.reset(new sdm::ode_sedi<real_t,algo_rk4,  sdm::xi_p3<real_t>>(stat, envi)); break;
+      case id : pimpl->F_sedi.reset(new ode_sedi<real_t,algo_rk4,  xi_id<real_t>>(pimpl->stat, pimpl->envi)); break;
+      case ln : pimpl->F_sedi.reset(new ode_sedi<real_t,algo_rk4,  xi_ln<real_t>>(pimpl->stat, pimpl->envi)); break;
+      case p2 : pimpl->F_sedi.reset(new ode_sedi<real_t,algo_rk4,  xi_p2<real_t>>(pimpl->stat, pimpl->envi)); break;
+      case p3 : pimpl->F_sedi.reset(new ode_sedi<real_t,algo_rk4,  xi_p3<real_t>>(pimpl->stat, pimpl->envi)); break;
       default: assert(false);
     }
     break;
@@ -166,125 +176,213 @@ eqs_todo_sdm<real_t, thrust_device_system>::eqs_todo_sdm(
   }
   switch (chem_algo) // chemistry
   {
-    case sdm::euler : switch (xi_dfntn)
+    case euler : switch (xi_dfntn)
+
     {
-      case sdm::id : F_chem.reset(new sdm::ode_chem<real_t,algo_euler,sdm::xi_id<real_t>>(stat, envi, opt_gas, opt_aq)); break;
-      case sdm::ln : F_chem.reset(new sdm::ode_chem<real_t,algo_euler,sdm::xi_ln<real_t>>(stat, envi, opt_gas, opt_aq)); break;
-      case sdm::p2 : F_chem.reset(new sdm::ode_chem<real_t,algo_euler,sdm::xi_p2<real_t>>(stat, envi, opt_gas, opt_aq)); break;
-      case sdm::p3 : F_chem.reset(new sdm::ode_chem<real_t,algo_euler,sdm::xi_p3<real_t>>(stat, envi, opt_gas, opt_aq)); break;
+      case id : pimpl->F_chem.reset(new ode_chem<real_t,algo_euler,xi_id<real_t>>(pimpl->stat, pimpl->envi, opt_gas, opt_aq)); break;
+      case ln : pimpl->F_chem.reset(new ode_chem<real_t,algo_euler,xi_ln<real_t>>(pimpl->stat, pimpl->envi, opt_gas, opt_aq)); break;
+      case p2 : pimpl->F_chem.reset(new ode_chem<real_t,algo_euler,xi_p2<real_t>>(pimpl->stat, pimpl->envi, opt_gas, opt_aq)); break;
+      case p3 : pimpl->F_chem.reset(new ode_chem<real_t,algo_euler,xi_p3<real_t>>(pimpl->stat, pimpl->envi, opt_gas, opt_aq)); break;
       default: assert(false);
     }
     break;
-    case sdm::mmid: switch (xi_dfntn)
+    case mmid: switch (xi_dfntn)
     {
-      case sdm::id : F_chem.reset(new sdm::ode_chem<real_t,algo_mmid,  sdm::xi_id<real_t>>(stat, envi, opt_gas, opt_aq)); break;
-      case sdm::ln : F_chem.reset(new sdm::ode_chem<real_t,algo_mmid,  sdm::xi_ln<real_t>>(stat, envi, opt_gas, opt_aq)); break;
-      case sdm::p2 : F_chem.reset(new sdm::ode_chem<real_t,algo_mmid,  sdm::xi_p2<real_t>>(stat, envi, opt_gas, opt_aq)); break;
-      case sdm::p3 : F_chem.reset(new sdm::ode_chem<real_t,algo_mmid,  sdm::xi_p3<real_t>>(stat, envi, opt_gas, opt_aq)); break;
+      case id : pimpl->F_chem.reset(new ode_chem<real_t,algo_mmid,  xi_id<real_t>>(pimpl->stat, pimpl->envi, opt_gas, opt_aq)); break;
+      case ln : pimpl->F_chem.reset(new ode_chem<real_t,algo_mmid,  xi_ln<real_t>>(pimpl->stat, pimpl->envi, opt_gas, opt_aq)); break;
+      case p2 : pimpl->F_chem.reset(new ode_chem<real_t,algo_mmid,  xi_p2<real_t>>(pimpl->stat, pimpl->envi, opt_gas, opt_aq)); break;
+      case p3 : pimpl->F_chem.reset(new ode_chem<real_t,algo_mmid,  xi_p3<real_t>>(pimpl->stat, pimpl->envi, opt_gas, opt_aq)); break;
       default: assert(false);
     }
     break;
-    case sdm::rk4   : switch (xi_dfntn)
+    case rk4   : switch (xi_dfntn)
     {
-      case sdm::id : F_chem.reset(new sdm::ode_chem<real_t,algo_rk4,  sdm::xi_id<real_t>>(stat, envi, opt_gas, opt_aq)); break;
-      case sdm::ln : F_chem.reset(new sdm::ode_chem<real_t,algo_rk4,  sdm::xi_ln<real_t>>(stat, envi, opt_gas, opt_aq)); break;
-      case sdm::p2 : F_chem.reset(new sdm::ode_chem<real_t,algo_rk4,  sdm::xi_p2<real_t>>(stat, envi, opt_gas, opt_aq)); break;
-      case sdm::p3 : F_chem.reset(new sdm::ode_chem<real_t,algo_rk4,  sdm::xi_p3<real_t>>(stat, envi, opt_gas, opt_aq)); break;
+      case id : pimpl->F_chem.reset(new ode_chem<real_t,algo_rk4,  xi_id<real_t>>(pimpl->stat, pimpl->envi, opt_gas, opt_aq)); break;
+      case ln : pimpl->F_chem.reset(new ode_chem<real_t,algo_rk4,  xi_ln<real_t>>(pimpl->stat, pimpl->envi, opt_gas, opt_aq)); break;
+      case p2 : pimpl->F_chem.reset(new ode_chem<real_t,algo_rk4,  xi_p2<real_t>>(pimpl->stat, pimpl->envi, opt_gas, opt_aq)); break;
+      case p3 : pimpl->F_chem.reset(new ode_chem<real_t,algo_rk4,  xi_p3<real_t>>(pimpl->stat, pimpl->envi, opt_gas, opt_aq)); break;
       default: assert(false);
     }
     break;
     default: assert(false);
   }
 
-  // auxliary variable for super-droplet conc
-  ptr_map_insert(this->aux)("sd_conc", typename eqs<real_t>::axv({
-    "sd_conc", "super-droplet cencentration", this->quan2str(real_t(1)/grid.dx()/grid.dy()/grid.dz()),
-    typename eqs<real_t>::invariable(false),
-    vector<int>({0, 0, 0})
-  }));
-
-  // auxliary variable for total particle concentration
-  ptr_map_insert(this->aux)("n_tot", typename eqs<real_t>::axv({
-    "n_tot", "total particle cencentration", this->quan2str(real_t(1)/si::cubic_metres),
-    typename eqs<real_t>::invariable(false),
-    vector<int>({0, 0, 0})
-  }));
-
-  // auxliary variable for concentration 
-  ptr_map_insert(this->aux)("m_0", typename eqs<real_t>::axv({
-    "m_0", "<r^0> for r > r_min", this->quan2str(real_t(1)/si::cubic_metres),
-    typename eqs<real_t>::invariable(false),
-    vector<int>({0, 0, 0})
-  }));
-
-  // auxliary variable for mean radius
-  ptr_map_insert(this->aux)("m_1", typename eqs<real_t>::axv({
-    "m_1", "<r^1> for r > r_min", this->quan2str(si::metres/si::cubic_metres),
-    typename eqs<real_t>::invariable(false),
-    vector<int>({0, 0, 0})
-  }));
-
-  // auxliary variable for mean squared radius
-  ptr_map_insert(this->aux)("m_2", typename eqs<real_t>::axv({
-    "m_2", "<r^2> for r > r_min", this->quan2str(si::square_metres/si::cubic_metres),
-    typename eqs<real_t>::invariable(false),
-    vector<int>({0, 0, 0})
-  }));
-
-  // auxliary variable for mean cubed radius
-  ptr_map_insert(this->aux)("m_3", typename eqs<real_t>::axv({
-    "m_3", "<r^3> for r > r_min", this->quan2str(si::cubic_metres/si::cubic_metres),
-    typename eqs<real_t>::invariable(false),
-    vector<int>({0, 0, 0})
-  }));
-
-  // auxliary variable for mean cubed radius
-  ptr_map_insert(this->aux)("m_6", typename eqs<real_t>::axv({
-    "m_6", "<r^6> for r > r_min", this->quan2str(si::cubic_metres),
-    typename eqs<real_t>::invariable(false),
-    vector<int>({0, 0, 0})
-  }));
-
-  // auxliary variable for mean SO2 density within a droplet
-  ptr_map_insert(this->aux)("c_SO3", typename eqs<real_t>::axv({
-    "c_SO3", "<c_SO3> for r > r_min", this->quan2str(si::kilograms / si::cubic_metres),
-    typename eqs<real_t>::invariable(false),
-    vector<int>({0, 0, 0})
-  }));
-
   // initialising super-droplets
-  detail::sd_init(stat, grid, seed, min_rd, max_rd, mean_rd1, mean_rd2, sdev_rd1, sdev_rd2, n1_tot, n2_tot, sd_conc_mean, kappa, opt_gas, opt_aq);
+  detail::sd_init(pimpl->stat, pimpl->grid, pimpl->seed, min_rd, max_rd, mean_rd1, mean_rd2, sdev_rd1, sdev_rd2, n1_tot, n2_tot, sd_conc_mean, kappa, opt_gas, opt_aq);
 }
 
 template <typename real_t, int thrust_device_system>
-struct eqs_todo_sdm<real_t, thrust_device_system>::detail
+struct sdm<real_t, thrust_device_system>::detail
 {
+  typedef thrust::device_vector<int>::size_type thrust_size_t;
+
+  // private fields
+  map<enum processes, bool> opts;
+  bool constant_velocity;
+  const grd<real_t> &grid;
+
+  // private fields for ODE machinery
+  unique_ptr<ode<real_t>> 
+    F_adve, F_cond, F_sedi, F_chem;
+
+  // private fields with super droplet structures
+  stat_t<real_t> stat;
+  envi_t<real_t> envi;
+
+  enum xi_dfntns xi_dfntn;
+  real_t seed = 1234.;// TODO: option!
+
+  // private field with temporary space
+  thrust::device_vector<int> tmp_shrt; // e.g. for grid cell indices
+  thrust::device_vector<thrust_size_t> tmp_long;
+  thrust::device_vector<real_t> tmp_real;
+
+  // ctor
+  detail(
+    const grd<real_t> &grid, 
+    const vel<real_t> &velocity,
+    map<enum processes, bool> opts,
+    const enum xi_dfntns xi_dfntn,
+    const real_t sd_conc_mean
+  ) :
+    opts(opts), 
+    grid(grid), 
+    constant_velocity(velocity.is_constant()),
+    stat(grid.nx(), grid.ny(), sd_conc_mean),
+    envi(grid.nx(), grid.ny()),
+    xi_dfntn(xi_dfntn)
+  {}
+
+  // TODO: merge sd_init into ctr?
+  // initialising particle positions, numbers and dry radii
+  static void sd_init(
+    stat_t<real_t> &stat,
+    const grd<real_t> &grid,
+    real_t &seed,
+    const real_t min_rd, const real_t max_rd,
+    const real_t mean_rd1, const real_t mean_rd2,
+    const real_t sdev_rd1, const real_t sdev_rd2,
+    const real_t n1_tot, const real_t n2_tot, 
+    const real_t sd_conc_mean,
+    const real_t kappa,
+    map<enum chem_gas, quantity<phc::mixing_ratio, real_t>> opt_gas,
+    map<enum chem_aq, quantity<si::mass, real_t>> opt_aq
+  )
+  {
+    // initialise particle coordinates
+    {
+      uniform_random_real<real_t> rand_x(0, grid.nx() * (grid.dx() / si::metres), seed);
+      thrust::generate(stat.x_begin, stat.x_end, rand_x);
+      seed = rand_x();
+    }
+    {
+      uniform_random_real<real_t> rand_y(0, grid.ny() * (grid.dy() / si::metres), seed);
+      thrust::generate(stat.y_begin, stat.y_end, rand_y);
+      seed = rand_y();
+    }
+
+    // initialise particle dry size spectrum 
+    // TODO: assert that the distribution is < epsilon at rd_min and rd_max
+    thrust::generate( // rd3 temporarily means logarithms of radius!
+      stat.rd3.begin(), stat.rd3.end(), 
+      uniform_random_real<real_t>(log(min_rd), log(max_rd), seed) 
+    ); 
+    {
+      real_t multi = log(max_rd/min_rd) / sd_conc_mean 
+        * (grid.dx() * grid.dy() * grid.dz() / si::cubic_metres); 
+      thrust::transform(
+        stat.rd3.begin(), stat.rd3.end(), 
+        stat.n.begin(), 
+        lognormal<real_t>(
+          real_t(mean_rd1) * si::metres, 
+          real_t(sdev_rd1), 
+          real_t(multi * n1_tot) / si::cubic_metres, 
+          real_t(mean_rd2) * si::metres, 
+          real_t(sdev_rd2), 
+          real_t(multi * n2_tot) / si::cubic_metres
+        ) 
+      );
+      // converting rd back from logarihms to rd3 
+      struct exp3x { real_t operator()(real_t x) { return exp(3*x); } };
+      thrust::transform(stat.rd3.begin(), stat.rd3.end(), stat.rd3.begin(), exp3x());
+    }
+  
+    // initialise kappas
+    thrust::fill(stat.kpa.begin(), stat.kpa.end(), kappa);
+
+  // initialise chemical components
+  thrust::fill(
+    stat.c_aq.begin() +  H      * stat.n_part, 
+    stat.c_aq.begin() + (H + 1) * stat.n_part, 
+    opt_aq[H] / si::kilograms
+  );
+  thrust::fill(
+    stat.c_aq.begin() +  OH      * stat.n_part, 
+    stat.c_aq.begin() + (OH + 1) * stat.n_part, 
+    opt_aq[OH] / si::kilograms
+  );
+  thrust::fill(
+    stat.c_aq.begin() +  SO2      * stat.n_part, 
+    stat.c_aq.begin() + (SO2 + 1) * stat.n_part, 
+    opt_aq[SO2] / si::kilograms
+  );
+  thrust::fill(
+    stat.c_aq.begin() +  O3      * stat.n_part,  
+    stat.c_aq.begin() + (O3 + 1) * stat.n_part, 
+    opt_aq[O3] / si::kilograms
+  );
+  thrust::fill(
+    stat.c_aq.begin() +  H2O2      * stat.n_part, 
+    stat.c_aq.begin() + (H2O2 + 1) * stat.n_part, 
+    opt_aq[H2O2] / si::kilograms
+  );
+  thrust::fill(
+    stat.c_aq.begin() +  HSO3      * stat.n_part,
+    stat.c_aq.begin() + (HSO3 + 1) * stat.n_part,
+    opt_aq[HSO3] / si::kilograms
+  );
+  thrust::fill(
+    stat.c_aq.begin() +  SO3      * stat.n_part,
+    stat.c_aq.begin() + (SO3 + 1) * stat.n_part, 
+    opt_aq[SO3]  / si::kilograms
+  );
+  thrust::fill(
+    stat.c_aq.begin() +  HSO4      * stat.n_part,
+    stat.c_aq.begin() + (HSO4 + 1) * stat.n_part, 
+    0. //TODO?
+  );
+  thrust::fill(
+    stat.c_aq.begin() +  SO4      * stat.n_part,
+    stat.c_aq.begin() + (SO4 + 1) * stat.n_part, 
+    0.//TODO?
+  );
+  }
   // sorting out which particle belongs to which grid cell
-  static void sd_ij(sdm::stat_t<real_t> &stat, const grd<real_t> &grid)
+  static void sd_ij(stat_t<real_t> &stat, const grd<real_t> &grid)
   {
     // computing stat.i 
     thrust::transform(
       stat.x_begin, stat.x_end,
       stat.i.begin(),
-      sdm::divide_by_constant<real_t>(grid.dx() / si::metres)
+      divide_by_constant<real_t>(grid.dx() / si::metres)
     );
     // computing stat.j
     thrust::transform(
       stat.y_begin, stat.y_end,
       stat.j.begin(),
-      sdm::divide_by_constant<real_t>(grid.dy() / si::metres)
+      divide_by_constant<real_t>(grid.dy() / si::metres)
     );
     // computing stat.ij
     thrust::transform(
       stat.i.begin(), stat.i.end(),
       stat.j.begin(),
       stat.ij.begin(),
-      sdm::ravel_indices(grid.ny())
+      ravel_indices(grid.ny())
     );
   }
 
 static void sd_sync_in(
-  sdm::envi_t<real_t> &envi,
+  envi_t<real_t> &envi,
   const grd<real_t> &grid,
   const mtx::arr<real_t> &rhod,
   const mtx::arr<real_t> &rhod_th,
@@ -295,21 +393,21 @@ static void sd_sync_in(
   thrust::counting_iterator<thrust_size_t> iter(0);
   {
     thrust::for_each(iter, iter + envi.rhod.size(), 
-      sdm::blitz2thrust<real_t, real_t>(
+      blitz2thrust<real_t, real_t>(
         grid.nx(), rhod, envi.rhod
       )
     ); // TODO: this could be done just once in the kinematic model!
   }
   {
     thrust::for_each(iter, iter + envi.rhod_th.size(), 
-      sdm::blitz2thrust<real_t, real_t>(
+      blitz2thrust<real_t, real_t>(
         grid.nx(), rhod_th, envi.rhod_th 
       )
     );
   }
   {
     thrust::for_each(iter, iter + envi.rhod_rv.size(), 
-      sdm::blitz2thrust<real_t, real_t>(
+      blitz2thrust<real_t, real_t>(
         grid.nx(), rhod_rv, envi.rhod_rv
       )
     );
@@ -319,8 +417,8 @@ static void sd_sync_in(
   // TODO! should be done just once!!! TODO - now it's repeated in ode_xi::adjust()
   class rpT
   {
-    private: sdm::envi_t<real_t> &envi;
-    public: rpT(sdm::envi_t<real_t> &envi) : envi(envi) {}
+    private: envi_t<real_t> &envi;
+    public: rpT(envi_t<real_t> &envi) : envi(envi) {}
     public: void operator()(const thrust_size_t ij) 
     { 
       envi.r[ij] = envi.rhod_rv[ij] / envi.rhod[ij]; 
@@ -339,7 +437,7 @@ static void sd_sync_in(
 }
 
   static void sd_sync_out(
-    sdm::envi_t<real_t> envi,
+    envi_t<real_t> envi,
     const grd<real_t> &grid,
     mtx::arr<real_t> &rhod_th,
     mtx::arr<real_t> &rhod_rv,
@@ -349,14 +447,14 @@ static void sd_sync_in(
     thrust::counting_iterator<thrust_size_t> zero(0);
     thrust::sequence(tmp_shrt.begin(), tmp_shrt.end()); // TODO: could be optimised...
     thrust::for_each(zero, zero + envi.n_cell, 
-      sdm::thrust2blitz<real_t>(grid.nx(), tmp_shrt, envi.rhod_th, rhod_th)
+      thrust2blitz<real_t>(grid.nx(), tmp_shrt, envi.rhod_th, rhod_th)
     );
     thrust::for_each(zero, zero + envi.n_cell,
-      sdm::thrust2blitz<real_t>(grid.nx(), tmp_shrt, envi.rhod_rv, rhod_rv)
+      thrust2blitz<real_t>(grid.nx(), tmp_shrt, envi.rhod_rv, rhod_rv)
     );
   }
 
-static void sd_sort(sdm::stat_t<real_t> &stat)
+static void sd_sort(stat_t<real_t> &stat)
 {
   // filling-in stat.sorted_id with a sequence
   thrust::sequence(stat.sorted_id.begin(), stat.sorted_id.end());
@@ -369,7 +467,7 @@ static void sd_sort(sdm::stat_t<real_t> &stat)
   );
 }
 
-static void sd_shuffle_and_sort(sdm::stat_t<real_t> &stat, real_t &seed)
+static void sd_shuffle_and_sort(stat_t<real_t> &stat, real_t &seed)
 {
   // filling-in sorted_id with a random sequence 
   // that's a try to get the std::random_shuffle functionality using parallelisable Thrust calls
@@ -379,7 +477,7 @@ static void sd_shuffle_and_sort(sdm::stat_t<real_t> &stat, real_t &seed)
     // using sorted_ij as temporary space for the random key
     thrust::device_vector<int> &random_key = stat.sorted_ij; 
     {
-      sdm::uniform_random_int<int> rand(INT_MIN, INT_MAX, seed); // TODO: c++ version of INT_MIN/INT_MAX
+      uniform_random_int<int> rand(INT_MIN, INT_MAX, seed); // TODO: c++ version of INT_MIN/INT_MAX
       thrust::generate(random_key.begin(), random_key.end(), rand);
       seed = rand();
     }
@@ -403,13 +501,13 @@ static void sd_shuffle_and_sort(sdm::stat_t<real_t> &stat, real_t &seed)
 
 // computing diagnostics
 static void sd_diag(
-  const sdm::stat_t<real_t> &stat, 
+  const stat_t<real_t> &stat, 
   const grd<real_t> &grid, 
   ptr_unordered_map<string, mtx::arr<real_t>> &aux,
   thrust::device_vector<int> &tmp_shrt, 
   thrust::device_vector<thrust_size_t> &tmp_long,
   thrust::device_vector<real_t> &tmp_real,
-  const enum sdm::xi_dfntns xi_dfntn
+  const enum xi_dfntns xi_dfntn
 )
 {
   // calculating super-droplet concentration (per grid cell)
@@ -432,7 +530,7 @@ static void sd_diag(
     sd_conc(sd_conc.ijk) = real_t(0); // as some grid cells could be void of particles
     thrust::counting_iterator<thrust_size_t> zero(0);
     thrust::for_each(zero, zero + (n.first - tmp_shrt.begin()), 
-      sdm::thrust2blitz<real_t>(
+      thrust2blitz<real_t>(
         grid.nx(), tmp_shrt, tmp_long, sd_conc 
       )
     );
@@ -461,7 +559,7 @@ static void sd_diag(
     n_tot(n_tot.ijk) = real_t(0); // as some grid cells could be void of particles
     thrust::counting_iterator<thrust_size_t> iter(0);
     thrust::for_each(iter, iter + (n.first - tmp_shrt.begin()), 
-      sdm::thrust2blitz<real_t>( 
+      thrust2blitz<real_t>( 
         grid.nx(), tmp_shrt, tmp_long, n_tot, 
         real_t(1) / grid.dx() / grid.dy() / grid.dz() * si::cubic_metres
       )
@@ -482,14 +580,14 @@ static void sd_diag(
 
     switch (xi_dfntn)
     {
-      case sdm::p2:
+      case p2:
       n = thrust::reduce_by_key(
         stat.sorted_ij.begin(), stat.sorted_ij.end(),
         thrust::transform_iterator<
-          sdm::moment_counter<real_t, sdm::xi_p2<real_t>>,
+          moment_counter<real_t, xi_p2<real_t>>,
           decltype(stat.sorted_id.begin()),
           real_t
-        >(stat.sorted_id.begin(), sdm::moment_counter<real_t, sdm::xi_p2<real_t>>(stat, real_t(500e-9), k)),// TODO:!!! 500e-9 as an option!!!
+        >(stat.sorted_id.begin(), moment_counter<real_t, xi_p2<real_t>>(stat, real_t(500e-9), k)),// TODO:!!! 500e-9 as an option!!!
         tmp_shrt.begin(), // will store the grid cell indices
         tmp_real.begin()  // will store the concentrations per grid cell
       );
@@ -504,7 +602,7 @@ static void sd_diag(
     out(out.ijk) = real_t(0); // as some grid cells could be void of particles
     thrust::counting_iterator<thrust_size_t> iter(0);
     thrust::for_each(iter, iter + (n.first - tmp_shrt.begin()), 
-      sdm::thrust2blitz<real_t>( 
+      thrust2blitz<real_t>( 
         grid.nx(), tmp_shrt, tmp_real, out, 
         real_t(1) / grid.dx() / grid.dy() / grid.dz() * si::cubic_metres
       )
@@ -514,8 +612,8 @@ static void sd_diag(
   // calculating chemical stuff
   if (true/* TODO opt[chem]*/)
   {
-    typedef pair<enum sdm::chem_aq, string> keyval;
-    for (keyval &kv : list<keyval>({{sdm::SO3,"c_SO3"}}))
+    typedef pair<enum chem_aq, string> keyval;
+    for (keyval &kv : list<keyval>({{SO3,"c_SO3"}}))
     {
       // zeroing the temporary var
       thrust::fill(tmp_real.begin(), tmp_real.end(), 0); // TODO: is it needed
@@ -529,10 +627,10 @@ static void sd_diag(
       n = thrust::reduce_by_key(
         stat.sorted_ij.begin(), stat.sorted_ij.end(),
         thrust::transform_iterator<
-          sdm::chem_counter<real_t>,
+          chem_counter<real_t>,
           decltype(stat.sorted_id.begin()),
           real_t
-        >(stat.sorted_id.begin(), sdm::chem_counter<real_t>(stat, kv.first)),
+        >(stat.sorted_id.begin(), chem_counter<real_t>(stat, kv.first)),
         tmp_shrt.begin(), // will store the grid cell indices
         tmp_real.begin()  // will store the concentrations per grid cell
       );
@@ -542,7 +640,7 @@ static void sd_diag(
       out(out.ijk) = real_t(0); // as some grid cells could be void of particles
       thrust::counting_iterator<thrust_size_t> iter(0);
       thrust::for_each(iter, iter + (n.first - tmp_shrt.begin()),
-        sdm::thrust2blitz<real_t>(
+        thrust2blitz<real_t>(
           grid.nx(), tmp_shrt, tmp_real, out,
           real_t(1) / grid.dx() / grid.dy() / grid.dz() * si::cubic_metres
         )
@@ -552,9 +650,9 @@ static void sd_diag(
 }
 
 static void sd_advection(
-  sdm::ode<real_t> &F_adve,
-  sdm::stat_t<real_t> &stat,
-  sdm::envi_t<real_t> &envi,
+  ode<real_t> &F_adve,
+  stat_t<real_t> &stat,
+  envi_t<real_t> &envi,
   const grd<real_t> &grid,
   const quantity<si::time, real_t> dt,
   const mtx::arr<real_t> &Cx,
@@ -565,7 +663,7 @@ static void sd_advection(
   {
     thrust::counting_iterator<thrust_size_t> iter(0);
     thrust::for_each(iter, iter + envi.vx.size(), 
-      sdm::blitz2thrust<real_t, real_t>(
+      blitz2thrust<real_t, real_t>(
         grid.nx() + 1, Cx, envi.vx, (grid.dx() / si::metres) / (dt / si::seconds)
       )
     );
@@ -573,7 +671,7 @@ static void sd_advection(
   {
     thrust::counting_iterator<thrust_size_t> iter(0);
     thrust::for_each(iter, iter + envi.vy.size(), 
-      sdm::blitz2thrust<real_t, real_t>(
+      blitz2thrust<real_t, real_t>(
         grid.nx(), Cy, envi.vy, (grid.dx() / si::metres) / (dt / si::seconds)
       )
     );
@@ -584,8 +682,8 @@ static void sd_advection(
 }
 
 static void sd_sedimentation(
-  sdm::ode<real_t> &F_sedi,
-  sdm::stat_t<real_t> &stat,
+  ode<real_t> &F_sedi,
+  stat_t<real_t> &stat,
   const quantity<si::time, real_t> dt
 )
 {
@@ -594,20 +692,20 @@ static void sd_sedimentation(
 }
 
 static void sd_periodic_x(
-  sdm::stat_t<real_t> &stat,
+  stat_t<real_t> &stat,
   const grd<real_t> &grid
 )
 {
   // periodic boundary condition (in-place transforms)
   thrust::transform(stat.x_begin, stat.x_end, stat.x_begin, 
-    sdm::modulo<real_t>(
+    modulo<real_t>(
       grid.nx() * (grid.dx() / si::metres)
     )
   );
 }
 
 static void sd_recycle(
-  sdm::stat_t<real_t> &stat,
+  stat_t<real_t> &stat,
   const grd<real_t> &grid
 ) 
 {
@@ -615,10 +713,10 @@ static void sd_recycle(
   struct invalidate
   {
     // member fields
-    sdm::stat_t<real_t> &stat;
+    stat_t<real_t> &stat;
     const real_t Y;
     // ctor
-    invalidate(sdm::stat_t<real_t> &stat, const grd<real_t> &grid) :
+    invalidate(stat_t<real_t> &stat, const grd<real_t> &grid) :
       stat(stat), Y(grid.nx() * (grid.dx() / si::metres))
     {}
     // overloaded operator invoked by Thrust
@@ -641,8 +739,8 @@ static void sd_recycle(
 }
   
 static void sd_condevap(
-  sdm::ode<real_t> &F_cond,
-  sdm::stat_t<real_t> &stat,
+  ode<real_t> &F_cond,
+  stat_t<real_t> &stat,
   const quantity<si::time, real_t> dt
 )
 {
@@ -652,8 +750,8 @@ static void sd_condevap(
 }
 
 static void sd_chem(
-  sdm::ode<real_t> &F_chem,
-  sdm::stat_t<real_t> &stat,
+  ode<real_t> &F_chem,
+  stat_t<real_t> &stat,
   const quantity<si::time, real_t> dt
 )
 {
@@ -661,109 +759,6 @@ static void sd_chem(
   assert(*thrust::min_element(stat.c_aq.begin(), stat.c_aq.end()) >= 0);
 }
 
-  // initialising particle positions, numbers and dry radii
-  static void sd_init(
-    sdm::stat_t<real_t> &stat,
-    const grd<real_t> &grid,
-    real_t &seed,
-    const real_t min_rd, const real_t max_rd,
-    const real_t mean_rd1, const real_t mean_rd2,
-    const real_t sdev_rd1, const real_t sdev_rd2,
-    const real_t n1_tot, const real_t n2_tot, 
-    const real_t sd_conc_mean,
-    const real_t kappa,
-    map<enum sdm::chem_gas, quantity<phc::mixing_ratio, real_t>> opt_gas,
-    map<enum sdm::chem_aq, quantity<si::mass, real_t>> opt_aq
-  )
-  {
-    // initialise particle coordinates
-    {
-      sdm::uniform_random_real<real_t> rand_x(0, grid.nx() * (grid.dx() / si::metres), seed);
-      thrust::generate(stat.x_begin, stat.x_end, rand_x);
-      seed = rand_x();
-    }
-    {
-      sdm::uniform_random_real<real_t> rand_y(0, grid.ny() * (grid.dy() / si::metres), seed);
-      thrust::generate(stat.y_begin, stat.y_end, rand_y);
-      seed = rand_y();
-    }
-
-    // initialise particle dry size spectrum 
-    // TODO: assert that the distribution is < epsilon at rd_min and rd_max
-    thrust::generate( // rd3 temporarily means logarithms of radius!
-      stat.rd3.begin(), stat.rd3.end(), 
-      sdm::uniform_random_real<real_t>(log(min_rd), log(max_rd), seed) 
-    ); 
-    {
-      real_t multi = log(max_rd/min_rd) / sd_conc_mean 
-        * (grid.dx() * grid.dy() * grid.dz() / si::cubic_metres); 
-      thrust::transform(
-        stat.rd3.begin(), stat.rd3.end(), 
-        stat.n.begin(), 
-        sdm::lognormal<real_t>(
-          real_t(mean_rd1) * si::metres, 
-          real_t(sdev_rd1), 
-          real_t(multi * n1_tot) / si::cubic_metres, 
-          real_t(mean_rd2) * si::metres, 
-          real_t(sdev_rd2), 
-          real_t(multi * n2_tot) / si::cubic_metres
-        ) 
-      );
-      // converting rd back from logarihms to rd3 
-      struct exp3x { real_t operator()(real_t x) { return exp(3*x); } };
-      thrust::transform(stat.rd3.begin(), stat.rd3.end(), stat.rd3.begin(), exp3x());
-    }
-  
-    // initialise kappas
-    thrust::fill(stat.kpa.begin(), stat.kpa.end(), kappa);
-
-  // initialise chemical components
-  thrust::fill(
-    stat.c_aq.begin() +  sdm::H      * stat.n_part, 
-    stat.c_aq.begin() + (sdm::H + 1) * stat.n_part, 
-    opt_aq[sdm::H] / si::kilograms
-  );
-  thrust::fill(
-    stat.c_aq.begin() +  sdm::OH      * stat.n_part, 
-    stat.c_aq.begin() + (sdm::OH + 1) * stat.n_part, 
-    opt_aq[sdm::OH] / si::kilograms
-  );
-  thrust::fill(
-    stat.c_aq.begin() +  sdm::SO2      * stat.n_part, 
-    stat.c_aq.begin() + (sdm::SO2 + 1) * stat.n_part, 
-    opt_aq[sdm::SO2] / si::kilograms
-  );
-  thrust::fill(
-    stat.c_aq.begin() +  sdm::O3      * stat.n_part,  
-    stat.c_aq.begin() + (sdm::O3 + 1) * stat.n_part, 
-    opt_aq[sdm::O3] / si::kilograms
-  );
-  thrust::fill(
-    stat.c_aq.begin() +  sdm::H2O2      * stat.n_part, 
-    stat.c_aq.begin() + (sdm::H2O2 + 1) * stat.n_part, 
-    opt_aq[sdm::H2O2] / si::kilograms
-  );
-  thrust::fill(
-    stat.c_aq.begin() +  sdm::HSO3      * stat.n_part,
-    stat.c_aq.begin() + (sdm::HSO3 + 1) * stat.n_part,
-    opt_aq[sdm::HSO3] / si::kilograms
-  );
-  thrust::fill(
-    stat.c_aq.begin() +  sdm::SO3      * stat.n_part,
-    stat.c_aq.begin() + (sdm::SO3 + 1) * stat.n_part, 
-    opt_aq[sdm::SO3]  / si::kilograms
-  );
-  thrust::fill(
-    stat.c_aq.begin() +  sdm::HSO4      * stat.n_part,
-    stat.c_aq.begin() + (sdm::HSO4 + 1) * stat.n_part, 
-    0. //TODO?
-  );
-  thrust::fill(
-    stat.c_aq.begin() +  sdm::SO4      * stat.n_part,
-    stat.c_aq.begin() + (sdm::SO4 + 1) * stat.n_part, 
-    0.//TODO?
-  );
-  }
 
   // 
   template <class xi>
@@ -772,16 +767,16 @@ static void sd_chem(
     // member fields
     const quantity<si::time, real_t> dt;
     const quantity<si::volume, real_t> dv;
-    sdm::uniform_random_real<real_t> rand;
+    uniform_random_real<real_t> rand;
     real_t &seed;
-    sdm::stat_t<real_t> &stat;
-    const sdm::envi_t<real_t> &envi;
+    stat_t<real_t> &stat;
+    const envi_t<real_t> &envi;
     thrust::device_vector<real_t> &tmp_real;
 
     // ctor
     collider(
-      sdm::stat_t<real_t> &stat, 
-      const sdm::envi_t<real_t> &envi, 
+      stat_t<real_t> &stat, 
+      const envi_t<real_t> &envi, 
       const grd<real_t> &grid,
       real_t &seed,
       thrust::device_vector<real_t> &tmp_real,
@@ -803,7 +798,7 @@ static void sd_chem(
     }
 
     // overloaded operator invoked by Thrust
-    void operator()(sdm::thrust_size_t key)
+    void operator()(thrust_size_t key)
     {
       // we take into account every second droplet
       if (key % 2 != 0) return; 
@@ -812,7 +807,7 @@ static void sd_chem(
       if (stat.sorted_ij[key] != stat.sorted_ij[key+1]) return;
 
       // we get the id-s and ij-s from the sorted random permutation
-      sdm::thrust_size_t
+      thrust_size_t
         id1 = stat.sorted_id[key],
         id2 = stat.sorted_id[key+1],
         ij = stat.sorted_ij[key];
@@ -867,15 +862,15 @@ static void sd_chem(
   };
 
 static void sd_coalescence(
-  sdm::stat_t<real_t> &stat,
-  const sdm::envi_t<real_t> &envi,
+  stat_t<real_t> &stat,
+  const envi_t<real_t> &envi,
   const grd<real_t> &grid,
   real_t &seed,
   const quantity<si::time, real_t> dt,
   thrust::device_vector<int> &tmp_shrt, 
   thrust::device_vector<thrust_size_t> &tmp_long,
   thrust::device_vector<real_t> &tmp_real,
-  const enum sdm::xi_dfntns xi_dfntn
+  const enum xi_dfntns xi_dfntn
 )
 {
   thrust::counting_iterator<thrust_size_t> zero(0);
@@ -926,9 +921,9 @@ static void sd_coalescence(
 
   switch (xi_dfntn)
   {
-    case sdm::p2:
+    case p2:
       // the collider uses n and n+1, hence stopping at n_part - 1
-      thrust::for_each(zero, zero + stat.n_part - 1, collider<sdm::xi_p2<real_t>>(stat, envi, grid, seed, tmp_real, dt));
+      thrust::for_each(zero, zero + stat.n_part - 1, collider<xi_p2<real_t>>(stat, envi, grid, seed, tmp_real, dt));
       break;
     default: assert(false); //TODO: ln, p3, id, ...
   }
@@ -936,9 +931,9 @@ static void sd_coalescence(
 };
 
 template <typename real_t, int thrust_device_system>
-void eqs_todo_sdm<real_t, thrust_device_system>::adjustments(
-  int n, // TODO: mo¿e jednak bez n...
-  vector<ptr_vector<mtx::arr<real_t>>> &psi,
+void sdm<real_t, thrust_device_system>::adjustments(
+  mtx::arr<real_t> &rhod_th,
+  mtx::arr<real_t> &rhod_rv,
   ptr_unordered_map<string, mtx::arr<real_t>> &aux, 
   const ptr_vector<mtx::arr<real_t>> C,
   const quantity<si::time, real_t> dt
@@ -946,50 +941,51 @@ void eqs_todo_sdm<real_t, thrust_device_system>::adjustments(
 {
   // TODO: assert(sd_conc.lbound(mtx::k) == sd_conc.ubound(mtx::k)); // 2D
   // TODO: sd_breakup(dt); 
+  // TODO: sd_sources(dt);
   // TODO: substepping with different timesteps as an option
   // TODO: which order would be best? (i.e. cond, chem, coal, ...)
   const mtx::arr<real_t> &rhod = aux.at("rhod");
-  mtx::arr<real_t> &rhod_th = psi[this->par.idx_rhod_th][n];
-  mtx::arr<real_t> &rhod_rv = psi[this->par.idx_rhod_rv][n];
 
-  detail::sd_ij(stat, grid);
-  detail::sd_sync_in(envi, grid, rhod, rhod_th, rhod_rv);
-  if (opts[sdm::cond]) detail::sd_condevap(*F_cond, stat, dt); // does init() at first time step - has to be placed after sync, and before others
-  if (opts[sdm::adve]) 
+  detail::sd_ij(pimpl->stat, pimpl->grid);
+  detail::sd_sync_in(pimpl->envi, pimpl->grid, rhod, rhod_th, rhod_rv);
+  if (pimpl->opts[cond]) detail::sd_condevap(*pimpl->F_cond, pimpl->stat, dt); // does init() at first time step - has to be placed after sync, and before others
+  if (pimpl->opts[adve]) 
   {   
-    detail::sd_advection(*F_adve, stat, envi, grid, dt, C[0], C[1]); 
+    detail::sd_advection(*pimpl->F_adve, pimpl->stat, pimpl->envi, pimpl->grid, dt, C[0], C[1]); 
   }   
-  if (opts[sdm::sedi]) 
+  if (pimpl->opts[sedi]) 
   {   
-    detail::sd_sedimentation(*F_sedi, stat, dt); // TODO: SD recycling!
+    detail::sd_sedimentation(*pimpl->F_sedi, pimpl->stat, dt); // TODO: SD recycling!
   }   
-  detail::sd_periodic_x(stat, grid);
-  detail::sd_recycle(stat, grid);
-  detail::sd_ij(stat, grid);
-  if (opts[sdm::chem]) detail::sd_chem(*F_chem, stat, dt);
-  if (opts[sdm::coal])
+  detail::sd_periodic_x(pimpl->stat, pimpl->grid);
+  detail::sd_recycle(pimpl->stat, pimpl->grid);
+  detail::sd_ij(pimpl->stat, pimpl->grid);
+  if (pimpl->opts[chem]) detail::sd_chem(*pimpl->F_chem, pimpl->stat, dt);
+  if (pimpl->opts[coal])
   {   
     int n_steps = 5;
     for (int i = 0; i < n_steps; ++i)
     {   
-      detail::sd_shuffle_and_sort(stat, seed);
-      detail::sd_coalescence(stat, envi, grid, seed, dt / real_t(n_steps), tmp_shrt, tmp_long, tmp_real, xi_dfntn);
+      detail::sd_shuffle_and_sort(pimpl->stat, pimpl->seed);
+      detail::sd_coalescence(pimpl->stat, pimpl->envi, pimpl->grid, pimpl->seed, dt / real_t(n_steps), pimpl->tmp_shrt, pimpl->tmp_long, pimpl->tmp_real, pimpl->xi_dfntn);
     }   
   }   
-  else detail::sd_sort(stat);
-  detail::sd_diag(stat, grid, aux, tmp_shrt, tmp_long, tmp_real, xi_dfntn); // TODO: only when recording!
+  else detail::sd_sort(pimpl->stat);
+  detail::sd_diag(pimpl->stat, pimpl->grid, aux, pimpl->tmp_shrt, pimpl->tmp_long, pimpl->tmp_real, pimpl->xi_dfntn); // TODO: only when recording!
   // transfer new rhod_rv and rhod_th back to Blitz
-  detail::sd_sync_out(envi, grid, rhod_th, rhod_rv, tmp_shrt); // has to be placed after condensation?
+  detail::sd_sync_out(pimpl->envi, pimpl->grid, rhod_th, rhod_rv, pimpl->tmp_shrt); // has to be placed after condensation?
 }
-#endif
+
+}
 
 // explicit instantiations
+#include "../cfg/cfg_types.hpp"
 #if defined(USE_FLOAT)
-template class eqs_todo_sdm<float, THRUST_DEVICE_SYSTEM>;
+template class sdm::sdm<float, ICICLE_THRUST_DEVICE_SYSTEM>;
 #endif
 #if defined(USE_DOUBLE)
-template class eqs_todo_sdm<double, THRUST_DEVICE_SYSTEM>;
+template class sdm::sdm<double, ICICLE_THRUST_DEVICE_SYSTEM>;
 #endif
 #if defined(USE_LDOUBLE)
-template class eqs_todo_sdm<long double, THRUST_DEVICE_SYSTEM>;
+template class sdm::sdm<long double, ICICLE_THRUST_DEVICE_SYSTEM>;
 #endif

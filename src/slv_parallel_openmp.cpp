@@ -5,7 +5,6 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#include "cfg.hpp"
 #include "slv_parallel_openmp.hpp"
 #ifdef _OPENMP
 #  include <omp.h>
@@ -49,6 +48,7 @@ void slv_parallel_openmp<real_t>::integ_loop()
 #endif
 
 // explicit instantiations
+#include "cfg/cfg_types.hpp"
 #if defined(USE_FLOAT)
 template class slv_parallel_openmp<float>;
 #endif

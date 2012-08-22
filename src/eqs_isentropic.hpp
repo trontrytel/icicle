@@ -9,7 +9,6 @@
  */
 #pragma once
 
-#include "cmn.hpp"
 #include "eqs.hpp"
 #include "rhs_implicit.hpp"
 #include "grd.hpp"
@@ -24,9 +23,9 @@ class eqs_isentropic : public eqs<real_t>
   {
     // TODO: add const qualifiers and initiliase here if possible
     quantity<si::pressure, real_t> p_unit, p_top;
-    quantity<velocity_times_pressure, real_t> q_unit;
+    quantity<multiply_typeof_helper<si::velocity, si::pressure>::type, real_t> q_unit;
     quantity<si::temperature, real_t> theta_unit, theta_frst;
-    quantity<specific_energy, real_t> M_unit; 
+    quantity<multiply_typeof_helper<si::acceleration, si::length>::type, real_t> M_unit; 
     quantity<si::dimensionless, real_t> dHdxy_unit; 
     vector<int> idx_dp;
   };

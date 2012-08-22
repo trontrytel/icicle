@@ -33,7 +33,7 @@ class slv_serial : public slv<real_t>
   private: ptr_unordered_map<string, mtx::arr<real_t>> aux;
 
   // RHS representations (implicit and explicit parts)
-  private: ptr_vector<nullable<mtx::arr<real_t>>> rhs_R, rhs_C;
+  private: ptr_vector<boost::nullable<mtx::arr<real_t>>> rhs_R, rhs_C;
 
   private: unique_ptr<tmp<real_t>> cache; 
   private: vector<mtx::arr<real_t>*> tmpvec; // used in update_forcings

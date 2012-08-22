@@ -7,8 +7,11 @@
  @  @brief contains definition of the eqs_shallow_water class - a system of 2D shallow-water equations
  */
 
-#include "cfg.hpp"
 #include "eqs_shallow_water.hpp"
+#include "cmn/cmn_error.hpp"
+
+#include <boost/assign/ptr_map_inserter.hpp>
+using boost::assign::ptr_map_insert;
 
 /** @brief the 2D shallow-water equations system
  *
@@ -147,6 +150,7 @@ eqs_shallow_water<real_t>::eqs_shallow_water(const grd<real_t> &grid)
 }
 
 // explicit instantiations
+#include "cfg/cfg_types.hpp"
 #if defined(USE_FLOAT)
 template class eqs_shallow_water<float>;
 #endif

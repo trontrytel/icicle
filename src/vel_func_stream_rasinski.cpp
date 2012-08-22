@@ -5,7 +5,6 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#include "cfg.hpp"
 #include "vel_func_stream_rasinski.hpp"
 
 template <typename real_t>
@@ -44,6 +43,7 @@ quantity<si::velocity, real_t> vel_func_stream_rasinski<real_t>::v(
 }
 
 // explicit instantiations
+#include "cfg/cfg_types.hpp"
 #if defined(USE_FLOAT)
 template class vel_func_stream_rasinski<float>;
 #endif

@@ -5,8 +5,10 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#include "cfg.hpp"
 #include "slv_serial.hpp"
+
+#include <boost/assign/ptr_map_inserter.hpp>
+using boost::assign::ptr_map_insert;
 
 // ctor
 template <typename real_t>
@@ -378,6 +380,7 @@ void slv_serial<real_t>::integ_loop()
 }
 
 // explicit instantiations
+#include "cfg/cfg_types.hpp"
 #if defined(USE_FLOAT)
 template class slv_serial<float>;
 #endif

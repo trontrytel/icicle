@@ -17,6 +17,9 @@ using std::string;
 #include <vector>
 using std::vector;
 
+#include "cmn/cmn_netcdf.hpp" // TODO: move somehow into detail?
+#include "cmn/cmn_error.hpp"
+
 template <typename real_t>
 class vel_func_stream : public vel_func<real_t>
 {

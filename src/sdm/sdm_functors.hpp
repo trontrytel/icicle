@@ -10,7 +10,7 @@
 #pragma once
 
 #include "sdm_base.hpp"
-#include "phc_lognormal.hpp"
+#include "../phc_lognormal.hpp"
 
 #ifdef USE_THRUST
 
@@ -149,11 +149,11 @@ namespace sdm {
   template <typename real_t, class xi>
   class moment_counter
   { 
-    private: const sdm::stat_t<real_t> &stat;
+    private: const stat_t<real_t> &stat;
     private: const real_t threshold;
     private: int k;
     public: moment_counter(
-      const sdm::stat_t<real_t> &stat,
+      const stat_t<real_t> &stat,
       const real_t threshold,
       const int k
     ) : stat(stat), threshold(xi::xi_of_rw(threshold)), k(k) {}
@@ -173,10 +173,10 @@ namespace sdm {
   template <typename real_t>
   class chem_counter 
   { 
-    private: const sdm::stat_t<real_t> &stat;
+    private: const stat_t<real_t> &stat;
     private: const int spec;
     public: chem_counter(
-      const sdm::stat_t<real_t> &stat,
+      const stat_t<real_t> &stat,
       const int spec
     ) : stat(stat), spec(spec) {}
     public: real_t operator()(const thrust_size_t id) const

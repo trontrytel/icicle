@@ -8,7 +8,6 @@
  */
 #pragma once
 
-#include "cmn.hpp"
 #include "mtx.hpp"
 
 /// @brief a base class for advection operators

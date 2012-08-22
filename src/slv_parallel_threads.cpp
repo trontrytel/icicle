@@ -6,7 +6,6 @@
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
 
-#include "cfg.hpp"
 #include "slv_parallel_threads.hpp"
 
 #ifdef USE_BOOST_THREAD
@@ -49,6 +48,7 @@ void slv_parallel_threads<real_t>::integ_loop()
 #endif
 
 // explicit instantiations
+#include "cfg/cfg_types.hpp"
 #if defined(USE_FLOAT)
 template class slv_parallel_threads<float>;
 #endif

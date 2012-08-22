@@ -6,33 +6,37 @@
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
 #pragma once
-#ifdef USE_NETCDF
 #  include "out.hpp"
-#  include "inf.hpp"
-#  include "eqs.hpp"
 #  include "stp.hpp"
-#  include "grd.hpp"
+#  include "cfg/cfg_netcdf.hpp"
 
-#  include <memory>    // TODO: move into detail
-using std::unique_ptr; // 
+#  include <memory>  
+using std::unique_ptr;
 
 template <typename real_t>
 class out_netcdf : public out<real_t>
 {
-  // TODO: move into detail
-  private: unique_ptr<NcFile> f; 
-  private: map<string, NcVar> vars;
-  private: inf info;
-
+  // ctor
   public: out_netcdf(
     const string &file, 
     const stp<real_t> &setup, 
     int ver, 
     const string &cmdline
-  );
+  )
+#if !defined(USE_NETCDF)
+  { error_macro("recompile icicle with -DUSE_NETCDF") }
+#else
+  ;
+#endif
 
+  // dtor (e.g. writing execution time into the netcdf)
   public: ~out_netcdf();
 
+  // pimpl
+  private: struct detail;
+  private: unique_ptr<detail> pimpl;
+
+  // implementing the public interface
   public: void record(
     const string &name, 
     const mtx::arr<real_t> &psi,
@@ -40,4 +44,3 @@ class out_netcdf : public out<real_t>
     const unsigned long t // t is the number of the record!
   ); 
 };
-#endif 

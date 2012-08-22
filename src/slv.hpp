@@ -7,7 +7,6 @@
  */
 #pragma once
 
-#include "cmn.hpp" 
 #include "adv.hpp"
 
 template <typename real_t>

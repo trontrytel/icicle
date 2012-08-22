@@ -8,7 +8,6 @@
  */
 #pragma once
 
-#include "cmn.hpp"
 #include "eqs.hpp"
 #include "rhs_explicit.hpp"
 #include "grd.hpp"

@@ -9,7 +9,6 @@
  */
 #pragma once
 
-//#include "cmn.hpp"
 #include "eqs.hpp"
 
 /// @brief a minimalistic model of two coupled harmonic oscillators

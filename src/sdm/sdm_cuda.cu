@@ -2,4 +2,5 @@
 #include <blitz/array.h>
 
 #define THRUST_DEVICE_SYSTEM THRUST_DEVICE_SYSTEM_CUDA
-#include "eqs_todo_sdm.inc"
+#define ICICLE_THRUST_DEVICE_SYSTEM sdm::cuda
+#include "sdm.cpp"

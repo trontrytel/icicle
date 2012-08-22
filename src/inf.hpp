@@ -8,8 +8,9 @@
  */
 #pragma once
 
-#include "cmn.hpp" // TODO: get rid of it
 #include "mtx.hpp"
+
+#include "cfg/cfg_boost_timer.hpp"
 
 #ifdef USE_BOOST_TIMER
 #  include <boost/timer/timer.hpp>

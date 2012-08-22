@@ -8,7 +8,6 @@
  @  @brief contains definition of eqs_harmonic_oscillator
  */
 
-#include "cfg.hpp"
 #include "eqs_harmonic_oscillator.hpp"
 
 /// @brief a minimalistic model of a harmonic oscillator 
@@ -57,6 +56,7 @@ eqs_harmonic_oscillator<real_t>::eqs_harmonic_oscillator(quantity<si::frequency,
 }
 
 // explicit instantiations
+#include "cfg/cfg_types.hpp"
 #if defined(USE_FLOAT)
 template class eqs_harmonic_oscillator<float>;
 #endif

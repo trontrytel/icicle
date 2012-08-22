@@ -44,7 +44,8 @@ using boost::units::detail::get_value;
 
 #include <boost/lexical_cast.hpp>
 
-#include "../../src/cmn.hpp"
+#include "../../src/cmn/cmn_error.hpp"
+#include "../../src/cmn/cmn_units.hpp"
 #include "../../src/phc_theta.hpp"
 #include "../../src/phc_terminal_vel.hpp"
 
@@ -103,7 +104,7 @@ const quantity<divide_typeof_helper<si::momentum, si::area>::type, real_t>
   ampl = rho_0 * w_max * (real_t(nx) * dx) / real_t(4*atan(1));
 
 // options for microphysics
-std::string micro = http_or_default("micro", string("mm")); // sdm | bulk | mm
+std::string micro = http_or_default("micro", string("sdm")); // sdm | bulk | mm
 
 // blk parameters
 bool 

@@ -8,7 +8,6 @@
  */
 #pragma once
 
-#include "cmn.hpp" 
 #include "eqs.hpp"
 
 /// @brief the simplest equation system consisting of a single homogeneous transport equation

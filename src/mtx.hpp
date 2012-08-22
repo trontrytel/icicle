@@ -6,12 +6,16 @@
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
 #pragma once
+
 #if defined(USE_BOOST_THREAD) || defined(_OPENMP)
 #  define BZ_THREADSAFE
 #endif
 #include <blitz/array.h>
 #include <blitz/numinquire.h>
 using blitz::where;
+
+#include <boost/units/static_rational.hpp> // TODO: use simply some struct frac_t {};
+using boost::units::static_rational;
 
 #define mtx_expr_1arg_macro(name,a1,expr) \
   template<class t1> \

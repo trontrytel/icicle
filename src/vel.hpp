@@ -7,7 +7,6 @@
  */
 #pragma once
 
-#include "cmn.hpp" 
 #include "mtx.hpp" 
 #include "grd.hpp" 
 

@@ -7,7 +7,6 @@
  *  @brief contains definition of the eqs_scalar_advection class - the simplest equation system
  */
 
-#include "cfg.hpp" 
 #include "eqs_scalar_advection.hpp"
 
 /// @brief the simplest equation system consisting of a single homogeneous transport equation
@@ -21,6 +20,7 @@ eqs_scalar_advection<real_t>::eqs_scalar_advection()
 }
 
 // explicit instantiations
+#include "cfg/cfg_types.hpp" 
 #if defined(USE_FLOAT)
 template class eqs_scalar_advection<float>;
 #endif

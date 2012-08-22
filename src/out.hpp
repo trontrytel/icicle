@@ -6,7 +6,6 @@
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
 #pragma once
-#include "cmn.hpp"  // TODO: get rid of it
 #include "mtx.hpp" 
 
 #include <string>

@@ -5,7 +5,6 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#include "cfg.hpp"
 #include "slv_parallel_distmem_mpi.hpp"
 #if defined(USE_BOOST_MPI)
 
@@ -55,6 +54,7 @@ void slv_parallel_distmem_mpi<real_t, shrdmem_class>::sndrcv(int peer, int cnt, 
 #endif
 
 // explicit instantiations
+#include "cfg/cfg_types.hpp"
 #if defined(USE_FLOAT)
 template class slv_parallel_distmem_mpi<float, slv_parallel_serial<float>>;
 #endif

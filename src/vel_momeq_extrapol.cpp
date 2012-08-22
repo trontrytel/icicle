@@ -5,7 +5,6 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#include "cfg.hpp"
 #include "vel_momeq_extrapol.hpp" 
 #include "grd_carthesian.hpp" 
 
@@ -46,6 +45,7 @@ void vel_momeq_extrapol<real_t>::populate_courant_fields(int nm0, int nm1,
 }
 
 // explicit instantiations
+#include "cfg/cfg_types.hpp"
 #if defined(USE_FLOAT)
 template class vel_momeq_extrapol<float>;
 #endif

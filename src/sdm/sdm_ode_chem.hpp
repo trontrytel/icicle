@@ -8,10 +8,10 @@
  */
 #pragma once
 #include "sdm_ode.hpp"
-#include "phc_henry.hpp"
-#include "phc_chem_molar_mass.hpp"
-#include "phc_dissociation.hpp" 
-#include "phc_react.hpp"
+#include "../phc_henry.hpp"
+#include "../phc_chem_molar_mass.hpp"
+#include "../phc_dissociation.hpp" 
+#include "../phc_react.hpp"
 
 namespace sdm
 {
@@ -34,80 +34,80 @@ namespace sdm
         {
           // Henrys law (see Seinfeld & Pandis 1997 p 340)
           // concentration of dissolved A = partial pressure of gas phase of A * Henrys coefficient for A
-          case sdm::SO2: { 
+          case SO2: { 
             const thrust_size_t ij = nest.stat.ij[id];
-            real_t c_equil = phc::henry::H_SO2<real_t>() * nest.opt_gas.at(sdm::gSO2) * (nest.envi.p[ij] * si::pascals)  
+            real_t c_equil = phc::henry::H_SO2<real_t>() * nest.opt_gas.at(gSO2) * (nest.envi.p[ij] * si::pascals)  
               * (4./3 * M_PI * this->rw3_of_xi(nest.stat.xi[id]) * si::cubic_metres) * phc::mass::M_SO2<real_t>() / si::kilograms;
-            return (c_equil - nest.stat.c_aq[id + nest.stat.n_part  * sdm::SO2]) / nest.dt * si::seconds;
+            return (c_equil - nest.stat.c_aq[id + nest.stat.n_part  * SO2]) / nest.dt * si::seconds;
           }
-          case sdm::O3: {
+          case O3: {
             const thrust_size_t ij = nest.stat.ij[id];
-            real_t c_equil = phc::henry::H_O3<real_t>() * nest.opt_gas.at(sdm::gO3) * (nest.envi.p[ij] * si::pascals)  
+            real_t c_equil = phc::henry::H_O3<real_t>() * nest.opt_gas.at(gO3) * (nest.envi.p[ij] * si::pascals)  
               * (4./3 * M_PI * this->rw3_of_xi(nest.stat.xi[id]) * si::cubic_metres) * phc::mass::M_O3<real_t>() / si::kilograms;
-            return (c_equil - nest.stat.c_aq[id + nest.stat.n_part * sdm::O3]) / nest.dt * si::seconds;
+            return (c_equil - nest.stat.c_aq[id + nest.stat.n_part * O3]) / nest.dt * si::seconds;
           }
-          case sdm::H2O2: {
+          case H2O2: {
             const thrust_size_t ij = nest.stat.ij[id];
-            real_t c_equil = phc::henry::H_H2O2<real_t>() * nest.opt_gas.at(sdm::gH2O2) * (nest.envi.p[ij] * si::pascals)  
+            real_t c_equil = phc::henry::H_H2O2<real_t>() * nest.opt_gas.at(gH2O2) * (nest.envi.p[ij] * si::pascals)  
               * (4./3 * M_PI * this->rw3_of_xi(nest.stat.xi[id]) * si::cubic_metres) * phc::mass::M_H2O2<real_t>() / si::kilograms;
-            return (c_equil - nest.stat.c_aq[id + nest.stat.n_part * sdm::H2O2]) / nest.dt * si::seconds;
+            return (c_equil - nest.stat.c_aq[id + nest.stat.n_part * H2O2]) / nest.dt * si::seconds;
           }
           // dissociation (see Seinfeld & Pandis 1997 p 349)
           // [A-] = dissociation const * [H2O * A] / [H+]
-          case sdm::H: {
+          case H: {
           const thrust_size_t ij = nest.stat.ij[id];
             real_t c_equil = (
-               nest.stat.c_aq[id + nest.stat.n_part * sdm::OH]   / (phc::mass::M_OH<real_t>() * si::moles / si::kilograms)
-             + nest.stat.c_aq[id + nest.stat.n_part * sdm::HSO3] / (phc::mass::M_HSO3<real_t>() * si::moles / si::kilograms)
-             + nest.stat.c_aq[id + nest.stat.n_part * sdm::SO3]  / (phc::mass::M_SO3<real_t>() * si::moles / si::kilograms)
+               nest.stat.c_aq[id + nest.stat.n_part * OH]   / (phc::mass::M_OH<real_t>() * si::moles / si::kilograms)
+             + nest.stat.c_aq[id + nest.stat.n_part * HSO3] / (phc::mass::M_HSO3<real_t>() * si::moles / si::kilograms)
+             + nest.stat.c_aq[id + nest.stat.n_part * SO3]  / (phc::mass::M_SO3<real_t>() * si::moles / si::kilograms)
             )* phc::mass::M_H<real_t>() * si::moles / si::kilograms ;
-            return (c_equil - nest.stat.c_aq[id + nest.stat.n_part * sdm::H]) / nest.dt * si::seconds;
+            return (c_equil - nest.stat.c_aq[id + nest.stat.n_part * H]) / nest.dt * si::seconds;
           }
-          case sdm::OH: {
+          case OH: {
             const thrust_size_t ij = nest.stat.ij[id];                         
 //            real_t c_equil = phc::dissociation::K_H2O<real_t>() * si::cubic_metres / si::moles
 //             * real_t(1/18.*1e3) // [H2O]   TODO !!!!
-//             / real_t(nest.stat.c_aq[id + nest.stat.n_part * sdm::H]);
-//            return (c_equil - nest.stat.c_aq[id + nest.stat.n_part * sdm::OH]) / nest.dt * si::seconds;
+//             / real_t(nest.stat.c_aq[id + nest.stat.n_part * H]);
+//            return (c_equil - nest.stat.c_aq[id + nest.stat.n_part * OH]) / nest.dt * si::seconds;
 return 0; //TODO !!!
           }
-          case sdm::HSO3: {
+          case HSO3: {
             const thrust_size_t ij = nest.stat.ij[id];                         
             real_t c_equil = (4./3 * M_PI * this->rw3_of_xi(nest.stat.xi[id]) * si::cubic_metres) 
               * phc::mass::M_HSO3<real_t>() * phc::dissociation::K_SO2<real_t>() / si::kilograms
-              * real_t(nest.stat.c_aq[id + nest.stat.n_part * sdm::SO2]) / real_t(nest.stat.c_aq[id + nest.stat.n_part * sdm::H]) 
+              * real_t(nest.stat.c_aq[id + nest.stat.n_part * SO2]) / real_t(nest.stat.c_aq[id + nest.stat.n_part * H]) 
               * (phc::mass::M_H<real_t>() / phc::mass::M_SO2<real_t>());
 
-            return (c_equil - nest.stat.c_aq[id + nest.stat.n_part * sdm::HSO3]) / nest.dt * si::seconds;
+            return (c_equil - nest.stat.c_aq[id + nest.stat.n_part * HSO3]) / nest.dt * si::seconds;
           }
-          case sdm::SO3: {
+          case SO3: {
             const thrust_size_t ij = nest.stat.ij[id];                         
             real_t c_equil = (4./3 * M_PI * this->rw3_of_xi(nest.stat.xi[id]) * si::cubic_metres) 
               * phc::mass::M_SO3<real_t>() * phc::dissociation::K_HSO3<real_t>() / si::kilograms 
-              * real_t(nest.stat.c_aq[id + nest.stat.n_part * sdm::HSO3]) / real_t(nest.stat.c_aq[id + nest.stat.n_part * sdm::H]) 
+              * real_t(nest.stat.c_aq[id + nest.stat.n_part * HSO3]) / real_t(nest.stat.c_aq[id + nest.stat.n_part * H]) 
               * (phc::mass::M_H<real_t>() / phc::mass::M_HSO3<real_t>()) ;
-            return (c_equil - nest.stat.c_aq[id + nest.stat.n_part * sdm::SO3]) / nest.dt * si::seconds;
+            return (c_equil - nest.stat.c_aq[id + nest.stat.n_part * SO3]) / nest.dt * si::seconds;
           }
-          case sdm::HSO4: {
+          case HSO4: {
             const thrust_size_t ij = nest.stat.ij[id];                   
 /*                       // should be si::mass_density ? 
             quantity<si::concentration, real_t> dS_VI = 
-              real_t(nest.stat.c_aq[id + nest.stat.n_part * sdm::O3]) * si::kilograms / phc::mass::M_O3<real_t>() 
+              real_t(nest.stat.c_aq[id + nest.stat.n_part * O3]) * si::kilograms / phc::mass::M_O3<real_t>() 
               / (4./3 * M_PI * this->rw3_of_xi(nest.stat.xi[id]) * si::cubic_metres)  
               * (
-                real_t(nest.stat.c_aq[id + nest.stat.n_part * sdm::SO2]) / phc::mass::M_SO2<real_t>() * phc::react::R_S_O3_k0<real_t>() +  
-                real_t(nest.stat.c_aq[id + nest.stat.n_part * sdm::HSO3]) / phc::mass::M_HSO3<real_t>() * phc::react::R_S_O3_k1<real_t>() +
-                real_t(nest.stat.c_aq[id + nest.stat.n_part * sdm::SO3]) / phc::mass::M_SO3<real_t>() * phc::react::R_S_O3_k2<real_t>() 
+                real_t(nest.stat.c_aq[id + nest.stat.n_part * SO2]) / phc::mass::M_SO2<real_t>() * phc::react::R_S_O3_k0<real_t>() +  
+                real_t(nest.stat.c_aq[id + nest.stat.n_part * HSO3]) / phc::mass::M_HSO3<real_t>() * phc::react::R_S_O3_k1<real_t>() +
+                real_t(nest.stat.c_aq[id + nest.stat.n_part * SO3]) / phc::mass::M_SO3<real_t>() * phc::react::R_S_O3_k2<real_t>() 
               ) * si::kilograms / (4./3 * M_PI * this->rw3_of_xi(nest.stat.xi[id]) * si::cubic_metres) 
               * nest.dt;
 
-            quantity<si::concentration, real_t> H = real_t(nest.stat.c_aq[id + nest.stat.n_part * sdm::H]) * si::kilograms 
+            quantity<si::concentration, real_t> H = real_t(nest.stat.c_aq[id + nest.stat.n_part * H]) * si::kilograms 
               / phc::mass::M_H<real_t>() / (4./3 * M_PI * this->rw3_of_xi(nest.stat.xi[id]) * si::cubic_metres)
             return H * (dS_VI / (H + phc::dissociation::K_HSO4<real_t>());
 */
 return 0;
           }
-          case sdm::SO4: {
+          case SO4: {
             return 0;
           }
         }
@@ -119,8 +119,8 @@ return 0;
     private: const envi_t<real_t> &envi;
     private: const thrust::counting_iterator<thrust_size_t> zero;
     private: quantity<si::time, real_t> dt;
-    private: const map<enum sdm::chem_gas, quantity<phc::mixing_ratio, real_t>> opt_gas;
-    private: const map<enum sdm::chem_aq, quantity<si::mass, real_t>> opt_aq;
+    private: const map<enum chem_gas, quantity<phc::mixing_ratio, real_t>> opt_gas;
+    private: const map<enum chem_aq, quantity<si::mass, real_t>> opt_aq;
 
     void init(const quantity<si::time, real_t> &dt_arg)
     {
@@ -131,8 +131,8 @@ return 0;
     public: ode_chem(
       const stat_t<real_t> &stat, 
       const envi_t<real_t> &envi, 
-      const map<enum sdm::chem_gas, quantity<phc::mixing_ratio, real_t>> &opt_gas,
-      const map<enum sdm::chem_aq, quantity<si::mass, real_t>> opt_aq
+      const map<enum chem_gas, quantity<phc::mixing_ratio, real_t>> &opt_gas,
+      const map<enum chem_aq, quantity<si::mass, real_t>> opt_aq
     ) 
       : stat(stat), envi(envi), zero(0), opt_gas(opt_gas), opt_aq(opt_aq)
     {}

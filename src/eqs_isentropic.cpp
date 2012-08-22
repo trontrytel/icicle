@@ -8,11 +8,14 @@
  @  @brief contains definition of the eqs_isentropic class - a system of 3D isentropic equations
  */
 
-#include "cfg.hpp"
 #include "rhs_explicit.hpp"
 #include "eqs_isentropic.hpp"
+#include "cmn/cmn_error.hpp"
 
 #include <boost/lexical_cast.hpp>
+
+#include <boost/assign/ptr_map_inserter.hpp>
+using boost::assign::ptr_map_insert;
 
 template <typename real_t>
 class eqs_isentropic<real_t>::rayleigh_damping : public rhs_implicit<real_t> // (aka sponge layer, aka gravity-wave absorber)
@@ -248,6 +251,7 @@ eqs_isentropic<real_t>::eqs_isentropic(const grd<real_t> &grid,
 }
 
 // explicit instantiations
+#include "cfg/cfg_types.hpp"
 #if defined(USE_FLOAT)
 template class eqs_isentropic<float>;
 #endif

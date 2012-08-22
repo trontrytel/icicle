@@ -7,8 +7,10 @@
  @  @brief contains the @ref main() function in which the floating point precision choice takes place
  */
 
-#include "cfg.hpp"
 #include "mdl.hpp"
+#include "cfg/cfg_types.hpp"
+#include "cfg/cfg_boost_mpi.hpp"
+#include "cfg/cfg_boost_thread.hpp"
 
 int main(int ac, char* av[])
 {
@@ -94,7 +96,7 @@ int main(int ac, char* av[])
 #endif
     error_macro("unsupported number of bits (" << bits << ")")
   }
-  catch (exception &e)
+  catch (std::exception &e)
   {
     std::cerr << "-- exception cought: " << e.what() << std::endl;
     std::cerr << "-- exit: KO" << std::endl;

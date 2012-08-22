@@ -9,6 +9,7 @@
 #include "slv_parallel_distmem.hpp"
 #include "slv_parallel_serial.hpp"
 
+#include "cfg/cfg_boost_mpi.hpp"
 #ifdef USE_BOOST_MPI
 #  include <boost/mpi.hpp>
 namespace mpi = boost::mpi;

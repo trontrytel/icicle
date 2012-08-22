@@ -9,19 +9,19 @@
  */
 #pragma once
 
-#  define phc_decltype_return(expr) -> decltype(expr) { return expr; }
+#include "cmn/cmn_units.hpp"
 
-#  define phc_declare_const_macro(name, value, unit) template <typename real_t> \
+#define phc_decltype_return(expr) -> decltype(expr) { return expr; }
+
+#define phc_declare_const_macro(name, value, unit) template <typename real_t> \
   static constexpr auto name() phc_decltype_return(real_t(value) * unit)
 
-#  define phc_derived_const_macro(name, value) template <typename real_t> \
+#define phc_derived_const_macro(name, value) template <typename real_t> \
   static constexpr auto name() phc_decltype_return(value)
 
-#  define phc_declare_funct_macro template <typename real_t> 
+#define phc_declare_funct_macro template <typename real_t> 
 
-#  include <boost/math/constants/constants.hpp>
-
-// TODO: the same functions with Blitz arguments - how to automate???
+#include <boost/math/constants/constants.hpp>
 
 // TODO: would changing namespace to class and hence marking all members defined below as inline help?
 //       (but that excludes definition of namespace embers in multiple files)

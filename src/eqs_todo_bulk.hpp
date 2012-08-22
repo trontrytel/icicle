@@ -11,6 +11,8 @@
 #include "phc_kessler.hpp"
 #include "phc_theta.hpp"
 
+#include "cmn/cmn_error.hpp" 
+
 template <typename real_t>
 class eqs_todo_bulk : public eqs_todo<real_t> 
 {

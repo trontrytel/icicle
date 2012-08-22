@@ -8,7 +8,6 @@
  @  @brief contains definitions of eqs_todo_mm class - 2 moment parametrisation of warm rain  microphysics
  */
 
-#include "cfg.hpp"
 #include "eqs_todo_mm.hpp"
 #include "phc.hpp"
 #include "phc_theta.hpp"
@@ -249,6 +248,7 @@ eqs_todo_mm<real_t>::eqs_todo_mm(
 }
 
 // explicit instantiations
+#include "cfg/cfg_types.hpp"
 #if defined(USE_FLOAT)
 template class eqs_todo_mm<float>;
 #endif

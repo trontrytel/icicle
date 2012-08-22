@@ -7,8 +7,12 @@
  */
 #pragma once
 
-#include "cmn.hpp" 
 #include "mtx.hpp"
+
+#include "cmn/cmn_units.hpp"
+
+#include <boost/ptr_container/ptr_unordered_map.hpp>
+using boost::ptr_unordered_map;
 
 #include <string>
 using std::string;

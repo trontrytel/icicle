@@ -7,7 +7,6 @@
  *  @brief definition of the adv_leapfrog class with an implementation of the leapfrog advection scheme
  */
 
-#include "cfg.hpp"
 #include "adv_leapfrog.hpp"
 
 template <typename real_t> 
@@ -130,6 +129,7 @@ typename adv<real_t>::op3D *adv_leapfrog<real_t>::factory(
 }
 
 // explicit instantiations
+#include "cfg/cfg_types.hpp"
 #if defined(USE_FLOAT)
 template class adv_leapfrog<float>;
 #endif

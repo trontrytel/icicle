@@ -11,6 +11,7 @@
 
 namespace sdm 
 {
+  enum thrust_device_systems {openmp, cuda};
   enum chem_gas {gSO2, gO3, gH2O2};
   enum chem_aq {H, OH, SO2, O3, H2O2, HSO3, SO3, HSO4, SO4};
   enum processes {adve, cond, sedi, coal, chem};
