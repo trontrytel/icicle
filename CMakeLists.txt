@@ -107,7 +107,7 @@ icicle_option(LDOUBLE "'long double' type support (compiler-dependent, 80 bits f
 
 # CUDA (optional)
 if (DEFINED CUDA AND NOT CUDA)
-  message(STATUS "Building without CUDA support (-DCUDA=NO specified)")
+  message(STATUS "Building without CUDA support (-DCUDA=NO specified or previous CMake run did not find it)")
 else()
   find_package(CUDA)
   set(CUDA_PROPAGATE_HOST_FLAGS OFF)
@@ -215,7 +215,7 @@ icicle_check_boost_lib(
 
 # Boost.Thread (optional)
 if (DEFINED THREADS AND NOT THREADS)
-  message(STATUS "Building without Boost.Thread support (-DTHREADS=NO specified)")
+  message(STATUS "Building without Boost.Thread support (-DTHREADS=NO specified or previous CMake run did not find it)")
 else()
   icicle_check_boost_lib(
     status "boost_thread" WARNING "Threads parallelisation will not be available."
@@ -230,7 +230,7 @@ icicle_option(THREADS "threads paralellisation using Boost.Thread" "${status}")
 
 # Boost.Timer (optional) 
 if (DEFINED TIMER AND NOT TIMER)
-  message(STATUS "Building without Boost.Timer support (-DTIMER=NO specified)")
+  message(STATUS "Building without Boost.Timer support (-DTIMER=NO specified or previous CMake run did not find it)")
 else()
   icicle_check_boost_lib(
     status "boost_timer" WARNING "Simulation timing will not be available."
@@ -243,7 +243,7 @@ icicle_option(TIMER "Simulation timing using Boost.Timer" "${status}")
 
 # Boost.MPI (optional)
 if (DEFINED MPI AND NOT MPI)
-  message(STATUS "Building without Boost.MPI support (-DMPI=NO specified)")
+  message(STATUS "Building without Boost.MPI support (-DMPI=NO specified or previous CMake run did not find it)")
 else()
   icicle_check_boost_lib(
     status "boost_mpi" WARNING 
@@ -256,26 +256,28 @@ icicle_option(MPI "MPI paralellisation using Boost.MPI" "${status}")
 
 # Boost.odeint (optional)
 if (DEFINED ODEINT AND NOT ODEINT) 
-  message(STATUS "Building without Boost.odeint support (-DODEINT=NO specified)")
+  message(STATUS "Building without Boost.odeint support (-DODEINT=NO specified or previous CMake run did not find it)")
 else()
   icicle_check(status "boost_odeint" WARNING 
     "Features relying on ODE integration will not be available."
     "#include <boost/numeric/odeint.hpp>\n int main() {}" 
   )
   set(USE_BOOST_ODEINT ${status})
-  set(TMP ${CMAKE_CXX_FLAGS}) 
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
-  icicle_check(status "boost_fusion" WARNING 
-    "Boost.fusion seems not functional (buggy Boost 1.50?)"
-    "#include <boost/fusion/container.hpp>\n int main() {}" 
-  )
-  set(CMAKE_CXX_FLAGS ${TMP}) 
+  if (status)
+    set(TMP ${CMAKE_CXX_FLAGS}) 
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+    icicle_check(status "boost_fusion" WARNING 
+      "Boost.fusion seems not functional (buggy Boost 1.50?)"
+      "#include <boost/fusion/container.hpp>\n int main() {}" 
+    )
+    set(CMAKE_CXX_FLAGS ${TMP}) 
+  endif()
 endif()
 icicle_option(ODEINT "ODE integration with Boost.odeint" "${status}")
 
 # OpenMP (optional, not using FIND_PACKAGE(OpenMP) as it relies on a C compiler)
 if (DEFINED OPENMP AND NOT OPENMP)   
-  message(STATUS "Building without OpenMP support (-DOPENMP=NO specified)")
+  message(STATUS "Building without OpenMP support (-DOPENMP=NO specified or previous CMake run did not find it)")
 else()
   set(TMP ${CMAKE_CXX_FLAGS}) 
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
@@ -291,7 +293,7 @@ icicle_option(OPENMP "OpenMP paralellisation" "${status}")
 
 # NetCDF (optional)
 if(DEFINED NETCDF AND NOT NETCDF) 
-  message(STATUS "Building without netCDF support (-DNETCDF=NO specified)")
+  message(STATUS "Building without netCDF support (-DNETCDF=NO specified or previous CMake run did not find it)")
 else()
   cmake_push_check_state()
   set(CMAKE_REQUIRED_LIBRARIES "-lnetcdf_c++4")
@@ -309,7 +311,7 @@ icicle_option(NETCDF "netCDF input/output" "${status}")
 
 # Thrust (optional)
 if(DEFINED THRUST AND NOT THRUST) 
-  message(STATUS "Building without Thrust support (-DTHRUST=NO specified)")
+  message(STATUS "Building without Thrust support (-DTHRUST=NO specified or previous CMake run did not find it)")
 else()
   icicle_check(status "thrust" WARNING "Features relying on Thrust will not be available." "
     #define THRUST_DEVICE_SYSTEM THRUST_DEVICE_SYSTEM_OMP
