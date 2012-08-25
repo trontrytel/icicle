@@ -65,11 +65,11 @@ typedef float real_t;
 // simulation parameteters (the 8th WMO Cloud Modelling Workshop: Case 1    
 // by W.W.Grabowski: http://rap.ucar.edu/~gthompsn/workshop2012/case1/case1.pdf  
 const size_t 
-  nx = http_or_default("nx",size_t(75)),                   // 75 
-  ny = http_or_default("ny",size_t(75));                    // 75 
+  nx = http_or_default("nx",size_t(750)),                   // 75 
+  ny = http_or_default("ny",size_t(750));                    // 75 
 const quantity<si::length,real_t> 
-  dx = http_or_default("dx",real_t(20.)) * si::metres,       // 20 m
-  dy = http_or_default("dy",real_t(20.)) * si::metres;       // 20 m
+  dx = http_or_default("dx",real_t(2.)) * si::metres,       // 20 m
+  dy = http_or_default("dy",real_t(2.)) * si::metres;       // 20 m
 const quantity<si::temperature, real_t>
   th_0 = http_or_default("th_0", real_t(289)) * si::kelvins;   // 289 K
 const quantity<phc::mixing_ratio, real_t>
@@ -90,11 +90,11 @@ const int
   bits = http_or_default("bits", int(32)),
   fct = http_or_default("fct", int(0)),  
   toa = http_or_default("toa", int(0)),
-  iord = http_or_default("iord", int(1)),
+  iord = http_or_default("iord", int(2)),
   nsd = http_or_default("nsd", int(1));  
 const quantity<si::time, real_t> 
-  t_max = 400 * si::seconds, // 4 * 3600
-  dt_out = real_t(3) * si::seconds; // 300
+  t_max = 4*3600 * si::seconds, // 4 * 3600
+  dt_out = real_t(1) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = http_or_default("w_max", real_t(.6)) * si::metres / si::second; // .6 TODO: check it!
 const quantity<si::mass_density, real_t>
@@ -115,13 +115,13 @@ bool
 
 // mm parameters
 bool
-  mm_act   = "true",
-  mm_cond  = "false",
-  mm_acc   = "false",
-  mm_autoc = "false",
-  mm_self  = "false",
-  mm_turb  = "false",
-  mm_sedi  = "false";
+  mm_act   = true,
+  mm_cond  = true,
+  mm_autoc = true,
+  mm_acc   = false,
+  mm_self  = false,
+  mm_turb  = false,
+  mm_sedi  = false;
 real_t
   mean_rd = .04e-6,  //TODO - bimodal aerosol size spectrum
   sdev_rd = 1.4,
@@ -294,9 +294,15 @@ int main(int argc, char **argv)
     << " --vel rasinski"
       << " --vel.rasinski.file " << dir << "/rho.nc"
       << " --vel.rasinski.A " << ampl
-    << " --t_max " << real_t(t_max / si::seconds)
-    << " --dt " << "auto" 
-    << " --dt_out " << real_t(dt_out / si::seconds)
+
+//    << " --t_max " << real_t(t_max / si::seconds)
+//    << " --dt " << "auto" 
+//    << " --dt_out " << real_t(dt_out / si::seconds)
+
+    << " --dt " << real_t(1)
+    << " --nt " << real_t(4*3600)
+    << " --nout " << real_t(60*10)
+
     << " --out netcdf" 
     << " --out.netcdf.file " << dir << "/out.nc";
     if (micro == "bulk") 
