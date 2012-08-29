@@ -28,8 +28,11 @@ class eqs_todo_mm : public eqs_todo<real_t>
 
   // nested class
   private: template <bool fill_tmp> class activation;
-  private: class cond_evap;
-
+  private: class activation_th;
+  private: template <bool fill_tmp> class cond_evap;
+  private: class n_evap;
+  private: class theta_cond_evap;
+  private: template <bool fill_tmp> class autoconv;
 
   // ctor
   public: eqs_todo_mm(
