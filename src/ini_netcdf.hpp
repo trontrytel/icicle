@@ -9,6 +9,7 @@
 
 #include "ini.hpp"
 #include "cfg/cfg_netcdf.hpp"
+#include "cmn/cmn_error.hpp"
 
 #include <memory>
 using std::unique_ptr; 

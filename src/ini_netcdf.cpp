@@ -6,10 +6,11 @@
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
 #include "cfg/cfg_netcdf.hpp"
+#include "ini_netcdf.hpp"
+
 #ifdef USE_NETCDF
-#  include "ini_netcdf.hpp"
 #  include "cmn/cmn_netcdf.hpp"
-#  include "cmn/cmn_error.hpp"
+#endif
 
 #  include <vector>
 using std::vector;
@@ -18,13 +19,16 @@ using std::vector;
 template <typename real_t>
 struct ini_netcdf<real_t>::detail
 {
+#ifdef USE_NETCDF
   unique_ptr<NcFile> f;
+#endif
   size_t xs, ys, zs; 
   string filename;
   const grd<real_t> *grid;
 };
 
 // ctor
+#ifdef USE_NETCDF
 template <typename real_t>
 ini_netcdf<real_t>::ini_netcdf(const grd<real_t> &grid, const string filename)
   : pimpl(new detail())
@@ -56,6 +60,7 @@ ini_netcdf<real_t>::ini_netcdf(const grd<real_t> &grid, const string filename)
     }
     catch (NcException& e) error_macro(e.what())
 }
+#endif
 
 template <typename real_t>
 void ini_netcdf<real_t>::populate_scalar_field(
@@ -64,6 +69,7 @@ void ini_netcdf<real_t>::populate_scalar_field(
   mtx::arr<real_t> &data
 ) const
 {
+#ifdef USE_NETCDF
   try
   {
     NcVar v = pimpl->f->getVar(varname);
@@ -97,8 +103,8 @@ void ini_netcdf<real_t>::populate_scalar_field(
     }  
   } 
   catch (NcException& e) error_macro(e.what())
-}
 #endif
+}
 
 // explicit instantiations
 #include "cfg/cfg_types.hpp"

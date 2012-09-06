@@ -36,7 +36,7 @@ out<real_t> *opt_out(
   if (outtype == "debug")
     return new out_debug<real_t>();
   else
-#  ifdef USE_NETCDF
+#  if defined(USE_NETCDF)
   if (outtype == "netcdf")
   {
     return new out_netcdf<real_t>(vm["out.netcdf.file"].as<string>(), setup, 

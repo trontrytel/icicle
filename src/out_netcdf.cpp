@@ -6,13 +6,15 @@
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
 #include "cfg/cfg_netcdf.hpp"
+#include "out_netcdf.hpp"
+
 #ifdef USE_NETCDF
-#  include "out_netcdf.hpp"
 #  include "cmn/cmn_netcdf.hpp"
-#  include "cmn/cmn_error.hpp"
-#  include "inf.hpp"
-#  include "eqs.hpp"
-#  include "grd.hpp"
+#endif
+
+#include "inf.hpp"
+#include "eqs.hpp"
+#include "grd.hpp"
 
 // TODO: ncFloat vs. ncDouble as a command-line option (but it float computations and double requeste -> error)
 // TODO: add X_sclr i X_vctr variables! (e.g. for axis labelling)
@@ -21,11 +23,15 @@
 template <typename real_t>
 struct out_netcdf<real_t>::detail
 {
+#ifdef USE_NETCDF
   unique_ptr<NcFile> f;  
   map<string, NcVar> vars;
+#endif
   unique_ptr<inf> info;
 };
 
+// ctor
+#ifdef USE_NETCDF
 template <typename real_t>
 out_netcdf<real_t>::out_netcdf(
   const string &file, 
@@ -131,10 +137,13 @@ out_netcdf<real_t>::out_netcdf(
   }
   catch (NcException& e) error_macro(e.what())
 }
+#endif
 
+// dtor
 template <typename real_t>
 out_netcdf<real_t>::~out_netcdf()
 {
+#ifdef USE_NETCDF
   // from a destructor results in undefined behaviour 
   // so trying to handle the exceptions here
   try
@@ -145,6 +154,7 @@ out_netcdf<real_t>::~out_netcdf()
       pimpl->f->putAtt(it->first, it->second);
   }
   catch (NcException& e) warning_macro(e.what())
+#endif
 }
 
 template <typename real_t>
@@ -155,6 +165,7 @@ void out_netcdf<real_t>::record(
   const unsigned long t // t is the number of the record!
 ) 
 {
+#ifdef USE_NETCDF
   try 
   {
     vector<size_t> startp(4), countp(4, 1);
@@ -176,8 +187,8 @@ void out_netcdf<real_t>::record(
     //if (!f->sync()) warning_macro("failed to synchronise netCDF file")
   }
   catch (NcException& e) error_macro(e.what());
-}
 #endif 
+}
 
 // explicit instantiations
 #include "cfg/cfg_types.hpp"
