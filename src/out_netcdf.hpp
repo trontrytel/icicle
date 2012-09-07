@@ -10,7 +10,7 @@
 #include "stp.hpp"
 #include "cfg/cfg_netcdf.hpp"
 
-#  include <memory>  
+#include <memory>  
 using std::unique_ptr;
 
 template <typename real_t>
@@ -24,17 +24,17 @@ class out_netcdf : public out<real_t>
     const string &cmdline
   )
 #if !defined(USE_NETCDF)
-  { error_macro("recompile icicle with -DUSE_NETCDF") }
+  { error_macro("recompile icicle with -DUSE_NETCDF (cmake -DNETCDF=ON)") }
 #else
   ;
-#endif
-
-  // dtor (e.g. writing execution time into the netcdf)
-  public: ~out_netcdf();
 
   // pimpl
   private: struct detail;
   private: unique_ptr<detail> pimpl;
+#endif
+
+  // dtor (e.g. writing execution time into the netcdf)
+  public: ~out_netcdf();
 
   // implementing the public interface
   public: void record(

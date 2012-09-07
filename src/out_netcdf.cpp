@@ -20,18 +20,18 @@
 // TODO: add X_sclr i X_vctr variables! (e.g. for axis labelling)
 // TODO: is the order of dimensions optimal?
 
+#if defined(USE_NETCDF)
 template <typename real_t>
 struct out_netcdf<real_t>::detail
 {
-#ifdef USE_NETCDF
   unique_ptr<NcFile> f;  
   map<string, NcVar> vars;
-#endif
   unique_ptr<inf> info;
 };
+#endif
 
 // ctor
-#ifdef USE_NETCDF
+#if defined(USE_NETCDF)
 template <typename real_t>
 out_netcdf<real_t>::out_netcdf(
   const string &file, 
@@ -143,7 +143,7 @@ out_netcdf<real_t>::out_netcdf(
 template <typename real_t>
 out_netcdf<real_t>::~out_netcdf()
 {
-#ifdef USE_NETCDF
+#if defined(USE_NETCDF)
   // from a destructor results in undefined behaviour 
   // so trying to handle the exceptions here
   try
@@ -165,7 +165,7 @@ void out_netcdf<real_t>::record(
   const unsigned long t // t is the number of the record!
 ) 
 {
-#ifdef USE_NETCDF
+#if defined(USE_NETCDF)
   try 
   {
     vector<size_t> startp(4), countp(4, 1);
