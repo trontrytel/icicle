@@ -17,6 +17,7 @@ using std::string;
 #include <vector>
 using std::vector;
 
+#include "cfg/cfg_netcdf.hpp"
 #if defined(USE_NETCDF)
 #  include "cmn/cmn_netcdf.hpp" // TODO: move somehow into detail?
 #endif
