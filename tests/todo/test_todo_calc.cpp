@@ -66,11 +66,11 @@ typedef float real_t;
 // simulation parameteters (the 8th WMO Cloud Modelling Workshop: Case 1    
 // by W.W.Grabowski: http://rap.ucar.edu/~gthompsn/workshop2012/case1/case1.pdf  
 const size_t 
-  nx = http_or_default("nx",size_t(750)),                   // 75 
-  ny = http_or_default("ny",size_t(750));                    // 75 
+  nx = http_or_default("nx",size_t(75)),                   // 75 
+  ny = http_or_default("ny",size_t(75));                    // 75 
 const quantity<si::length,real_t> 
-  dx = http_or_default("dx",real_t(2.)) * si::metres,       // 20 m
-  dy = http_or_default("dy",real_t(2.)) * si::metres;       // 20 m
+  dx = http_or_default("dx",real_t(20)) * si::metres,       // 20 m
+  dy = http_or_default("dy",real_t(20)) * si::metres;       // 20 m
 const quantity<si::temperature, real_t>
   th_0 = http_or_default("th_0", real_t(289)) * si::kelvins;   // 289 K
 const quantity<phc::mixing_ratio, real_t>
@@ -94,8 +94,8 @@ const int
   iord = http_or_default("iord", int(2)),
   nsd = http_or_default("nsd", int(1));  
 const quantity<si::time, real_t> 
-  t_max = 4*3600 * si::seconds, // 4 * 3600
-  dt_out = real_t(1) * si::seconds; // 300
+  t_max = 9 * si::seconds, // 4 * 3600
+  dt_out = real_t(3) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = http_or_default("w_max", real_t(.6)) * si::metres / si::second; // .6 TODO: check it!
 const quantity<si::mass_density, real_t>
@@ -131,18 +131,24 @@ real_t
 // sdm parameters
 std::string
   sdm_xi = "p2", 
-  sdm_ode_algo_adve = "euler",
-  sdm_ode_algo_sedi = "euler",
-  sdm_ode_algo_cond = "euler",
-  sdm_ode_algo_chem = "euler";
+  sdm_ode_adve_algo = "euler",
+  sdm_ode_sedi_algo = "euler",
+  sdm_ode_cond_algo = "euler",
+  sdm_ode_chem_algo = "euler";
+int
+  sdm_adve_sstp = 1,
+  sdm_sedi_sstp = 1,
+  sdm_chem_sstp = 1,
+  sdm_cond_sstp = 125,
+  sdm_coal_sstp = 1;
 bool 
   sdm_adve = http_or_default("sdm_adve", true),
   sdm_cond = http_or_default("sdm_cond", true),
-  sdm_coal = http_or_default("sdm_coal", true),
-  sdm_sedi = http_or_default("sdm_sedi", true),
-  sdm_chem = http_or_default("sdm_chem", true);
+  sdm_coal = http_or_default("sdm_coal", false),
+  sdm_sedi = http_or_default("sdm_sedi", false),
+  sdm_chem = http_or_default("sdm_chem", false);
 real_t 
-  sd_conc_mean = http_or_default("sd_conc_mean", 32),
+  sd_conc_mean = http_or_default("sd_conc_mean", 256),
   mean_rd1 = .04e-6,
   mean_rd2 = .15e-6,
   sdev_rd1 = 1.4,
@@ -296,20 +302,24 @@ int main(int argc, char **argv)
       << " --vel.rasinski.file " << dir << "/rho.nc"
       << " --vel.rasinski.A " << ampl
 
-//    << " --t_max " << real_t(t_max / si::seconds)
-//    << " --dt " << "auto" 
-//    << " --dt_out " << real_t(dt_out / si::seconds)
+    << " --t_max " << real_t(t_max / si::seconds)
+    << " --dt " << "auto" 
+    << " --dt_out " << real_t(dt_out / si::seconds)
 
-    << " --dt " << real_t(1)
-    << " --nt " << real_t(4*3600)
-    << " --nout " << real_t(60*10)
+// TODO TEMP TODO TEMP !!!
+//    << " --dt " << real_t(1)
+//    << " --nt " << real_t(4*3600)
+//    << " --nout " << real_t(60*10)
 
     << " --out netcdf" 
     << " --out.netcdf.file " << dir << "/out.nc";
+
+    // TEMP TODO!
     if (micro == "bulk") 
       cmd << " --slv openmp --nsd " << nsd;
     else 
       cmd << " --slv serial";
+
     if (micro == "bulk") cmd << " --eqs todo_bulk"
       << " --eqs.todo_bulk.cevp " << blk_cevp
       << " --eqs.todo_bulk.conv " << blk_conv
@@ -332,10 +342,18 @@ int main(int argc, char **argv)
     ;
     else if (micro == "sdm") cmd << " --eqs todo_sdm"
       << " --eqs.todo_sdm.xi " << sdm_xi
-      << " --eqs.todo_sdm.adve.algo " << sdm_ode_algo_adve
-      << " --eqs.todo_sdm.sedi.algo " << sdm_ode_algo_sedi
-      << " --eqs.todo_sdm.cond.algo " << sdm_ode_algo_cond
-      << " --eqs.todo_sdm.chem.algo " << sdm_ode_algo_chem
+
+      << " --eqs.todo_sdm.adve.algo " << sdm_ode_adve_algo
+      << " --eqs.todo_sdm.sedi.algo " << sdm_ode_sedi_algo
+      << " --eqs.todo_sdm.cond.algo " << sdm_ode_cond_algo
+      << " --eqs.todo_sdm.chem.algo " << sdm_ode_chem_algo
+
+      << " --eqs.todo_sdm.adve.sstp " << sdm_adve_sstp
+      << " --eqs.todo_sdm.sedi.sstp " << sdm_sedi_sstp
+      << " --eqs.todo_sdm.cond.sstp " << sdm_cond_sstp
+      << " --eqs.todo_sdm.chem.sstp " << sdm_chem_sstp
+      << " --eqs.todo_sdm.coal.sstp " << sdm_coal_sstp
+
       << " --eqs.todo_sdm.adve " << sdm_adve
       << " --eqs.todo_sdm.cond " << sdm_cond
       << " --eqs.todo_sdm.coal " << sdm_coal

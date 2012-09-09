@@ -40,10 +40,8 @@ sdm<real_t, thrust_device_system>::sdm(
   const vel<real_t> &velocity,
   map<enum processes, bool> opts,
   const enum xi_dfntns xi_dfntn,
-  const enum ode_algos xy_algo,
-  const enum ode_algos sd_algo,
-  const enum ode_algos xi_algo,
-  const enum ode_algos chem_algo,
+  const enum ode_algos adve_algo, const enum ode_algos sedi_algo, const enum ode_algos cond_algo, const enum ode_algos chem_algo,
+  const int adve_sstp, const int sedi_sstp, const int cond_sstp, const int chem_sstp, const int coal_sstp,
   const real_t sd_conc_mean,
   const real_t min_rd,
   const real_t max_rd, 
@@ -61,7 +59,8 @@ sdm<real_t, thrust_device_system>::sdm(
   velocity,
   opts,
   xi_dfntn,
-  sd_conc_mean
+  sd_conc_mean,
+  adve_sstp, sedi_sstp, cond_sstp, chem_sstp, coal_sstp
 ))
 {
   // TODO: assert that we use no paralellisation or allow some parallelism!
@@ -105,45 +104,45 @@ sdm<real_t, thrust_device_system>::sdm(
   // TODO: adams_bashforth_moulton...
 
   // initialising ODE right-hand-sides
-  switch (xy_algo) // advection
+  switch (adve_algo) // advection
   {
     case euler: pimpl->F_adve.reset(new ode_adve<real_t, algo_euler>(pimpl->stat, pimpl->envi)); break;
     case mmid : pimpl->F_adve.reset(new ode_adve<real_t, algo_mmid >(pimpl->stat, pimpl->envi)); break;
     case rk4  : pimpl->F_adve.reset(new ode_adve<real_t, algo_rk4  >(pimpl->stat, pimpl->envi)); break;
     default: assert(false);
   }
-  switch (xi_algo) // condensation/evaporation
+  switch (cond_algo) // condensation/evaporation
   {
     case euler: switch (xi_dfntn)
     {
-      case id : pimpl->F_cond.reset(new ode_cond<real_t, algo_euler, xi_id<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid)); break;
-      case ln : pimpl->F_cond.reset(new ode_cond<real_t, algo_euler, xi_ln<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid)); break;
-      case p2 : pimpl->F_cond.reset(new ode_cond<real_t, algo_euler, xi_p2<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid)); break;
-      case p3 : pimpl->F_cond.reset(new ode_cond<real_t, algo_euler, xi_p3<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid)); break;
+      case id : pimpl->F_cond.reset(new ode_cond<real_t, algo_euler, xi_id<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid, pimpl->tmp_real)); break;
+      case ln : pimpl->F_cond.reset(new ode_cond<real_t, algo_euler, xi_ln<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid, pimpl->tmp_real)); break;
+      case p2 : pimpl->F_cond.reset(new ode_cond<real_t, algo_euler, xi_p2<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid, pimpl->tmp_real)); break;
+      case p3 : pimpl->F_cond.reset(new ode_cond<real_t, algo_euler, xi_p3<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid, pimpl->tmp_real)); break;
       default: assert(false);
     } 
     break;
     case mmid: switch (xi_dfntn)
     {
-      case id : pimpl->F_cond.reset(new ode_cond<real_t, algo_mmid, xi_id<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid)); break;
-      case ln : pimpl->F_cond.reset(new ode_cond<real_t, algo_mmid, xi_ln<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid)); break;
-      case p2 : pimpl->F_cond.reset(new ode_cond<real_t, algo_mmid, xi_p2<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid)); break;
-      case p3 : pimpl->F_cond.reset(new ode_cond<real_t, algo_mmid, xi_p3<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid)); break;
+      case id : pimpl->F_cond.reset(new ode_cond<real_t, algo_mmid, xi_id<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid, pimpl->tmp_real)); break;
+      case ln : pimpl->F_cond.reset(new ode_cond<real_t, algo_mmid, xi_ln<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid, pimpl->tmp_real)); break;
+      case p2 : pimpl->F_cond.reset(new ode_cond<real_t, algo_mmid, xi_p2<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid, pimpl->tmp_real)); break;
+      case p3 : pimpl->F_cond.reset(new ode_cond<real_t, algo_mmid, xi_p3<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid, pimpl->tmp_real)); break;
       default: assert(false);
     } 
     break;
     case rk4  : switch (xi_dfntn) 
     {
-      case id : pimpl->F_cond.reset(new ode_cond<real_t, algo_rk4,   xi_id<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid)); break;
-      case ln : pimpl->F_cond.reset(new ode_cond<real_t, algo_rk4,   xi_ln<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid)); break;
-      case p2 : pimpl->F_cond.reset(new ode_cond<real_t, algo_rk4,   xi_p2<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid)); break;
-      case p3 : pimpl->F_cond.reset(new ode_cond<real_t, algo_rk4,   xi_p3<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid)); break;
+      case id : pimpl->F_cond.reset(new ode_cond<real_t, algo_rk4,   xi_id<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid, pimpl->tmp_real)); break;
+      case ln : pimpl->F_cond.reset(new ode_cond<real_t, algo_rk4,   xi_ln<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid, pimpl->tmp_real)); break;
+      case p2 : pimpl->F_cond.reset(new ode_cond<real_t, algo_rk4,   xi_p2<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid, pimpl->tmp_real)); break;
+      case p3 : pimpl->F_cond.reset(new ode_cond<real_t, algo_rk4,   xi_p3<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid, pimpl->tmp_real)); break;
       default: assert(false);
     }
     break;
     default: assert(false);
   } 
-  switch (sd_algo) // sedimentation
+  switch (sedi_algo) // sedimentation
   {
     case euler : switch (xi_dfntn)
     {
@@ -208,7 +207,12 @@ sdm<real_t, thrust_device_system>::sdm(
   }
 
   // initialising super-droplets
-  detail::sd_init(pimpl->stat, pimpl->grid, pimpl->seed, min_rd, max_rd, mean_rd1, mean_rd2, sdev_rd1, sdev_rd2, n1_tot, n2_tot, sd_conc_mean, kappa, opt_gas, opt_aq);
+  detail::sd_init(
+    pimpl->stat, pimpl->grid, pimpl->seed, 
+    min_rd, max_rd, 
+    mean_rd1, mean_rd2, sdev_rd1, sdev_rd2, n1_tot, n2_tot, 
+    sd_conc_mean, kappa, opt_gas, opt_aq
+  );
 }
 
 template <typename real_t, int thrust_device_system>
@@ -224,6 +228,9 @@ struct sdm<real_t, thrust_device_system>::detail
   // private fields for ODE machinery
   unique_ptr<ode<real_t>> 
     F_adve, F_cond, F_sedi, F_chem;
+
+  // private fields for ODE timestep settings
+  const int adve_sstp, cond_sstp, sedi_sstp, chem_sstp, coal_sstp;
 
   // private fields with super droplet structures
   stat_t<real_t> stat;
@@ -243,14 +250,16 @@ struct sdm<real_t, thrust_device_system>::detail
     const vel<real_t> &velocity,
     map<enum processes, bool> opts,
     const enum xi_dfntns xi_dfntn,
-    const real_t sd_conc_mean
+    const real_t sd_conc_mean,
+    const int adve_sstp, const int sedi_sstp, const int cond_sstp, const int chem_sstp, const int coal_sstp
   ) :
     opts(opts), 
     grid(grid), 
     constant_velocity(velocity.is_constant()),
     stat(grid.nx(), grid.ny(), sd_conc_mean),
     envi(grid.nx(), grid.ny()),
-    xi_dfntn(xi_dfntn)
+    xi_dfntn(xi_dfntn),
+    adve_sstp(adve_sstp), sedi_sstp(sedi_sstp), cond_sstp(cond_sstp), chem_sstp(chem_sstp), coal_sstp(coal_sstp)
   {}
 
   // TODO: merge sd_init into ctr?
@@ -655,6 +664,7 @@ static void sd_advection(
   envi_t<real_t> &envi,
   const grd<real_t> &grid,
   const quantity<si::time, real_t> dt,
+  const int n_steps,
   const mtx::arr<real_t> &Cx,
   const mtx::arr<real_t> &Cy
 )
@@ -678,17 +688,18 @@ static void sd_advection(
   }
 
   // performing advection using odeint 
-  F_adve.advance(stat.xy, dt);
+  F_adve.advance(stat.xy, dt, n_steps);
 }
 
 static void sd_sedimentation(
   ode<real_t> &F_sedi,
   stat_t<real_t> &stat,
-  const quantity<si::time, real_t> dt
+  const quantity<si::time, real_t> dt,
+  const int n_steps
 )
 {
   // performing advection using odeint
-  F_sedi.advance(stat.xy, dt);
+  F_sedi.advance(stat.xy, dt, n_steps);
 }
 
 static void sd_periodic_x(
@@ -741,21 +752,23 @@ static void sd_recycle(
 static void sd_condevap(
   ode<real_t> &F_cond,
   stat_t<real_t> &stat,
-  const quantity<si::time, real_t> dt
+  const quantity<si::time, real_t> dt,
+  const int n_steps
 )
 {
   // growing/shrinking the droplets
-  F_cond.advance(stat.xi, dt, 50); // TODO: maximal timestep as an option!
+  F_cond.advance(stat.xi, dt, n_steps); 
   assert(*thrust::min_element(stat.xi.begin(), stat.xi.end()) > 0);
 }
 
 static void sd_chem(
   ode<real_t> &F_chem,
   stat_t<real_t> &stat,
-  const quantity<si::time, real_t> dt
+  const quantity<si::time, real_t> dt,
+  const int n_steps
 )
 {
-  F_chem.advance(stat.c_aq, dt, 10); // TODO !!!!!
+  F_chem.advance(stat.c_aq, dt, n_steps); 
   assert(*thrust::min_element(stat.c_aq.begin(), stat.c_aq.end()) >= 0);
 }
 
@@ -930,52 +943,97 @@ static void sd_coalescence(
 }
 };
 
-template <typename real_t, int thrust_device_system>
-void sdm<real_t, thrust_device_system>::adjustments(
-  mtx::arr<real_t> &rhod_th,
-  mtx::arr<real_t> &rhod_rv,
-  ptr_unordered_map<string, mtx::arr<real_t>> &aux, 
-  const ptr_vector<mtx::arr<real_t>> C,
-  const quantity<si::time, real_t> dt
-)
-{
-  // TODO: assert(sd_conc.lbound(mtx::k) == sd_conc.ubound(mtx::k)); // 2D
-  // TODO: sd_breakup(dt); 
-  // TODO: sd_sources(dt);
-  // TODO: substepping with different timesteps as an option
-  // TODO: which order would be best? (i.e. cond, chem, coal, ...)
-  const mtx::arr<real_t> &rhod = aux.at("rhod");
+  template <typename real_t, int thrust_device_system>
+  void sdm<real_t, thrust_device_system>::adjustments(
+    mtx::arr<real_t> &rhod_th,
+    mtx::arr<real_t> &rhod_rv,
+    ptr_unordered_map<string, mtx::arr<real_t>> &aux, 
+    const ptr_vector<mtx::arr<real_t>> C,
+    const quantity<si::time, real_t> dt
+  )
+  {
+    // TODO: assert(sd_conc.lbound(mtx::k) == sd_conc.ubound(mtx::k)); // 2D
+    // TODO: sd_breakup(dt); 
+    // TODO: sd_sources(dt);
+    // TODO: substepping with different timesteps as an option
+    const mtx::arr<real_t> &rhod = aux.at("rhod");
 
-  detail::sd_ij(pimpl->stat, pimpl->grid);
-  detail::sd_sync_in(pimpl->envi, pimpl->grid, rhod, rhod_th, rhod_rv);
-  if (pimpl->opts[cond]) detail::sd_condevap(*pimpl->F_cond, pimpl->stat, dt); // does init() at first time step - has to be placed after sync, and before others
-  if (pimpl->opts[adve]) 
-  {   
-    detail::sd_advection(*pimpl->F_adve, pimpl->stat, pimpl->envi, pimpl->grid, dt, C[0], C[1]); 
-  }   
-  if (pimpl->opts[sedi]) 
-  {   
-    detail::sd_sedimentation(*pimpl->F_sedi, pimpl->stat, dt); // TODO: SD recycling!
-  }   
-  detail::sd_periodic_x(pimpl->stat, pimpl->grid);
-  detail::sd_recycle(pimpl->stat, pimpl->grid);
-  detail::sd_ij(pimpl->stat, pimpl->grid);
-  if (pimpl->opts[chem]) detail::sd_chem(*pimpl->F_chem, pimpl->stat, dt);
-  if (pimpl->opts[coal])
-  {   
-    int n_steps = 5;
-    for (int i = 0; i < n_steps; ++i)
+    // housekeeping: regenerating the ij vector
+    detail::sd_ij(pimpl->stat, pimpl->grid);
+
+    // syncing in Eulerian-grid data to envi
+    detail::sd_sync_in(pimpl->envi, pimpl->grid, rhod, rhod_th, rhod_rv);
+ 
+    // condensation/evaporation
+    if (pimpl->opts[cond]) 
+    {
+      // does init() at first time step - has to be placed after sync, and before others
+      detail::sd_condevap(*pimpl->F_cond, pimpl->stat, dt, pimpl->cond_sstp); 
+    }
+
+    // advection
+    if (pimpl->opts[adve]) 
     {   
-      detail::sd_shuffle_and_sort(pimpl->stat, pimpl->seed);
-      detail::sd_coalescence(pimpl->stat, pimpl->envi, pimpl->grid, pimpl->seed, dt / real_t(n_steps), pimpl->tmp_shrt, pimpl->tmp_long, pimpl->tmp_real, pimpl->xi_dfntn);
+      detail::sd_advection(*pimpl->F_adve, pimpl->stat, pimpl->envi, pimpl->grid, dt, pimpl->adve_sstp, C[0], C[1]); 
     }   
-  }   
-  else detail::sd_sort(pimpl->stat);
-  detail::sd_diag(pimpl->stat, pimpl->grid, aux, pimpl->tmp_shrt, pimpl->tmp_long, pimpl->tmp_real, pimpl->xi_dfntn); // TODO: only when recording!
-  // transfer new rhod_rv and rhod_th back to Blitz
-  detail::sd_sync_out(pimpl->envi, pimpl->grid, rhod_th, rhod_rv, pimpl->tmp_shrt); // has to be placed after condensation?
-}
+  
+    // sedimentation
+    if (pimpl->opts[sedi]) 
+    {   
+      detail::sd_sedimentation(*pimpl->F_sedi, pimpl->stat, dt, pimpl->sedi_sstp); 
+    }   
+ 
+    // periodic boundaries
+    if (pimpl->opts[adve] || pimpl->opts[sedi])
+    {
+      detail::sd_periodic_x(pimpl->stat, pimpl->grid);
 
+      // super-droplet recycling (TODO: could be used for sources?)
+      detail::sd_recycle(pimpl->stat, pimpl->grid);
+
+      // housekeeping: regenerating the ij vector
+      detail::sd_ij(pimpl->stat, pimpl->grid);
+    }
+  
+    // chemistry
+    if (pimpl->opts[chem]) 
+    {
+      detail::sd_chem(*pimpl->F_chem, pimpl->stat, dt, pimpl->chem_sstp);
+    }
+
+    // coalescence
+    if (pimpl->opts[coal])
+    {   
+      for (int i = 0; i < pimpl->coal_sstp; ++i)
+      {   
+        detail::sd_shuffle_and_sort(pimpl->stat, pimpl->seed);
+        detail::sd_coalescence(
+          pimpl->stat, pimpl->envi, pimpl->grid, pimpl->seed, 
+          dt / real_t(pimpl->coal_sstp), 
+          pimpl->tmp_shrt, pimpl->tmp_long, pimpl->tmp_real, 
+          pimpl->xi_dfntn
+        );
+      }   
+    }   
+    else 
+    {
+      detail::sd_sort(pimpl->stat);
+    }
+
+    // diagnostics
+    detail::sd_diag(
+      pimpl->stat, 
+      pimpl->grid, 
+      aux, 
+      pimpl->tmp_shrt, 
+      pimpl->tmp_long, 
+      pimpl->tmp_real, 
+      pimpl->xi_dfntn
+    ); // TODO: only when recording!
+
+    // syncing out data to the Eulerian grid (rhod_rv and rhod_th)
+    detail::sd_sync_out(pimpl->envi, pimpl->grid, rhod_th, rhod_rv, pimpl->tmp_shrt); 
+  }
 }
 
 // explicit instantiations

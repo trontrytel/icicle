@@ -53,8 +53,6 @@ namespace sdm
       T.resize(n_cell);
       p.resize(n_cell);
       r.resize(n_cell);
-      m_3_old.resize(n_cell);
-      m_3_new.resize(n_cell);
     }
   };
 

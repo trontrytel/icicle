@@ -64,27 +64,28 @@ namespace sdm
   class ode_cond : public ode_algo<real_t, algo>
   { 
     // nested functor
-    class m_3 : xi
+    class dm_3_summator : xi
     {
-      private: real_t dv;
+      private: const real_t dv, sign;
       private: const stat_t<real_t> &stat;
       private: thrust::device_vector<real_t> &out;
  
-      public: m_3(
+      // ctor
+      public: dm_3_summator(
         const stat_t<real_t> &stat,
         thrust::device_vector<real_t> &out,
-        const grd<real_t> &grid
+        const grd<real_t> &grid,
+        const real_t sign
       ) :
         stat(stat),
         out(out),
-        dv(grid.dx() * grid.dy() * grid.dz() / si::cubic_metres)
-      {
-        thrust::fill(out.begin(), out.end(), real_t(0));
-      }
+        dv(grid.dx() * grid.dy() * grid.dz() / si::cubic_metres),
+        sign(sign)
+      { }
     
       void operator()(const thrust_size_t id)
       {
-        out[stat.ij[id]] += real_t(stat.n[id]) * this->rw3_of_xi(stat.xi[id]) / dv;
+        out[stat.ij[id]] += sign * real_t(stat.n[id]) * this->rw3_of_xi(stat.xi[id]) / dv;
       }
     };
 
@@ -93,12 +94,14 @@ namespace sdm
     { 
       stat_t<real_t> &stat;
       const envi_t<real_t> &envi;
+      const real_t maxRH;
 
       // ctor
       equil(
         stat_t<real_t> &stat, 
-        const envi_t<real_t> &envi
-      ) : stat(stat), envi(envi)
+        const envi_t<real_t> &envi,
+        const real_t maxRH
+      ) : stat(stat), envi(envi), maxRH(maxRH)
       { }
 
       void operator()(const thrust_size_t id) 
@@ -108,7 +111,7 @@ namespace sdm
           stat.rd3[id] * si::cubic_metres, 
           real_t(stat.kpa[id]),
           thrust::min(
-            real_t(.99),
+            maxRH,
             real_t( // TODO: interpolation to drop positions?
               phc::R_v<real_t>() * (envi.T[ij] * si::kelvins) * (envi.rhod_rv[ij] * si::kilograms / si::cubic_metres) 
               / (phc::p_vs<real_t>(envi.T[ij] * si::kelvins))
@@ -127,19 +130,23 @@ namespace sdm
       private: const stat_t<real_t> &stat;
       private: const envi_t<real_t> &envi;
       private: const real_t dt;
+      private: const real_t maxRH;
 
       // ctor
       public: drop_growth_equation(
         const stat_t<real_t> &stat,
         const envi_t<real_t> &envi,
-        const real_t dt
-      ) : stat(stat), envi(envi), dt(dt) {}
+        const real_t dt,
+        const real_t maxRH
+      ) : stat(stat), envi(envi), dt(dt), maxRH(maxRH) {}
 
       // overloaded () operator invoked by thrust::transform()
       public: real_t operator()(const thrust_size_t id)
       {
         thrust_size_t ij = stat.ij[id]; 
-        real_t rdrdt = phc::rdrdt<real_t>(
+
+        // the growth rate defined by the Maxwell-Mason equation
+        real_t dxidt = phc::rdrdt<real_t>(
           real_t(envi.rhod_rv[ij]) / si::cubic_metres * si::kilograms,
           envi.T[ij] * si::kelvins,
           phc::a_w<real_t>(
@@ -147,22 +154,33 @@ namespace sdm
             stat.rd3[id] * si::cubic_metres, // rd3
             real_t(stat.kpa[id]) // kappa
           )
-        ) * si::seconds / si::square_metres;       // to make it dimensionless
-        real_t dxidt = rdrdt * this->dxidrw(this->rw_of_xi(stat.xi[id])) / this->rw_of_xi(stat.xi[id]);
+        ) 
+        * si::seconds / si::square_metres // to make it dimensionless
+        / this->rw_of_xi(stat.xi[id]) // to get drdt
+        * this->dxidrw(this->rw_of_xi(stat.xi[id])) // to get dxidt (Jacobian)
+        ;
 
+        // the growth rate defined by "come back to equilibrium"
+        // compare e.g. apparently analogous tricks in:
+        // - Johnson 1980, JAS 37 2079-2085, disussion of inequality (5)
+        // - Heanel 1987, Beitr. Phys. Atmosph. 60 321-338, section 4.2
         real_t xi_eq = this->xi_of_rw3(
           phc::rw3_eq<real_t>(
             stat.rd3[id] * si::cubic_metres, 
             real_t(stat.kpa[id]),
             real_t( // TODO: interpolation to drop positions?
               thrust::min(
-                real_t(.99),
+                maxRH,
                 real_t(phc::R_v<real_t>() * (envi.T[ij] * si::kelvins) * (envi.rhod_rv[ij] * si::kilograms / si::cubic_metres) 
                 / (phc::p_vs<real_t>(envi.T[ij] * si::kelvins)))
               )   
             )
           ) / si::cubic_metres);
+
+        // chosing which one to use
         if (stat.xi[id] + dt * dxidt < xi_eq) dxidt = (xi_eq - stat.xi[id]) / dt;
+
+        // returning
         return dxidt;
 // TODO? this->dxidrw_by_r?
       }
@@ -172,14 +190,17 @@ namespace sdm
     private: stat_t<real_t> &stat;
     private: envi_t<real_t> &envi;
     private: const grd<real_t> &grid;
-    private: quantity<si::time, real_t> dt;
+    private: quantity<si::time, real_t> dt_sstp;
+    private: const real_t maxRH = .99; // TODO: should this be an option (at least it deserves some documentation)
+    private: thrust::device_vector<real_t> dm_3;
 
     // ctor
     public: ode_cond(
       stat_t<real_t> &stat,
       envi_t<real_t> &envi,
-      const grd<real_t> &grid
-    ) : stat(stat), envi(envi), grid(grid)
+      const grd<real_t> &grid,
+      thrust::device_vector<real_t> &tmp_real
+    ) : stat(stat), envi(envi), grid(grid), dm_3(tmp_real)
     {}
   
     // overloaded () operator invoked by odeint
@@ -189,28 +210,36 @@ namespace sdm
       const real_t 
     )
     {
+      thrust::counting_iterator<thrust_size_t> zero(0);
+
+      // calculating the third moment of the spectrum before condensation
+      thrust::fill(dm_3.begin(), dm_3.end(), real_t(0));
+      thrust::for_each(zero, zero + stat.n_part, dm_3_summator(stat, dm_3, grid, -1));
+
+      // calculating drop growth
       thrust::counting_iterator<thrust_size_t> iter(0);
       thrust::transform(
         iter, iter + stat.n_part, 
         dxi_dt.begin(), 
-        drop_growth_equation(stat, envi, dt / si::seconds)
+        drop_growth_equation(stat, envi, dt_sstp / si::seconds, maxRH)
       );
     }
 
     // a post-ctor init method
     // (cannot be placed in the constructor as at that time the initial values were not loaded yet to psi)
-    void init(const quantity<si::time, real_t> &dt_)
+    void init(const quantity<si::time, real_t> &dt_sstp_)
     {
-      dt = dt_;      
-
-      // initialising the wet radii (xi variable) to equilibrium values
-      thrust::counting_iterator<thrust_size_t> zero(0);
-      thrust::for_each(zero, zero + stat.n_part, equil(stat, envi));
-      thrust::for_each(zero, zero + stat.n_part, m_3(stat, envi.m_3_old, grid));
+      dt_sstp = dt_sstp_;      
     }
 
-    // a post-ode-step method
-    void adjust()
+    void pre_step()
+    {
+      // initialising the wet radii (xi variable) to equilibrium values
+      thrust::counting_iterator<thrust_size_t> zero(0);
+      thrust::for_each(zero, zero + stat.n_part, equil(stat, envi, maxRH));
+    }
+
+    void post_step()
     {
       // nested functor
       class adj
@@ -266,32 +295,39 @@ namespace sdm
         > S; // TODO: instantiate it in the ctor?
 
         private: envi_t<real_t> &envi;
+        private: const thrust::device_vector<real_t> &dm_3;
 
         // ctor
-        public: adj(envi_t<real_t> &envi) : envi(envi) { }
+        public: adj(
+          envi_t<real_t> &envi,
+          thrust::device_vector<real_t> &dm_3
+        ) : envi(envi), dm_3(dm_3) 
+        { }
 
         // invoked by thrust::transform
         public: void operator()(const thrust_size_t ij) // TODO: too much duplication with eqs_todo_bulk_ode.cpp :(
         {
-          // theta is modified by do_step, and hence we cannot pass an expression and we need a temp. var.
-          quantity<multiply_typeof_helper<si::mass_density, si::temperature>::type, real_t>
-            tmp = envi.rhod_th[ij] * si::kilograms / si::cubic_metres * si::kelvins;
-
           // (<r^3>_new - <r^3>_old)  --->  drhod_rv
-          quantity<si::mass_density, real_t> drhod_rv =
-            (envi.m_3_old[ij] - envi.m_3_new[ij]) * phc::rho_w<real_t>() * real_t(4./3) * phc::pi<real_t>();
+          quantity<si::mass_density, real_t> drhod_rv =  
+            real_t(-dm_3[ij]) * phc::rho_w<real_t>() * real_t(4./3) * phc::pi<real_t>();
 
-          // integrating the First Law for moist air
-          rhs F(envi, ij); // TODO: instantiate it somewehere else - not every sub-time-step !!!
-          S.do_step(
-            boost::ref(F),
-            tmp,
-            envi.rhod_rv[ij] * si::kilograms / si::cubic_metres,
-            drhod_rv
-          );
+          {
+            // theta is modified by do_step, and hence we cannot pass an expression and we need a temp. var.
+            quantity<multiply_typeof_helper<si::mass_density, si::temperature>::type, real_t>
+              tmp = envi.rhod_th[ij] * si::kilograms / si::cubic_metres * si::kelvins;
 
-          // latent heat source/sink due to evaporation/condensation
-          envi.rhod_th[ij] = tmp / (si::kilograms / si::cubic_metres * si::kelvins); 
+            // integrating the First Law for moist air
+            rhs F(envi, ij); // TODO: instantiate it somewehere else - not every sub-time-step !!!
+            S.do_step(
+              boost::ref(F),
+              tmp,
+              envi.rhod_rv[ij] * si::kilograms / si::cubic_metres,
+              drhod_rv
+            );
+
+            // latent heat source/sink due to evaporation/condensation
+            envi.rhod_th[ij] = tmp / (si::kilograms / si::cubic_metres * si::kelvins); 
+          }
 
           // updating rhod_rv
           envi.rhod_rv[ij] += drhod_rv / (si::kilograms / si::cubic_metres);
@@ -302,14 +338,11 @@ namespace sdm
    
       thrust::counting_iterator<thrust_size_t> zero(0);
 
-      // calculating new <r^3>
-      thrust::for_each(zero, zero + stat.n_part, m_3(stat, envi.m_3_new, grid)); // TODO: does the zero work????
+      // substracting the third moment after condensation
+      thrust::for_each(zero, zero + stat.n_part, dm_3_summator(stat, dm_3, grid, +1));
 
       // adjusting rhod_rv and rhod_th according to the First Law (and T,p,r as well)
-      thrust::for_each(zero, zero + envi.n_cell, adj(envi));
-
-      // new -> old 
-      thrust::swap(envi.m_3_old, envi.m_3_new); 
+      thrust::for_each(zero, zero + envi.n_cell, adj(envi, dm_3));
     }
   };
 } // namespace sdm

@@ -137,8 +137,9 @@ namespace sdm {
 
     public: real_t operator()(real_t lnrd)
     {
-      return real_t(( //TODO allow more modes of distribution
-// TODO: logarith or not: as an option
+      // TODO allow more modes of distribution
+      // TODO: logarith or not: as an option
+      return real_t(( 
           phc::log_norm_n_e<real_t>(mean_rd1, sdev_rd1, n1_tot, lnrd) + 
           phc::log_norm_n_e<real_t>(mean_rd2, sdev_rd2, n2_tot, lnrd) 
         ) * si::cubic_metres

@@ -245,7 +245,7 @@ int main(int argc, char **argv)
       gp.sendBinary(tmp0);
 
 
-      gp << "set title 'particle (> 1 um) concentration [1/cm^3]'" << endl;
+      gp << "set title 'particle (> 1 {/Symbol m}m) concentration [1/cm^3]'" << endl;
       gp << "set cbrange [0:150]" << endl;
       nf.getVar("m_0").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
       tmp0 /= 1e6;
@@ -266,10 +266,9 @@ int main(int argc, char **argv)
       gp.sendBinary(tmp0);
 
 
-      //gp << "set title 'cloud droplet effective radius [{/Symbol m}m]'" << endl;
-      gp << "set title 'effective radius [um] (particles > 1 um)'" << endl;
-      gp << "set logscale cb" << endl;
-      gp << "set cbrange [1:500]" << endl;
+      gp << "set title 'effective radius [{/Symbol m}m] (particles > 1 {/Symbol m})'" << endl;
+      //gp << "set logscale cb" << endl;
+      //gp << "set cbrange [1:500]" << endl;
       nf.getVar("m_3").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
       nf.getVar("m_2").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp1.data()); 
       tmp0 /= tmp1;

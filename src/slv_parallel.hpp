@@ -61,7 +61,10 @@ class slv_parallel : public slv<real_t>
   {
     barrier();
     if (sd == 0) // for shared mem the 0-th thread takes controll here
+    {
+      notice_macro("recording (record no." << r << ")")
       for (int sdi=0; sdi < nsd; ++sdi) slvs[sdi].record(n, r);
+    }
   }
 
   private: void fill_halos(int sd, int e, int n)

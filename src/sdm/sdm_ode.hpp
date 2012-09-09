@@ -32,9 +32,9 @@ namespace sdm
   class ode 
   {
     public: virtual void advance(
-      thrust::device_vector<real_t> &x, 
+      thrust::device_vector<real_t> &x,
       const quantity<si::time, real_t> &dt,
-      const int n_steps = 1
+      const int n_steps
     ) = 0;
   };
 
@@ -52,26 +52,28 @@ namespace sdm
     ) = 0;
 
     private: bool inited = false;
-    protected: virtual void init(const quantity<si::time, real_t> &dt) {}
-    protected: virtual void adjust() {}
+    protected: virtual void init(const quantity<si::time, real_t> &dt_sstp) {}
+    protected: virtual void pre_step() {}
+    protected: virtual void post_step() {}
  
     public: void advance(
-      thrust::device_vector<real_t> &x, 
+      thrust::device_vector<real_t> &x,
       const quantity<si::time, real_t> &dt,
-      const int n_steps 
+      const int n_steps
     )
     {
       // intended for calculations that cannot be placed in the constructor 
       // since at that time the initial values are not loaded yet to psi
       if (!inited) 
       {
-        init(dt);
+        init(dt / real_t(n_steps)); 
         inited = true;
       }
       for (int i = 0; i < n_steps; ++i)
       {
+        pre_step();
         stepper.do_step(boost::ref(*this), x, 0, dt / si::seconds / n_steps);
-        adjust();
+        post_step();
       }
       // TODO: error_stepper ?
     }

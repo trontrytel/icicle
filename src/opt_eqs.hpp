@@ -59,6 +59,11 @@ inline void opt_eqs_desc(po::options_description &desc)
     ("eqs.todo_sdm.cond.algo", po::value<string>()->default_value("rk4"), "condensation/evaporation ODE solver type (euler, mmid, rk4)")
     ("eqs.todo_sdm.sedi.algo", po::value<string>()->default_value("rk4"), "sedimentation ODE solver type (euler, mmid, rk4)")
     ("eqs.todo_sdm.chem.algo", po::value<string>()->default_value("rk4"), "chemistry ODE solver type (euler, mmid, rk4)")
+    ("eqs.todo_sdm.adve.sstp", po::value<int>()->default_value(1), "number of substeps for advection")
+    ("eqs.todo_sdm.cond.sstp", po::value<int>()->default_value(1), "number of substeps for condensation/evaporation")
+    ("eqs.todo_sdm.sedi.sstp", po::value<int>()->default_value(1), "number of substeps for sedimentation")
+    ("eqs.todo_sdm.chem.sstp", po::value<int>()->default_value(1), "number of substeps for chemistry")
+    ("eqs.todo_sdm.coal.sstp", po::value<int>()->default_value(1), "number of substeps for coalescence")
     ("eqs.todo_sdm.sd_conc_mean", po::value<string>()->default_value("64"), "mean super-droplet density per cell") // TODO: why 64? :)
     ("eqs.todo_sdm.min_rd", po::value<string>(), "minimum possible dry aerosol radius [m]") 
     ("eqs.todo_sdm.max_rd", po::value<string>(), "maximum posiible dry aerosol radius [m]")
@@ -175,6 +180,11 @@ eqs<real_t> *opt_eqs(
       map_algo.at(vm["eqs.todo_sdm.sedi.algo"].as<string>()),
       map_algo.at(vm["eqs.todo_sdm.cond.algo"].as<string>()),
       map_algo.at(vm["eqs.todo_sdm.chem.algo"].as<string>()),
+      vm["eqs.todo_sdm.adve.sstp"].as<int>(),
+      vm["eqs.todo_sdm.sedi.sstp"].as<int>(),
+      vm["eqs.todo_sdm.cond.sstp"].as<int>(),
+      vm["eqs.todo_sdm.chem.sstp"].as<int>(),
+      vm["eqs.todo_sdm.coal.sstp"].as<int>(),
       real_cast<real_t>(vm, "eqs.todo_sdm.sd_conc_mean"),
       real_cast<real_t>(vm, "eqs.todo_sdm.min_rd"),
       real_cast<real_t>(vm, "eqs.todo_sdm.max_rd"),
