@@ -9,7 +9,7 @@
 #pragma once
 
 #include "../cmn/cmn_error.hpp"
-#include "../phc.hpp"
+#include "../phc/phc.hpp"
 #include "../mtx.hpp"
 #include "../grd.hpp"
 #include "../vel.hpp"

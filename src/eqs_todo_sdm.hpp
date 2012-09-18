@@ -14,7 +14,7 @@
 
 #include "eqs_todo.hpp" 
 #include "vel.hpp"
-#include "phc.hpp"
+#include "phc/phc.hpp"
 #include "sdm/sdm_enums.hpp"
 
 #include <memory>

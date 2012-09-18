@@ -26,7 +26,7 @@ using boost::units::detail::get_value;
 #include <gnuplot-iostream/gnuplot-iostream.h>
 using std::endl;
 
-#include "../../src/phc_terminal_vel.hpp"
+#include "../../src/phc/phc_terminal_vel.hpp"
 
 typedef float real_t;
 

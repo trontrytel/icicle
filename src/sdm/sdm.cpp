@@ -8,9 +8,9 @@
  *  @brief definition of the eqs_todo_sdm class
  */
 
-#include "../phc_lognormal.hpp" // TODO: not here?
-#include "../phc_terminal_vel.hpp" // TODO: not here?
-#include "../phc_kappa_koehler.hpp" // TODO: not here?
+#include "../phc/phc_lognormal.hpp" // TODO: not here?
+#include "../phc/phc_terminal_vel.hpp" // TODO: not here?
+#include "../phc/phc_kappa_koehler.hpp" // TODO: not here?
 
 #include "sdm.hpp"
 #include "sdm_base.hpp"

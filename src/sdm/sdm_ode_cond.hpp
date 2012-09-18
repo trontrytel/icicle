@@ -8,10 +8,10 @@
 #pragma once
 
 #include "sdm_ode.hpp"
-#include "../phc_theta.hpp"
-#include "../phc_const_cp.hpp"
-#include "../phc_kappa_koehler.hpp"
-#include "../phc_maxwell-mason.hpp"
+#include "../phc/phc_theta.hpp"
+#include "../phc/phc_const_cp.hpp"
+#include "../phc/phc_kappa_koehler.hpp"
+#include "../phc/phc_maxwell-mason.hpp"
 
 namespace sdm
 {

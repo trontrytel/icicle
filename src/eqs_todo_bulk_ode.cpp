@@ -15,7 +15,7 @@
 namespace odeint = boost::numeric::odeint;
 #endif
 
-#include "phc_const_cp.hpp"
+#include "phc/phc_const_cp.hpp"
 
 template <typename real_t>
 eqs_todo_bulk_ode<real_t>::eqs_todo_bulk_ode(

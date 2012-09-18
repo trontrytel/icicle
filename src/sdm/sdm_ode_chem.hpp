@@ -8,10 +8,10 @@
  */
 #pragma once
 #include "sdm_ode.hpp"
-#include "../phc_henry.hpp"
-#include "../phc_chem_molar_mass.hpp"
-#include "../phc_dissociation.hpp" 
-#include "../phc_react.hpp"
+#include "../phc/phc_henry.hpp"
+#include "../phc/phc_chem_molar_mass.hpp"
+#include "../phc/phc_dissociation.hpp" 
+#include "../phc/phc_react.hpp"
 
 namespace sdm
 {

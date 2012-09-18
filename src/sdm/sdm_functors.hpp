@@ -10,7 +10,7 @@
 #pragma once
 
 #include "sdm_base.hpp"
-#include "../phc_lognormal.hpp"
+#include "../phc/phc_lognormal.hpp"
 
 #ifdef USE_THRUST
 

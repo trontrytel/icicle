@@ -9,10 +9,9 @@
  */
 
 #include "eqs_todo_mm.hpp"
-#include "phc.hpp"
-#include "phc_theta.hpp"
-#include "phc_kelvin_term.hpp"
-#include "phc_mm.hpp"
+#include "phc/phc_theta.hpp"
+#include "phc/phc_kelvin_term.hpp"
+#include "phc/phc_mm.hpp"
 
 /** @brief the 2 moment parametrisation of warm rain microphysics
  *

@@ -8,8 +8,8 @@
  */
 #pragma once
 #include "eqs_todo.hpp"
-#include "phc_kessler.hpp"
-#include "phc_theta.hpp"
+#include "phc/phc_kessler.hpp"
+#include "phc/phc_theta.hpp"
 
 #include "cmn/cmn_error.hpp" 
 

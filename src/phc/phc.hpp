@@ -9,7 +9,7 @@
  */
 #pragma once
 
-#include "cmn/cmn_units.hpp"
+#include "../cmn/cmn_units.hpp"
 
 #define phc_decltype_return(expr) -> decltype(expr) { return expr; }
 
