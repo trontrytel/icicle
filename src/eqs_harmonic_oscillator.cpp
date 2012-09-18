@@ -56,13 +56,5 @@ eqs_harmonic_oscillator<real_t>::eqs_harmonic_oscillator(quantity<si::frequency,
 }
 
 // explicit instantiations
-#include "cfg/cfg_types.hpp"
-#if defined(USE_FLOAT)
-template class eqs_harmonic_oscillator<float>;
-#endif
-#if defined(USE_DOUBLE)
-template class eqs_harmonic_oscillator<double>;
-#endif
-#if defined(USE_LDOUBLE)
-template class eqs_harmonic_oscillator<long double>;
-#endif
+#define ICICLE_INSTANTIATE_CLASS eqs_harmonic_oscillator
+#include "cmn/cmn_instant.hpp"

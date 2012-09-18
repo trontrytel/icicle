@@ -191,13 +191,5 @@ void out_netcdf<real_t>::record(
 }
 
 // explicit instantiations
-#include "cfg/cfg_types.hpp"
-#if defined(USE_FLOAT)
-template class out_netcdf<float>;
-#endif
-#if defined(USE_DOUBLE)
-template class out_netcdf<double>;
-#endif
-#if defined(USE_LDOUBLE)
-template class out_netcdf<long double>;
-#endif
+#define ICICLE_INSTANTIATE_CLASS out_netcdf
+#include "cmn/cmn_instant.hpp"

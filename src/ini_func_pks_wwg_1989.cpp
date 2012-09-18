@@ -29,13 +29,5 @@ quantity<si::dimensionless, real_t> ini_func_pks_wwg_1989<real_t>::psi(
 }
 
 // explicit instantiations
-#include "cfg/cfg_types.hpp"
-#if defined(USE_FLOAT)
-template class ini_func_pks_wwg_1989<float>;
-#endif
-#if defined(USE_DOUBLE)
-template class ini_func_pks_wwg_1989<double>;
-#endif
-#if defined(USE_LDOUBLE)
-template class ini_func_pks_wwg_1989<long double>;
-#endif
+#define ICICLE_INSTANTIATE_CLASS ini_func_pks_wwg_1989
+#include "cmn/cmn_instant.hpp"

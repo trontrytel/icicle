@@ -107,13 +107,5 @@ void ini_netcdf<real_t>::populate_scalar_field(
 }
 
 // explicit instantiations
-#include "cfg/cfg_types.hpp"
-#if defined(USE_FLOAT)
-template class ini_netcdf<float>;
-#endif
-#if defined(USE_DOUBLE)
-template class ini_netcdf<double>;
-#endif
-#if defined(USE_LDOUBLE)
-template class ini_netcdf<long double>;
-#endif
+#define ICICLE_INSTANTIATE_CLASS ini_netcdf
+#include "cmn/cmn_instant.hpp"

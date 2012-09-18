@@ -21,13 +21,5 @@ typename adv<real_t>::op3D *adv_upstream<real_t>::factory(
 }
 
 // explicit instantiations
-#include "cfg/cfg_types.hpp"
-#if defined(USE_FLOAT)
-template class adv_upstream<float>;
-#endif
-#if defined(USE_DOUBLE)
-template class adv_upstream<double>;
-#endif
-#if defined(USE_LDOUBLE)
-template class adv_upstream<long double>;
-#endif
+#define ICICLE_INSTANTIATE_CLASS adv_upstream
+#include "cmn/cmn_instant.hpp"

@@ -46,8 +46,8 @@ using boost::units::detail::get_value;
 
 #include "../../src/cmn/cmn_error.hpp"
 #include "../../src/cmn/cmn_units.hpp"
-#include "../../src/phc_theta.hpp"
-#include "../../src/phc_terminal_vel.hpp"
+#include "../../src/phc/phc_theta.hpp"
+#include "../../src/phc/phc_terminal_vel.hpp"
 
 #include <cgicc/Cgicc.h>
 cgicc::Cgicc cgi;

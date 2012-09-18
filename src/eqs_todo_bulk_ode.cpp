@@ -178,13 +178,5 @@ void eqs_todo_bulk_ode<real_t>::condevap(
 }
 
 // explicit instantiations
-#include "cfg/cfg_types.hpp"
-#if defined(USE_FLOAT)
-template class eqs_todo_bulk_ode<float>;
-#endif
-#if defined(USE_DOUBLE)
-template class eqs_todo_bulk_ode<double>;
-#endif
-#if defined(USE_LDOUBLE)
-template class eqs_todo_bulk_ode<long double>;
-#endif
+#define ICICLE_INSTANTIATE_CLASS eqs_todo_bulk_ode
+#include "cmn/cmn_instant.hpp"

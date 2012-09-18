@@ -447,13 +447,5 @@ eqs_todo_mm<real_t>::eqs_todo_mm(
 }
 
 // explicit instantiations
-#include "cfg/cfg_types.hpp"
-#if defined(USE_FLOAT)
-template class eqs_todo_mm<float>;
-#endif
-#if defined(USE_DOUBLE)
-template class eqs_todo_mm<double>;
-#endif
-#if defined(USE_LDOUBLE)
-template class eqs_todo_mm<long double>;
-#endif
+#define ICICLE_INSTANTIATE_CLASS eqs_todo_mm
+#include "cmn/cmn_instant.hpp"

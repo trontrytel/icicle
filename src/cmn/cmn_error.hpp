@@ -12,19 +12,18 @@
 #include <exception>
 #include <iostream>
 
-#  define error_macro(msg) \
+#define error_macro(msg) \
 { \
   std::cerr << "-- error: " << msg << std::endl; \
   throw std::exception(); \
 }
 
-#  define warning_macro(msg) \
+#define warning_macro(msg) \
 { \
   std::cerr << "-- warning: " << msg << std::endl; \
 }
 
-#  define notice_macro(msg) \
+#define notice_macro(msg) \
 { \
   std::cerr << "-- notice: " << msg << std::endl; \
 }
-

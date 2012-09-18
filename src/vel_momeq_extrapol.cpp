@@ -45,13 +45,5 @@ void vel_momeq_extrapol<real_t>::populate_courant_fields(int nm0, int nm1,
 }
 
 // explicit instantiations
-#include "cfg/cfg_types.hpp"
-#if defined(USE_FLOAT)
-template class vel_momeq_extrapol<float>;
-#endif
-#if defined(USE_DOUBLE)
-template class vel_momeq_extrapol<double>;
-#endif
-#if defined(USE_LDOUBLE)
-template class vel_momeq_extrapol<long double>;
-#endif
+#define ICICLE_INSTANTIATE_CLASS vel_momeq_extrapol
+#include "cmn/cmn_instant.hpp"

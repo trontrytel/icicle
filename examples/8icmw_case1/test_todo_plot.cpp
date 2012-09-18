@@ -46,7 +46,7 @@ using blitz::Range;
 
 #include "../../src/cmn/cmn_error.hpp"
 #include "../../src/cmn/cmn_units.hpp"
-#include "../../src/phc.hpp"
+#include "../../src/phc/phc.hpp"
 
 typedef float real_t;
 

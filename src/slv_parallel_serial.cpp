@@ -28,13 +28,5 @@ void slv_parallel_serial<real_t>::integ_loop()
 }
 
 // explicit instantiations
-#include "cfg/cfg_types.hpp"
-#if defined(USE_FLOAT)
-template class slv_parallel_serial<float>;
-#endif
-#if defined(USE_DOUBLE)
-template class slv_parallel_serial<double>;
-#endif
-#if defined(USE_LDOUBLE)
-template class slv_parallel_serial<long double>;
-#endif
+#define ICICLE_INSTANTIATE_CLASS slv_parallel_serial
+#include "cmn/cmn_instant.hpp"

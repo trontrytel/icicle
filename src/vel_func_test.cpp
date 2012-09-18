@@ -49,13 +49,5 @@ quantity<si::velocity, real_t> vel_func_test<real_t>::v(
 }
 
 // explicit instantiations
-#include "cfg/cfg_types.hpp"
-#if defined(USE_FLOAT)
-template class vel_func_test<float>;
-#endif
-#if defined(USE_DOUBLE)
-template class vel_func_test<double>;
-#endif
-#if defined(USE_LDOUBLE)
-template class vel_func_test<long double>;
-#endif
+#define ICICLE_INSTANTIATE_CLASS vel_func_test
+#include "cmn/cmn_instant.hpp"

@@ -251,13 +251,5 @@ eqs_isentropic<real_t>::eqs_isentropic(const grd<real_t> &grid,
 }
 
 // explicit instantiations
-#include "cfg/cfg_types.hpp"
-#if defined(USE_FLOAT)
-template class eqs_isentropic<float>;
-#endif
-#if defined(USE_DOUBLE)
-template class eqs_isentropic<double>;
-#endif
-#if defined(USE_LDOUBLE)
-template class eqs_isentropic<long double>;
-#endif
+#define ICICLE_INSTANTIATE_CLASS eqs_isentropic
+#include "cmn/cmn_instant.hpp"

@@ -380,13 +380,5 @@ void slv_serial<real_t>::integ_loop()
 }
 
 // explicit instantiations
-#include "cfg/cfg_types.hpp"
-#if defined(USE_FLOAT)
-template class slv_serial<float>;
-#endif
-#if defined(USE_DOUBLE)
-template class slv_serial<double>;
-#endif
-#if defined(USE_LDOUBLE)
-template class slv_serial<long double>;
-#endif
+#define ICICLE_INSTANTIATE_CLASS slv_serial
+#include "cmn/cmn_instant.hpp"

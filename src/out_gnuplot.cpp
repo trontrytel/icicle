@@ -70,13 +70,5 @@ void out_gnuplot<real_t>::record_helper(const mtx::arr<real_t> &psi, const mtx::
 }
 
 // explicit instantiations
-#include "cfg/cfg_types.hpp"
-#if defined(USE_FLOAT)
-template class out_gnuplot<float>;
-#endif
-#if defined(USE_DOUBLE)
-template class out_gnuplot<double>;
-#endif
-#if defined(USE_LDOUBLE)
-template class out_gnuplot<long double>;
-#endif
+#define ICICLE_INSTANTIATE_CLASS out_gnuplot
+#include "cmn/cmn_instant.hpp"

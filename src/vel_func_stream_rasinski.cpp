@@ -43,13 +43,5 @@ quantity<si::velocity, real_t> vel_func_stream_rasinski<real_t>::v(
 }
 
 // explicit instantiations
-#include "cfg/cfg_types.hpp"
-#if defined(USE_FLOAT)
-template class vel_func_stream_rasinski<float>;
-#endif
-#if defined(USE_DOUBLE)
-template class vel_func_stream_rasinski<double>;
-#endif
-#if defined(USE_LDOUBLE)
-template class vel_func_stream_rasinski<long double>;
-#endif
+#define ICICLE_INSTANTIATE_CLASS vel_func_stream_rasinski
+#include "cmn/cmn_instant.hpp"

@@ -126,13 +126,7 @@ void slv_parallel_distmem_fork<real_t, shrdmem_class>::sndrcv(int peer, int cnt,
 }
 
 // explicit instantiations
-#include "cfg/cfg_types.hpp"
-#if defined(USE_FLOAT)
-template class slv_parallel_distmem_fork<float, slv_parallel_serial<float>>;
-#endif
-#if defined(USE_DOUBLE)
-template class slv_parallel_distmem_fork<double, slv_parallel_serial<double>>;
-#endif
-#if defined(USE_LDOUBLE)
-template class slv_parallel_distmem_fork<long double, slv_parallel_serial<long double>>;
-#endif
+#define ICICLE_INSTANTIATE_CLASS slv_parallel_distmem_fork
+#define ICICLE_INSTANTIATE_PARAM slv_parallel_serial
+#define ICICLE_INSTANTIATE_PARAM_PARAM
+#include "cmn/cmn_instant.hpp"

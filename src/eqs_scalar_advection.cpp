@@ -20,13 +20,5 @@ eqs_scalar_advection<real_t>::eqs_scalar_advection()
 }
 
 // explicit instantiations
-#include "cfg/cfg_types.hpp" 
-#if defined(USE_FLOAT)
-template class eqs_scalar_advection<float>;
-#endif
-#if defined(USE_DOUBLE)
-template class eqs_scalar_advection<double>;
-#endif
-#if defined(USE_LDOUBLE)
-template class eqs_scalar_advection<long double>;
-#endif
+#define ICICLE_INSTANTIATE_CLASS eqs_scalar_advection
+#include "cmn/cmn_instant.hpp"

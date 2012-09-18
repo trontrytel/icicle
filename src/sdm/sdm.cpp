@@ -2,15 +2,11 @@
  *  @author Sylwester Arabas <slayoo@igf.fuw.edu.pl>
  *  @author Anna Jaruga <ajaruga@igf.fuw.edu.pl>
  *  @copyright University of Warsaw
- *  @date April-June 2012
+ *  @date April-September 2012
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  *  @brief definition of the eqs_todo_sdm class
  */
-
-#include "../phc/phc_lognormal.hpp" // TODO: not here?
-#include "../phc/phc_terminal_vel.hpp" // TODO: not here?
-#include "../phc/phc_kappa_koehler.hpp" // TODO: not here?
 
 #include "sdm.hpp"
 #include "sdm_base.hpp"
@@ -66,8 +62,6 @@ sdm<real_t, thrust_device_system>::sdm(
   // TODO: assert that we use no paralellisation or allow some parallelism!
   // TODO: random seed as an option
   // TODO: option: number of cores to use (via Thrust)
-
-  // TODO? embed tmp_* in a temp_t?
 
   // temporary space with nx * ny size
   pimpl->tmp_shrt.resize(grid.nx() * grid.ny());
@@ -1037,13 +1031,6 @@ static void sd_coalescence(
 }
 
 // explicit instantiations
-#include "../cfg/cfg_types.hpp"
-#if defined(USE_FLOAT)
-template class sdm::sdm<float, ICICLE_THRUST_DEVICE_SYSTEM>;
-#endif
-#if defined(USE_DOUBLE)
-template class sdm::sdm<double, ICICLE_THRUST_DEVICE_SYSTEM>;
-#endif
-#if defined(USE_LDOUBLE)
-template class sdm::sdm<long double, ICICLE_THRUST_DEVICE_SYSTEM>;
-#endif
+#define ICICLE_INSTANTIATE_CLASS sdm::sdm
+#define ICICLE_INSTANTIATE_PARAM ICICLE_THRUST_DEVICE_SYSTEM
+#include "../cmn/cmn_instant.hpp"

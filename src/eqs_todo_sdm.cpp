@@ -168,13 +168,5 @@ void eqs_todo_sdm<real_t>::adjustments(
 #endif
 
 // explicit instantiations
-#include "cfg/cfg_types.hpp"
-#if defined(USE_FLOAT)
-template class eqs_todo_sdm<float>;
-#endif
-#if defined(USE_DOUBLE)
-template class eqs_todo_sdm<double>;
-#endif
-#if defined(USE_LDOUBLE)
-template class eqs_todo_sdm<long double>;
-#endif
+#define ICICLE_INSTANTIATE_CLASS eqs_todo_sdm
+#include "cmn/cmn_instant.hpp"

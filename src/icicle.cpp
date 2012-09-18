@@ -89,7 +89,7 @@ int main(int ac, char* av[])
       mdl<long double>(vm, options.str());
     else 
 #endif
-#ifdef USE_FLOAT128 // TODO: only if GNU compiler?
+#ifdef USE_FLOAT128
     if (sizeof(__float128) * 8 == bits) 
       mdl<__float_128>(vm, options.str());
     else 

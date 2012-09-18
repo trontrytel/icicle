@@ -40,13 +40,5 @@ quantity<si::dimensionless, real_t> ini_func_boxcar<real_t>::psi(
 }
 
 // explicit instantiations
-#include "cfg/cfg_types.hpp"
-#if defined(USE_FLOAT)
-template class ini_func_boxcar<float>;
-#endif
-#if defined(USE_DOUBLE)
-template class ini_func_boxcar<double>;
-#endif
-#if defined(USE_LDOUBLE)
-template class ini_func_boxcar<long double>;
-#endif
+#define ICICLE_INSTANTIATE_CLASS ini_func_boxcar
+#include "cmn/cmn_instant.hpp"

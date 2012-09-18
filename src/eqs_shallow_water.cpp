@@ -150,13 +150,5 @@ eqs_shallow_water<real_t>::eqs_shallow_water(const grd<real_t> &grid)
 }
 
 // explicit instantiations
-#include "cfg/cfg_types.hpp"
-#if defined(USE_FLOAT)
-template class eqs_shallow_water<float>;
-#endif
-#if defined(USE_DOUBLE)
-template class eqs_shallow_water<double>;
-#endif
-#if defined(USE_LDOUBLE)
-template class eqs_shallow_water<long double>;
-#endif
+#define ICICLE_INSTANTIATE_CLASS eqs_shallow_water
+#include "cmn/cmn_instant.hpp"
