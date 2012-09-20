@@ -1,0 +1,1 @@
+add_subdirectory(8icmw_case1)
