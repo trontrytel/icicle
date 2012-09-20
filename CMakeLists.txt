@@ -9,17 +9,28 @@
 # http://www.cmake.org/Wiki/CMake_Version_Compatibility_Matrix/StandardCMakeModules
 # cmake_minimum_required(VERSION 2.6) # for simplified if-constructs
 # cmake_minimum_required(VERSION 2.8) # for FindCuda
-cmake_minimum_required(VERSION 2.8.6) # for CMakePushCheckState
 
-set(TMP "-std=c++0x") # C++11 (name understandable for pre-2011 compilers)
-set(CMAKE_CXX_FLAGS_RELEASE "${TMP} -DNDEBUG -Wfatal-errors" CACHE STRING "Release options." FORCE)
-#if (CMAKE_COMPILER_IS_GNUCXX)
+cmake_minimum_required(VERSION 2.8.6) # for CMakePushCheckState
+project(icicle CXX)
+message("${CMAKE_COMPILER_IS_GNUCXX}")
+
+# CMake includes
+include(FeatureSummary)
+include(CheckCXXSourceCompiles) 
+include(CheckCXXSourceRuns)
+include(CMakePushCheckState)
+
+set(CXX11_FLAG "-std=c++0x") # C++11 (name understandable for pre-2011 compilers)
+set(CMAKE_CXX_FLAGS_RELEASE "${CXX11_FLAG} -DNDEBUG -Wfatal-errors" CACHE STRING "Release options." FORCE)
+if(CMAKE_COMPILER_IS_GNUCXX)
+  message("detected GNU compiler")
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Ofast" CACHE STRING "Release options." FORCE)
-#else()
-#  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3" CACHE STRING "Release options." FORCE)
-#endif()
-set(CMAKE_CXX_FLAGS_DEBUG "${TMP} -DBZ_DEBUG" CACHE STRING "Debug options." FORCE)
-unset(TMP)
+else()
+  message("detected non-GNU compiler")
+  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3" CACHE STRING "Release options." FORCE)
+endif()
+set(CMAKE_CXX_FLAGS_DEBUG "${CXX11_FLAG} -DBZ_DEBUG" CACHE STRING "Debug options." FORCE)
+unset(CXX11_FLAG)
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
   # TODO: use the actual flags for tests
@@ -27,24 +38,16 @@ elseif ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
   # TODO: use the actual flags for tests
 else()
   message(FATAL_ERROR "Please specify the build type, i.e.:
-    \$ cmake . -DCMAKE_BUILD_TYPE=Debug   \# (CXX_FLAGS=\"\$CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS_DEBUG}\")
+    \$ cmake . -DCMAKE_BUILD_TYPE=Debug   \# (CXX_FLAGS: \"${CMAKE_CXX_FLAGS_DEBUG} \$CMAKE_CXX_FLAGS\")
     or
-    \$ cmake . -DCMAKE_BUILD_TYPE=Release \# (CXX_FLAGS=\"\$CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS_RELEASE}\")")
+    \$ cmake . -DCMAKE_BUILD_TYPE=Release \# (CXX_FLAGS: \"${CMAKE_CXX_FLAGS_RELEASE} \$CMAKE_CXX_FLAGS\")")
 endif()
-
-project(icicle CXX)
 
 set(TMP "src/cfg_types.hpp") # // TODO: other cfg_*
 foreach(d .;doc;tests;src)
   set(TMP "${TMP};${d}/Makefile;${d}/CMakeCache.txt;${d}/cmake_install.cmake;${d}/CMakeFiles;${d}/Testing;${d}/CTestTestfile.cmake")
 endforeach()
 set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${TMP}")
-
-# CMake includes
-include(FeatureSummary)
-include(CheckCXXSourceCompiles) 
-include(CheckCXXSourceRuns)
-include(CMakePushCheckState)
 
 # describing available options
 function(icicle_option var desc) # functions use local scope, macros use global
@@ -364,10 +367,12 @@ add_subdirectory(examples)
 #add_subdirectory(src) 
 
 message(STATUS "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --")
+message(STATUS "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --")
 feature_summary(WHAT ENABLED_FEATURES DESCRIPTION "Enabled Features (to disable use -DFEATURE=NO where USE_FEATURE=ON):")
 feature_summary(WHAT DISABLED_FEATURES DESCRIPTION "Disabled Features (to enable use -DFEATURE=ON where USE_FEATURE=OFF):")
 message(STATUS "Compilation set-up:
 compiler: ${CMAKE_CXX_COMPILER}
 version: ${INFO_CXX_VERSION}
 flags: ${INFO_CXX_FLAGS}")
+message(STATUS "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --")
 message(STATUS "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --")
