@@ -142,6 +142,13 @@ set(tmp "${tmp};src/out_gnuplot.cpp")
 set(tmp "${tmp};src/out_debug.cpp")
 set(tmp "${tmp};src/icicle.cpp")
 
+if(USE_CUDA)
+  set(tmp "${tmp};src/sdm/sdm_cuda.cu")
+  cuda_add_executable(icicle ${tmp})
+else()
+  add_executable(icicle ${tmp})
+endif()
+
 # FLOAT, DOUBLE, LDOUBLE and FLOAT128
 set(USE_FLOAT TRUE)
 if(DEFINED FLOAT AND NOT FLOAT)
@@ -174,16 +181,6 @@ icicle_option(USE_FLOAT128 "'__float128' type support (GNU extension, 128 bits)"
 if(NOT USE_FLOAT AND NOT USE_DOUBLE AND NOT USE_LDOUBLE AND NOT USE_FLOAT128)
   message(FATAL_ERROR "-DFLOAD=NO -DDOUBLE=NO -DLDBOULBE=NO and -DFLOAT128=NO may not be specified all at once!")
 endif() 
-
-
-if(USE_CUDA)
-  set(tmp "${tmp};src/sdm/sdm_cuda.cu")
-  cuda_add_executable(icicle ${tmp})
-else()
-  add_executable(icicle ${tmp})
-endif()
-
-
 
 # Blitz++ (mandatory)
 target_link_libraries(icicle debug "-lblitz") # TODO: check if debugging actually works, if not suggest recompiling blitz with --enable-shared

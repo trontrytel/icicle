@@ -24,7 +24,19 @@ int main(int ac, char* av[])
     po::options_description desc("options");
     desc.add_options()
       ("help", "print this message")
-      ("bits", po::value<int>()->default_value(32), "floating point bits: sizeof(float), sizeof(double), sizeof(long double)");
+      ("bits", po::value<int>()->default_value(
+#if defined(USE_DOUBLE)
+        8 * sizeof(double)
+#elif defined(USE_FLOAT)
+        8 * sizeof(float)
+#elif defined(USE_LDOUBLE)
+        8 * sizeof(long double)
+#elif defined(USE_FLOAT128)
+        8 * sizeof(__float128)
+#else
+#  error
+#endif
+      ), "floating point bits: sizeof(float), sizeof(double), sizeof(long double)");
     opt_stp_desc(desc);
     opt_adv_desc(desc);
     opt_slv_desc(desc);
@@ -42,29 +54,6 @@ int main(int ac, char* av[])
     {
       std::cerr << desc << std::endl;
       exit(EXIT_SUCCESS); // this is what GNU coding standards suggest
-    }
-
-    // --slv list
-    if (vm.count("slv") && vm["slv"].as<string>() == "list")
-    {
-      std::cout << "serial fork";
-#ifdef _OPENMP
-      std::cout << " openmp fork+openmp";
-#endif
-#ifdef USE_BOOST_THREAD
-      std::cout << " threads fork+threads";
-#endif
-#ifdef USE_BOOST_MPI
-      std::cout << " mpi";
-#  ifdef USE_BOOST_THREAD
-      std::cout << " mpi+threads";
-#  endif
-#  ifdef _OPENMP
-      std::cout << " mpi+openmp";
-#  endif
-#endif
-      std::cout << std::endl;
-      exit(EXIT_FAILURE);
     }
 
     // string containing all passed options (e.g. for archiving in a netCDF file)

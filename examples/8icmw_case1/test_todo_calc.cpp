@@ -244,8 +244,8 @@ int main(int argc, char **argv)
 
     // initial values: (assuming no liquid and rain water -> to be adjusted by the model)
     Array<real_t, 1> arr_rhod(ny), arr_z(ny), arr_rhod_rl(ny), 
-                     arr_rhod_rv(ny), arr_rhod_rr(ny), arr_rhod_th(ny),
-                     arr_rhod_nl(ny), arr_rhod_nr(ny);
+                     arr_rhod_rv(ny), arr_rhod_th(ny),
+                     arr_zero(ny);
     for (int j = 0; j < ny; ++j) 
     {
       quantity<si::length, real_t> z = real_t(j + .5) * dy;
@@ -260,26 +260,26 @@ int main(int argc, char **argv)
 
       arr_z(j) = z / si::metres;
       arr_rhod(j) = rhod / si::kilograms * si::cubic_metres;
-      arr_rhod_rl(j) = 0; // to be adjusted by the model
-      arr_rhod_rr(j) = 0; // to be adjusted by the model
+      arr_zero(j) = 0;
       arr_rhod_rv(j) = arr_rhod(j) * rt_0;
       arr_rhod_th(j) = arr_rhod(j) * th / si::kelvins;
-      if (micro == "mm"){
-        arr_rhod_nl(j)=0; // to be adjusted by the model
-        arr_rhod_nr(j)=0; // to be adjusted by the model
-      }    
     }
 
     // writing the profiles to the netCDF 
     nvy.putVar(arr_z.data());
     nvrhod.putVar(arr_rhod.data());
     nvrhod_rv.putVar(arr_rhod_rv.data());
-    nvrhod_rl.putVar(arr_rhod_rl.data());
-    nvrhod_rr.putVar(arr_rhod_rr.data());
     nvrhod_th.putVar(arr_rhod_th.data());
-    if (micro == "mm"){
-      nvrhod_nl.putVar(arr_rhod_nl.data());
-      nvrhod_nr.putVar(arr_rhod_nr.data());
+
+    if (micro == "bulk")
+    {
+      nvrhod_rl.putVar(arr_zero.data());
+      nvrhod_rr.putVar(arr_zero.data());
+    } 
+    else if (micro == "mm")
+    {
+      nvrhod_nl.putVar(arr_zero.data());
+      nvrhod_nr.putVar(arr_zero.data());
     }
   }
   
