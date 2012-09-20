@@ -15,7 +15,7 @@
 template <typename real_t>
 struct eqs_todo_sdm<real_t>::detail
 {
-  unique_ptr<sdm::sdm_proto<real_t>> particles;
+  const unique_ptr<sdm::sdm_proto<real_t>> particles;
 };
 
 template <typename real_t>

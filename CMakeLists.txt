@@ -12,7 +12,6 @@
 
 cmake_minimum_required(VERSION 2.8.6) # for CMakePushCheckState
 project(icicle CXX)
-message("${CMAKE_COMPILER_IS_GNUCXX}")
 
 # CMake includes
 include(FeatureSummary)
@@ -23,10 +22,8 @@ include(CMakePushCheckState)
 set(CXX11_FLAG "-std=c++0x") # C++11 (name understandable for pre-2011 compilers)
 set(CMAKE_CXX_FLAGS_RELEASE "${CXX11_FLAG} -DNDEBUG -Wfatal-errors" CACHE STRING "Release options." FORCE)
 if(CMAKE_COMPILER_IS_GNUCXX)
-  message("detected GNU compiler")
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Ofast" CACHE STRING "Release options." FORCE)
 else()
-  message("detected non-GNU compiler")
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3" CACHE STRING "Release options." FORCE)
 endif()
 set(CMAKE_CXX_FLAGS_DEBUG "${CXX11_FLAG} -DBZ_DEBUG" CACHE STRING "Debug options." FORCE)
@@ -106,7 +103,7 @@ set(USE_CUDA FALSE)
 if (DEFINED CUDA AND NOT CUDA)
   message(STATUS "Building without CUDA support (-DCUDA=NO specified or CMake have not found it)")
 else()
-  find_package(CUDA)
+  find_package(CUDA QUIET)
   set(CUDA_PROPAGATE_HOST_FLAGS OFF)
   set(USE_CUDA ${CUDA_FOUND})
 endif()
