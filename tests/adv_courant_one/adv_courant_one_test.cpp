@@ -76,11 +76,7 @@ int main()
                 // combinations that does not make sense
                 if (slv == "serial" and nsd == 1) continue; 
                 if (nxyz != "--grd.nx 20 --vel.uniform.u" && nsd > 1) continue; // parallelism only in X
-/*
-// TODO!
-                  if [ "$adv" = "mpdata --adv.mpdata.fct 1" -a $nsd = 20 ]; then continue; fi # halo > nx
 
-*/
                 ostringstream cmd;
                 cmd << "../../icicle --ini boxcar --ini.boxcar.bx 1";
                 cmd << " --bits " << bits << " --dt_out 1 --grd.dx 1 --grd.dy 1 --grd.dz 1";
