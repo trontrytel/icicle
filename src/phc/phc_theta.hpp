@@ -94,4 +94,16 @@ namespace phc
     );  
   }
 
+  // dry air density as a function of p, theta and rv
+  phc_declare_funct_macro quantity<si::mass_density, real_t> rhod(
+    quantity<si::pressure, real_t> p,
+    quantity<si::temperature, real_t> th, 
+    quantity<phc::mixing_ratio, real_t> rv
+  )
+  {
+    return (p - phc::p_v<real_t>(p, rv)) / 
+      (phc::exner<real_t>(p, rv) * phc::R_d<real_t>() * th);
+  }
+
+
 };

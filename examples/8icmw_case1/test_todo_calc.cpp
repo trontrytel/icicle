@@ -7,17 +7,6 @@
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
 
-#include <vector>
-using std::vector;
-
-#include <netcdf>
-using netCDF::NcFile;
-using netCDF::NcDim;
-using netCDF::NcVar;
-using netCDF::ncFloat;
-typedef vector<size_t> start;
-typedef vector<size_t> count;
-
 #include <string>
 using std::string;
 
@@ -25,11 +14,6 @@ using std::string;
 using std::ostringstream;
 using std::cerr;
 using std::endl;
-
-#include <blitz/array.h>
-using blitz::Array;
-using blitz::Range;
-using blitz::toEnd;
 
 #include <boost/units/systems/si.hpp>
 #include <boost/units/io.hpp>
@@ -46,8 +30,9 @@ using boost::units::detail::get_value;
 
 #include "../../src/cmn/cmn_error.hpp"
 #include "../../src/cmn/cmn_units.hpp"
-#include "../../src/phc/phc_theta.hpp"
-#include "../../src/phc/phc_terminal_vel.hpp"
+#include "../../src/phc/phc.hpp"
+
+#include "../../src/wkc/wkc_icmw8_case1.hpp"
 
 #include <cgicc/Cgicc.h>
 cgicc::Cgicc cgi;
@@ -97,14 +82,10 @@ const quantity<si::time, real_t>
   t_max = 9 * si::seconds, // 4 * 3600
   dt_out = real_t(3) * si::seconds; // 300
 const quantity<si::velocity, real_t>
-  w_max = http_or_default("w_max", real_t(.6)) * si::metres / si::second; // .6 TODO: check it!
-const quantity<si::mass_density, real_t>
-  rho_0 = 1 * si::kilograms / si::cubic_metres;
-const quantity<divide_typeof_helper<si::momentum, si::area>::type, real_t> 
-  ampl = rho_0 * w_max * (real_t(nx) * dx) / real_t(4*atan(1));
+  w_max = http_or_default("w_max", real_t(.6)) * si::metres_per_second; // .6 TODO: check it!
 
 // options for microphysics
-std::string micro = http_or_default("micro", string("sdm")); // sdm | bulk | mm
+std::string micro_opt = http_or_default("micro", string("bulk")); 
 
 // blk parameters
 bool 
@@ -158,150 +139,39 @@ real_t
   min_rd = 1e-9,
   max_rd = 1e-6;
 
-// pressure profile derived by integrating the hydrostatic eq.
-// assuming constant theta, constant rv and R=R(rv) 
-quantity<si::pressure,real_t> p_hydrostatic(
-  quantity<si::length, real_t> z,
-  quantity<si::temperature,real_t> th_0,
-  quantity<phc::mixing_ratio, real_t> r_0,
-  quantity<si::length, real_t> z_0,
-  quantity<si::pressure, real_t> p_0
-)
-{
-  return phc::p_1000<real_t>() * real_t(pow(
-    pow(p_0 / phc::p_1000<real_t>(), phc::R_d_over_c_pd<real_t>()) 
-    - 
-    phc::R_d_over_c_pd<real_t>() * phc::g<real_t>() / th_0 / phc::R<real_t>(r_0) * (z - z_0), 
-    phc::c_pd<real_t>() / phc::R_d<real_t>()
-  ));
-}
-
-// TODO: document it and name it correctly
-quantity<si::mass_density, real_t> rhod_todo(
-  quantity<si::pressure, real_t> p,
-  quantity<si::temperature, real_t> th_0,
-  quantity<phc::mixing_ratio, real_t> r_0
-)
-{
-  return (p - phc::p_v<real_t>(p, rt_0)) / (phc::exner<real_t>(p, rt_0) * phc::R_d<real_t>() * th_0);
-}
+using wkc::icmw8_case1::micro_t;
+using wkc::icmw8_case1::bulk;
+using wkc::icmw8_case1::sdm;
+using wkc::icmw8_case1::mm;
 
 int main(int argc, char **argv)
 {
+  enum micro_t micro;
+  if (micro_opt == "bulk") micro = bulk;
+  else if (micro_opt == "sdm") micro = sdm;
+  else if (micro_opt == "mm") micro = mm;
+  else error_macro("unknown microphysics")
+
   string dir = argc > 1 ? argv[1] : "tmp";
   notice_macro("creating " << dir << "...");
   mkdir(dir.c_str(), 0777);
 
-  {
-    notice_macro("creating rho.nc ...")
-    NcFile nf(dir + "/rho.nc", NcFile::newFile, NcFile::classic);
+  notice_macro("creating input files ...")
+  string opts = wkc::icmw8_case1::create_files(
+    wkc::icmw8_case1::bulk,
+    dir + "/rho.nc", 
+    dir + "/ini.nc",
+    nx, ny, dx, dy, th_0, rt_0, p_0
+  );
 
-    // dimensions and variables
-    NcDim ndy = nf.addDim("Y", 2 * ny+1); 
-    NcVar nvy = nf.addVar("Y", ncFloat, vector<NcDim>({ndy}));
-    NcVar nvrho = nf.addVar("rho", ncFloat, vector<NcDim>({ndy}));
-  
-    // dry air density at all needed levels
-    for (size_t j = 0; j < 2 * ny + 1; ++j) 
-    {
-      // calculating
-      quantity<si::length, real_t> z = real_t(.5 * j) * dy ;
-      quantity<si::pressure, real_t> p = p_hydrostatic(z, th_0, rt_0, real_t(0) * si::metres, p_0);
-      quantity<si::mass_density, real_t> rhod = rhod_todo(p, th_0, rt_0);
-
-      // writing to the netCDF
-      nvy.putVar(start({j}), z / si::metres);
-      nvrho.putVar(start({j}), rhod * si::cubic_metres / si::kilogram);
-    }
-  } // nf gets closed here
-
-  {
-    notice_macro("creating ini.nc ...")
-    NcFile nf(dir + "/ini.nc", NcFile::newFile, NcFile::classic);
-
-    // dimensions
-    NcDim ndx = nf.addDim("X", 1); 
-    NcDim ndy = nf.addDim("Y", ny); 
-    NcDim ndz = nf.addDim("Z", 1); 
-
-    // dimension-annotating variable
-    NcVar nvy = nf.addVar("Y", ncFloat, vector<NcDim>({ndx,ndy,ndz}));
- 
-    // advected fields
-    NcVar nvrhod_rv = nf.addVar("rhod_rv", ncFloat, vector<NcDim>({ndx,ndy,ndz}));
-    NcVar nvrhod_rl = nf.addVar("rhod_rl", ncFloat, vector<NcDim>({ndx,ndy,ndz}));
-    NcVar nvrhod_rr = nf.addVar("rhod_rr", ncFloat, vector<NcDim>({ndx,ndy,ndz}));
-    NcVar nvrhod_th = nf.addVar("rhod_th", ncFloat, vector<NcDim>({ndx,ndy,ndz}));
-    
-    NcVar nvrhod_nl, nvrhod_nr;
-    if (micro == "mm")
-    {
-      nvrhod_nl = nf.addVar("rhod_nl", ncFloat, vector<NcDim>({ndx,ndy,ndz}));
-      nvrhod_nr = nf.addVar("rhod_nr", ncFloat, vector<NcDim>({ndx,ndy,ndz}));
-    }
-    // auxiliary fields
-    NcVar nvrhod = nf.addVar("rhod", ncFloat, vector<NcDim>({ndx,ndy,ndz}));
-
-    // initial values: (assuming no liquid and rain water -> to be adjusted by the model)
-    Array<real_t, 1> arr_rhod(ny), arr_z(ny), arr_rhod_rl(ny), 
-                     arr_rhod_rv(ny), arr_rhod_th(ny),
-                     arr_zero(ny);
-    for (int j = 0; j < ny; ++j) 
-    {
-      quantity<si::length, real_t> z = real_t(j + .5) * dy;
-      quantity<si::pressure, real_t> p = p_hydrostatic(z, th_0, rt_0, real_t(0) * si::metres, p_0);
-      quantity<si::mass_density, real_t> rhod = rhod_todo(p, th_0, rt_0); 
-      quantity<si::temperature, real_t> T = p / rhod / phc::R_d<real_t>();
-      // theta^\star as a function of theta
-      quantity<si::temperature, real_t> th = real_t(pow(
-        real_t(th_0 / T) * pow(T / si::kelvins, pow(phc::R_over_c_p<real_t>(rt_0) / phc::R_d_over_c_pd<real_t>(),-1)), 
-        phc::R_over_c_p<real_t>(rt_0) / phc::R_d_over_c_pd<real_t>()
-      )) * si::kelvins;
-
-      arr_z(j) = z / si::metres;
-      arr_rhod(j) = rhod / si::kilograms * si::cubic_metres;
-      arr_zero(j) = 0;
-      arr_rhod_rv(j) = arr_rhod(j) * rt_0;
-      arr_rhod_th(j) = arr_rhod(j) * th / si::kelvins;
-    }
-
-    // writing the profiles to the netCDF 
-    nvy.putVar(arr_z.data());
-    nvrhod.putVar(arr_rhod.data());
-    nvrhod_rv.putVar(arr_rhod_rv.data());
-    nvrhod_th.putVar(arr_rhod_th.data());
-
-    if (micro == "bulk")
-    {
-      nvrhod_rl.putVar(arr_zero.data());
-      nvrhod_rr.putVar(arr_zero.data());
-    } 
-    else if (micro == "mm")
-    {
-      nvrhod_nl.putVar(arr_zero.data());
-      nvrhod_nr.putVar(arr_zero.data());
-    }
-  }
-  
   notice_macro("calling the solver ...")
   ostringstream cmd;
   cmd
-    << "../../icicle"
-    << " --bits " << bits
-    << " --ini netcdf"
-    << " --ini.netcdf.file " << dir << "/ini.nc"
-    << " --grd.dx " << dx / si::metres
-    << " --grd.nx " << nx
-    << " --grd.dy " << dy / si::metres
-    << " --grd.ny " << ny
+    << "../../icicle " << opts 
     << " --adv mpdata"
       << " --adv.mpdata.fct " << fct
       << " --adv.mpdata.iord " << iord
       << " --adv.mpdata.third_order " << toa
-    << " --vel rasinski"
-      << " --vel.rasinski.file " << dir << "/rho.nc"
-      << " --vel.rasinski.A " << ampl
-
     << " --t_max " << real_t(t_max / si::seconds)
     << " --dt " << "auto" 
     << " --dt_out " << real_t(dt_out / si::seconds)
@@ -315,19 +185,19 @@ int main(int argc, char **argv)
     << " --out.netcdf.file " << dir << "/out.nc";
 
     // TEMP TODO!
-    if (micro == "bulk") 
+    if (micro == bulk) 
       cmd << " --slv openmp --nsd " << nsd;
     else 
       cmd << " --slv serial";
 
-    if (micro == "bulk") cmd << " --eqs todo_bulk"
+    if (micro == bulk) cmd << " --eqs todo_bulk"
       << " --eqs.todo_bulk.cevp " << blk_cevp
       << " --eqs.todo_bulk.conv " << blk_conv
       << " --eqs.todo_bulk.clct " << blk_clct
       << " --eqs.todo_bulk.sedi " << blk_sedi
       << " --eqs.todo_bulk.revp " << blk_revp
     ;
-    else if (micro == "mm") cmd << " --eqs todo_mm"
+    else if (micro == mm) cmd << " --eqs todo_mm"
       << " --eqs.todo_mm.act "   << mm_act
       << " --eqs.todo_mm.cond "  << mm_cond
       << " --eqs.todo_mm.acc "   << mm_acc
@@ -340,7 +210,7 @@ int main(int argc, char **argv)
       << " --eqs.todo_mm.n_tot "   << n_tot
       << " --eqs.todo_mm.chem_b "    << chem_b
     ;
-    else if (micro == "sdm") cmd << " --eqs todo_sdm"
+    else if (micro == sdm) cmd << " --eqs todo_sdm"
       << " --eqs.todo_sdm.xi " << sdm_xi
 
       << " --eqs.todo_sdm.adve.algo " << sdm_ode_adve_algo

@@ -49,7 +49,7 @@ void refresh(const string &msg)
     << h3() << msg << h3() << endl
     << pre().set("style","font-size:1.5em; margin-top: 5em;");
   cout.flush();
-  system("/usr/games/fortune -s");
+  int status = system("/usr/games/fortune -s");
   cout 
     << pre()
     << body()
@@ -65,7 +65,7 @@ int main(int argc, char **argv)
 
   if (string(qs) == "purge") 
   {
-    system("rm -rf http/*");
+    int status = system("rm -rf http/*");
     error_macro("purged.");
   }
 
@@ -88,8 +88,9 @@ int main(int argc, char **argv)
     if (pid < 0) error_macro("fork() failed.")
     else if (pid != 0) refresh("simulation started, please wait...");
 
-    freopen( "/dev/null", "r", stdin); 
-    freopen( "/dev/null", "w", stdout);
+    FILE* status;
+    status = freopen( "/dev/null", "r", stdin); 
+    status = freopen( "/dev/null", "w", stdout);
     //freopen( "/dev/null", "w", stderr); // keeping to log error messages
     execl("/bin/bash", "bash", "-c", cmd.c_str(), NULL);
   }
