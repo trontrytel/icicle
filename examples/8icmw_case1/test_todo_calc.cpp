@@ -23,15 +23,15 @@ using boost::units::divide_typeof_helper;
 using boost::units::detail::get_value;
 
 // mkdir()
-#include <sys/stat.h>
-#include <sys/types.h>
+//#include <sys/stat.h>
+//#include <sys/types.h>
+#include <boost/filesystem.hpp>
 
 #include <boost/lexical_cast.hpp>
 
 #include "../../src/cmn/cmn_error.hpp"
 #include "../../src/cmn/cmn_units.hpp"
 #include "../../src/phc/phc.hpp"
-
 #include "../../src/wkc/wkc_icmw8_case1.hpp"
 
 #include <cgicc/Cgicc.h>
@@ -60,15 +60,6 @@ const quantity<si::temperature, real_t>
   th_0 = http_or_default("th_0", real_t(289)) * si::kelvins;   // 289 K
 const quantity<phc::mixing_ratio, real_t>
   rt_0 = http_or_default("rt_0", real_t(7.5e-3));              // 7.5e-3 kg/kg
-const quantity<si::pressure, real_t> 
-  p_0 = 101500 * si::pascals; // 1015 hPa
-const quantity<si::dimensionless, real_t>
-  kappa = 0.61; // ammonium sulphate
-  //kappa = 1.28; // sodium chloride
-const quantity<si::dimensionless, real_t>// equivalent of kappa for 2 moment param. (assuming no insoluable aerosol core)
-  //TODO? calculate from kappa?
-  chem_b = 0.505; // ammonium sluphate
-  //chem_b = 1.33; // sodium chloride
 
 // other parameters deduced from the Fortran code published at:
 // http://www.rap.ucar.edu/~gthompsn/workshop2012/case1/kinematic_wrain.vocals.v3.for
@@ -79,8 +70,8 @@ const int
   iord = http_or_default("iord", int(2)),
   nsd = http_or_default("nsd", int(1));  
 const quantity<si::time, real_t> 
-  t_max = 9 * si::seconds, // 4 * 3600
-  dt_out = real_t(3) * si::seconds; // 300
+  t_max = 30 * si::seconds, // 4 * 3600
+  dt_out = real_t(1) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = http_or_default("w_max", real_t(.6)) * si::metres_per_second; // .6 TODO: check it!
 
@@ -99,7 +90,7 @@ bool
 bool
   mm_act   = true,
   mm_cond  = true,
-  mm_autoc = true,
+  mm_autoc = false,
   mm_acc   = false,
   mm_self  = false,
   mm_turb  = false,
@@ -129,15 +120,7 @@ bool
   sdm_sedi = http_or_default("sdm_sedi", false),
   sdm_chem = http_or_default("sdm_chem", false);
 real_t 
-  sd_conc_mean = http_or_default("sd_conc_mean", 256),
-  mean_rd1 = .04e-6,
-  mean_rd2 = .15e-6,
-  sdev_rd1 = 1.4,
-  sdev_rd2 = 1.6,
-  n1_tot = 60e6,
-  n2_tot = 40e6,
-  min_rd = 1e-9,
-  max_rd = 1e-6;
+  sd_conc_mean = http_or_default("sd_conc_mean", 256);
 
 using wkc::icmw8_case1::micro_t;
 using wkc::icmw8_case1::bulk;
@@ -154,14 +137,14 @@ int main(int argc, char **argv)
 
   string dir = argc > 1 ? argv[1] : "tmp";
   notice_macro("creating " << dir << "...");
-  mkdir(dir.c_str(), 0777);
+  boost::filesystem::create_directory(dir);
 
   notice_macro("creating input files ...")
   string opts = wkc::icmw8_case1::create_files(
-    wkc::icmw8_case1::bulk,
+    micro,
     dir + "/rho.nc", 
     dir + "/ini.nc",
-    nx, ny, dx, dy, th_0, rt_0, p_0
+    nx, ny, dx, dy, th_0, rt_0, w_max
   );
 
   notice_macro("calling the solver ...")
@@ -172,14 +155,14 @@ int main(int argc, char **argv)
       << " --adv.mpdata.fct " << fct
       << " --adv.mpdata.iord " << iord
       << " --adv.mpdata.third_order " << toa
-    << " --t_max " << real_t(t_max / si::seconds)
-    << " --dt " << "auto" 
-    << " --dt_out " << real_t(dt_out / si::seconds)
+//    << " --t_max " << real_t(t_max / si::seconds)
+//    << " --dt " << "auto" 
+//    << " --dt_out " << real_t(dt_out / si::seconds)
 
 // TODO TEMP TODO TEMP !!!
-//    << " --dt " << real_t(1)
-//    << " --nt " << real_t(4*3600)
-//    << " --nout " << real_t(60*10)
+    << " --dt " << real_t(1)
+    << " --nt " << real_t(300)
+    << " --nout " << real_t(30)
 
     << " --out netcdf" 
     << " --out.netcdf.file " << dir << "/out.nc";
@@ -205,10 +188,6 @@ int main(int argc, char **argv)
       << " --eqs.todo_mm.self "  << mm_self
       << " --eqs.todo_mm.turb "  << mm_turb
       << " --eqs.todo_mm.sedi "  << mm_sedi
-      << " --eqs.todo_mm.mean_rd " << mean_rd
-      << " --eqs.todo_mm.sdev_rd " << sdev_rd
-      << " --eqs.todo_mm.n_tot "   << n_tot
-      << " --eqs.todo_mm.chem_b "    << chem_b
     ;
     else if (micro == sdm) cmd << " --eqs todo_sdm"
       << " --eqs.todo_sdm.xi " << sdm_xi
@@ -230,18 +209,9 @@ int main(int argc, char **argv)
       << " --eqs.todo_sdm.sedi " << sdm_sedi
       << " --eqs.todo_sdm.chem " << sdm_chem
       << " --eqs.todo_sdm.sd_conc_mean " << sd_conc_mean
-      << " --eqs.todo_sdm.min_rd " << min_rd
-      << " --eqs.todo_sdm.max_rd " << max_rd
-      << " --eqs.todo_sdm.mean_rd1 " << mean_rd1
-      << " --eqs.todo_sdm.mean_rd2 " << mean_rd2
-      << " --eqs.todo_sdm.sdev_rd1 " << sdev_rd1
-      << " --eqs.todo_sdm.sdev_rd2 " << sdev_rd2
-      << " --eqs.todo_sdm.n1_tot " << n1_tot
-      << " --eqs.todo_sdm.n2_tot " << n2_tot
-      << " --eqs.todo_sdm.kappa " << kappa
     ;
     else assert(false);
     
   if (EXIT_SUCCESS != system(cmd.str().c_str()))
-    cerr << "model run failed: " << cmd.str() << endl;
+    error_macro("model run failed: " << cmd.str())
 }

@@ -213,9 +213,9 @@ int main(int argc, char **argv)
       gp.sendBinary(tmp0);
 
       gp << "set title 'rain water mixing ratio [g/kg]'" << endl;
-      gp << "set autoscale cb" << endl;
-//      gp << "set cbrange [0.:.02]" << endl;
-//      gp << "set cbtics .01" << endl;
+//      gp << "set autoscale cb" << endl;
+      gp << "set cbrange [0.:.02]" << endl;
+      gp << "set cbtics .01" << endl;
       nf.getVar("rhod_rr").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
       tmp0 /= rhod;
       gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using ($1*1000) with image notitle";
@@ -223,9 +223,9 @@ int main(int argc, char **argv)
       gp.sendBinary(tmp0);
 
       gp << "set title 'rain water number concentration [1/cm3]'" << endl;
-      gp << "set autoscale cb" << endl;
-//      gp << "set cbrange [0.:100]" << endl;
-//      gp << "set cbtics 10" << endl;
+//      gp << "set autoscale cb" << endl;
+      gp << "set cbrange [0.:100]" << endl;
+      gp << "set cbtics 10" << endl;
       nf.getVar("rhod_nr").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
       tmp0 /= rhod;
       gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using ($1*1e-6) with image notitle";
