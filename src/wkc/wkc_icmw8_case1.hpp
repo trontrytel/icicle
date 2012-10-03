@@ -61,7 +61,6 @@ namespace wkc
       const quantity<si::length, real_t> dy = real_t(20) * si::metres,
       const quantity<si::temperature, real_t> th_0 = real_t(289) * si::kelvins,
       const quantity<si::dimensionless, real_t> rt_0 = real_t(7.5e-3),
-      const quantity<si::pressure, real_t> p_0 = real_t(101500) * si::pascals,
       const quantity<si::velocity, real_t> w_max = real_t(.6) * si::metres_per_second // TODO: check it
     ) 
     {
@@ -72,10 +71,36 @@ namespace wkc
         << " --grd.nx " << nx
         << " --grd.dy " << dy / si::metres
         << " --grd.ny " << ny;
- 
+     
+      // initial dry aerosol spectra as defined in case 1 of 8icmw
+      if(micro == sdm)
+      {
+        opts  
+          << " --eqs.todo_sdm.mean_rd1 " << .04e-6
+          << " --eqs.todo_sdm.mean_rd2 " << .15e-6
+          << " --eqs.todo_sdm.sdev_rd1 " << 1.4
+          << " --eqs.todo_sdm.sdev_rd2 " << 1.6
+          << " --eqs.todo_sdm.n1_tot " << 60e6
+          << " --eqs.todo_sdm.n2_tot " << 40e6
+          << " --eqs.todo_sdm.kappa " << 0.61; // ammonium sulphate
+         //kappa = 1.28; // sodium chloride
+      }
+      // initial dry aerosol spectra as defined in case 1 of 8icmw
+      //(ony one mode TODO)
+      else if(micro == mm)
+      {
+        opts  
+          << " --eqs.todo_mm.mean_rd " << .04e-6
+          << " --eqs.todo_mm.sdev_rd " << 1.4
+          << " --eqs.todo_mm.n_tot " << 60e6
+          //chem_b - equivalent of kappa for 2 moment param. (assuming no insoluable aerosol core)
+          << " --eqs.todo_mm.chem_b "    << .505; // ammonium sluphate
+          //chem_b = 1.33; // sodium chloride
+
+      }
       // scope block introduced in order to close the netCDF file
       {
-        notice_macro("creating rho.nc ...")
+        notice_macro("creating " << rho_filename << " ...")
         NcFile nf(rho_filename, NcFile::newFile, NcFile::classic);
 
         // dimensions and variables
@@ -87,9 +112,12 @@ namespace wkc
         for (size_t j = 0; j < 2 * ny + 1; ++j)
         {
           // calculating
+          // <TODO> repeated above!
+          const quantity<si::pressure, real_t> p_0 = real_t(101500) * si::pascals;
           quantity<si::length, real_t> z = real_t(.5 * j) * dy ;
           quantity<si::pressure, real_t> p = phc::hydrostatic::p(z, th_0, rt_0, real_t(0) * si::metres, p_0);
           quantity<si::mass_density, real_t> rhod = phc::rhod(p, th_0, rt_0);
+          // </TODO>
 
           // writing to the netCDF
           nvy.putVar(start({j}), z / si::metres);
@@ -116,7 +144,7 @@ namespace wkc
           << " --ini netcdf"
           << " --ini.netcdf.file " << ini_filename;
 
-	notice_macro("creating ini.nc ...")
+	notice_macro("creating " << ini_filename << " ...")
 	NcFile nf(ini_filename, NcFile::newFile, NcFile::classic);
 
 	// dimensions
@@ -142,9 +170,13 @@ namespace wkc
 			 arr_zero(ny);
 	for (int j = 0; j < ny; ++j)
 	{
+          // <TODO> repeated below!
+          const quantity<si::pressure, real_t> p_0 = real_t(101500) * si::pascals;
 	  quantity<si::length, real_t> z = real_t(j + .5) * dy;
 	  quantity<si::pressure, real_t> p = phc::hydrostatic::p(z, th_0, rt_0, real_t(0) * si::metres, p_0);
 	  quantity<si::mass_density, real_t> rhod = phc::rhod(p, th_0, rt_0);
+          // </TODO>
+
 	  quantity<si::temperature, real_t> T = p / rhod / phc::R_d<real_t>();
 	  // theta^\star as a function of theta
 	  quantity<si::temperature, real_t> th = real_t(pow(
@@ -177,6 +209,8 @@ namespace wkc
 	  nvrhod_nr = nf.addVar("rhod_nr", ncFloat, vector<NcDim>({ndx,ndy,ndz}));
 	  nvrhod_nl.putVar(arr_zero.data());
 	  nvrhod_nr.putVar(arr_zero.data());
+	  nvrhod_rl.putVar(arr_zero.data());
+	  nvrhod_rr.putVar(arr_zero.data());
 	}
 
         notice_macro("done.")

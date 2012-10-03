@@ -1,6 +1,6 @@
 set(tmp test_todo_calc)
 add_executable(${tmp} ${tmp}.cpp)
-target_link_libraries(${tmp} "-lnetcdf_c++4 -lblitz -lcgicc") # TODO! 
+target_link_libraries(${tmp} "-lnetcdf_c++4 -lblitz -lcgicc -lboost_system-mt -lboost_filesystem-mt") # TODO! 
 
 set(tmp test_todo_plot)
 add_executable(${tmp} ${tmp}.cpp)
