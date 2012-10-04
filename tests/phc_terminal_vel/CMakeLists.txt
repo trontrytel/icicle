@@ -1,4 +1,5 @@
 set(tmp phc_terminal_vel_test)
 add_executable(${tmp} ${tmp}.cpp)
 target_link_libraries(${tmp} "-lnetcdf_c++4 -lboost_iostreams-mt -lboost_system-mt -lblitz")
+add_dependencies(${tmp} icicle)
 add_test(${tmp} ${tmp})

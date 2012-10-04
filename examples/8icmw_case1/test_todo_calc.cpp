@@ -22,9 +22,6 @@ using boost::units::quantity;
 using boost::units::divide_typeof_helper;
 using boost::units::detail::get_value;
 
-// mkdir()
-//#include <sys/stat.h>
-//#include <sys/types.h>
 #include <boost/filesystem.hpp>
 
 #include <boost/lexical_cast.hpp>
@@ -70,13 +67,13 @@ const int
   iord = http_or_default("iord", int(2)),
   nsd = http_or_default("nsd", int(1));  
 const quantity<si::time, real_t> 
-  t_max = 30 * si::seconds, // 4 * 3600
+  t_max = 10 * si::seconds, // 4 * 3600
   dt_out = real_t(1) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = http_or_default("w_max", real_t(.6)) * si::metres_per_second; // .6 TODO: check it!
 
 // options for microphysics
-std::string micro_opt = http_or_default("micro", string("bulk")); 
+std::string micro_opt = http_or_default("micro", string("sdm")); 
 
 // blk parameters
 bool 
@@ -100,18 +97,11 @@ real_t
   sdev_rd = 1.4,
   n_tot = 60e6;
 
-// sdm parameters
-std::string
-  sdm_xi = "p2", 
-  sdm_ode_adve_algo = "euler",
-  sdm_ode_sedi_algo = "euler",
-  sdm_ode_cond_algo = "euler",
-  sdm_ode_chem_algo = "euler";
 int
   sdm_adve_sstp = 1,
   sdm_sedi_sstp = 1,
   sdm_chem_sstp = 1,
-  sdm_cond_sstp = 125,
+  sdm_cond_sstp = 50,
   sdm_coal_sstp = 1;
 bool 
   sdm_adve = http_or_default("sdm_adve", true),
@@ -173,14 +163,14 @@ int main(int argc, char **argv)
     else 
       cmd << " --slv serial";
 
-    if (micro == bulk) cmd << " --eqs todo_bulk"
+    if (micro == bulk) cmd 
       << " --eqs.todo_bulk.cevp " << blk_cevp
       << " --eqs.todo_bulk.conv " << blk_conv
       << " --eqs.todo_bulk.clct " << blk_clct
       << " --eqs.todo_bulk.sedi " << blk_sedi
       << " --eqs.todo_bulk.revp " << blk_revp
     ;
-    else if (micro == mm) cmd << " --eqs todo_mm"
+    else if (micro == mm) cmd 
       << " --eqs.todo_mm.act "   << mm_act
       << " --eqs.todo_mm.cond "  << mm_cond
       << " --eqs.todo_mm.acc "   << mm_acc
@@ -189,14 +179,7 @@ int main(int argc, char **argv)
       << " --eqs.todo_mm.turb "  << mm_turb
       << " --eqs.todo_mm.sedi "  << mm_sedi
     ;
-    else if (micro == sdm) cmd << " --eqs todo_sdm"
-      << " --eqs.todo_sdm.xi " << sdm_xi
-
-      << " --eqs.todo_sdm.adve.algo " << sdm_ode_adve_algo
-      << " --eqs.todo_sdm.sedi.algo " << sdm_ode_sedi_algo
-      << " --eqs.todo_sdm.cond.algo " << sdm_ode_cond_algo
-      << " --eqs.todo_sdm.chem.algo " << sdm_ode_chem_algo
-
+    else if (micro == sdm) cmd 
       << " --eqs.todo_sdm.adve.sstp " << sdm_adve_sstp
       << " --eqs.todo_sdm.sedi.sstp " << sdm_sedi_sstp
       << " --eqs.todo_sdm.cond.sstp " << sdm_cond_sstp
