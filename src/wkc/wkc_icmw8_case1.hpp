@@ -22,6 +22,12 @@ using std::endl;
 #include <vector>
 using std::vector;
 
+#include <list>
+using std::list;
+
+#include <map>
+using std::map;
+
 // TODO: are all these "usings" neccessary
 #include <netcdf>
 using netCDF::NcFile;
@@ -48,6 +54,8 @@ namespace wkc
   {
     // 
     enum micro_t {bulk, sdm, mm};
+    map<enum micro_t, string> micro_str({{bulk, "bulk"}, {sdm, "sdm"}, {mm, "mm"}});
+
 
     // returns a string with options to be passed to icicle
     template <typename real_t>
@@ -70,7 +78,8 @@ namespace wkc
         << " --grd.dx " << dx / si::metres
         << " --grd.nx " << nx
         << " --grd.dy " << dy / si::metres
-        << " --grd.ny " << ny;
+        << " --grd.ny " << ny
+        << " --eqs todo_" + micro_str[micro];
      
       // initial dry aerosol spectra as defined in case 1 of 8icmw
       if(micro == sdm)

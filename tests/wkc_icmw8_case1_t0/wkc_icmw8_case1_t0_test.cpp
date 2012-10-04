@@ -13,9 +13,6 @@
 #include <map>
 using std::map;
 
-#include <list>
-using std::list;
-
 #include <boost/filesystem.hpp>
 
 #include <boost/units/systems/si.hpp>
@@ -31,20 +28,36 @@ using std::endl;
 
 #include "../../src/wkc/wkc_icmw8_case1.hpp"
 
+typedef vector<size_t> start;
+typedef vector<size_t> count;
+
 typedef float real_t; // TODO: chose a supported one
+using wkc::icmw8_case1::micro_str;
 using wkc::icmw8_case1::micro_t;
 using wkc::icmw8_case1::bulk;
 using wkc::icmw8_case1::sdm;
 using wkc::icmw8_case1::mm;
 
-//TODO check ini files
-
 int main()
 {
-  for (micro_t &micro : list<enum micro_t>({bulk, sdm, mm}))
-  {
-    map<enum micro_t, string> micro_str({{bulk, "bulk"}, {sdm, "sdm"}, {mm, "mm"}});
+  list<enum micro_t> micros({bulk, sdm, mm});
 
+  // initialising gnuplot
+  Gnuplot gp;
+  gp << "set term svg enhanced" << endl;
+  gp << "set output 'tmp.svg'" << endl; 
+  gp << "set xlabel 'r_l [g/kg]'" << endl;
+  gp << "set key bottom right" << endl;
+  gp << "set grid" << endl;
+  gp << "plot 0 notitle";
+  for (micro_t &micro : micros)
+    gp << ",'-' using ($1*1000):0 with linespoints t \"r_l (" << micro_str[micro] << ")\"";
+  gp << endl;
+
+  // loop over types of microphysics
+  for (micro_t &micro : micros)
+  {
+    // creating the input files
     boost::filesystem::remove_all("tmp_" + micro_str[micro]);
     boost::filesystem::create_directory("tmp_" + micro_str[micro]);
     string opts = wkc::icmw8_case1::create_files<real_t>(micro, 
@@ -52,35 +65,79 @@ int main()
       "tmp_" + micro_str[micro] + "/ini.nc"
     );
 
+    // checking ini files
+    NcFile nfini("tmp_" + micro_str[micro] + "/ini.nc", NcFile::read);
+    int ny = nfini.getDim("Y").getSize();
+    Array<real_t, 1> rhod(ny);
+    nfini.getVar("rhod").getVar(rhod.data());
+
+    // sanity check
+    if (min(rhod) < .9 || max(rhod) > 1.3) error_macro("the air seems too dense...");
+
+    // TODO: check e.g. if really hydrostatic
+
+    // running the simulations
     ostringstream cmd;
-    cmd
-      << "../../icicle " << opts
-        << " --adv mpdata"
-        << " --dt_out 3"
-        << " --t_max 3"
-        << " --out netcdf"
-          << " --out.netcdf.file tmp_" << micro_str[micro] << "/out.nc"
-       << " --slv serial"
-       << " --eqs todo_" + micro_str[micro];
-//     if (micro == sdm) 
+    cmd << "../../icicle " 
+      << opts
+      << " --adv mpdata"
+      << " --dt_out 6"
+      << " --t_max 6"
+      << " --out netcdf"
+      << " --out.netcdf.file tmp_" << micro_str[micro] << "/out.nc"
+      << " --slv serial";
+
+    if (micro == bulk) cmd 
+      << " --eqs.todo_bulk.cevp true"
+      << " --eqs.todo_bulk.conv false"
+      << " --eqs.todo_bulk.clct false"
+      << " --eqs.todo_bulk.sedi false"
+      << " --eqs.todo_bulk.revp false";
+    else if (micro == mm) cmd 
+      << " --eqs.todo_mm.act   true"
+      << " --eqs.todo_mm.cond  true"
+      << " --eqs.todo_mm.autoc false"
+      << " --eqs.todo_mm.acc   false"
+      << " --eqs.todo_mm.self  false"
+      << " --eqs.todo_mm.turb  false"
+      << " --eqs.todo_mm.sedi  false";
+    else if (micro == sdm) cmd 
+      << " --eqs.todo_sdm.adve true"
+      << " --eqs.todo_sdm.cond true"
+      << " --eqs.todo_sdm.coal false"
+      << " --eqs.todo_sdm.sedi false"
+      << " --eqs.todo_sdm.chem false";
 
     if (EXIT_SUCCESS != system(cmd.str().c_str()))
       error_macro("model run failed: " << cmd.str())
+
+    {
+      NcFile nfout("tmp_" + micro_str[micro] + "/out.nc", NcFile::read);
+      int nx = nfout.getDim("X").getSize();
+      if (ny != nfout.getDim("Y").getSize()) error_macro("ini:ny != out:ny");
+      Array<real_t, 2> rhod_rl(nx, ny);
+
+      int t = 1; // letting the non-bulk models to deal with supersaturation
+      
+      if (micro == sdm)
+      {
+        nfout.getVar("m_3").getVar(start({t,0,0,0}), count({1,nx,ny,1}), rhod_rl.data());
+        rhod_rl *= real_t(4./3.) * phc::pi<real_t>() * phc::rho_w<real_t>() * si::cubic_metres / si::kilograms;
+      }
+      else
+      {
+        nfout.getVar("rhod_rl").getVar(start({t,0,0,0}), count({1,nx,ny,1}), rhod_rl.data());
+      }
+
+      Array<real_t, 1> rl_mean(ny);
+      rl_mean = 0;
+      for (int y = 0; y < ny; ++y)
+      {
+        for (int x = 0; x < nx; ++x) 
+          rl_mean(y) += rhod_rl(x, y);
+        rl_mean(y) /= nx * rhod(y);
+      }
+      gp.send(rl_mean);
+    }
   }
-/*
-  map< quantity<si::length, real_t>, quantity<si::velocity, real_t> > plot_data;
-  for(int i=0; i<=45; i++){
-    radius = r*real_t(i*100) ; 
-    term_vel = phc::vt(r * real_t(i * 100),T, rhoa) ;
-    plot_data[radius * real_t(2*1e6)] = term_vel * real_t(100);
-  }
- 
-  Gnuplot gp;
-  gp << "set xlabel 'drop diameter [um]'" << endl;
-  gp << "set ylabel 'terminal velocity [cm/s]'" << endl;
-  gp << "set term svg" << endl;
-  gp << "set output 'term_vel_test.svg'" << endl; 
-  gp << "plot '-' u 1:3" << endl;
-  gp.send(plot_data);
-*/
 }
