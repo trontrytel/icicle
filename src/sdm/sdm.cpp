@@ -234,7 +234,7 @@ struct sdm<real_t, thrust_device_system>::detail
   real_t seed = 1234.;// TODO: option!
 
   // private field with temporary space
-  thrust::device_vector<int> tmp_shrt; // e.g. for grid cell indices
+  thrust::device_vector<int> tmp_shrt; // e.g. for grid cell indices /// TEMP TODO TODO TEMP !!!! (int -> long int)
   thrust::device_vector<thrust_size_t> tmp_long;
   thrust::device_vector<real_t> tmp_real;
 
@@ -508,7 +508,6 @@ static void sd_diag(
   const grd<real_t> &grid, 
   ptr_unordered_map<string, mtx::arr<real_t>> &aux,
   thrust::device_vector<int> &tmp_shrt, 
-  thrust::device_vector<thrust_size_t> &tmp_long,
   thrust::device_vector<real_t> &tmp_real,
   const enum xi_dfntns xi_dfntn
 )
@@ -517,16 +516,16 @@ static void sd_diag(
   {
     // TODO: repeated in sd_coalescence!
     // zeroing the temporary var 
-    thrust::fill(tmp_long.begin(), tmp_long.end(), 0); // TODO: is it needed?
+    thrust::fill(tmp_real.begin(), tmp_real.end(), 0); // TODO: is it needed?
     // doing the reduction
     thrust::pair<
       decltype(tmp_shrt.begin()), 
-      decltype(tmp_long.begin())
+      decltype(tmp_real.begin())
     > n = thrust::reduce_by_key(
       stat.sorted_ij.begin(), stat.sorted_ij.end(),
       thrust::make_constant_iterator(1),
       tmp_shrt.begin(), // will store the grid cell indices
-      tmp_long.begin()  // will store the concentrations per grid cell
+      tmp_real.begin()  // will store the concentrations per grid cell
     );
     // writing to aux
     mtx::arr<real_t> &sd_conc = aux.at("sd_conc");
@@ -534,7 +533,7 @@ static void sd_diag(
     thrust::counting_iterator<thrust_size_t> zero(0);
     thrust::for_each(zero, zero + (n.first - tmp_shrt.begin()), 
       thrust2blitz<real_t>(
-        grid.nx(), tmp_shrt, tmp_long, sd_conc 
+        grid.nx(), tmp_shrt, tmp_real, sd_conc 
       )
     );
   }
@@ -542,11 +541,11 @@ static void sd_diag(
   // calculating the zero-th moment (i.e. total particle concentration per unit volume)
   {
     // zeroing the temporary var
-    thrust::fill(tmp_long.begin(), tmp_long.end(), 0); // TODO: is it needed?
+    thrust::fill(tmp_real.begin(), tmp_real.end(), 0); // TODO: is it needed?
     // doing the reduction
     thrust::pair<
       decltype(tmp_shrt.begin()), 
-      decltype(tmp_long.begin())
+      decltype(tmp_real.begin())
     > n = thrust::reduce_by_key(
       stat.sorted_ij.begin(), 
       stat.sorted_ij.end(),
@@ -555,7 +554,7 @@ static void sd_diag(
         decltype(stat.sorted_id.begin())
       >(stat.n.begin(), stat.sorted_id.begin()), 
       tmp_shrt.begin(), // will store the grid cell indices
-      tmp_long.begin()  // will store the concentrations per grid cell
+      tmp_real.begin()  // will store the concentrations per grid cell
     );
     // writing to aux
     mtx::arr<real_t> &n_tot = aux.at("n_tot");
@@ -563,7 +562,7 @@ static void sd_diag(
     thrust::counting_iterator<thrust_size_t> iter(0);
     thrust::for_each(iter, iter + (n.first - tmp_shrt.begin()), 
       thrust2blitz<real_t>( 
-        grid.nx(), tmp_shrt, tmp_long, n_tot, 
+        grid.nx(), tmp_shrt, tmp_real, n_tot, 
         real_t(1) / grid.dx() / grid.dy() / grid.dz() * si::cubic_metres
       )
     );
@@ -599,7 +598,6 @@ static void sd_diag(
     }
 
     // writing to aux
-cerr << "dumping m_" << k << endl;
     ostringstream tmp;
     tmp << "m_" << k;
     mtx::arr<real_t> &out = aux.at(tmp.str());
@@ -611,7 +609,6 @@ cerr << "dumping m_" << k << endl;
         real_t(1) / grid.dx() / grid.dy() / grid.dz() * si::cubic_metres
       )
     );
-cerr << "done." << endl;
   }
 
   // calculating chemical stuff
@@ -1022,7 +1019,6 @@ static void sd_coalescence(
       pimpl->grid, 
       aux, 
       pimpl->tmp_shrt, 
-      pimpl->tmp_long, 
       pimpl->tmp_real, 
       pimpl->xi_dfntn
     ); // TODO: only when recording!

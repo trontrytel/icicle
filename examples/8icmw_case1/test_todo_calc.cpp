@@ -101,7 +101,7 @@ int
   sdm_adve_sstp = 1,
   sdm_sedi_sstp = 1,
   sdm_chem_sstp = 1,
-  sdm_cond_sstp = 128,
+  sdm_cond_sstp = 64,
   sdm_coal_sstp = 1;
 bool 
   sdm_adve = http_or_default("sdm_adve", true),
