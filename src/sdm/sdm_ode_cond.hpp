@@ -177,6 +177,7 @@ namespace sdm
             )
           ) / si::cubic_metres);
 
+        // TODO: as an option
         // chosing which one to use
         if (stat.xi[id] + dt * dxidt < xi_eq) dxidt = (xi_eq - stat.xi[id]) / dt;
 
@@ -217,6 +218,7 @@ namespace sdm
     //
     void pre_step()
     {
+cerr << "pre_step()" << endl;
       thrust::counting_iterator<thrust_size_t> zero(0);
 
       // calculating the third moment of the spectrum before condensation
@@ -231,6 +233,7 @@ namespace sdm
       const real_t 
     )
     {
+cerr << "step()" << endl;
       thrust::counting_iterator<thrust_size_t> zero(0);
 
       // calculating drop growth
@@ -244,6 +247,7 @@ namespace sdm
     //
     void post_step()
     {
+cerr << "post_step()" << endl;
       // nested functor
       class adj
       {
@@ -266,28 +270,19 @@ namespace sdm
             const quantity<si::mass_density, real_t> rhod_rv
           )
           {
-            //if (rhod_rv != rhod_rv_initial) // TODO 
-            //{
-              envi.r[ij] = rhod_rv / (envi.rhod[ij] * si::kilograms / si::cubic_metres);
-              envi.p[ij] = phc::p<real_t>(rhod_th, real_t(envi.r[ij])) / si::pascals;
-              envi.T[ij] = phc::T<real_t>(
-                rhod_th / (envi.rhod[ij] * si::kilograms / si::cubic_metres), 
-                envi.p[ij] * si::pascals, 
-                real_t(envi.r[ij])
-              ) / si::kelvins;
-            //}
+            // TODO: if other than Euler, the envi.{p,T,r} should be updated here!
             F = phc::dtheta_drv<real_t>(
               envi.T[ij] * si::kelvins, 
               envi.p[ij] * si::pascals, 
               real_t(envi.r[ij]), 
               rhod_th, 
               envi.rhod[ij] * si::kilograms / si::cubic_metres
-            ); // TODO: option : which dtheta...
+            ); 
           }
         };
 
         // odeint::euler< // TODO: opcja?
-        odeint::runge_kutta4<
+        odeint::euler<
           quantity<multiply_typeof_helper<si::mass_density, si::temperature>::type, real_t>, // state_type
           real_t, // value_type
           quantity<si::temperature, real_t>, // deriv_type
@@ -325,7 +320,7 @@ namespace sdm
               boost::ref(F),
               tmp,
               envi.rhod_rv[ij] * si::kilograms / si::cubic_metres,
-              drhod_rv
+              drhod_rv 
             );
 
             // latent heat source/sink due to evaporation/condensation
@@ -334,6 +329,15 @@ namespace sdm
 
           // updating rhod_rv
           envi.rhod_rv[ij] += drhod_rv / (si::kilograms / si::cubic_metres);
+          {
+            envi.r[ij] = envi.rhod_rv[ij] / envi.rhod[ij];
+            envi.p[ij] = phc::p<real_t>(envi.rhod_th[ij] * si::kelvins * si::kilograms / si::cubic_metres, real_t(envi.r[ij])) / si::pascals;
+            envi.T[ij] = phc::T<real_t>(
+              envi.rhod_th[ij] / envi.rhod[ij] * si::kelvins, 
+              envi.p[ij] * si::pascals, 
+              real_t(envi.r[ij])
+            ) / si::kelvins;
+          }
           //assert(rhod_rv(i,j,k) >= 0);  TODO
           //assert(isfinite(rhod_rv(i,j,k))); TODO
         }

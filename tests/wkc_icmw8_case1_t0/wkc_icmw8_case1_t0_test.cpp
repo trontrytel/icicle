@@ -44,6 +44,7 @@ int main()
 
   // letting the non-bulk models to deal with supersaturation
   int dt_out = 5, n_out = 4; 
+  real_t eps = .05e-3;
 
   // loop over types of microphysics
   for (micro_t &micro : micros)
@@ -82,8 +83,8 @@ int main()
       << " --eqs.todo_mm.turb  false"
       << " --eqs.todo_mm.sedi  false";
     else if (micro == sdm) cmd 
-      << " --eqs.todo_sdm.sd_conc_mean 64"
-      << " --eqs.todo_sdm.cond.sstp 64"
+      << " --eqs.todo_sdm.sd_conc_mean 256"
+      << " --eqs.todo_sdm.cond.sstp 1"
       << " --eqs.todo_sdm.adve true"
       << " --eqs.todo_sdm.cond true"
       << " --eqs.todo_sdm.coal false"
@@ -141,7 +142,8 @@ int main()
 
   {
     Array<real_t, 2> rhod_rl(nx, ny);
-    Array<real_t, 1> rl_mean(ny);
+    Array<real_t, 1> rl_mean(ny), rl_mean_cache(ny);
+    bool cached = false;
     for (micro_t &micro : micros)
     {
       NcFile nfout("tmp_" + micro_str[micro] + "/out.nc", NcFile::read);
@@ -164,6 +166,22 @@ int main()
           rl_mean(y) /= nx * rhod(y);
         }
         gp.send(rl_mean);
+      }
+ 
+      // checking value from the last t
+      if (!cached)
+      {
+        rl_mean_cache = rl_mean;
+        cached = true;
+      }
+      else
+      {
+        for (int y = 0; y < ny; ++y)
+        {
+          cerr << "abs(" << rl_mean_cache(y) << "-" << rl_mean(y) << ") = " << std::abs(rl_mean_cache(y) - rl_mean(y))<< endl;
+          if (std::abs(rl_mean_cache(y) - rl_mean(y)) > eps) 
+            error_macro("delta rl_mean > eps for " << micro_str[micro] << " @ y = " << y) 
+        }
       }
     }
   }

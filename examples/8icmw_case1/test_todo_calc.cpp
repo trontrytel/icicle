@@ -64,11 +64,11 @@ const int
   bits = http_or_default("bits", int(64)),
   fct = http_or_default("fct", int(0)),  
   toa = http_or_default("toa", int(0)),
-  iord = http_or_default("iord", int(1)),
+  iord = http_or_default("iord", int(2)),
   nsd = http_or_default("nsd", int(1));  
 const quantity<si::time, real_t> 
-  t_max = 30 * si::seconds, // 4 * 3600
-  dt_out = real_t(3) * si::seconds; // 300
+  t_max = 1000 * si::seconds, // 4 * 3600
+  dt_out = real_t(25) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = http_or_default("w_max", real_t(.6)) * si::metres_per_second; // .6 TODO: check it!
 
@@ -101,16 +101,16 @@ int
   sdm_adve_sstp = 1,
   sdm_sedi_sstp = 1,
   sdm_chem_sstp = 1,
-  sdm_cond_sstp = 64,
+  sdm_cond_sstp = 1,
   sdm_coal_sstp = 1;
 bool 
   sdm_adve = http_or_default("sdm_adve", true),
   sdm_cond = http_or_default("sdm_cond", true),
-  sdm_coal = http_or_default("sdm_coal", false),
-  sdm_sedi = http_or_default("sdm_sedi", false),
+  sdm_coal = http_or_default("sdm_coal", true),
+  sdm_sedi = http_or_default("sdm_sedi", true),
   sdm_chem = http_or_default("sdm_chem", false);
 real_t 
-  sd_conc_mean = http_or_default("sd_conc_mean", 128);
+  sd_conc_mean = http_or_default("sd_conc_mean", 256);
 
 using wkc::icmw8_case1::micro_t;
 using wkc::icmw8_case1::bulk;
