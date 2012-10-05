@@ -61,14 +61,14 @@ const quantity<phc::mixing_ratio, real_t>
 // other parameters deduced from the Fortran code published at:
 // http://www.rap.ucar.edu/~gthompsn/workshop2012/case1/kinematic_wrain.vocals.v3.for
 const int 
-  bits = http_or_default("bits", int(32)),
+  bits = http_or_default("bits", int(64)),
   fct = http_or_default("fct", int(0)),  
   toa = http_or_default("toa", int(0)),
-  iord = http_or_default("iord", int(2)),
+  iord = http_or_default("iord", int(1)),
   nsd = http_or_default("nsd", int(1));  
 const quantity<si::time, real_t> 
-  t_max = 10 * si::seconds, // 4 * 3600
-  dt_out = real_t(1) * si::seconds; // 300
+  t_max = 30 * si::seconds, // 4 * 3600
+  dt_out = real_t(3) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = http_or_default("w_max", real_t(.6)) * si::metres_per_second; // .6 TODO: check it!
 
@@ -101,7 +101,7 @@ int
   sdm_adve_sstp = 1,
   sdm_sedi_sstp = 1,
   sdm_chem_sstp = 1,
-  sdm_cond_sstp = 50,
+  sdm_cond_sstp = 128,
   sdm_coal_sstp = 1;
 bool 
   sdm_adve = http_or_default("sdm_adve", true),
@@ -110,7 +110,7 @@ bool
   sdm_sedi = http_or_default("sdm_sedi", false),
   sdm_chem = http_or_default("sdm_chem", false);
 real_t 
-  sd_conc_mean = http_or_default("sd_conc_mean", 256);
+  sd_conc_mean = http_or_default("sd_conc_mean", 128);
 
 using wkc::icmw8_case1::micro_t;
 using wkc::icmw8_case1::bulk;
@@ -145,14 +145,14 @@ int main(int argc, char **argv)
       << " --adv.mpdata.fct " << fct
       << " --adv.mpdata.iord " << iord
       << " --adv.mpdata.third_order " << toa
-//    << " --t_max " << real_t(t_max / si::seconds)
-//    << " --dt " << "auto" 
-//    << " --dt_out " << real_t(dt_out / si::seconds)
+    << " --t_max " << real_t(t_max / si::seconds)
+    << " --dt " << "auto" 
+    << " --dt_out " << real_t(dt_out / si::seconds)
 
 // TODO TEMP TODO TEMP !!!
-    << " --dt " << real_t(1)
-    << " --nt " << real_t(300)
-    << " --nout " << real_t(30)
+//    << " --dt " << real_t(1)
+//    << " --nt " << real_t(300)
+//    << " --nout " << real_t(30)
 
     << " --out netcdf" 
     << " --out.netcdf.file " << dir << "/out.nc";

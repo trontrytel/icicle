@@ -192,7 +192,7 @@ namespace sdm
     private: const grd<real_t> &grid;
     private: quantity<si::time, real_t> dt_sstp;
     private: const real_t maxRH = .99; // TODO: should this be an option (at least it deserves some documentation)
-    private: thrust::device_vector<real_t> dm_3;
+    private: thrust::device_vector<real_t> &dm_3;
 
     // ctor
     public: ode_cond(
@@ -203,6 +203,27 @@ namespace sdm
     ) : stat(stat), envi(envi), grid(grid), dm_3(tmp_real)
     {}
   
+    // a post-ctor init method
+    // (cannot be placed in the constructor as at that time the initial values were not loaded yet to psi)
+    void init(const quantity<si::time, real_t> &dt_sstp_)
+    {
+      dt_sstp = dt_sstp_;      
+
+      // initialising the wet radii (xi variable) to equilibrium values
+      thrust::counting_iterator<thrust_size_t> zero(0);
+      thrust::for_each(zero, zero + stat.n_part, equil(stat, envi, maxRH));
+    }
+
+    //
+    void pre_step()
+    {
+      thrust::counting_iterator<thrust_size_t> zero(0);
+
+      // calculating the third moment of the spectrum before condensation
+      thrust::fill(dm_3.begin(), dm_3.end(), real_t(0));
+      thrust::for_each(zero, zero + stat.n_part, dm_3_summator(stat, dm_3, grid, -1));
+    }
+
     // overloaded () operator invoked by odeint
     public: void operator()(
       const thrust::device_vector<real_t>&, 
@@ -212,33 +233,15 @@ namespace sdm
     {
       thrust::counting_iterator<thrust_size_t> zero(0);
 
-      // calculating the third moment of the spectrum before condensation
-      thrust::fill(dm_3.begin(), dm_3.end(), real_t(0));
-      thrust::for_each(zero, zero + stat.n_part, dm_3_summator(stat, dm_3, grid, -1));
-
       // calculating drop growth
-      thrust::counting_iterator<thrust_size_t> iter(0);
       thrust::transform(
-        iter, iter + stat.n_part, 
+        zero, zero + stat.n_part, 
         dxi_dt.begin(), 
         drop_growth_equation(stat, envi, dt_sstp / si::seconds, maxRH)
       );
     }
 
-    // a post-ctor init method
-    // (cannot be placed in the constructor as at that time the initial values were not loaded yet to psi)
-    void init(const quantity<si::time, real_t> &dt_sstp_)
-    {
-      dt_sstp = dt_sstp_;      
-    }
-
-    void pre_step()
-    {
-      // initialising the wet radii (xi variable) to equilibrium values
-      thrust::counting_iterator<thrust_size_t> zero(0);
-      thrust::for_each(zero, zero + stat.n_part, equil(stat, envi, maxRH));
-    }
-
+    //
     void post_step()
     {
       // nested functor

@@ -595,10 +595,11 @@ static void sd_diag(
         tmp_real.begin()  // will store the concentrations per grid cell
       );
       break;
-      default: assert(false); //TODO: ln, p3, id, ...
+      default: error_macro("assert!") //TODO: ln, p3, id, ...
     }
 
     // writing to aux
+cerr << "dumping m_" << k << endl;
     ostringstream tmp;
     tmp << "m_" << k;
     mtx::arr<real_t> &out = aux.at(tmp.str());
@@ -610,6 +611,7 @@ static void sd_diag(
         real_t(1) / grid.dx() / grid.dy() / grid.dz() * si::cubic_metres
       )
     );
+cerr << "done." << endl;
   }
 
   // calculating chemical stuff

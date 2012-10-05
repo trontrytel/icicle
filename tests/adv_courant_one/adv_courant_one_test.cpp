@@ -78,7 +78,7 @@ int main()
                 if (nxyz != "--grd.nx 20 --vel.uniform.u" && nsd > 1) continue; // parallelism only in X
 
                 ostringstream cmd;
-                cmd << "../../icicle --ini boxcar --ini.boxcar.bx 1";
+                cmd << "../../icicle --eqs scalar_advection --ini boxcar --ini.boxcar.bx 1";
                 cmd << " --bits " << bits << " --dt_out 1 --grd.dx 1 --grd.dy 1 --grd.dz 1";
                 cmd << " --vel uniform " << nxyz << " " << u;
                 cmd << " --t_max " << t_max << " --adv " << adv << " --slv " << slv << " --out gnuplot --nsd " << nsd;

@@ -162,11 +162,14 @@ namespace sdm {
     {   
       switch (k)
       {
-        case 0: return stat.xi[id] > threshold ? (stat.n[id]) : 0;
-        case 1: return stat.xi[id] > threshold ? (stat.n[id] * xi::rw_of_xi(stat.xi[id])) : 0; 
-        case 2: return stat.xi[id] > threshold ? (stat.n[id] * xi::rw2_of_xi(stat.xi[id])) : 0;
-        case 3: return stat.xi[id] > threshold ? (stat.n[id] * xi::rw3_of_xi(stat.xi[id])) : 0;
-        default: return stat.xi[id] > threshold ? (stat.n[id] * pow(xi::rw_of_xi(stat.xi[id]), k)) : 0;
+        case 0 : return stat.xi[id] > threshold ? (real_t(stat.n[id])) : 0;
+        //                                         ^^^^^^ this cast is absolutely needed!!!
+        //                                                otherwise gcc optimisations result in 
+        //                                                negative values from real_t(size_t) conversion
+        case 1 : return stat.xi[id] > threshold ? (real_t(stat.n[id]) * xi::rw_of_xi(stat.xi[id])) : 0; 
+        case 2 : return stat.xi[id] > threshold ? (real_t(stat.n[id]) * xi::rw2_of_xi(stat.xi[id])) : 0;
+        case 3 : return stat.xi[id] > threshold ? (real_t(stat.n[id]) * xi::rw3_of_xi(stat.xi[id])) : 0;
+        default: return stat.xi[id] > threshold ? (real_t(stat.n[id]) * pow(xi::rw_of_xi(stat.xi[id]), k)) : 0;
       }
     }
   };

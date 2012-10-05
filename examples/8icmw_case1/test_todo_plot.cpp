@@ -240,6 +240,7 @@ int main(int argc, char **argv)
       gp << "set title 'super-droplet conc. [1/dx/dy/dz]'" << endl;
       gp << "set cbrange [0:512]" << endl;
       nf.getVar("sd_conc").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
+cerr << "sd conc: " << min(tmp0) << " ... " << max(tmp0) << endl;
       gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";
       gp << endl;
       gp.sendBinary(tmp0);
@@ -249,6 +250,7 @@ int main(int argc, char **argv)
       gp << "set cbrange [0:150]" << endl;
       nf.getVar("m_0").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
       tmp0 /= 1e6;
+cerr << "conc: " << min(tmp0) << " ... " << max(tmp0) << endl;
       gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";
       gp << endl;
       gp.sendBinary(tmp0);
@@ -270,11 +272,14 @@ int main(int argc, char **argv)
       //gp << "set logscale cb" << endl;
       //gp << "set cbrange [1:500]" << endl;
       nf.getVar("m_3").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
+cerr << "m_3: " << min(tmp0) << " ... " << max(tmp0) << endl;
       nf.getVar("m_2").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp1.data()); 
+cerr << "m_2: " << min(tmp0) << " ... " << max(tmp0) << endl;
       tmp0 /= tmp1;
       tmp0 *= 1e6;
       gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";
       gp << endl;
+cerr << "r_eff: " << min(tmp0) << " ... " << max(tmp0) << endl;
       gp.sendBinary(tmp0);
     }
     else assert(false);
