@@ -218,7 +218,6 @@ namespace sdm
     //
     void pre_step()
     {
-cerr << "pre_step()" << endl;
       thrust::counting_iterator<thrust_size_t> zero(0);
 
       // calculating the third moment of the spectrum before condensation
@@ -233,7 +232,6 @@ cerr << "pre_step()" << endl;
       const real_t 
     )
     {
-cerr << "step()" << endl;
       thrust::counting_iterator<thrust_size_t> zero(0);
 
       // calculating drop growth
@@ -247,7 +245,6 @@ cerr << "step()" << endl;
     //
     void post_step()
     {
-cerr << "post_step()" << endl;
       // nested functor
       class adj
       {

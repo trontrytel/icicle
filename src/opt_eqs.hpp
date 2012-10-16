@@ -8,13 +8,13 @@
 #pragma once
 
 #  include "opt.hpp"
-#  include "eqs_scalar_advection.hpp"
-#  include "eqs_shallow_water.hpp"
-#  include "eqs_isentropic.hpp"
-#  include "eqs_harmonic_oscillator.hpp"
-#  include "eqs_todo_bulk_ode.hpp"
-#  include "eqs_todo_mm.hpp"
-#  include "eqs_todo_sdm.hpp"
+#  include "eqs/eqs_scalar_advection.hpp"
+#  include "eqs/eqs_shallow_water.hpp"
+#  include "eqs/eqs_isentropic.hpp"
+#  include "eqs/eqs_harmonic_oscillator.hpp"
+#  include "eqs/eqs_todo_bulk_ode.hpp"
+#  include "eqs/eqs_todo_mm.hpp"
+#  include "eqs/eqs_todo_sdm.hpp"
 
 inline void opt_eqs_desc(po::options_description &desc)
 {

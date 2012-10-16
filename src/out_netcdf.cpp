@@ -13,7 +13,7 @@
 #endif
 
 #include "inf.hpp"
-#include "eqs.hpp"
+#include "eqs/eqs.hpp"
 #include "grd.hpp"
 
 // TODO: ncFloat vs. ncDouble as a command-line option (but it float computations and double requeste -> error)

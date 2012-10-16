@@ -9,9 +9,9 @@
  */
 
 #include "eqs_todo_mm.hpp"
-#include "phc/phc_theta.hpp"
-#include "phc/phc_kelvin_term.hpp"
-#include "phc/phc_mm.hpp"
+#include "../phc/phc_theta.hpp"
+#include "../phc/phc_kelvin_term.hpp"
+#include "../phc/phc_mm.hpp"
 
 /** @brief the 2 moment parametrisation of warm rain microphysics
  *
@@ -448,4 +448,4 @@ eqs_todo_mm<real_t>::eqs_todo_mm(
 
 // explicit instantiations
 #define ICICLE_INSTANTIATE_CLASS eqs_todo_mm
-#include "cmn/cmn_instant.hpp"
+#include "../cmn/cmn_instant.hpp"

@@ -9,9 +9,9 @@
 #pragma once
 
 #include "eqs.hpp"
-#include "rhs_explicit.hpp"
-#include "grd.hpp"
-#include "phc/phc.hpp"
+#include "../rhs_explicit.hpp"
+#include "../grd.hpp"
+#include "../phc/phc.hpp"
 
 template <typename real_t>
 class eqs_shallow_water : public eqs<real_t> 

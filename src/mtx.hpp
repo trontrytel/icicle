@@ -158,24 +158,24 @@ namespace mtx
   struct idx_ijk : idx
   {
     idx_ijk(const blitz::Range &i, const blitz::Range &j, const blitz::Range &k) 
-      : idx(blitz::TinyVector<blitz::Range, 3>(i,j,k)) 
+      : idx({i,j,k}) 
     { } 
     idx_ijk(const blitz::Range &i, const blitz::Range &j, const int k = 0) 
-      : idx(blitz::TinyVector<blitz::Range, 3>(i,j,blitz::Range(k,k))) 
+      : idx({i,j,blitz::Range(k,k)}) 
     { } 
     idx_ijk(const blitz::Range &i, const int j = 0, const int k = 0) 
-      : idx(blitz::TinyVector<blitz::Range, 3>(
+      : idx({
         i,
         blitz::Range(j,j),
         blitz::Range(k,k)
-      )) 
+      }) 
     { } 
     idx_ijk(const int i, const int j = 0, const int k = 0) 
-      : idx(blitz::TinyVector<blitz::Range, 3>(
+      : idx({
         blitz::Range(i,i),
         blitz::Range(j,j),
         blitz::Range(k,k)
-      )) 
+      }) 
     { } 
   };
 
@@ -183,7 +183,7 @@ namespace mtx
   struct idx_jki : idx
   {
     idx_jki(const blitz::Range &j, const blitz::Range &k, const blitz::Range &i) 
-      : idx(blitz::TinyVector<blitz::Range, 3>(i,j,k)) 
+      : idx({i,j,k}) 
     { } 
   };
 
@@ -191,7 +191,7 @@ namespace mtx
   struct idx_kij : idx
   {
     idx_kij(const blitz::Range &k, const blitz::Range &i, const blitz::Range &j) 
-      : idx(blitz::TinyVector<blitz::Range, 3>(i,j,k)) 
+      : idx({i,j,k}) 
     { } 
   };
 

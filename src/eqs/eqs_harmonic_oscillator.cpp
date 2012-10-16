@@ -57,4 +57,4 @@ eqs_harmonic_oscillator<real_t>::eqs_harmonic_oscillator(quantity<si::frequency,
 
 // explicit instantiations
 #define ICICLE_INSTANTIATE_CLASS eqs_harmonic_oscillator
-#include "cmn/cmn_instant.hpp"
+#include "../cmn/cmn_instant.hpp"

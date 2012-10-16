@@ -9,18 +9,16 @@
  */
 #pragma once
 
-#include "cfg/cfg_boost_odeint.hpp"
-#include "cfg/cfg_thrust.hpp"
-
+#include "../cfg/cfg_boost_odeint.hpp"
+#include "../cfg/cfg_thrust.hpp"
 #include "eqs_todo.hpp" 
-#include "vel.hpp"
-#include "phc/phc.hpp"
-#include "sdm/sdm_enums.hpp"
+#include "../vel.hpp"
+#include "../phc/phc.hpp"
+#include "../sdm/sdm_enums.hpp"
+#include "../cmn/cmn_error.hpp"
 
 #include <memory>
 using std::unique_ptr;
-
-#include "cmn/cmn_error.hpp"
 
 // TODO: option to set the number of threads to use!
 
@@ -81,7 +79,8 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     vector<ptr_vector<mtx::arr<real_t>>> &psi,
     ptr_unordered_map<string, mtx::arr<real_t>> &aux, 
     const ptr_vector<mtx::arr<real_t>> C,
-    const quantity<si::time, real_t> dt
+    const quantity<si::time, real_t> dt,
+    bool record
   )
 #if !defined(USE_BOOST_ODEINT) || !defined(USE_THRUST)
   { assert(false); }

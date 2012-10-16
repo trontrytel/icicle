@@ -512,6 +512,7 @@ static void sd_diag(
   const enum xi_dfntns xi_dfntn
 )
 {
+cerr << "sd_diag()" << endl;
   // calculating super-droplet concentration (per grid cell)
   {
     // TODO: repeated in sd_coalescence!
@@ -840,7 +841,7 @@ static void sd_chem(
         * dt // timestep
         / dv // volume
         * si::square_metres * phc::pi<real_t>() * pow(this->rw_of_xi(stat.xi[id1]) + this->rw_of_xi(stat.xi[id2]), 2) // geometrical cross-section
-        * real_t(10); // collection efficiency TODO!!!
+        * real_t(1); // collection efficiency TODO!!!
       assert(prob < 1);
 
       // tossing a random number and returning if unlucky
@@ -942,7 +943,8 @@ static void sd_coalescence(
     mtx::arr<real_t> &rhod_rv,
     ptr_unordered_map<string, mtx::arr<real_t>> &aux, 
     const ptr_vector<mtx::arr<real_t>> C,
-    const quantity<si::time, real_t> dt
+    const quantity<si::time, real_t> dt,
+    bool record
   )
   {
     // TODO: assert(sd_conc.lbound(mtx::k) == sd_conc.ubound(mtx::k)); // 2D
@@ -1013,15 +1015,15 @@ static void sd_coalescence(
       detail::sd_sort(pimpl->stat);
     }
 
-    // diagnostics
-    detail::sd_diag(
+    // diagnostics (only when recording!)
+    if (record) detail::sd_diag(
       pimpl->stat, 
       pimpl->grid, 
       aux, 
       pimpl->tmp_shrt, 
       pimpl->tmp_real, 
       pimpl->xi_dfntn
-    ); // TODO: only when recording!
+    ); 
 
     // syncing out data to the Eulerian grid (rhod_rv and rhod_th)
     detail::sd_sync_out(pimpl->envi, pimpl->grid, rhod_th, rhod_rv, pimpl->tmp_shrt); 

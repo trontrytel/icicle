@@ -52,7 +52,8 @@ namespace sdm
       mtx::arr<real_t> &rhod_rv,
       ptr_unordered_map<string, mtx::arr<real_t>> &aux, 
       const ptr_vector<mtx::arr<real_t>> C,
-      const quantity<si::time, real_t> dt
+      const quantity<si::time, real_t> dt,
+      bool record
     )  
     {
       assert(false);
@@ -93,7 +94,8 @@ namespace sdm
       mtx::arr<real_t> &rhod_rv,
       ptr_unordered_map<string, mtx::arr<real_t>> &aux, 
       const ptr_vector<mtx::arr<real_t>> C,
-      const quantity<si::time, real_t> dt
+      const quantity<si::time, real_t> dt,
+      bool record
     );
   };
 };

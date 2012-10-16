@@ -8,7 +8,7 @@
  */
 
 #include "eqs_shallow_water.hpp"
-#include "cmn/cmn_error.hpp"
+#include "../cmn/cmn_error.hpp"
 
 #include <boost/assign/ptr_map_inserter.hpp>
 using boost::assign::ptr_map_insert;
@@ -151,4 +151,4 @@ eqs_shallow_water<real_t>::eqs_shallow_water(const grd<real_t> &grid)
 
 // explicit instantiations
 #define ICICLE_INSTANTIATE_CLASS eqs_shallow_water
-#include "cmn/cmn_instant.hpp"
+#include "../cmn/cmn_instant.hpp"

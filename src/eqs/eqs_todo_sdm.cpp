@@ -10,7 +10,7 @@
 
 #include "eqs_todo_sdm.hpp"
 #if defined(USE_THRUST) && defined(USE_BOOST_ODEINT)
-#  include "sdm/sdm.hpp"
+#  include "../sdm/sdm.hpp"
 
 template <typename real_t>
 struct eqs_todo_sdm<real_t>::detail
@@ -156,17 +156,18 @@ void eqs_todo_sdm<real_t>::adjustments(
   vector<ptr_vector<mtx::arr<real_t>>> &psi,
   ptr_unordered_map<string, mtx::arr<real_t>> &aux, 
   const ptr_vector<mtx::arr<real_t>> C,
-  const quantity<si::time, real_t> dt
+  const quantity<si::time, real_t> dt,
+  bool record
 )
 {
   pimpl->particles->adjustments(
     psi[this->par.idx_rhod_th][n],
     psi[this->par.idx_rhod_rv][n],
-    aux, C, dt
+    aux, C, dt, record
   );
 }
 #endif
 
 // explicit instantiations
 #define ICICLE_INSTANTIATE_CLASS eqs_todo_sdm
-#include "cmn/cmn_instant.hpp"
+#include "../cmn/cmn_instant.hpp"

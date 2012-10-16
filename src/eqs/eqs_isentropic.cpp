@@ -8,9 +8,9 @@
  @  @brief contains definition of the eqs_isentropic class - a system of 3D isentropic equations
  */
 
-#include "rhs_explicit.hpp"
+#include "../rhs_explicit.hpp"
 #include "eqs_isentropic.hpp"
-#include "cmn/cmn_error.hpp"
+#include "../cmn/cmn_error.hpp"
 
 #include <boost/lexical_cast.hpp>
 
@@ -252,4 +252,4 @@ eqs_isentropic<real_t>::eqs_isentropic(const grd<real_t> &grid,
 
 // explicit instantiations
 #define ICICLE_INSTANTIATE_CLASS eqs_isentropic
-#include "cmn/cmn_instant.hpp"
+#include "../cmn/cmn_instant.hpp"
