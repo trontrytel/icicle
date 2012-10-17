@@ -7,15 +7,14 @@
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
 
-#include "cfg/cfg_boost_odeint.hpp"
+#include "../cfg/cfg_boost_odeint.hpp"
 #include "eqs_todo_bulk_ode.hpp"
+#include "../phc/phc_const_cp.hpp"
 
 #if defined(USE_BOOST_ODEINT)
 #  include <boost/numeric/odeint.hpp>
 namespace odeint = boost::numeric::odeint;
 #endif
-
-#include "phc/phc_const_cp.hpp"
 
 template <typename real_t>
 eqs_todo_bulk_ode<real_t>::eqs_todo_bulk_ode(
@@ -179,4 +178,4 @@ void eqs_todo_bulk_ode<real_t>::condevap(
 
 // explicit instantiations
 #define ICICLE_INSTANTIATE_CLASS eqs_todo_bulk_ode
-#include "cmn/cmn_instant.hpp"
+#include "../cmn/cmn_instant.hpp"

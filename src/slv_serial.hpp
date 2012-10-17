@@ -73,7 +73,7 @@ class slv_serial : public slv<real_t>
 
   public: void apply_forcings(int e, int n, quantity<si::time, real_t> dt);
 
-  public: void apply_adjustments(int n, const quantity<si::time, real_t> dt);
+  public: void apply_adjustments(int n, const quantity<si::time, real_t> dt, bool record);
 
   public: void cycle_arrays(const int e, const int n); // TODO: n unneeded?
 

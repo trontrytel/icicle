@@ -96,7 +96,7 @@ class slv_parallel : public slv<real_t>
     int n = 0;
 
     // adjustments for the initial condition
-    slvs[sd].apply_adjustments(n, setup.dt);
+    slvs[sd].apply_adjustments(n, setup.dt, true);
 
     for (int e = 0; e < setup.eqsys.n_vars(); ++e) 
       fill_halos(sd, e, n); 
@@ -148,7 +148,7 @@ class slv_parallel : public slv<real_t>
       } // e - equations
 
       // apply post-advection, pre-rhs adjustments
-      slvs[sd].apply_adjustments(n + 1, setup.dt);
+      slvs[sd].apply_adjustments(n + 1, setup.dt, (t+1) % setup.nout == 0);
 
       // assuming that computation of forcings relies on the outcome of advection of ALL variables
       if (!allhomo)

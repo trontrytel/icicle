@@ -7,7 +7,7 @@
  *  @brief definition of the @ref eqs class - a base class for all transport equation systems
  */
 #pragma once
-#include "rhs.hpp"
+#include "../rhs.hpp"
 
 #include <vector>
 using std::vector;
@@ -269,7 +269,8 @@ class eqs
     vector<ptr_vector<mtx::arr<real_t>>> &psi, // advected fields
     ptr_unordered_map<string, mtx::arr<real_t>> &aux, // auxiliary variables
     const ptr_vector<mtx::arr<real_t>> C, // Courant number fields
-    const quantity<si::time, real_t> dt
+    const quantity<si::time, real_t> dt,
+    bool record
   ) {} // no default adjustments
 
 };

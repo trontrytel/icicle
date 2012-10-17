@@ -341,9 +341,9 @@ void slv_serial<real_t>::apply_forcings(int e, int n, quantity<si::time, real_t>
 }
 
 template <typename real_t>
-void slv_serial<real_t>::apply_adjustments(int n, const quantity<si::time, real_t> dt)
+void slv_serial<real_t>::apply_adjustments(int n, const quantity<si::time, real_t> dt, bool record)
 {
-  setup.eqsys.adjustments(n, psi, aux, C, dt); 
+  setup.eqsys.adjustments(n, psi, aux, C, dt, record); 
 }
 
 template <typename real_t>

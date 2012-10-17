@@ -8,10 +8,9 @@
  */
 #pragma once
 #include "eqs_todo.hpp"
-#include "phc/phc_kessler.hpp"
-#include "phc/phc_theta.hpp"
-
-#include "cmn/cmn_error.hpp" 
+#include "../phc/phc_kessler.hpp"
+#include "../phc/phc_theta.hpp"
+#include "../cmn/cmn_error.hpp" 
 
 template <typename real_t>
 class eqs_todo_bulk : public eqs_todo<real_t> 
@@ -180,7 +179,8 @@ class eqs_todo_bulk : public eqs_todo<real_t>
     vector<ptr_vector<mtx::arr<real_t>>> &psi,
     ptr_unordered_map<string, mtx::arr<real_t>> &aux, 
     const ptr_vector<mtx::arr<real_t>> C,
-    const quantity<si::time, real_t> dt
+    const quantity<si::time, real_t> dt,
+    bool record
   ) 
   {
     const mtx::arr<real_t>

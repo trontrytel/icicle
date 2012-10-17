@@ -21,4 +21,4 @@ eqs_scalar_advection<real_t>::eqs_scalar_advection()
 
 // explicit instantiations
 #define ICICLE_INSTANTIATE_CLASS eqs_scalar_advection
-#include "cmn/cmn_instant.hpp"
+#include "../cmn/cmn_instant.hpp"

@@ -13,7 +13,7 @@
 #include "vel.hpp"
 #include "ini.hpp"
 #include "grd.hpp"
-#include "eqs.hpp"
+#include "eqs/eqs.hpp"
 
 #include "cmn/cmn_error.hpp"
 

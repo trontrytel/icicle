@@ -67,8 +67,8 @@ const int
   iord = http_or_default("iord", int(2)),
   nsd = http_or_default("nsd", int(1));  
 const quantity<si::time, real_t> 
-  t_max = 1000 * si::seconds, // 4 * 3600
-  dt_out = real_t(25) * si::seconds; // 300
+  t_max = 360 * si::seconds, // 4 * 3600
+  dt_out = real_t(100) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = http_or_default("w_max", real_t(.6)) * si::metres_per_second; // .6 TODO: check it!
 

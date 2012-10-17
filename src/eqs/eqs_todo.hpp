@@ -8,8 +8,8 @@
 #pragma once
 
 #include "eqs.hpp"
-#include "rhs_explicit.hpp"
-#include "grd.hpp"
+#include "../rhs_explicit.hpp"
+#include "../grd.hpp"
 
 #include <boost/assign/ptr_map_inserter.hpp>
 using boost::assign::ptr_map_insert;
