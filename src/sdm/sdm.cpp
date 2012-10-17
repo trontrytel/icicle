@@ -32,7 +32,7 @@ namespace sdm
 
 template <typename real_t, int thrust_device_system>
 sdm<real_t, thrust_device_system>::sdm(
-  const grd<real_t> &grid, 
+  const grd<real_t> &grid,
   const vel<real_t> &velocity,
   map<enum processes, bool> opts,
   const enum xi_dfntns xi_dfntn,
@@ -512,7 +512,6 @@ static void sd_diag(
   const enum xi_dfntns xi_dfntn
 )
 {
-cerr << "sd_diag()" << endl;
   // calculating super-droplet concentration (per grid cell)
   {
     // TODO: repeated in sd_coalescence!

@@ -15,6 +15,7 @@
 template <typename real_t>
 struct eqs_todo_sdm<real_t>::detail
 {
+  // both sdm<openmp> and sdm<cuda> inherit from sdm_proto 
   unique_ptr<sdm::sdm_proto<real_t>> particles;
 };
 
@@ -106,7 +107,7 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
   // initialising super-droplets
   if (true) // TODO!
     pimpl->particles.reset(new sdm::sdm<real_t, sdm::openmp>(
-      grid, 
+      grid,
       velocity,
       opts,
       xi_dfntn,
