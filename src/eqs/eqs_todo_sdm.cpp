@@ -74,7 +74,7 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
       ostringstream name, desc, unit;
       name << "m_" << moment.first;
       if (moment.second.size() > 1) name << "_" << r;
-      desc << "<r^" << moment.first << "> for r > " << range.first << " and r < " << range.second;
+      desc << "<r^" << moment.first << "> for r > " << range.first << " and r <= " << range.second;
       unit << "1 meter^" << moment.first -3;
       // auxliary variable for concentration 
       ptr_map_insert(this->aux)(name.str(), typename eqs<real_t>::axv({

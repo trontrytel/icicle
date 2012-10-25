@@ -216,7 +216,18 @@ eqs<real_t> *opt_eqs(
         {sdm::SO3,  real_cast<real_t>(vm, "eqs.todo_sdm.chem.ini_c_SO3") *si::kilograms}
       }),
       map<int, vector<pair<quantity<si::length, real_t>, quantity<si::length, real_t>>>> ({
-        {0,{{.5e-6 * si::metres, 25e-6 * si::metres}}},
+        {0,{
+          {00.5e-6 * si::metres, 03.0e-6 * si::metres},
+          {03.0e-6 * si::metres, 05.5e-6 * si::metres},
+          {05.5e-6 * si::metres, 08.0e-6 * si::metres},
+          {08.0e-6 * si::metres, 10.5e-6 * si::metres},
+          {10.5e-6 * si::metres, 13.0e-6 * si::metres},
+          {13.0e-6 * si::metres, 15.5e-6 * si::metres},
+          {15.5e-6 * si::metres, 18.0e-6 * si::metres},
+          {18.0e-6 * si::metres, 20.5e-6 * si::metres},
+          {20.5e-6 * si::metres, 23.0e-6 * si::metres},
+          {23.0e-6 * si::metres, 25.5e-6 * si::metres}
+        }},
         {1,{{.5e-6 * si::metres, 25e-6 * si::metres}}},
         {2,{{.5e-6 * si::metres, 25e-6 * si::metres}}},
         {3,{{.5e-6 * si::metres, 25e-6 * si::metres}}},
