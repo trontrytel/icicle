@@ -30,7 +30,7 @@ struct stp
 
   int nout;
   unsigned long nt;
-  quantity<si::time, real_t> dt;
+  quantity<si::time, real_t> dt, dt_out;
 
   stp(
     const adv<real_t> &advsch, 
@@ -45,7 +45,8 @@ struct stp
       velocity(velocity), 
       intcond(intcond), 
       grid(grid),
-      eqsys(eqsys)
+      eqsys(eqsys),
+      dt_out(dt_out)
   { 
     // TODO: it does not work for non-constant velocities as of now!
     int halo = (advsch.stencil_extent() -1) / 2;

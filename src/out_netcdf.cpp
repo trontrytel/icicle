@@ -27,6 +27,7 @@ struct out_netcdf<real_t>::detail
   unique_ptr<NcFile> f;  
   map<string, NcVar> vars;
   unique_ptr<inf> info;
+  quantity<si::time, real_t> dt_out;
 };
 #endif
 
@@ -40,6 +41,7 @@ out_netcdf<real_t>::out_netcdf(
   const string &cmdline
 ) : pimpl(new detail()) 
 { 
+  pimpl->dt_out = setup.dt_out;
   pimpl->info.reset(new inf(cmdline));
 
   // TODO: that's about cartesian/spherical/etc, not about Arakawa-C
@@ -68,6 +70,9 @@ out_netcdf<real_t>::out_netcdf(
       sdims[3] = d_zs; // TODO: skip dimensions of size 1?
 
       // grid variables
+      pimpl->vars["time"] = pimpl->f->addVar("time", ncFloat, d_t);
+      pimpl->vars["time"].putAtt("unit", "seconds");
+
       NcVar v_xs = pimpl->f->addVar("X", ncFloat, d_xs);
       v_xs.putAtt("unit", "metres");
       {
@@ -77,6 +82,7 @@ out_netcdf<real_t>::out_netcdf(
         v_xs.putVar(tmp);
         delete[] tmp;
       }
+
       NcVar v_ys = pimpl->f->addVar("Y", ncFloat, d_ys);
       v_ys.putAtt("unit", "metres");
       { // TODO: merge with the above
@@ -86,6 +92,7 @@ out_netcdf<real_t>::out_netcdf(
         v_ys.putVar(tmp);
         delete[] tmp;
       }
+
       NcVar v_zs = pimpl->f->addVar("Z", ncFloat, d_zs);
       v_zs.putAtt("unit", "metres");
       { // TODO: merge with the above
@@ -168,6 +175,14 @@ void out_netcdf<real_t>::record(
 #if defined(USE_NETCDF)
   try 
   {
+    // recording time
+    {
+      vector<size_t> startp = {t}, countp = {1};
+      float value = real_t(t) * pimpl->dt_out / si::seconds;
+      pimpl->vars["time"].putVar(startp, countp, &value);
+    }
+
+    // recording the data
     vector<size_t> startp(4), countp(4, 1);
     startp[0] = t;
     countp[1] = ijk.ubound(mtx::i) - ijk.lbound(mtx::i) + 1;
