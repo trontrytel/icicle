@@ -182,6 +182,15 @@ if(NOT USE_FLOAT AND NOT USE_DOUBLE AND NOT USE_LDOUBLE AND NOT USE_FLOAT128)
   message(FATAL_ERROR "-DFLOAD=NO -DDOUBLE=NO -DLDBOULBE=NO and -DFLOAT128=NO may not be specified all at once!")
 endif() 
 
+# checking if fork() requires librt
+set(code "extern \"C\" {\n#include <unistd.h>\n#include <sys/types.h>\n}\;\n int main() { pid_t pid = fork()\; }")
+icicle_check(status "fork" FATAL_ERROR "" "${code}")
+if(NOT status)
+  icicle_check(status "fork_librt" FATAL_ERROR "fork() not usable" "${code}")
+  target_link_libraries(icicle "-lrt")
+endif()
+unset(code)
+
 # Blitz++ (mandatory)
 target_link_libraries(icicle debug "-lblitz") # TODO: check if debugging actually works, if not suggest recompiling blitz with --enable-shared
 icicle_check(status "blitz" FATAL_ERROR ""
