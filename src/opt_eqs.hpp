@@ -217,20 +217,20 @@ eqs<real_t> *opt_eqs(
       }),
       map<int, vector<pair<quantity<si::length, real_t>, quantity<si::length, real_t>>>> ({
         {0,{
-          {00.5e-6 * si::metres, 03.0e-6 * si::metres},
-          {03.0e-6 * si::metres, 05.5e-6 * si::metres},
-          {05.5e-6 * si::metres, 08.0e-6 * si::metres},
-          {08.0e-6 * si::metres, 10.5e-6 * si::metres},
-          {10.5e-6 * si::metres, 13.0e-6 * si::metres},
-          {13.0e-6 * si::metres, 15.5e-6 * si::metres},
-          {15.5e-6 * si::metres, 18.0e-6 * si::metres},
-          {18.0e-6 * si::metres, 20.5e-6 * si::metres},
-          {20.5e-6 * si::metres, 23.0e-6 * si::metres},
-          {23.0e-6 * si::metres, 25.5e-6 * si::metres}
+          {real_t(00.5e-6) * si::metres, real_t(03.0e-6) * si::metres},
+          {real_t(03.0e-6) * si::metres, real_t(05.5e-6) * si::metres},
+          {real_t(05.5e-6) * si::metres, real_t(08.0e-6) * si::metres},
+          {real_t(08.0e-6) * si::metres, real_t(10.5e-6) * si::metres},
+          {real_t(10.5e-6) * si::metres, real_t(13.0e-6) * si::metres},
+          {real_t(13.0e-6) * si::metres, real_t(15.5e-6) * si::metres},
+          {real_t(15.5e-6) * si::metres, real_t(18.0e-6) * si::metres},
+          {real_t(18.0e-6) * si::metres, real_t(20.5e-6) * si::metres},
+          {real_t(20.5e-6) * si::metres, real_t(23.0e-6) * si::metres},
+          {real_t(23.0e-6) * si::metres, real_t(25.5e-6) * si::metres}
         }},
-        {1,{{.5e-6 * si::metres, 25e-6 * si::metres}}},
-        {2,{{.5e-6 * si::metres, 25e-6 * si::metres}}},
-        {3,{{.5e-6 * si::metres, 25e-6 * si::metres}}},
+        {1,{{real_t(.5e-6) * si::metres, real_t(25e-6) * si::metres}}},
+        {2,{{real_t(.5e-6) * si::metres, real_t(25e-6) * si::metres}}},
+        {3,{{real_t(.5e-6) * si::metres, real_t(25e-6) * si::metres}}},
         {6,{}}
       })
     );
