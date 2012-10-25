@@ -184,7 +184,7 @@ endif()
 
 # checking if fork() requires librt
 set(code "#include <boost/interprocess/ipc/message_queue.hpp>\n int main() {  boost::interprocess::message_queue q(boost::interprocess::open_or_create, \"n\", 1, sizeof(bool))\; }")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 icicle_check(status "ipc" WARNING "" "${code}")
 if(NOT status)
   cmake_push_check_state()
