@@ -45,7 +45,10 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
   const real_t n2_tot,
   const real_t kappa,
   map<enum sdm::chem_gas, quantity<phc::mixing_ratio, real_t>> opt_gas,
-  map<enum sdm::chem_aq, quantity<si::mass, real_t>> opt_aq
+  map<enum sdm::chem_aq, quantity<si::mass, real_t>> opt_aq,
+  map<int, vector<pair<
+    quantity<si::length, real_t>, quantity<si::length, real_t>
+  >>> outmoments
 ) : eqs_todo<real_t>(grid, &this->par), pimpl(new detail())
 {
   // auxliary variable for super-droplet conc
@@ -55,6 +58,7 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
     vector<int>({0, 0, 0})
   }));
 
+  // TODO: obsolete?
   // auxliary variable for total particle concentration
   ptr_map_insert(this->aux)("n_tot", typename eqs<real_t>::axv({
     "n_tot", "total particle cencentration", this->quan2str(real_t(1)/si::cubic_metres),
@@ -62,40 +66,25 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
     vector<int>({0, 0, 0})
   }));
 
-  // auxliary variable for concentration 
-  ptr_map_insert(this->aux)("m_0", typename eqs<real_t>::axv({
-    "m_0", "<r^0> for r > r_min", this->quan2str(real_t(1)/si::cubic_metres),
-    typename eqs<real_t>::invariable(false),
-    vector<int>({0, 0, 0})
-  }));
-
-  // auxliary variable for mean radius
-  ptr_map_insert(this->aux)("m_1", typename eqs<real_t>::axv({
-    "m_1", "<r^1> for r > r_min", this->quan2str(si::metres/si::cubic_metres),
-    typename eqs<real_t>::invariable(false),
-    vector<int>({0, 0, 0})
-  }));
-
-  // auxliary variable for mean squared radius
-  ptr_map_insert(this->aux)("m_2", typename eqs<real_t>::axv({
-    "m_2", "<r^2> for r > r_min", this->quan2str(si::square_metres/si::cubic_metres),
-    typename eqs<real_t>::invariable(false),
-    vector<int>({0, 0, 0})
-  }));
-
-  // auxliary variable for mean cubed radius
-  ptr_map_insert(this->aux)("m_3", typename eqs<real_t>::axv({
-    "m_3", "<r^3> for r > r_min", this->quan2str(si::cubic_metres/si::cubic_metres),
-    typename eqs<real_t>::invariable(false),
-    vector<int>({0, 0, 0})
-  }));
-
-  // auxliary variable for mean cubed radius
-  ptr_map_insert(this->aux)("m_6", typename eqs<real_t>::axv({
-    "m_6", "<r^6> for r > r_min", this->quan2str(si::cubic_metres),
-    typename eqs<real_t>::invariable(false),
-    vector<int>({0, 0, 0})
-  }));
+  for (auto moment : outmoments)
+  {
+    int r = 0;
+    for (auto range : moment.second)
+    {
+      ostringstream name, desc, unit;
+      name << "m_" << moment.first;
+      if (moment.second.size() > 1) name << "_" << r;
+      desc << "<r^" << moment.first << "> for r > " << range.first << " and r < " << range.second;
+      unit << "1 meter^" << moment.first -3;
+      // auxliary variable for concentration 
+      ptr_map_insert(this->aux)(name.str(), typename eqs<real_t>::axv({
+        name.str(), desc.str(), unit.str(),
+        typename eqs<real_t>::invariable(false),
+        vector<int>({0, 0, 0})
+      }));
+      ++r;
+    }
+  }
 
   // auxliary variable for mean SO2 density within a droplet
   ptr_map_insert(this->aux)("c_SO3", typename eqs<real_t>::axv({
@@ -124,7 +113,8 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
       n2_tot,
       kappa,
       opt_gas, 
-      opt_aq 
+      opt_aq,
+      outmoments
 ));
 /*
   else
@@ -146,7 +136,8 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
       n2_tot,
       kappa,
       opt_gas, 
-      opt_aq 
+      opt_aq,
+      outmoments 
 ));
 */
 }

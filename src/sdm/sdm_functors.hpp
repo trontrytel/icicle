@@ -151,25 +151,32 @@ namespace sdm {
   class moment_counter
   { 
     private: const stat_t<real_t> &stat;
-    private: const real_t threshold;
+    private: const real_t rmin, rmax;
     private: int k;
     public: moment_counter(
       const stat_t<real_t> &stat,
-      const real_t threshold,
+      const real_t rmin,
+      const real_t rmax,
       const int k
-    ) : stat(stat), threshold(xi::xi_of_rw(threshold)), k(k) {}
+    ) : 
+      stat(stat), 
+      rmin(xi::xi_of_rw(rmin)), 
+      rmax(xi::xi_of_rw(rmax)), 
+      k(k) 
+    {}
+
     public: real_t operator()(const thrust_size_t id) const
     {   
       switch (k)
       {
-        case 0 : return stat.xi[id] > threshold ? (real_t(stat.n[id])) : 0;
-        //                                         ^^^^^^ this cast is absolutely needed!!!
-        //                                                otherwise gcc optimisations result in 
-        //                                                negative values from real_t(size_t) conversion
-        case 1 : return stat.xi[id] > threshold ? (real_t(stat.n[id]) * xi::rw_of_xi(stat.xi[id])) : 0; 
-        case 2 : return stat.xi[id] > threshold ? (real_t(stat.n[id]) * xi::rw2_of_xi(stat.xi[id])) : 0;
-        case 3 : return stat.xi[id] > threshold ? (real_t(stat.n[id]) * xi::rw3_of_xi(stat.xi[id])) : 0;
-        default: return stat.xi[id] > threshold ? (real_t(stat.n[id]) * pow(xi::rw_of_xi(stat.xi[id]), k)) : 0;
+        case 0 : return (stat.xi[id] > rmin && stat.xi[id] < rmax) ? (real_t(stat.n[id])) : 0;
+        //                                                            ^^^^^^ this cast is absolutely needed!!!
+        //                                                                   otherwise gcc optimisations result in 
+        //                                                                   negative values from real_t(size_t) conversion
+        case 1 : return (stat.xi[id] > rmin && stat.xi[id] < rmax) ? (real_t(stat.n[id]) * xi::rw_of_xi(stat.xi[id])) : 0; 
+        case 2 : return (stat.xi[id] > rmin && stat.xi[id] < rmax) ? (real_t(stat.n[id]) * xi::rw2_of_xi(stat.xi[id])) : 0;
+        case 3 : return (stat.xi[id] > rmin && stat.xi[id] < rmax) ? (real_t(stat.n[id]) * xi::rw3_of_xi(stat.xi[id])) : 0;
+        default: return (stat.xi[id] > rmin && stat.xi[id] < rmax) ? (real_t(stat.n[id]) * pow(xi::rw_of_xi(stat.xi[id]), k)) : 0;
       }
     }
   };

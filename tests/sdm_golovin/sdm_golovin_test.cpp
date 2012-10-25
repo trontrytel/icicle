@@ -76,6 +76,7 @@ int main()
   });
 
   // TODO: for(openmp, cuda)
+/*
   sdm::sdm<real_t, sdm::openmp> particles(
     grid,
     velocity,
@@ -96,4 +97,5 @@ int main()
     opt_gas,
     opt_aq
   );
+*/
 }

@@ -74,8 +74,14 @@ inline void opt_eqs_desc(po::options_description &desc)
     ("eqs.todo_sdm.sdev_rd2", po::value<string>(), "second mode geometric standard deviation [1]")
     ("eqs.todo_sdm.n1_tot", po::value<string>(), "first mode total concentration [m-3]") 
     ("eqs.todo_sdm.n2_tot", po::value<string>(), "second mode total concentration [m-3]")
-    ("eqs.todo_sdm.kappa", po::value<string>(), "dolubility parameter kappa [1]")
-
+    ("eqs.todo_sdm.kappa", po::value<string>(), "hygroscopicity parameter kappa [1]")
+/* TODO!!!
+    ("eqs.todo_sdm.out_m0", po::value<string>()->default_value(".5e-6:25e-6"), "radius ranges for the 0-th moments [m]")
+    ("eqs.todo_sdm.out_m1", po::value<string>()->default_value(".5e-6:25e-6"), "radius ranges for the 1-st moments [m]")
+    ("eqs.todo_sdm.out_m2", po::value<string>()->default_value(".5e-6:25e-6"), "radius ranges for the 2-nd moments [m]")
+    ("eqs.todo_sdm.out_m3", po::value<string>()->default_value(".5e-6:25e-6"), "radius ranges for the 3-rd moments [m]")
+    ("eqs.todo_sdm.out_m6", po::value<string>()->default_value(""), "radius ranges for the 6-th moments [m]")
+*/
     // initial parameters of chemical compounds:
     // gas phase in the air
     ("eqs.todo_sdm.chem.env_SO2", po::value<string>()->default_value("1e-10"), "volume mixing ratio of SO2 [1]")
@@ -208,6 +214,13 @@ eqs<real_t> *opt_eqs(
         {sdm::H2O2, real_cast<real_t>(vm, "eqs.todo_sdm.chem.ini_c_H2O2")*si::kilograms},
         {sdm::HSO3, real_cast<real_t>(vm, "eqs.todo_sdm.chem.ini_c_HSO3")*si::kilograms},
         {sdm::SO3,  real_cast<real_t>(vm, "eqs.todo_sdm.chem.ini_c_SO3") *si::kilograms}
+      }),
+      map<int, vector<pair<quantity<si::length, real_t>, quantity<si::length, real_t>>>> ({
+        {0,{{.5e-6 * si::metres, 25e-6 * si::metres}}},
+        {1,{{.5e-6 * si::metres, 25e-6 * si::metres}}},
+        {2,{{.5e-6 * si::metres, 25e-6 * si::metres}}},
+        {3,{{.5e-6 * si::metres, 25e-6 * si::metres}}},
+        {6,{}}
       })
     );
   }

@@ -21,6 +21,7 @@ using std::unique_ptr;
 
 #include <map>
 using std::map;
+using std::pair;
 
 #include <boost/ptr_container/ptr_vector.hpp>
 using boost::ptr_vector;
@@ -86,7 +87,8 @@ namespace sdm
       real_t kappa,
       //initial chemical conditions (in air and droplets)
       map<enum chem_gas, quantity<phc::mixing_ratio, real_t>> opt_gas, 
-      map<enum chem_aq, quantity<si::mass, real_t>> opt_aq 
+      map<enum chem_aq, quantity<si::mass, real_t>> opt_aq,
+      const map<int, vector<pair<quantity<si::length, real_t>, quantity<si::length, real_t>>>> &outmoments
     );
 
     public: void adjustments(

@@ -49,14 +49,16 @@ sdm<real_t, thrust_device_system>::sdm(
   const real_t n2_tot,
   const real_t kappa,
   map<enum chem_gas, quantity<phc::mixing_ratio, real_t>> opt_gas,
-  map<enum chem_aq, quantity<si::mass, real_t>> opt_aq
+  map<enum chem_aq, quantity<si::mass, real_t>> opt_aq,
+  const map<int, vector<pair<quantity<si::length, real_t>, quantity<si::length, real_t>>>> &outmoments
 ) : pimpl(new detail(
   grid, 
   velocity,
   opts,
   xi_dfntn,
   sd_conc_mean,
-  adve_sstp, sedi_sstp, cond_sstp, chem_sstp, coal_sstp
+  adve_sstp, sedi_sstp, cond_sstp, chem_sstp, coal_sstp,
+  outmoments
 ))
 {
   // TODO: assert that we use no paralellisation or allow some parallelism!
@@ -218,6 +220,10 @@ struct sdm<real_t, thrust_device_system>::detail
   map<enum processes, bool> opts;
   bool constant_velocity;
   const grd<real_t> &grid;
+  const map<int, vector<pair<
+    quantity<si::length, real_t>, 
+    quantity<si::length, real_t>
+  >>> outmoments;
 
   // private fields for ODE machinery
   unique_ptr<ode<real_t>> 
@@ -245,7 +251,8 @@ struct sdm<real_t, thrust_device_system>::detail
     map<enum processes, bool> opts,
     const enum xi_dfntns xi_dfntn,
     const real_t sd_conc_mean,
-    const int adve_sstp, const int sedi_sstp, const int cond_sstp, const int chem_sstp, const int coal_sstp
+    const int adve_sstp, const int sedi_sstp, const int cond_sstp, const int chem_sstp, const int coal_sstp,
+    const map<int, vector<pair<quantity<si::length, real_t>, quantity<si::length, real_t>>>> &outmoments
   ) :
     opts(opts), 
     grid(grid), 
@@ -253,7 +260,8 @@ struct sdm<real_t, thrust_device_system>::detail
     stat(grid.nx(), grid.ny(), sd_conc_mean),
     envi(grid.nx(), grid.ny()),
     xi_dfntn(xi_dfntn),
-    adve_sstp(adve_sstp), sedi_sstp(sedi_sstp), cond_sstp(cond_sstp), chem_sstp(chem_sstp), coal_sstp(coal_sstp)
+    adve_sstp(adve_sstp), sedi_sstp(sedi_sstp), cond_sstp(cond_sstp), chem_sstp(chem_sstp), coal_sstp(coal_sstp),
+    outmoments(outmoments)
   {}
 
   // TODO: merge sd_init into ctr?
@@ -509,7 +517,8 @@ static void sd_diag(
   ptr_unordered_map<string, mtx::arr<real_t>> &aux,
   thrust::device_vector<int> &tmp_shrt, 
   thrust::device_vector<real_t> &tmp_real,
-  const enum xi_dfntns xi_dfntn
+  const enum xi_dfntns xi_dfntn,
+  const map<int, vector<pair<quantity<si::length, real_t>, quantity<si::length, real_t>>>> &outmoments
 )
 {
   // calculating super-droplet concentration (per grid cell)
@@ -538,6 +547,7 @@ static void sd_diag(
     );
   }
 
+  // TODO: obsolete?
   // calculating the zero-th moment (i.e. total particle concentration per unit volume)
   {
     // zeroing the temporary var
@@ -569,46 +579,54 @@ static void sd_diag(
   }
 
   // calculating k-th moment of the particle distribution (for particles with radius greater than a given threshold)
-  for (int &k : list<int>({0,1,2,3,6}))
+  for (auto moment : outmoments)
   {
-    // zeroing the temporary var
-    thrust::fill(tmp_real.begin(), tmp_real.end(), 0); // TODO: is it needed
-
-    // doing the reduction, i.e. 
-    thrust::pair<
-      decltype(tmp_shrt.begin()),
-      decltype(tmp_real.begin()) 
-    > n;
-
-    switch (xi_dfntn)
+    int k = moment.first, r = 0;
+std::cerr << "k=" << k << std::endl;
+    for (auto range : moment.second)
     {
-      case p2:
-      n = thrust::reduce_by_key(
-        stat.sorted_ij.begin(), stat.sorted_ij.end(),
-        thrust::transform_iterator<
-          moment_counter<real_t, xi_p2<real_t>>,
-          decltype(stat.sorted_id.begin()),
-          real_t
-        >(stat.sorted_id.begin(), moment_counter<real_t, xi_p2<real_t>>(stat, real_t(500e-9), k)),// TODO:!!! 500e-9 as an option!!!
-        tmp_shrt.begin(), // will store the grid cell indices
-        tmp_real.begin()  // will store the concentrations per grid cell
-      );
-      break;
-      default: error_macro("assert!") //TODO: ln, p3, id, ...
-    }
+std::cerr << "r in (" << range.first << " ... " << range.second << ")" << std::endl;
+      // zeroing the temporary var
+      thrust::fill(tmp_real.begin(), tmp_real.end(), 0); // TODO: is it needed
 
-    // writing to aux
-    ostringstream tmp;
-    tmp << "m_" << k;
-    mtx::arr<real_t> &out = aux.at(tmp.str());
-    out(out.ijk) = real_t(0); // as some grid cells could be void of particles
-    thrust::counting_iterator<thrust_size_t> iter(0);
-    thrust::for_each(iter, iter + (n.first - tmp_shrt.begin()), 
-      thrust2blitz<real_t>( 
-        grid.nx(), tmp_shrt, tmp_real, out, 
-        real_t(1) / grid.dx() / grid.dy() / grid.dz() * si::cubic_metres
-      )
-    );
+      // doing the reduction, i.e. 
+      thrust::pair<
+        decltype(tmp_shrt.begin()),
+        decltype(tmp_real.begin()) 
+      > n;
+
+      switch (xi_dfntn)
+      {
+        case p2:
+        n = thrust::reduce_by_key(
+          stat.sorted_ij.begin(), stat.sorted_ij.end(),
+          thrust::transform_iterator<
+            moment_counter<real_t, xi_p2<real_t>>,
+            decltype(stat.sorted_id.begin()),
+            real_t
+          >(stat.sorted_id.begin(), moment_counter<real_t, xi_p2<real_t>>(stat, range.first / si::metres, range.second / si::metres, k)),
+          tmp_shrt.begin(), // will store the grid cell indices
+          tmp_real.begin()  // will store the concentrations per grid cell
+        );
+        break;
+        default: error_macro("assert!") //TODO: ln, p3, id, ...
+      }
+
+      // writing to aux
+      ostringstream tmp;
+      tmp << "m_" << k;
+      if (moment.second.size() > 1) tmp << "_" << r;
+      mtx::arr<real_t> &out = aux.at(tmp.str());
+      out(out.ijk) = real_t(0); // as some grid cells could be void of particles
+      thrust::counting_iterator<thrust_size_t> iter(0);
+      thrust::for_each(iter, iter + (n.first - tmp_shrt.begin()), 
+        thrust2blitz<real_t>( 
+          grid.nx(), tmp_shrt, tmp_real, out, 
+          real_t(1) / grid.dx() / grid.dy() / grid.dz() * si::cubic_metres
+        )
+      );
+      ++r;
+    }
   }
 
   // calculating chemical stuff
@@ -1021,7 +1039,8 @@ static void sd_coalescence(
       aux, 
       pimpl->tmp_shrt, 
       pimpl->tmp_real, 
-      pimpl->xi_dfntn
+      pimpl->xi_dfntn,
+      pimpl->outmoments
     ); 
 
     // syncing out data to the Eulerian grid (rhod_rv and rhod_th)
