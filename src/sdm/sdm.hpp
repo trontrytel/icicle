@@ -68,7 +68,7 @@ namespace sdm
 
     // ctor 
     public: sdm(
-      const grd<real_t> &grid, 
+      const grd<real_t> &grid,
       const vel<real_t> &velocity,
       map<enum processes, bool> opts,
       enum xi_dfntns xi_dfntn,

@@ -73,7 +73,7 @@ const quantity<si::velocity, real_t>
   w_max = http_or_default("w_max", real_t(.6)) * si::metres_per_second; // .6 TODO: check it!
 
 // options for microphysics
-std::string micro_opt = http_or_default("micro", string("sdm")); 
+std::string micro_opt = http_or_default("micro", string("bulk")); 
 
 // blk parameters
 bool 
