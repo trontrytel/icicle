@@ -188,7 +188,7 @@ eqs<real_t> *opt_eqs(
       opt << "eqs.todo_sdm.out_m" << k;
       string str = vm[opt.str()].as<string>();
 
-      std::map<std::string, std::string> ranges;
+      std::vector<pair<std::string, std::string>> ranges;
       std::string::iterator first = str.begin();
       std::string::iterator last  = str.end();
 
