@@ -7,14 +7,19 @@
  */
 #pragma once
 
-#  include "opt.hpp"
-#  include "eqs/eqs_scalar_advection.hpp"
-#  include "eqs/eqs_shallow_water.hpp"
-#  include "eqs/eqs_isentropic.hpp"
-#  include "eqs/eqs_harmonic_oscillator.hpp"
-#  include "eqs/eqs_todo_bulk_ode.hpp"
-#  include "eqs/eqs_todo_mm.hpp"
-#  include "eqs/eqs_todo_sdm.hpp"
+#include "opt.hpp"
+#include "eqs/eqs_scalar_advection.hpp"
+#include "eqs/eqs_shallow_water.hpp"
+#include "eqs/eqs_isentropic.hpp"
+#include "eqs/eqs_harmonic_oscillator.hpp"
+#include "eqs/eqs_todo_bulk_ode.hpp"
+#include "eqs/eqs_todo_mm.hpp"
+#include "eqs/eqs_todo_sdm.hpp"
+
+#include <boost/spirit/include/qi.hpp>        
+#include <boost/fusion/adapted/std_pair.hpp>  
+
+#include <list>
 
 inline void opt_eqs_desc(po::options_description &desc)
 {
@@ -75,13 +80,11 @@ inline void opt_eqs_desc(po::options_description &desc)
     ("eqs.todo_sdm.n1_tot", po::value<string>(), "first mode total concentration [m-3]") 
     ("eqs.todo_sdm.n2_tot", po::value<string>(), "second mode total concentration [m-3]")
     ("eqs.todo_sdm.kappa", po::value<string>(), "hygroscopicity parameter kappa [1]")
-/* TODO!!!
     ("eqs.todo_sdm.out_m0", po::value<string>()->default_value(".5e-6:25e-6"), "radius ranges for the 0-th moments [m]")
     ("eqs.todo_sdm.out_m1", po::value<string>()->default_value(".5e-6:25e-6"), "radius ranges for the 1-st moments [m]")
     ("eqs.todo_sdm.out_m2", po::value<string>()->default_value(".5e-6:25e-6"), "radius ranges for the 2-nd moments [m]")
     ("eqs.todo_sdm.out_m3", po::value<string>()->default_value(".5e-6:25e-6"), "radius ranges for the 3-rd moments [m]")
     ("eqs.todo_sdm.out_m6", po::value<string>()->default_value(""), "radius ranges for the 6-th moments [m]")
-*/
     // initial parameters of chemical compounds:
     // gas phase in the air
     ("eqs.todo_sdm.chem.env_SO2", po::value<string>()->default_value("1e-10"), "volume mixing ratio of SO2 [1]")
@@ -173,6 +176,51 @@ eqs<real_t> *opt_eqs(
       {"p2", sdm::p2},
       {"p3", sdm::p3}
     });
+
+    // parsing moment list
+    map<int, vector<pair<
+      quantity<si::length, real_t>, 
+      quantity<si::length, real_t>
+    >>> outmoments;
+    for (int &k : std::list<int>({0,1,2,3,6})) 
+    {
+      ostringstream opt;
+      opt << "eqs.todo_sdm.out_m" << k;
+      string str = vm[opt.str()].as<string>();
+
+      std::map<std::string, std::string> ranges;
+      std::string::iterator first = str.begin();
+      std::string::iterator last  = str.end();
+
+      const bool result = boost::spirit::qi::phrase_parse(first, last, 
+        *( 
+          *(boost::spirit::qi::char_-":")  >> 
+          boost::spirit::qi::lit(":") >> 
+          *(boost::spirit::qi::char_-";") >> 
+          -boost::spirit::qi::lit(";") 
+        ),
+        boost::spirit::ascii::space, ranges
+      );    
+      if (!result || first != last) error_macro("failed to parse string: " << str)
+      for (auto &range : ranges)
+      {
+        try 
+        {
+          outmoments[k].push_back({
+            boost::lexical_cast<real_t>(range.first) * si::metres,
+            boost::lexical_cast<real_t>(range.second) * si::metres
+          });
+        }
+        catch (boost::bad_lexical_cast &)  
+        {
+          error_macro("failed to convert " << range.first << " ... " << range.second
+            << " into floating point value range"
+          )
+        }
+      }
+    }
+
+    // calling the ctor
     return new eqs_todo_sdm<real_t>(grid, velocity,
       map<enum sdm::processes, bool>({
         {sdm::adve, vm["eqs.todo_sdm.adve"].as<bool>()},
@@ -215,24 +263,7 @@ eqs<real_t> *opt_eqs(
         {sdm::HSO3, real_cast<real_t>(vm, "eqs.todo_sdm.chem.ini_c_HSO3")*si::kilograms},
         {sdm::SO3,  real_cast<real_t>(vm, "eqs.todo_sdm.chem.ini_c_SO3") *si::kilograms}
       }),
-      map<int, vector<pair<quantity<si::length, real_t>, quantity<si::length, real_t>>>> ({
-        {0,{
-          {real_t(00.5e-6) * si::metres, real_t(03.0e-6) * si::metres},
-          {real_t(03.0e-6) * si::metres, real_t(05.5e-6) * si::metres},
-          {real_t(05.5e-6) * si::metres, real_t(08.0e-6) * si::metres},
-          {real_t(08.0e-6) * si::metres, real_t(10.5e-6) * si::metres},
-          {real_t(10.5e-6) * si::metres, real_t(13.0e-6) * si::metres},
-          {real_t(13.0e-6) * si::metres, real_t(15.5e-6) * si::metres},
-          {real_t(15.5e-6) * si::metres, real_t(18.0e-6) * si::metres},
-          {real_t(18.0e-6) * si::metres, real_t(20.5e-6) * si::metres},
-          {real_t(20.5e-6) * si::metres, real_t(23.0e-6) * si::metres},
-          {real_t(23.0e-6) * si::metres, real_t(25.5e-6) * si::metres}
-        }},
-        {1,{{real_t(.5e-6) * si::metres, real_t(25e-6) * si::metres}}},
-        {2,{{real_t(.5e-6) * si::metres, real_t(25e-6) * si::metres}}},
-        {3,{{real_t(.5e-6) * si::metres, real_t(25e-6) * si::metres}}},
-        {6,{}}
-      })
+      outmoments
     );
   }
   else 
