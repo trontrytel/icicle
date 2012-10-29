@@ -68,12 +68,12 @@ const int
   nsd = http_or_default("nsd", int(1));  
 const quantity<si::time, real_t> 
   t_max = 360 * si::seconds, // 4 * 3600
-  dt_out = real_t(100) * si::seconds; // 300
+  dt_out = real_t(10) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = http_or_default("w_max", real_t(.6)) * si::metres_per_second; // .6 TODO: check it!
 
 // options for microphysics
-std::string micro_opt = http_or_default("micro", string("bulk")); 
+std::string micro_opt = http_or_default("micro", string("sdm")); 
 
 // blk parameters
 bool 
@@ -179,20 +179,28 @@ int main(int argc, char **argv)
       << " --eqs.todo_mm.turb "  << mm_turb
       << " --eqs.todo_mm.sedi "  << mm_sedi
     ;
-    else if (micro == sdm) cmd 
-      << " --eqs.todo_sdm.adve.sstp " << sdm_adve_sstp
-      << " --eqs.todo_sdm.sedi.sstp " << sdm_sedi_sstp
-      << " --eqs.todo_sdm.cond.sstp " << sdm_cond_sstp
-      << " --eqs.todo_sdm.chem.sstp " << sdm_chem_sstp
-      << " --eqs.todo_sdm.coal.sstp " << sdm_coal_sstp
+    else if (micro == sdm) 
+    {
+      cmd 
+        << " --eqs.todo_sdm.adve.sstp " << sdm_adve_sstp
+        << " --eqs.todo_sdm.sedi.sstp " << sdm_sedi_sstp
+        << " --eqs.todo_sdm.cond.sstp " << sdm_cond_sstp
+        << " --eqs.todo_sdm.chem.sstp " << sdm_chem_sstp
+        << " --eqs.todo_sdm.coal.sstp " << sdm_coal_sstp
 
-      << " --eqs.todo_sdm.adve " << sdm_adve
-      << " --eqs.todo_sdm.cond " << sdm_cond
-      << " --eqs.todo_sdm.coal " << sdm_coal
-      << " --eqs.todo_sdm.sedi " << sdm_sedi
-      << " --eqs.todo_sdm.chem " << sdm_chem
-      << " --eqs.todo_sdm.sd_conc_mean " << sd_conc_mean
-    ;
+        << " --eqs.todo_sdm.adve " << sdm_adve
+        << " --eqs.todo_sdm.cond " << sdm_cond
+        << " --eqs.todo_sdm.coal " << sdm_coal
+        << " --eqs.todo_sdm.sedi " << sdm_sedi
+        << " --eqs.todo_sdm.chem " << sdm_chem
+        << " --eqs.todo_sdm.sd_conc_mean " << sd_conc_mean
+
+        // TEMP...
+        << " --eqs.todo_sdm.out_m0 \"";
+      for (int i = 0; i < 25; ++i) cmd << i << "e-6:" << i + 1 << "e-6;";
+      for (int i = 0; i < 7; ++i) cmd << 25 * int(pow(2,i)) << "e-6:" << 25 * int(pow(2,i+1)) << "e-6;";
+      cmd << "\"";
+    }
     else assert(false);
     
   if (EXIT_SUCCESS != system(cmd.str().c_str()))

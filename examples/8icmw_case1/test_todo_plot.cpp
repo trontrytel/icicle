@@ -237,8 +237,8 @@ int main(int argc, char **argv)
     {
       // sdm-relevant plots:
 
-      gp << "set title 'super-droplet conc. [1/dx/dy/dz]'" << endl;
 /*
+      gp << "set title 'super-droplet conc. [1/dx/dy/dz]'" << endl;
       gp << "set cbrange [0:512]" << endl;
       nf.getVar("sd_conc").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
       gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";
@@ -247,6 +247,7 @@ int main(int argc, char **argv)
 */
 
 
+/*
       gp << "set title 'particle (> 1 {/Symbol m}m) concentration [1/cm^3]'" << endl;
       gp << "set cbrange [0:150]" << endl;
       nf.getVar("m_0").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
@@ -254,7 +255,7 @@ int main(int argc, char **argv)
       gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";
       gp << endl;
       gp.sendBinary(tmp0);
-
+*/
 
 /*
       gp << "set title 'mean SO3 mass in the droplet" << endl;
@@ -269,8 +270,7 @@ int main(int argc, char **argv)
       gp.sendBinary(tmp0);
 */
 
-
-      gp << "set title 'effective radius [{/Symbol m}m] (particles > 1 {/Symbol m})'" << endl;
+      gp << "set title 'effective radius [{/Symbol m}m] (particles > 1 {/Symbol m}m)'" << endl;
       gp << "set logscale cb" << endl;
       gp << "set cbrange [1:500]" << endl;
       nf.getVar("m_3").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
@@ -280,6 +280,33 @@ int main(int argc, char **argv)
       gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";
       gp << endl;
       gp.sendBinary(tmp0);
+
+      // spectrum plot
+      {
+        int ns = 32;
+        Array<real_t,2> tmps(ns, ny);
+        for (int i = 0; i < ns; ++i)
+        {
+          ostringstream name;
+          name << "m_0_" << i;
+          nf.getVar(name.str()).getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data());
+          {
+            blitz::firstIndex x;
+            blitz::secondIndex y;
+cerr << i << ": " << name.str() << endl;
+            tmps(i, blitz::Range::all()) = mean(tmp0(x, y), x);
+          }
+        }
+        tmps /= 1e6; // 1/m3 -> 1/cm3
+        gp << "set title 'particle concentration [1/cm^3]'" << endl;
+        gp << "unset logscale cb" << endl;
+        gp << "set autoscale cb" << endl;
+        gp << "set xrange [0:.75]" << endl;
+        gp << "set xlabel 'particle radius [{/Symbol m}m]'" << endl;
+        gp << "splot '-' binary" << gp.binfmt(tmps) << dxdy << " using 1 with image notitle";
+        gp << endl;
+        gp.sendBinary(tmps);
+      }
     }
     else assert(false);
 
