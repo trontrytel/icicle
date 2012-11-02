@@ -43,7 +43,7 @@ int main()
   list<enum micro_t> micros({bulk, sdm, mm});
 
   // letting the non-bulk models to deal with supersaturation
-  int dt_out = 5, n_out = 4; 
+  int dt_out = 5, n_out = 4; // [seconds]
   real_t eps = .05e-3;
   int status = EXIT_SUCCESS;
 
