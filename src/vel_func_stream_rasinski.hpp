@@ -23,8 +23,13 @@ template <typename real_t>
 class vel_func_stream_rasinski : public vel_func_stream<real_t>
 {
   private: const quantity<si::dimensionless, real_t> pi;
-  private: const quantity<si::length, real_t> X, Z;
+  private: const quantity<si::length, real_t> X, Z, dx, dz;
   private: const quantity<divide_typeof_helper<si::momentum, si::area>::type, real_t> A;
+
+  private: quantity<divide_typeof_helper<si::momentum, si::area>::type, real_t> psi(
+    const quantity<si::length, real_t> &x, 
+    const quantity<si::length, real_t> &z
+  ) const;
 
   public: vel_func_stream_rasinski(
     const grd<real_t> &grid,
