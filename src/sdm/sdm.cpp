@@ -61,7 +61,7 @@ sdm<real_t, thrust_device_system>::sdm(
   outmoments
 ))
 {
-  // TODO: assert that we use no paralellisation or allow some parallelism!
+  // TODO: assert that we use no paralellisation (in advection) or allow some parallelism!
   // TODO: random seed as an option
   // TODO: option: number of cores to use (via Thrust)
 
@@ -258,7 +258,7 @@ struct sdm<real_t, thrust_device_system>::detail
     grid(grid), 
     constant_velocity(velocity.is_constant()),
     stat(grid.nx(), grid.ny(), sd_conc_mean),
-    envi(grid.nx(), grid.ny()),
+    envi(grid.nx(), grid.ny(), grid.dx() / si::metres, grid.dy() / si::metres),
     xi_dfntn(xi_dfntn),
     adve_sstp(adve_sstp), sedi_sstp(sedi_sstp), cond_sstp(cond_sstp), chem_sstp(chem_sstp), coal_sstp(coal_sstp),
     outmoments(outmoments)
@@ -321,53 +321,57 @@ struct sdm<real_t, thrust_device_system>::detail
     // initialise kappas
     thrust::fill(stat.kpa.begin(), stat.kpa.end(), kappa);
 
-  // initialise chemical components
-  thrust::fill(
-    stat.c_aq.begin() +  H      * stat.n_part, 
-    stat.c_aq.begin() + (H + 1) * stat.n_part, 
-    opt_aq[H] / si::kilograms
-  );
-  thrust::fill(
-    stat.c_aq.begin() +  OH      * stat.n_part, 
-    stat.c_aq.begin() + (OH + 1) * stat.n_part, 
-    opt_aq[OH] / si::kilograms
-  );
-  thrust::fill(
-    stat.c_aq.begin() +  SO2      * stat.n_part, 
-    stat.c_aq.begin() + (SO2 + 1) * stat.n_part, 
-    opt_aq[SO2] / si::kilograms
-  );
-  thrust::fill(
-    stat.c_aq.begin() +  O3      * stat.n_part,  
-    stat.c_aq.begin() + (O3 + 1) * stat.n_part, 
-    opt_aq[O3] / si::kilograms
-  );
-  thrust::fill(
-    stat.c_aq.begin() +  H2O2      * stat.n_part, 
-    stat.c_aq.begin() + (H2O2 + 1) * stat.n_part, 
-    opt_aq[H2O2] / si::kilograms
-  );
-  thrust::fill(
-    stat.c_aq.begin() +  HSO3      * stat.n_part,
-    stat.c_aq.begin() + (HSO3 + 1) * stat.n_part,
-    opt_aq[HSO3] / si::kilograms
-  );
-  thrust::fill(
-    stat.c_aq.begin() +  SO3      * stat.n_part,
-    stat.c_aq.begin() + (SO3 + 1) * stat.n_part, 
-    opt_aq[SO3]  / si::kilograms
-  );
-  thrust::fill(
-    stat.c_aq.begin() +  HSO4      * stat.n_part,
-    stat.c_aq.begin() + (HSO4 + 1) * stat.n_part, 
-    0. //TODO?
-  );
-  thrust::fill(
-    stat.c_aq.begin() +  SO4      * stat.n_part,
-    stat.c_aq.begin() + (SO4 + 1) * stat.n_part, 
-    0.//TODO?
-  );
+    // initialise chemical components
+//    if (pimpl->opts[chem]) // TODO
+    {
+      thrust::fill(
+        stat.c_aq.begin() +  H      * stat.n_part, 
+        stat.c_aq.begin() + (H + 1) * stat.n_part, 
+        opt_aq[H] / si::kilograms
+      );
+      thrust::fill(
+        stat.c_aq.begin() +  OH      * stat.n_part, 
+        stat.c_aq.begin() + (OH + 1) * stat.n_part, 
+        opt_aq[OH] / si::kilograms
+      );
+      thrust::fill(
+        stat.c_aq.begin() +  SO2      * stat.n_part, 
+        stat.c_aq.begin() + (SO2 + 1) * stat.n_part, 
+        opt_aq[SO2] / si::kilograms
+      );
+      thrust::fill(
+        stat.c_aq.begin() +  O3      * stat.n_part,  
+        stat.c_aq.begin() + (O3 + 1) * stat.n_part, 
+        opt_aq[O3] / si::kilograms
+      );
+      thrust::fill(
+        stat.c_aq.begin() +  H2O2      * stat.n_part, 
+        stat.c_aq.begin() + (H2O2 + 1) * stat.n_part, 
+        opt_aq[H2O2] / si::kilograms
+      );
+      thrust::fill(
+        stat.c_aq.begin() +  HSO3      * stat.n_part,
+        stat.c_aq.begin() + (HSO3 + 1) * stat.n_part,
+        opt_aq[HSO3] / si::kilograms
+      );
+      thrust::fill(
+        stat.c_aq.begin() +  SO3      * stat.n_part,
+        stat.c_aq.begin() + (SO3 + 1) * stat.n_part, 
+        opt_aq[SO3]  / si::kilograms
+      );
+      thrust::fill(
+        stat.c_aq.begin() +  HSO4      * stat.n_part,
+        stat.c_aq.begin() + (HSO4 + 1) * stat.n_part, 
+        0. //TODO?
+      );
+      thrust::fill(
+        stat.c_aq.begin() +  SO4      * stat.n_part,
+        stat.c_aq.begin() + (SO4 + 1) * stat.n_part, 
+        0.//TODO?
+      );
+    }
   }
+
   // sorting out which particle belongs to which grid cell
   static void sd_ij(stat_t<real_t> &stat, const grd<real_t> &grid)
   {
@@ -858,7 +862,7 @@ static void sd_chem(
         * dt // timestep
         / dv // volume
         * si::square_metres * phc::pi<real_t>() * pow(this->rw_of_xi(stat.xi[id1]) + this->rw_of_xi(stat.xi[id2]), 2) // geometrical cross-section
-        * real_t(10); // collection efficiency TODO!!!
+        * real_t(1); // collection efficiency TODO!!!
       assert(prob < 1);
 
       // tossing a random number and returning if unlucky
@@ -967,7 +971,6 @@ static void sd_coalescence(
     // TODO: assert(sd_conc.lbound(mtx::k) == sd_conc.ubound(mtx::k)); // 2D
     // TODO: sd_breakup(dt); 
     // TODO: sd_sources(dt);
-    // TODO: substepping with different timesteps as an option
     const mtx::arr<real_t> &rhod = aux.at("rhod");
 
     // housekeeping: regenerating the ij vector
