@@ -11,6 +11,7 @@
 #include "../phc/phc_theta.hpp"
 #include "../phc/phc_const_cp.hpp"
 #include "../phc/phc_kappa_koehler.hpp"
+#include "../phc/phc_kelvin_term.hpp"
 #include "../phc/phc_maxwell-mason.hpp"
 
 namespace sdm
@@ -107,7 +108,7 @@ namespace sdm
       void operator()(const thrust_size_t id) 
       { 
         thrust_size_t ij = stat.ij[id]; 
-        real_t rw3_eq = phc::rw3_eq<real_t>( // TODO: allow choice among different Koehler curves
+        real_t rw3_eq = phc::kappa::rw3_eq<real_t>( // TODO: allow choice among different Koehler curves
           stat.rd3[id] * si::cubic_metres, 
           real_t(stat.kpa[id]),
           thrust::min(
@@ -116,7 +117,8 @@ namespace sdm
               phc::R_v<real_t>() * (envi.T[ij] * si::kelvins) * (envi.rhod_rv[ij] * si::kilograms / si::cubic_metres) 
               / (phc::p_vs<real_t>(envi.T[ij] * si::kelvins))
             )
-          )
+          ),
+          envi.T[ij] * si::kelvins
         ) / si::cubic_metres;
         stat.xi[id] = this->xi_of_rw3(rw3_eq);
       }
@@ -149,11 +151,12 @@ namespace sdm
         real_t dxidt = phc::rdrdt<real_t>(
           real_t(envi.rhod_rv[ij]) / si::cubic_metres * si::kilograms,
           envi.T[ij] * si::kelvins,
-          phc::a_w<real_t>(
+          phc::kappa::a_w<real_t>(
             this->rw3_of_xi(stat.xi[id]) * si::cubic_metres, // rw3
             stat.rd3[id] * si::cubic_metres, // rd3
             real_t(stat.kpa[id]) // kappa
-          )
+          ),
+          phc::kelvin::klvntrm<real_t>(this->rw_of_xi(stat.xi[id]) * si::metres, envi.T[ij] * si::kelvins) // the Kelvin term
         ) 
         * si::seconds / si::square_metres // to make it dimensionless
         / this->rw_of_xi(stat.xi[id]) // to get drdt
@@ -165,7 +168,7 @@ namespace sdm
         // - Johnson 1980, JAS 37 2079-2085, disussion of inequality (5)
         // - Heanel 1987, Beitr. Phys. Atmosph. 60 321-338, section 4.2
         real_t xi_eq = this->xi_of_rw3(
-          phc::rw3_eq<real_t>(
+          phc::kappa::rw3_eq<real_t>(
             stat.rd3[id] * si::cubic_metres, 
             real_t(stat.kpa[id]),
             real_t( // TODO: interpolation to drop positions?
@@ -174,7 +177,8 @@ namespace sdm
                 real_t(phc::R_v<real_t>() * (envi.T[ij] * si::kelvins) * (envi.rhod_rv[ij] * si::kilograms / si::cubic_metres) 
                 / (phc::p_vs<real_t>(envi.T[ij] * si::kelvins)))
               )   
-            )
+            ),
+            envi.T[ij] * si::kelvins
           ) / si::cubic_metres);
 
         // TODO: as an option

@@ -586,10 +586,8 @@ static void sd_diag(
   for (auto moment : outmoments)
   {
     int k = moment.first, r = 0;
-std::cerr << "k=" << k << std::endl;
     for (auto range : moment.second)
     {
-std::cerr << "r in (" << range.first << " ... " << range.second << ")" << std::endl;
       // zeroing the temporary var
       thrust::fill(tmp_real.begin(), tmp_real.end(), 0); // TODO: is it needed
 
