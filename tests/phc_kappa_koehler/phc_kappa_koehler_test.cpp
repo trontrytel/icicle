@@ -32,8 +32,8 @@ int main()
       for (real_t &vap_ratio : list<real_t>({.5, .6, .7, .8, .9, .999})
       )
       {
-        quantity<si::dimensionless, real_t> aw = phc::a_w<real_t>(
-          phc::rw3_eq<real_t>(pow<3>(rd * si::metres), kappa, vap_ratio),
+        quantity<si::dimensionless, real_t> aw = phc::kappa::a_w<real_t>(
+          phc::kappa::rw3_eq_nokelvin<real_t>(pow<3>(rd * si::metres), kappa, vap_ratio),
           pow<3>(rd * si::metres), 
           kappa
         );

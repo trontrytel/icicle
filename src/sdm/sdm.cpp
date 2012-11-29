@@ -79,6 +79,7 @@ sdm<real_t, thrust_device_system>::sdm(
       odeint::thrust_operations
     > algo_euler;
 
+/*
   typedef odeint::runge_kutta4<
       thrust::device_vector<real_t>, // state type
       real_t, // value_type
@@ -96,15 +97,14 @@ sdm<real_t, thrust_device_system>::sdm(
       odeint::thrust_algebra,
       odeint::thrust_operations
     > algo_mmid;
-
-  // TODO: adams_bashforth_moulton...
+*/
 
   // initialising ODE right-hand-sides
   switch (adve_algo) // advection
   {
     case euler: pimpl->F_adve.reset(new ode_adve<real_t, algo_euler>(pimpl->stat, pimpl->envi)); break;
-    case mmid : pimpl->F_adve.reset(new ode_adve<real_t, algo_mmid >(pimpl->stat, pimpl->envi)); break;
-    case rk4  : pimpl->F_adve.reset(new ode_adve<real_t, algo_rk4  >(pimpl->stat, pimpl->envi)); break;
+//    case mmid : pimpl->F_adve.reset(new ode_adve<real_t, algo_mmid >(pimpl->stat, pimpl->envi)); break;
+//    case rk4  : pimpl->F_adve.reset(new ode_adve<real_t, algo_rk4  >(pimpl->stat, pimpl->envi)); break;
     default: assert(false);
   }
   switch (cond_algo) // condensation/evaporation
@@ -118,6 +118,7 @@ sdm<real_t, thrust_device_system>::sdm(
       default: assert(false);
     } 
     break;
+/*
     case mmid: switch (xi_dfntn)
     {
       case id : pimpl->F_cond.reset(new ode_cond<real_t, algo_mmid, xi_id<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid, pimpl->tmp_real)); break;
@@ -136,6 +137,7 @@ sdm<real_t, thrust_device_system>::sdm(
       default: assert(false);
     }
     break;
+*/
     default: assert(false);
   } 
   switch (sedi_algo) // sedimentation
@@ -149,6 +151,7 @@ sdm<real_t, thrust_device_system>::sdm(
       default: assert(false);
     }
     break;
+/*
     case mmid: switch (xi_dfntn)
     {
       case id : pimpl->F_sedi.reset(new ode_sedi<real_t,algo_mmid,  xi_id<real_t>>(pimpl->stat, pimpl->envi)); break;
@@ -167,6 +170,7 @@ sdm<real_t, thrust_device_system>::sdm(
       default: assert(false);
     }
     break;
+*/
     default: assert(false);
   }
   switch (chem_algo) // chemistry
@@ -181,6 +185,7 @@ sdm<real_t, thrust_device_system>::sdm(
       default: assert(false);
     }
     break;
+/*
     case mmid: switch (xi_dfntn)
     {
       case id : pimpl->F_chem.reset(new ode_chem<real_t,algo_mmid,  xi_id<real_t>>(pimpl->stat, pimpl->envi, opt_gas, opt_aq)); break;
@@ -199,6 +204,7 @@ sdm<real_t, thrust_device_system>::sdm(
       default: assert(false);
     }
     break;
+*/
     default: assert(false);
   }
 

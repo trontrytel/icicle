@@ -14,6 +14,8 @@
 #include "../phc/phc_kelvin_term.hpp"
 #include "../phc/phc_maxwell-mason.hpp"
 
+#include <boost/math/tools/toms748_solve.hpp>
+
 namespace sdm
 {
   // identity: xi = rw
@@ -58,6 +60,49 @@ namespace sdm
     static T rw2_of_xi(const T &xi) { return pow(xi, 2./3); } 
     static T rw3_of_xi(const T &xi) { return xi; } 
     static T dxidrw(const T &rw) { return T(3) * rw * rw; }
+  };
+
+  // TODO: document it
+  template <typename real_t, class xi>
+  struct dxidt_implicit : xi
+  {
+    const stat_t<real_t> &stat;
+    const envi_t<real_t> &envi;
+    const thrust_size_t id;
+    const real_t dt;
+
+    dxidt_implicit(
+      const stat_t<real_t> &stat,
+      const envi_t<real_t> &envi,
+      const thrust_size_t id,
+      const real_t dt
+    ) :
+      stat(stat), envi(envi), id(id), dt(dt)
+    { }
+ 
+    real_t dxidt(real_t xi_star)
+    {
+      return phc::rdrdt<real_t>(
+        real_t(envi.rhod_rv[stat.ij[id]]) / si::cubic_metres * si::kilograms,
+        envi.T[stat.ij[id]] * si::kelvins,
+        phc::kappa::a_w<real_t>(
+          this->rw3_of_xi(xi_star) * si::cubic_metres, // rw3
+          stat.rd3[id] * si::cubic_metres, // rd3
+          real_t(stat.kpa[id]) // kappa
+        ),
+        phc::kelvin::klvntrm<real_t>(this->rw_of_xi(xi_star) * si::metres, envi.T[stat.ij[id]] * si::kelvins) // the Kelvin term
+      ) 
+      * si::seconds / si::square_metres // to make it dimensionless
+      / this->rw_of_xi(xi_star) // to get drdt
+      * this->dxidrw(this->rw_of_xi(xi_star)) // to get dxidt (Jacobian)
+      ;
+    }
+
+    real_t operator()(real_t xi_star)
+    {
+      real_t f = xi_star - stat.xi[id] - dt * dxidt(xi_star);
+      return f;
+    }
   };
 
   // nested the ODE system to be solved to update super-droplet sizes
@@ -145,49 +190,25 @@ namespace sdm
       // overloaded () operator invoked by thrust::transform()
       public: real_t operator()(const thrust_size_t id)
       {
-        thrust_size_t ij = stat.ij[id]; 
-
-        // the growth rate defined by the Maxwell-Mason equation
-        real_t dxidt = phc::rdrdt<real_t>(
-          real_t(envi.rhod_rv[ij]) / si::cubic_metres * si::kilograms,
-          envi.T[ij] * si::kelvins,
-          phc::kappa::a_w<real_t>(
-            this->rw3_of_xi(stat.xi[id]) * si::cubic_metres, // rw3
-            stat.rd3[id] * si::cubic_metres, // rd3
-            real_t(stat.kpa[id]) // kappa
-          ),
-          phc::kelvin::klvntrm<real_t>(this->rw_of_xi(stat.xi[id]) * si::metres, envi.T[ij] * si::kelvins) // the Kelvin term
-        ) 
-        * si::seconds / si::square_metres // to make it dimensionless
-        / this->rw_of_xi(stat.xi[id]) // to get drdt
-        * this->dxidrw(this->rw_of_xi(stat.xi[id])) // to get dxidt (Jacobian)
-        ;
-
-        // the growth rate defined by "come back to equilibrium"
-        // compare e.g. apparently analogous tricks in:
-        // - Johnson 1980, JAS 37 2079-2085, disussion of inequality (5)
-        // - Heanel 1987, Beitr. Phys. Atmosph. 60 321-338, section 4.2
-        real_t xi_eq = this->xi_of_rw3(
-          phc::kappa::rw3_eq<real_t>(
-            stat.rd3[id] * si::cubic_metres, 
-            real_t(stat.kpa[id]),
-            real_t( // TODO: interpolation to drop positions?
-              thrust::min(
-                maxRH,
-                real_t(phc::R_v<real_t>() * (envi.T[ij] * si::kelvins) * (envi.rhod_rv[ij] * si::kilograms / si::cubic_metres) 
-                / (phc::p_vs<real_t>(envi.T[ij] * si::kelvins)))
-              )   
-            ),
-            envi.T[ij] * si::kelvins
-          ) / si::cubic_metres);
-
-        // TODO: as an option
-        // chosing which one to use
-        if (stat.xi[id] + dt * dxidt < xi_eq) dxidt = (xi_eq - stat.xi[id]) / dt;
-
-        // returning
-        return dxidt;
-// TODO? this->dxidrw_by_r?
+        dxidt_implicit<real_t, xi> f(stat, envi, id, dt); // the above-defined functor
+        real_t dxi = dt * f.dxidt(stat.xi[id]);
+        if (dxi == real_t(0)) return real_t(0); // TODO: is it worth putting here?
+        boost::uintmax_t iters = 20;
+        std::pair<real_t, real_t> xi_range = boost::math::tools::toms748_solve(
+          f, // the above-defined functor
+          thrust::max(
+            this->xi_of_rw3(stat.rd3[id]),
+            stat.xi[id] + 10 * thrust::min(real_t(0), dxi) // TODO: is 10 needed?
+          ), // min
+          stat.xi[id] + 10 * thrust::max(real_t(0), dxi), // max // TODO: is 10 needed
+          boost::math::tools::eps_tolerance<real_t>(sizeof(real_t) * 8 / 2), // the highest attainable precision with the algorithm according to Boost docs
+          iters,
+          boost::math::policies::policy<
+            boost::math::policies::domain_error<boost::math::policies::ignore_error>
+          >()
+        );
+        real_t xi_star = (xi_range.first + xi_range.second) / 2;
+        return (xi_star - stat.xi[id]) / dt;
       }
     };
 
@@ -339,6 +360,8 @@ namespace sdm
               real_t(envi.r[ij])
             ) / si::kelvins;
           }
+// TEMP!
+if (!(envi.rhod_rv[ij] >= 0)) std::cerr << "(rhod_rv(i,j,k) < 0)" << std::endl;
           //assert(rhod_rv(i,j,k) >= 0);  TODO
           //assert(isfinite(rhod_rv(i,j,k))); TODO
         }

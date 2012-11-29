@@ -213,6 +213,10 @@ if (NOT icicle_blitz_compiler)
   )
 endif()
 
+find_package(Boost COMPONENTS iostreams system program_options REQUIRED)
+include_directories(${Boost_INCLUDE_DIRS})
+target_link_libraries(icicle ${Boost_LIBRARIES})
+
 # Boost.lexical_cast (mandatory)
 icicle_check(status "boost_lexical_cast" FATAL_ERROR ""
   "#include <boost/lexical_cast.hpp>\n int main() {}"
@@ -223,11 +227,11 @@ icicle_check(status "boost_units" FATAL_ERROR ""
   "#include <boost/units/systems/si.hpp>\n int main() {}"
 )
 
-# Boost.program_options (mandatory)
-icicle_check_boost_lib(
-  status "boost_program_options" FATAL_ERROR ""
-  "#include <boost/program_options.hpp>\n int main() {boost::program_options::options_description d\;}"
-)
+## Boost.program_options (mandatory)
+#icicle_check_boost_lib(
+#  status "boost_program_options" FATAL_ERROR ""
+#  "#include <boost/program_options.hpp>\n int main() {boost::program_options::options_description d\;}"
+#)
 
 # Boost.Thread (optional)
 set(USE_BOOST_THREAD FALSE)
