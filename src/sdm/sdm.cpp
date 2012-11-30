@@ -866,8 +866,9 @@ static void sd_chem(
         * dt // timestep
         / dv // volume
         * si::square_metres * phc::pi<real_t>() * pow(this->rw_of_xi(stat.xi[id1]) + this->rw_of_xi(stat.xi[id2]), 2) // geometrical cross-section
-        * real_t(1); // collection efficiency TODO!!!
+        * real_t(10); // collection efficiency TODO!!!
       assert(prob < 1);
+if (prob >= 1) std::cerr << "prob >= 1!" << std::endl;
 
       // tossing a random number and returning if unlucky
       if (prob < rand()) return;
@@ -887,6 +888,7 @@ static void sd_chem(
       }
       else
       {
+if (stat.n[id1] != stat.n[id2]) std::cerr << "n1 = n2!" << std::endl;
         // TODO: eqs. 16-19 in Shima et al. 2009
         assert(false);
       }

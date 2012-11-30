@@ -61,7 +61,7 @@ int main(int argc, char **argv)
   NcFile nf(dir+"/out.nc", NcFile::read);
 
   notice_macro("opening super-droplet netCDF file")
-  NcFile nf2("/users/arabas/devel/test2.nc", NcFile::read);
+  NcFile nf2("/users/arabas/devel/test2_100_part.nc", NcFile::read);
 
   notice_macro("reading dt_out")
   quantity<si::time, real_t> dt_out;
@@ -114,10 +114,12 @@ int main(int argc, char **argv)
 
   for (size_t t = 0 ; t < nt; ++t) for (string &ext : list<string>({"eps","png"}))
   {
+    int tz = t;
+
     notice_macro("generating frame at t=" << t)
     gp << "reset" << endl;
     // progressive-rock connoisseur palette ;)
-    gp << "set palette defined (0 '#000000', 1 '#993399', 2 '#00CCFF', 3 '#66CC00', 4 '#FFFF00', 5 '#FC8727', 6 '#FD0000') maxcolors 20" << endl; 
+    gp << "set palette defined (0 '#ffffff', 1 '#993399', 2 '#00CCFF', 3 '#66CC00', 4 '#FFFF00', 5 '#FC8727', 6 '#FD0000') maxcolors 64" << endl; 
     gp << "set view map" << endl;
     gp << "set tics out scale .25" << endl;
 
@@ -131,10 +133,10 @@ int main(int argc, char **argv)
     gp << "set nokey" << endl;
 
     gp << "set label 't = " << int(real_t(t) * dt_out / si::seconds) << " s' at screen .51,.99 center" << endl;
-    gp << "set label 'icicle/sdm' at screen .25,.99 center" << endl;
-    gp << "set label 'Zach''s 2D-bin' at screen .75,.99 center" << endl;
+//    gp << "set label 'icicle/sdm' at screen .25,.99 center" << endl;
+//    gp << "set label 'Zach''s 2D-bin' at screen .75,.99 center" << endl;
 
-    int cols = 2, rows = 5;
+    int cols = 1, rows = 8;
 
     if (ext == "png")
       gp << "set term png enhanced size " << cols * 500 << "," << rows * 500 << endl;
@@ -144,6 +146,11 @@ int main(int argc, char **argv)
 
     gp << "set output '" << dir << "/test_" << zeropad(t) << "." << ext << "'" << endl;
     gp << "set multiplot layout " << rows << "," << cols << endl;
+
+    Array<real_t, 2> conc_aero(nx, ny), conc_cloud(nx, ny), conc_precip(nx, ny);
+    conc_aero = 0;
+    conc_cloud = 0;
+    conc_precip = 0;
 
     //// spectrum plot
     {
@@ -161,7 +168,6 @@ int main(int argc, char **argv)
       gp << "set xlabel 'particle (wet) radius [{/Symbol m}m]'" << endl;
 
       Array<real_t, 2> tmps(ns, ny), tmp(nx, ny);
-
       {
         // super-droplets
         for (int i = 0; i < ns; ++i)
@@ -169,6 +175,14 @@ int main(int argc, char **argv)
           ostringstream name;
           name << "m_0_" << i;
           nf.getVar(name.str()).getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp.data());
+
+          if (left_edges[i+1] / si::metres < 1e-6)
+            conc_aero += tmp / 1e6;
+          else if (left_edges[i] / si::metres > 1e-6 && left_edges[i+1] / si::metres < 25e-6)
+            conc_cloud += tmp / 1e6;
+          else if (left_edges[i] / si::metres > 25e-6)
+            conc_precip += tmp / 1e6;
+
           for (int y = 0; y < ny; ++y) 
             tmps(i, y) = sum(tmp(blitz::Range::all(), y)) / nx;
         }
@@ -179,27 +193,45 @@ int main(int argc, char **argv)
         gp.sendBinary(tmps);
       }
       // 2D-bin
+/*
       { 
         for (int i = 0; i < ns; ++i)
         {
-          nf2.getVar("QCDIST").getVar(start({t,0,0,i}), count({1,ny,nx,1}), tmp.data());
+          nf2.getVar("QCDIST").getVar(start({tz,0,0,i}), count({1,ny,nx,1}), tmp.data());
           for (int y = 0; y < ny; ++y) 
             tmps(i, y) = sum(tmp(y, blitz::Range::all())) / nx;
         }
-        nf2.getVar("GAC").getVar(start({t,0,0}), count({1,ny,nx}), tmp.data());
+        nf2.getVar("GAC").getVar(start({tz,0,0}), count({1,ny,nx}), tmp.data());
         tmp.transposeSelf(secondDim, firstDim);
         tmps *= tmp; // kg-1 -> m-3
-        tmps /= 1e6; // 1/m3 -> 1/cm3
+        tmps /= 1e6; // 1/m3 -> 1/cm3 
         gp << "splot '-' binary" << gp.binfmt(tmps)
           << " dx=1 dy=" << dy/1000 << " origin=(.5," << dy/2000 << ",0)"
           << " using 1 with image notitle" << endl;
         gp.sendBinary(tmps);
       }
+*/
     }
 
     gp << "set xlabel 'X [km]'" << endl;
     gp << "set xrange [" << 0 << ":" << nx * dx/1000 << "]" << endl;
     gp << "set xtics .5" << endl;
+
+    //// concentration plots
+    {
+      gp << "set title 'r<1 {/Symbol m}m particle conc. [1/cm^3]'" << endl;
+      gp << "splot '-' binary" << gp.binfmt(conc_aero) << dxdy << " using 1 with image notitle" << endl;
+      gp.sendBinary(conc_aero);
+
+      gp << "set title '1<r<25 {/Symbol m}m particle conc. [1/cm^3]'" << endl;
+      gp << "splot '-' binary" << gp.binfmt(conc_cloud) << dxdy << " using 1 with image notitle" << endl;
+      gp.sendBinary(conc_cloud);
+
+      gp << "set title 'r>25 {/Symbol m}m particle conc. [1/cm^3]'" << endl;
+      gp << "splot '-' binary" << gp.binfmt(conc_precip) << dxdy << " using 1 with image notitle" << endl;
+      gp.sendBinary(conc_precip);
+    }
+
     gp << "unset logscale cb" << endl;
 
     //// water vapour mixing ratio
@@ -214,10 +246,12 @@ int main(int argc, char **argv)
       gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " using ($1*1000) with image notitle" << endl;
       gp.sendBinary(tmp);
       // 2D-bin
-      nf2.getVar("QV").getVar(start({t,0,0}), count({1,ny,nx}), tmp.data()); 
+/*
+      nf2.getVar("QV").getVar(start({tz,0,0}), count({1,ny,nx}), tmp.data()); 
       tmp.transposeSelf(secondDim, firstDim);
       gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " using ($1*1000) with image notitle" << endl;
       gp.sendBinary(tmp);
+*/
     }
 
 
@@ -233,10 +267,12 @@ int main(int argc, char **argv)
       gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " with image notitle" << endl;
       gp.sendBinary(tmp);
       // 2D-bin
-      nf2.getVar("THETA").getVar(start({t,0,0}), count({1,ny,nx}), tmp.data()); 
+/*
+      nf2.getVar("THETA").getVar(start({tz,0,0}), count({1,ny,nx}), tmp.data()); 
       tmp.transposeSelf(secondDim, firstDim);
       gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " with image notitle" << endl;
       gp.sendBinary(tmp);
+*/
     }
 
  
@@ -251,7 +287,7 @@ int main(int argc, char **argv)
       gp << endl;
       gp.sendBinary(tmp);
       // 2D-bin
-      gp << "splot 0" << endl;
+//      gp << "splot 0" << endl;
     }
 
 
@@ -259,17 +295,18 @@ int main(int argc, char **argv)
     {
       Array<real_t, 2> tmp0(nx, ny), tmp1(nx, ny);
 
-      gp << "set title 'effective radius [{/Symbol m}m] (FSSP range)'" << endl;
+      gp << "set title 'effective radius [{/Symbol m}m] (FSSP range, N>10/cm^3)'" << endl;
       gp << "set cbrange [1:30]" << endl;
       nf.getVar("m_3").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
       nf.getVar("m_2").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp1.data()); 
       tmp0 /= tmp1;
       tmp0 *= 1e6;
+      tmp0 = where(conc_cloud > 10, tmp0, 0);
       gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";
       gp << endl;
       gp.sendBinary(tmp0);
       // 2D-bin
-      gp << "splot 0" << endl;
+//      gp << "splot 0" << endl;
     }
 
     gp << "unset multiplot" << endl;
