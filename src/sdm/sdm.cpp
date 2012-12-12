@@ -615,7 +615,7 @@ static void sd_diag(
   if (true/* TODO opt[chem]*/)
   {
     typedef pair<enum chem_aq, string> keyval;
-    for (keyval &kv : list<keyval>({{SO3,"c_SO3"}}))
+    for (keyval &kv : list<keyval>({{SO2,"c_SO2"},{HSO3,"c_HSO3"},{H, "c_H"},{OH,"c_OH"}}))
     {
       // zeroing the temporary var
       thrust::fill(tmp_real.begin(), tmp_real.end(), 0); // TODO: is it needed
