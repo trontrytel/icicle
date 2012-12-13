@@ -75,6 +75,8 @@ int main()
     {sdm::SO3,  0 * si::kilograms}
   });
 
+/*
+
   // TODO: for(openmp, cuda)
 /*
   sdm::sdm<real_t, sdm::openmp> particles(

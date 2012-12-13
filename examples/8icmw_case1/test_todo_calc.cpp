@@ -48,8 +48,8 @@ typedef float real_t;
 // simulation parameteters (the 8th WMO Cloud Modelling Workshop: Case 1    
 // by W.W.Grabowski: http://rap.ucar.edu/~gthompsn/workshop2012/case1/case1.pdf  
 const size_t 
-  nx = http_or_default("nx",size_t(75)),                   // 75 
-  ny = http_or_default("ny",size_t(75));                    // 75 
+  nx = http_or_default("nx",size_t(76)),                   // 75 
+  ny = http_or_default("ny",size_t(76));                    // 75 
 const quantity<si::length,real_t> 
   dx = http_or_default("dx",real_t(20)) * si::metres,       // 20 m
   dy = http_or_default("dy",real_t(20)) * si::metres;       // 20 m
@@ -65,10 +65,10 @@ const int
   fct = http_or_default("fct", int(0)),  
   toa = http_or_default("toa", int(0)),
   iord = http_or_default("iord", int(2)),
-  nsd = http_or_default("nsd", int(1));  
-//const quantity<si::time, real_t> 
-//  t_max = 100 * si::seconds, // 4 * 3600
-//  dt_out = real_t(30) * si::seconds; // 300
+  nsd = http_or_default("nsd", int(4));  
+const quantity<si::time, real_t> 
+  t_max = 100 * si::seconds, // 4 * 3600
+  dt_out = real_t(5) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = http_or_default("w_max", real_t(.6)) * si::metres_per_second; // .6 TODO: check it!
 
@@ -87,9 +87,9 @@ bool
 bool
   mm_act   = true,
   mm_cond  = true,
-  mm_autoc = false,
-  mm_acc   = false,
-  mm_self  = false,
+  mm_autoc = true,
+  mm_acc   = true,
+//  mm_self  = false, no selfaccretion in KK2000
   mm_turb  = false,
   mm_sedi  = false;
 real_t
@@ -100,7 +100,7 @@ real_t
 int
   sdm_adve_sstp = 1,
   sdm_sedi_sstp = 1,
-  sdm_chem_sstp = 1,
+  sdm_chem_sstp = 10,
   sdm_cond_sstp = 10,
   sdm_coal_sstp = 1;
 bool 
@@ -145,14 +145,19 @@ int main(int argc, char **argv)
       << " --adv.mpdata.fct " << fct
       << " --adv.mpdata.iord " << iord
       << " --adv.mpdata.third_order " << toa
-//    << " --t_max " << real_t(t_max / si::seconds)
-//    << " --dt " << "auto" 
-//    << " --dt_out " << real_t(dt_out / si::seconds)
+    << " --t_max " << real_t(t_max / si::seconds)
+    << " --dt " << "auto" 
+    << " --dt_out " << real_t(dt_out / si::seconds)
+
+// TODO TEMP TODO TEMP for mm !!!
+//    << " --dt " << real_t(1.)
+//    << " --nt " << real_t(3000)  //4*3600
+//    << " --nout " << real_t(100)   //600
 
 // TODO TEMP TODO TEMP !!!
-    << " --dt " << real_t(1.)
-    << " --nt " << real_t(1800)
-    << " --nout " << real_t(10)
+//    << " --dt " << real_t(1.)
+//    << " --nt " << real_t(1800)
+//    << " --nout " << real_t(10)
 
     << " --out netcdf" 
     << " --out.netcdf.file " << dir << "/out.nc";
@@ -175,7 +180,6 @@ int main(int argc, char **argv)
       << " --eqs.todo_mm.cond "  << mm_cond
       << " --eqs.todo_mm.acc "   << mm_acc
       << " --eqs.todo_mm.autoc " << mm_autoc
-      << " --eqs.todo_mm.self "  << mm_self
       << " --eqs.todo_mm.turb "  << mm_turb
       << " --eqs.todo_mm.sedi "  << mm_sedi
     ;
