@@ -61,7 +61,7 @@ int main(int argc, char **argv)
   NcFile nf(dir+"/out.nc", NcFile::read);
 
   notice_macro("opening super-droplet netCDF file")
-  NcFile nf2("/users/arabas/devel/test2_100_part.nc", NcFile::read);
+//  NcFile nf2("/users/arabas/devel/test2_100_part.nc", NcFile::read);
 
   notice_macro("reading dt_out")
   quantity<si::time, real_t> dt_out;

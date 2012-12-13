@@ -866,7 +866,7 @@ static void sd_chem(
         * dt // timestep
         / dv // volume
         * si::square_metres * phc::pi<real_t>() * pow(this->rw_of_xi(stat.xi[id1]) + this->rw_of_xi(stat.xi[id2]), 2) // geometrical cross-section
-        * real_t(10); // collection efficiency TODO!!!
+        * real_t(1); // collection efficiency TODO!!!
       assert(prob < 1);
 if (prob >= 1) std::cerr << "prob >= 1!" << std::endl;
 
