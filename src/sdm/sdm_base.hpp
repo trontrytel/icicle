@@ -27,6 +27,7 @@ namespace sdm
     // velocity field (copied from an Arakawa-C grid)
     thrust::device_vector<real_t> vx, vy;
     int vx_nx, vx_ny, vy_nx, vy_ny, n_cell; 
+    real_t dx, dy;
 
     // fields copied "as is" from the Eulerian model
     thrust::device_vector<real_t> rhod, rhod_th, rhod_rv;
@@ -36,7 +37,8 @@ namespace sdm
     thrust::device_vector<real_t> m_3_old, m_3_new;
 
     // ctor
-    envi_t(int nx, int ny) 
+    envi_t(int nx, int ny, real_t dx, real_t dy) :
+      dx(dx), dy(dy)
     {
       vx_nx = nx + 1;
       vx_ny = ny;
@@ -46,7 +48,7 @@ namespace sdm
       vy.resize(vy_nx * vy_ny);
 
       n_cell = nx * ny;
-      // TODO + 2 x halo if interpolating?
+      // TODO + 2 x halo if interpolating Tpq?
       rhod.resize(n_cell); 
       rhod_th.resize(n_cell); 
       rhod_rv.resize(n_cell);

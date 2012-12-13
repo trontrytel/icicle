@@ -43,8 +43,9 @@ int main()
   list<enum micro_t> micros({bulk, sdm, mm});
 
   // letting the non-bulk models to deal with supersaturation
-  int dt_out = 5, n_out = 4; 
+  int dt_out = 5, n_out = 4; // [seconds]
   real_t eps = .05e-3;
+  int status = EXIT_SUCCESS;
 
   // loop over types of microphysics
   for (micro_t &micro : micros)
@@ -180,7 +181,10 @@ int main()
         {
           cerr << "abs(" << rl_mean_cache(y) << "-" << rl_mean(y) << ") = " << std::abs(rl_mean_cache(y) - rl_mean(y))<< endl;
           if (std::abs(rl_mean_cache(y) - rl_mean(y)) > eps) 
-            error_macro("delta rl_mean > eps for " << micro_str[micro] << " @ y = " << y) 
+          {
+            warning_macro("delta rl_mean > eps for " << micro_str[micro] << " @ y = " << y) 
+            status = EXIT_FAILURE;
+          }
         }
       }
     }
@@ -217,4 +221,6 @@ int main()
   
   // closing the plot
   gp << "unset multiplot" << endl;
+
+  exit(status);
 }

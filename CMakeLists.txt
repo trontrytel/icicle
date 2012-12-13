@@ -182,6 +182,19 @@ if(NOT USE_FLOAT AND NOT USE_DOUBLE AND NOT USE_LDOUBLE AND NOT USE_FLOAT128)
   message(FATAL_ERROR "-DFLOAD=NO -DDOUBLE=NO -DLDBOULBE=NO and -DFLOAT128=NO may not be specified all at once!")
 endif() 
 
+# checking if fork() requires librt
+set(code "#include <boost/interprocess/ipc/message_queue.hpp>\n int main() {  boost::interprocess::message_queue q(boost::interprocess::open_or_create, \"n\", 1, sizeof(bool))\; }")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+icicle_check(status "ipc" WARNING "" "${code}")
+if(NOT status)
+  cmake_push_check_state()
+  set(CMAKE_REQUIRED_LIBRARIES "-lrt")
+  icicle_check(status "ipc_librt" FATAL_ERROR "ipc not usable" "${code}")
+  target_link_libraries(icicle ${CMAKE_REQUIRED_LIBRARIES})
+  cmake_pop_check_state()
+endif()
+unset(code)
+
 # Blitz++ (mandatory)
 target_link_libraries(icicle debug "-lblitz") # TODO: check if debugging actually works, if not suggest recompiling blitz with --enable-shared
 icicle_check(status "blitz" FATAL_ERROR ""
@@ -200,6 +213,10 @@ if (NOT icicle_blitz_compiler)
   )
 endif()
 
+find_package(Boost COMPONENTS iostreams system program_options REQUIRED)
+include_directories(${Boost_INCLUDE_DIRS})
+target_link_libraries(icicle ${Boost_LIBRARIES})
+
 # Boost.lexical_cast (mandatory)
 icicle_check(status "boost_lexical_cast" FATAL_ERROR ""
   "#include <boost/lexical_cast.hpp>\n int main() {}"
@@ -210,11 +227,11 @@ icicle_check(status "boost_units" FATAL_ERROR ""
   "#include <boost/units/systems/si.hpp>\n int main() {}"
 )
 
-# Boost.program_options (mandatory)
-icicle_check_boost_lib(
-  status "boost_program_options" FATAL_ERROR ""
-  "#include <boost/program_options.hpp>\n int main() {boost::program_options::options_description d\;}"
-)
+## Boost.program_options (mandatory)
+#icicle_check_boost_lib(
+#  status "boost_program_options" FATAL_ERROR ""
+#  "#include <boost/program_options.hpp>\n int main() {boost::program_options::options_description d\;}"
+#)
 
 # Boost.Thread (optional)
 set(USE_BOOST_THREAD FALSE)

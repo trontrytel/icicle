@@ -85,8 +85,8 @@ namespace wkc
       if(micro == sdm)
       {
         opts  
-          << " --eqs.todo_sdm.mean_rd1 " << .04e-6
-          << " --eqs.todo_sdm.mean_rd2 " << .15e-6
+          << " --eqs.todo_sdm.mean_rd1 " << .04e-6 / 2
+          << " --eqs.todo_sdm.mean_rd2 " << .15e-6 / 2
           << " --eqs.todo_sdm.sdev_rd1 " << 1.4
           << " --eqs.todo_sdm.sdev_rd2 " << 1.6
           << " --eqs.todo_sdm.n1_tot " << 60e6

@@ -95,6 +95,9 @@ class slv_parallel : public slv<real_t>
     }
     int n = 0;
 
+    // recording initial condition
+    record(sd, n, 0);
+
     // adjustments for the initial condition
     slvs[sd].apply_adjustments(n, setup.dt, true);
 
@@ -117,7 +120,7 @@ class slv_parallel : public slv<real_t>
       bool fallback = (t == 0 && setup.advsch.time_levels() == 3);
       n = fallback ? 0 : setup.advsch.time_levels() - 2;
 
-      if (t % setup.nout == 0) record(sd, n, t / setup.nout);
+      if (t != 0 && t % setup.nout == 0) record(sd, n, t / setup.nout);
 
       int last_group = -1;
       for (int e = 0; e < setup.eqsys.n_vars(); ++e)

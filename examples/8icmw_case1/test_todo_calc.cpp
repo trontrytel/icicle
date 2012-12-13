@@ -67,7 +67,7 @@ const int
   iord = http_or_default("iord", int(2)),
   nsd = http_or_default("nsd", int(4));  
 const quantity<si::time, real_t> 
-  t_max = 50 * si::seconds, // 4 * 3600
+  t_max = 100 * si::seconds, // 4 * 3600
   dt_out = real_t(5) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = http_or_default("w_max", real_t(.6)) * si::metres_per_second; // .6 TODO: check it!
@@ -100,15 +100,15 @@ real_t
 int
   sdm_adve_sstp = 1,
   sdm_sedi_sstp = 1,
-  sdm_chem_sstp = 100,
-  sdm_cond_sstp = 1,
+  sdm_chem_sstp = 10,
+  sdm_cond_sstp = 10,
   sdm_coal_sstp = 1;
 bool 
   sdm_adve = http_or_default("sdm_adve", true),
   sdm_cond = http_or_default("sdm_cond", true),
   sdm_coal = http_or_default("sdm_coal", true),
   sdm_sedi = http_or_default("sdm_sedi", true),
-  sdm_chem = http_or_default("sdm_chem", true);
+  sdm_chem = http_or_default("sdm_chem", false);
 real_t 
   sd_conc_mean = http_or_default("sd_conc_mean", 256);
 
@@ -145,7 +145,6 @@ int main(int argc, char **argv)
       << " --adv.mpdata.fct " << fct
       << " --adv.mpdata.iord " << iord
       << " --adv.mpdata.third_order " << toa
-
     << " --t_max " << real_t(t_max / si::seconds)
     << " --dt " << "auto" 
     << " --dt_out " << real_t(dt_out / si::seconds)
@@ -154,6 +153,11 @@ int main(int argc, char **argv)
 //    << " --dt " << real_t(1.)
 //    << " --nt " << real_t(3000)  //4*3600
 //    << " --nout " << real_t(100)   //600
+
+// TODO TEMP TODO TEMP !!!
+//    << " --dt " << real_t(1.)
+//    << " --nt " << real_t(1800)
+//    << " --nout " << real_t(10)
 
     << " --out netcdf" 
     << " --out.netcdf.file " << dir << "/out.nc";
@@ -179,20 +183,28 @@ int main(int argc, char **argv)
       << " --eqs.todo_mm.turb "  << mm_turb
       << " --eqs.todo_mm.sedi "  << mm_sedi
     ;
-    else if (micro == sdm) cmd 
-      << " --eqs.todo_sdm.adve.sstp " << sdm_adve_sstp
-      << " --eqs.todo_sdm.sedi.sstp " << sdm_sedi_sstp
-      << " --eqs.todo_sdm.cond.sstp " << sdm_cond_sstp
-      << " --eqs.todo_sdm.chem.sstp " << sdm_chem_sstp
-      << " --eqs.todo_sdm.coal.sstp " << sdm_coal_sstp
+    else if (micro == sdm) 
+    {
+      cmd 
+        << " --eqs.todo_sdm.adve.sstp " << sdm_adve_sstp
+        << " --eqs.todo_sdm.sedi.sstp " << sdm_sedi_sstp
+        << " --eqs.todo_sdm.cond.sstp " << sdm_cond_sstp
+        << " --eqs.todo_sdm.chem.sstp " << sdm_chem_sstp
+        << " --eqs.todo_sdm.coal.sstp " << sdm_coal_sstp
 
-      << " --eqs.todo_sdm.adve " << sdm_adve
-      << " --eqs.todo_sdm.cond " << sdm_cond
-      << " --eqs.todo_sdm.coal " << sdm_coal
-      << " --eqs.todo_sdm.sedi " << sdm_sedi
-      << " --eqs.todo_sdm.chem " << sdm_chem
-      << " --eqs.todo_sdm.sd_conc_mean " << sd_conc_mean
-    ;
+        << " --eqs.todo_sdm.adve " << sdm_adve
+        << " --eqs.todo_sdm.cond " << sdm_cond
+        << " --eqs.todo_sdm.coal " << sdm_coal
+        << " --eqs.todo_sdm.sedi " << sdm_sedi
+        << " --eqs.todo_sdm.chem " << sdm_chem
+        << " --eqs.todo_sdm.sd_conc_mean " << sd_conc_mean
+
+        // TEMP...
+        << " --eqs.todo_sdm.out_m0 \"";
+      for (int i = 0; i < 25; ++i) cmd << i << "e-6:" << i + 1 << "e-6;";
+      for (int i = 0; i < 7; ++i) cmd << 25 * int(pow(2,i)) << "e-6:" << 25 * int(pow(2,i+1)) << "e-6;";
+      cmd << "\"";
+    }
     else assert(false);
     
   if (EXIT_SUCCESS != system(cmd.str().c_str()))
