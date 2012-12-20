@@ -67,8 +67,8 @@ const int
   iord = http_or_default("iord", int(2)),
   nsd = http_or_default("nsd", int(4));  
 const quantity<si::time, real_t> 
-  t_max = 3600 * si::seconds, // 4 * 3600
-  dt_out = real_t(50) * si::seconds; // 300
+  t_max = 120 * si::seconds, // 4 * 3600
+  dt_out = real_t(10) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = http_or_default("w_max", real_t(.6)) * si::metres_per_second; // .6 TODO: check it!
 
@@ -145,9 +145,9 @@ int main(int argc, char **argv)
       << " --adv.mpdata.fct " << fct
       << " --adv.mpdata.iord " << iord
       << " --adv.mpdata.third_order " << toa
-    << " --t_max " << real_t(t_max / si::seconds)
-    << " --dt " << "auto" 
-    << " --dt_out " << real_t(dt_out / si::seconds)
+//    << " --t_max " << real_t(t_max / si::seconds)
+//    << " --dt " << "auto" 
+//    << " --dt_out " << real_t(dt_out / si::seconds)
 
 // TODO TEMP TODO TEMP for mm !!!
 //    << " --dt " << real_t(1.)
@@ -155,9 +155,9 @@ int main(int argc, char **argv)
 //    << " --nout " << real_t(100)   //600
 
 // TODO TEMP TODO TEMP !!!
-//    << " --dt " << real_t(1.)
-//    << " --nt " << real_t(1800)
-//    << " --nout " << real_t(10)
+    << " --dt " << real_t(1.)
+    << " --nt " << real_t(120)
+    << " --nout " << real_t(10)
 
     << " --out netcdf" 
     << " --out.netcdf.file " << dir << "/out.nc";
