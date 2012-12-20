@@ -5,7 +5,6 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#include "cfg.hpp"
 #include "out_debug.hpp"
 
 extern "C" {
@@ -29,19 +28,12 @@ void out_debug<real_t>::record(
         << ijk.lbound(1) << "..." << ijk.ubound(1) << "," 
         << ijk.lbound(2) << "..." << ijk.ubound(2) << "," 
       << "] @ t/dt=" << t
-      << endl
+      << std::endl
       << psi(ijk) 
-      << endl;
+      << std::endl;
     std::cerr << tmp.str(); // non-buffered?
 }
 
 // explicit instantiations
-#if defined(USE_FLOAT)
-template class out_debug<float>;
-#endif
-#if defined(USE_DOUBLE)
-template class out_debug<double>;
-#endif
-#if defined(USE_LDOUBLE)
-template class out_debug<long double>;
-#endif
+#define ICICLE_INSTANTIATE_CLASS out_debug
+#include "cmn/cmn_instant.hpp"

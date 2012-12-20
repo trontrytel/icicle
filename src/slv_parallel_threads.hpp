@@ -7,6 +7,7 @@
  */
 #pragma once
 #include "slv_parallel.hpp"
+#include "cfg/cfg_boost_thread.hpp"
 #ifdef USE_BOOST_THREAD
 #  include <boost/thread.hpp>
 #endif

@@ -8,7 +8,10 @@
 #pragma once
 #include "slv.hpp"
 #include "stp.hpp"
-#include "tmp.hpp"
+#include "tmp.hpp" // TODO: get rid of it!
+
+#  include <memory>
+using std::unique_ptr;
 
 template <typename real_t>
 class slv_serial : public slv<real_t>
@@ -30,7 +33,7 @@ class slv_serial : public slv<real_t>
   private: ptr_unordered_map<string, mtx::arr<real_t>> aux;
 
   // RHS representations (implicit and explicit parts)
-  private: ptr_vector<nullable<mtx::arr<real_t>>> rhs_R, rhs_C;
+  private: ptr_vector<boost::nullable<mtx::arr<real_t>>> rhs_R, rhs_C;
 
   private: unique_ptr<tmp<real_t>> cache; 
   private: vector<mtx::arr<real_t>*> tmpvec; // used in update_forcings
@@ -66,11 +69,11 @@ class slv_serial : public slv<real_t>
   public: void update_courants(const int g, const int nm1, const int nm0);
 
   /// \param n the time level to use for updating the forcings
-  public: void update_forcings(int n, const quantity<si::time, real_t> t);
+  public: void update_forcings(int n /*, const quantity<si::time, real_t> t*/);
 
   public: void apply_forcings(int e, int n, quantity<si::time, real_t> dt);
 
-  public: void apply_adjustments(int n, const quantity<si::time, real_t> dt);
+  public: void apply_adjustments(int n, const quantity<si::time, real_t> dt, bool record);
 
   public: void cycle_arrays(const int e, const int n); // TODO: n unneeded?
 

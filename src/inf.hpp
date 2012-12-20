@@ -8,18 +8,25 @@
  */
 #pragma once
 
-#include "cmn.hpp"
 #include "mtx.hpp"
+
+#include "cfg/cfg_boost_timer.hpp"
 
 #ifdef USE_BOOST_TIMER
 #  include <boost/timer/timer.hpp>
 #endif
 
+#include <string>
+using std::string;
+
+#include <map>
+using std::map;
+
 /// @brief a facility for gathering simulation info - timing, compiler configurration, etc
 class inf 
 {
 #ifdef USE_BOOST_TIMER
-  private: boost::timer::cpu_timer tmr;
+  private: boost::timer::cpu_timer tmr; // TODO: detail
 #endif
   private: string options;
   public: inf(const string &options)

@@ -8,6 +8,21 @@
 #pragma once
 #include "vel_func.hpp" 
 
+#include <map>
+using std::map;
+
+#include <string>
+using std::string;
+
+#include <vector>
+using std::vector;
+
+#include "cfg/cfg_netcdf.hpp"
+#if defined(USE_NETCDF)
+#  include "cmn/cmn_netcdf.hpp" // TODO: move somehow into detail?
+#endif
+#include "cmn/cmn_error.hpp"
+
 template <typename real_t>
 class vel_func_stream : public vel_func<real_t>
 {
@@ -33,8 +48,10 @@ class vel_func_stream : public vel_func<real_t>
 
   public: vel_func_stream(const grd<real_t> &grid, const string &filename)
     : vel_func<real_t>(grid)
+#if !defined(USE_NETCDF)
+  { error_macro("recompile icicle with -DUSE_NETCDF") }
+#else
   { 
-    // TODO: and what about USE_NETCDF=OFF !!!!
     try 
     {   
       NcFile nf(filename, NcFile::read);
@@ -50,4 +67,5 @@ class vel_func_stream : public vel_func<real_t>
     }
     catch (NcException& e) error_macro(e.what())
   }
+#endif
 };

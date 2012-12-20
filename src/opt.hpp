@@ -6,9 +6,14 @@
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
 #pragma once
-#include "cmn.hpp"
+
+#include "cmn/cmn_error.hpp"
+
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
+
+#include <string>
+using std::string;
 
 template <typename real_t>
 real_t real_cast(const po::variables_map& vm, const string &name) 

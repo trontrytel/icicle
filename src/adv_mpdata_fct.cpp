@@ -7,7 +7,6 @@
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  *  @brief definition of the adv_mpdata_fct class with an implementation of the flux-corrected MPDATA scheme
  */
-#include "cfg.hpp"
 #include "adv_mpdata_fct.hpp"
 
 #  define psi_min (*tmp_s[0])
@@ -334,12 +333,5 @@ typename adv<real_t>::op3D *adv_mpdata_fct<real_t>::factory(
 }
 
 // explicit instantiations
-#if defined(USE_FLOAT)
-template class adv_mpdata_fct<float>;
-#endif
-#if defined(USE_DOUBLE)
-template class adv_mpdata_fct<double>;
-#endif
-#if defined(USE_LDOUBLE)
-template class adv_mpdata_fct<long double>;
-#endif
+#define ICICLE_INSTANTIATE_CLASS adv_mpdata_fct
+#include "cmn/cmn_instant.hpp"

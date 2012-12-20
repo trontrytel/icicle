@@ -6,7 +6,6 @@
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  *  @brief contains definition of the ini_func_cone class
  */
-#include "cfg.hpp"
 #include "ini_func_cone.hpp" 
 
 template <typename real_t>
@@ -36,12 +35,6 @@ quantity<si::dimensionless, real_t> ini_func_cone<real_t>::psi(
 }
 
 // explicit instantiations
-#if defined(USE_FLOAT)
-template class ini_func_cone<float>;
-#endif
-#if defined(USE_DOUBLE)
-template class ini_func_cone<double>;
-#endif
-#if defined(USE_LDOUBLE)
-template class ini_func_cone<long double>;
-#endif
+// explicit instantiations
+#define ICICLE_INSTANTIATE_CLASS ini_func_cone
+#include "cmn/cmn_instant.hpp"

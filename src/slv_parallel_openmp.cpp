@@ -5,7 +5,6 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#include "cfg.hpp"
 #include "slv_parallel_openmp.hpp"
 #ifdef _OPENMP
 #  include <omp.h>
@@ -49,12 +48,5 @@ void slv_parallel_openmp<real_t>::integ_loop()
 #endif
 
 // explicit instantiations
-#if defined(USE_FLOAT)
-template class slv_parallel_openmp<float>;
-#endif
-#if defined(USE_DOUBLE)
-template class slv_parallel_openmp<double>;
-#endif
-#if defined(USE_LDOUBLE)
-template class slv_parallel_openmp<long double>;
-#endif
+#define ICICLE_INSTANTIATE_CLASS slv_parallel_openmp
+#include "cmn/cmn_instant.hpp"

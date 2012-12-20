@@ -9,6 +9,7 @@
 #pragma once
 #include "ini.hpp"
 #include "grd.hpp"
+#include "cmn/cmn_error.hpp"
 
 /// @brief a base class for functional-form specified initial conditions (still pure virtual, applicable to single-equation systems only)
 template <typename real_t>

@@ -30,19 +30,22 @@ out<real_t> *opt_out(
   const string &cmdline)
 {
   string outtype = vm.count("out") ? vm["out"].as<string>() : "<unspecified>";
+
+  // gnuplot
   if (outtype == "gnuplot")
     return new out_gnuplot<real_t>(setup.grid, vm["out.gnuplot.using"].as<string>());
   else
+
+  // debug
   if (outtype == "debug")
     return new out_debug<real_t>();
   else
-#  ifdef USE_NETCDF
+
+  // netcdf
   if (outtype == "netcdf")
-  {
     return new out_netcdf<real_t>(vm["out.netcdf.file"].as<string>(), setup, 
       vm["out.netcdf.ver"].as<int>(), cmdline);
-  }
   else
-#  endif
+
   error_macro("unsupported output type: " << outtype)
 }

@@ -7,8 +7,15 @@
  */
 #pragma once
 
-#include "cmn.hpp" 
 #include "mtx.hpp"
+
+#include "cmn/cmn_units.hpp"
+
+#include <boost/ptr_container/ptr_unordered_map.hpp>
+using boost::ptr_unordered_map;
+
+#include <string>
+using std::string;
 
 /** @brief TODO
  *
@@ -61,9 +68,9 @@ class rhs
 
   public: virtual void explicit_part(
     mtx::arr<real_t> &R, 
-    const ptr_unordered_map<string, mtx::arr<real_t>> &aux,
+    ptr_unordered_map<string, mtx::arr<real_t>> &aux,
     const mtx::arr<real_t> * const * const psi, 
-    const quantity<si::time, real_t> t
+    const quantity<si::time, real_t> dt
   ) const
   {
     assert(false);

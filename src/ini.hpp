@@ -10,6 +10,9 @@
 #include "grd.hpp"
 #include "mtx.hpp"
 
+#include <string>
+using std::string;
+
 /// @brief base class for initial conditions
 template <typename real_t>
 class ini 

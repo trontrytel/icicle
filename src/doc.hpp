@@ -9,11 +9,10 @@
 /** @mainpage
  *  @section sec_ABOUT_ICICLE About icicle
  *
- * Icicle is a modern C++ implementation of a nonoscillatory forward in time (NFT)
+ * Icicle is an object-oriented C++ implementation of a nonoscillatory forward in time (NFT)
  * solver for systems of generalised transport equations with emphasis on cloud 
  * and precipitation modelling applications. 
- * Icicle is being developed to serve as a numerical solver for systems of general transport
- * equations of the following type:
+ * Icicle solves systems of general transport equations of the following type:
  *
  * \f$ \partial_t \psi + \nabla \cdot (\vec{v} \psi) = R \f$
  * 
@@ -35,6 +34,14 @@
  *
  * Icicle's source code is publicly available under the terms of the @ref sec_COPYING
  * from a git repository at Github: http://github.com/slayoo/icicle/
+ *
+ * @section sec_EQUATIONS Supported equation sets
+ * @table
+ * | definition              | equation set | example |
+ * ----------------------------------------------------
+ * | eqs_scalar_advection    |              |         |
+ * | eqs_harmonic_oscillator |              |         |
+ * @endtable
  *
  * @section sec_CREDITS Credits
  *         

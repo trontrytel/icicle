@@ -23,7 +23,7 @@ int main()
   unlink("test_netcdf.nc");
   int status;
   std::string cmd =
-    "../../icicle"
+    "../../icicle --eqs scalar_advection"
     " --grd.dx 1 --grd.dy 1 --grd.dz 1"
     " --vel uniform --vel.uniform.u -1"
     " --t_max 10 --dt_out 1 --grd.nx 20"

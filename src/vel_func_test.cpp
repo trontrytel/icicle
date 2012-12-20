@@ -5,7 +5,6 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#include "cfg.hpp"
 #include "vel_func_test.hpp"
 
 template <typename real_t>
@@ -50,12 +49,5 @@ quantity<si::velocity, real_t> vel_func_test<real_t>::v(
 }
 
 // explicit instantiations
-#if defined(USE_FLOAT)
-template class vel_func_test<float>;
-#endif
-#if defined(USE_DOUBLE)
-template class vel_func_test<double>;
-#endif
-#if defined(USE_LDOUBLE)
-template class vel_func_test<long double>;
-#endif
+#define ICICLE_INSTANTIATE_CLASS vel_func_test
+#include "cmn/cmn_instant.hpp"

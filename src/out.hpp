@@ -6,8 +6,10 @@
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
 #pragma once
-#include "cmn.hpp" 
 #include "mtx.hpp" 
+
+#include <string>
+using std::string;
 
 template <typename real_t>
 class out 

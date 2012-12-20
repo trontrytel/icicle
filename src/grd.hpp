@@ -7,8 +7,9 @@
  *  @brief contains definition of the @ref grd class - a base class for all grids
  */
 #pragma once
-#include "cmn.hpp"
+
 #include "mtx.hpp"
+#include "cmn/cmn_units.hpp"
 
 /// @brief base class for grids
 template<typename real_t>

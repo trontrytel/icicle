@@ -1,3 +1,0 @@
-set(tmp test_eqs_harmonic_oscillator)
-add_executable(${tmp} ${tmp}.cpp)
-add_test(${tmp} ${tmp})

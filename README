@@ -31,12 +31,14 @@
   - Blitz++ library (>= 0.10) ... http://blitz.sourceforge.net/
 
   - Boost C++ libraries, incl.: ............. http://boost.org/
-    - Boost.Units (header only)
+    - Boost.Units (headers only)
     - Boost.program_options (headers and shared library)
     - Boost.conversion (headers only)
     - Boost.pointer_container (headers only)
 
-* optional libraries:
+* optional libraries/tools:
+
+  - CUDA's nvcc compiler .... http://developer.nvidia.com/cuda/
 
   - Boost C++ libraries, incl.: ............. http://boost.org/
     - Boost.Thread (headers & shared library)
@@ -56,6 +58,12 @@
 
   - gnuplot-iostream . http://stahlke.org/dan/gnuplot-iostream/
     (ver > 2012-04-01; only used in the test programs)
+
+  - gnuplot .............................. http://gnuplot.info/
+    (only used in test programs)
+
+  - GNU Cgicc .................. http://gnu.org/software/cgicc/
+    (only used in web interfaces to the test programs)
 
 * MPI requirements:
 

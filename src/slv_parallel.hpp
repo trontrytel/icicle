@@ -61,7 +61,10 @@ class slv_parallel : public slv<real_t>
   {
     barrier();
     if (sd == 0) // for shared mem the 0-th thread takes controll here
+    {
+      notice_macro("recording (record no." << r << ")")
       for (int sdi=0; sdi < nsd; ++sdi) slvs[sdi].record(n, r);
+    }
   }
 
   private: void fill_halos(int sd, int e, int n)
@@ -92,8 +95,11 @@ class slv_parallel : public slv<real_t>
     }
     int n = 0;
 
+    // recording initial condition
+    record(sd, n, 0);
+
     // adjustments for the initial condition
-    slvs[sd].apply_adjustments(n, setup.dt);
+    slvs[sd].apply_adjustments(n, setup.dt, true);
 
     for (int e = 0; e < setup.eqsys.n_vars(); ++e) 
       fill_halos(sd, e, n); 
@@ -103,18 +109,18 @@ class slv_parallel : public slv<real_t>
       slvs[sd].copy(n, n + 1); // TODO: only "dynamic" variables
 
     // first guess for forcing terms at t=0
-    if (!allhomo) slvs[sd].update_forcings(n, 0 * si::seconds);
+    if (!allhomo) slvs[sd].update_forcings(n/*, 0 * si::seconds*/);
 
     // time stepping
     for (unsigned long t = 0; t < setup.nt; ++t) 
     {   
-      if (sd == 0) cerr << "t/dt=" << t << " (t=" << real_t(t) * setup.dt << ")" << endl;
+      if (sd == 0) notice_macro("t/dt=" << t << " (t=" << real_t(t) * setup.dt << ")");
 
       assert(setup.advsch.time_levels() <= 3); // TODO: support for other values
       bool fallback = (t == 0 && setup.advsch.time_levels() == 3);
       n = fallback ? 0 : setup.advsch.time_levels() - 2;
 
-      if (t % setup.nout == 0) record(sd, n, t / setup.nout);
+      if (t != 0 && t % setup.nout == 0) record(sd, n, t / setup.nout);
 
       int last_group = -1;
       for (int e = 0; e < setup.eqsys.n_vars(); ++e)
@@ -145,14 +151,14 @@ class slv_parallel : public slv<real_t>
       } // e - equations
 
       // apply post-advection, pre-rhs adjustments
-      slvs[sd].apply_adjustments(n + 1, setup.dt);
+      slvs[sd].apply_adjustments(n + 1, setup.dt, (t+1) % setup.nout == 0);
 
       // assuming that computation of forcings relies on the outcome of advection of ALL variables
       if (!allhomo)
       {
         for (int e = 0; e < setup.eqsys.n_vars(); ++e) 
           fill_halos(sd, e, n + 1); 
-        slvs[sd].update_forcings(n + 1, real_t(t + .5) * setup.dt);
+        slvs[sd].update_forcings(n + 1/*, real_t(t + .5) * setup.dt*/);
         for (int e = 0; e < setup.eqsys.n_vars(); ++e)
           if (!homo[e]) slvs[sd].apply_forcings(e, n + 1, real_t(.5) * setup.dt);
       } 

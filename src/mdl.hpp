@@ -19,27 +19,27 @@ template <typename real_t>
 void mdl(const po::variables_map &vm, const string &cmdline) 
 {
   // grid choice
-  cerr << "-- init: parsing options: grd..." << endl;
+  notice_macro("parsing options: grd...")
   unique_ptr<grd<real_t>> grid(opt_grd<real_t>(vm));
 
   // advection scheme choice
-  cerr << "-- init: parsing options: adv..." << endl;
+  notice_macro("parsing options: adv...")
   unique_ptr<adv<real_t>> advsch(opt_adv<real_t>(vm));
 
   // velocity field choice
-  cerr << "-- init: parsing options: vel..." << endl;
+  notice_macro("parsing options: vel...")
   unique_ptr<vel<real_t>> velocity(opt_vel<real_t>(vm, *grid));
 
   // initial condition
-  cerr << "-- init: parsing options: ini..." << endl;
+  notice_macro("parsing options: ini...")
   unique_ptr<ini<real_t>> intcond(opt_ini<real_t>(vm, *grid));
 
   // equations
-  cerr << "-- init: parsing options: eqs..." << endl;
+  notice_macro("parsing options: eqs...")
   unique_ptr<eqs<real_t>> eqsys(opt_eqs<real_t>(vm, *grid, *intcond, *velocity));
 
   // grouping all above into a single set-up object
-  cerr << "-- init: parsing options: stp..." << endl;
+  notice_macro("parsing options: stp...")
   unique_ptr<stp<real_t>> setup(opt_stp<real_t>(vm, 
     *advsch, 
     *velocity, 
@@ -49,14 +49,14 @@ void mdl(const po::variables_map &vm, const string &cmdline)
   ));
 
   // output choice
-  cerr << "-- init: parsing options: out..." << endl;
+  notice_macro("parsing options: out...")
   unique_ptr<out<real_t>> output(opt_out<real_t>(vm, *setup, cmdline));
 
   // solver choice
-  cerr << "-- init: parsing options: slv..." << endl;
+  notice_macro("parsing options: slv...")
   unique_ptr<slv<real_t>> solver(opt_slv(vm, *setup, *output));
 
   // integration
-  cerr << "-- init: parsing options: done." << endl;
+  notice_macro("parsing options: done.")
   solver->integ_loop(); 
 }

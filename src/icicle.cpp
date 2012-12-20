@@ -7,12 +7,14 @@
  @  @brief contains the @ref main() function in which the floating point precision choice takes place
  */
 
-#include "cfg.hpp"
 #include "mdl.hpp"
+#include "cfg/cfg_types.hpp"
+#include "cfg/cfg_boost_mpi.hpp"
+#include "cfg/cfg_boost_thread.hpp"
 
 int main(int ac, char* av[])
 {
-  cerr << "-- init: icicle starting (built on " << __DATE__ << ")" << endl;
+  notice_macro("icicle starting (built on " << __DATE__ << ")")
 #if defined(__GNUC__) && !defined(__FAST_MATH__)
   warning_macro("GCC was used without the -ffast-math flag!")
 #endif
@@ -22,7 +24,19 @@ int main(int ac, char* av[])
     po::options_description desc("options");
     desc.add_options()
       ("help", "print this message")
-      ("bits", po::value<int>()->default_value(32), "floating point bits: sizeof(float), sizeof(double), sizeof(long double)");
+      ("bits", po::value<int>()->default_value(
+#if defined(USE_DOUBLE)
+        8 * sizeof(double)
+#elif defined(USE_FLOAT)
+        8 * sizeof(float)
+#elif defined(USE_LDOUBLE)
+        8 * sizeof(long double)
+#elif defined(USE_FLOAT128)
+        8 * sizeof(__float128)
+#else
+#  error
+#endif
+      ), "floating point bits: sizeof(float), sizeof(double), sizeof(long double)");
     opt_stp_desc(desc);
     opt_adv_desc(desc);
     opt_slv_desc(desc);
@@ -38,31 +52,8 @@ int main(int ac, char* av[])
     // --help or no argument case
     if (vm.count("help") || ac == 1)
     {
-      cerr << desc << endl;
+      std::cerr << desc << std::endl;
       exit(EXIT_SUCCESS); // this is what GNU coding standards suggest
-    }
-
-    // --slv list
-    if (vm.count("slv") && vm["slv"].as<string>() == "list")
-    {
-      cout << "serial fork";
-#ifdef _OPENMP
-      cout << " openmp fork+openmp";
-#endif
-#ifdef USE_BOOST_THREAD
-      cout << " threads fork+threads";
-#endif
-#ifdef USE_BOOST_MPI
-      cout << " mpi";
-#  ifdef USE_BOOST_THREAD
-      cout << " mpi+threads";
-#  endif
-#  ifdef _OPENMP
-      cout << " mpi+openmp";
-#  endif
-#endif
-      cout << endl;
-      exit(EXIT_FAILURE);
     }
 
     // string containing all passed options (e.g. for archiving in a netCDF file)
@@ -87,19 +78,19 @@ int main(int ac, char* av[])
       mdl<long double>(vm, options.str());
     else 
 #endif
-#ifdef USE_FLOAT128 // TODO: only if GNU compiler?
+#ifdef USE_FLOAT128
     if (sizeof(__float128) * 8 == bits) 
       mdl<__float_128>(vm, options.str());
     else 
 #endif
     error_macro("unsupported number of bits (" << bits << ")")
   }
-  catch (exception &e)
+  catch (std::exception &e)
   {
-    cerr << "-- exception cought: " << e.what() << endl;
-    cerr << "-- exit: KO" << endl;
+    std::cerr << "-- exception cought: " << e.what() << std::endl;
+    std::cerr << "-- exit: KO" << std::endl;
     exit(EXIT_FAILURE);
   }
-  cerr << "-- exit: OK" << endl;
+  std::cerr << "-- exit: OK" << std::endl;
   exit(EXIT_SUCCESS);
 }

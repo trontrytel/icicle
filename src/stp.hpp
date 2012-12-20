@@ -13,7 +13,9 @@
 #include "vel.hpp"
 #include "ini.hpp"
 #include "grd.hpp"
-#include "eqs.hpp"
+#include "eqs/eqs.hpp"
+
+#include "cmn/cmn_error.hpp"
 
 /// @brief A simple container for storing simulation set-up elements, i.e.
 ///        advection scheme, velocity field, initial condition, grid, equation system, etc
@@ -28,7 +30,7 @@ struct stp
 
   int nout;
   unsigned long nt;
-  quantity<si::time, real_t> dt;
+  quantity<si::time, real_t> dt, dt_out;
 
   stp(
     const adv<real_t> &advsch, 
@@ -43,7 +45,8 @@ struct stp
       velocity(velocity), 
       intcond(intcond), 
       grid(grid),
-      eqsys(eqsys)
+      eqsys(eqsys),
+      dt_out(dt_out)
   { 
     // TODO: it does not work for non-constant velocities as of now!
     int halo = (advsch.stencil_extent() -1) / 2;
@@ -71,10 +74,10 @@ struct stp
       dt = dt_out / real_t(++nout);
     }
     if (cmax*dt/si::seconds < advsch.courant_min()) 
-      error_macro("failed to calculate a reasonable time step for" << endl
-        << "t_max=" << t_max << endl
-        << "dt_out=" << dt_out << endl
-        << "cmax = " << cmax
+      error_macro("failed to auto-find time step (" 
+        << "t_max=" << t_max 
+        << "dt_out=" << dt_out 
+        << "cmax = " << cmax << ")"
       ) 
     if (!velocity.is_constant())  
       warning_macro("velocity field is not const -> calculated time step may change") 

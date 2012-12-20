@@ -5,7 +5,6 @@
  *  @section LICENSE
  *    GPLv3+ (see the COPYING file or http://www.gnu.org/licenses/)
  */
-#include "cfg.hpp"
 #include "slv_parallel_serial.hpp"
 
 template <typename real_t>
@@ -29,12 +28,5 @@ void slv_parallel_serial<real_t>::integ_loop()
 }
 
 // explicit instantiations
-#if defined(USE_FLOAT)
-template class slv_parallel_serial<float>;
-#endif
-#if defined(USE_DOUBLE)
-template class slv_parallel_serial<double>;
-#endif
-#if defined(USE_LDOUBLE)
-template class slv_parallel_serial<long double>;
-#endif
+#define ICICLE_INSTANTIATE_CLASS slv_parallel_serial
+#include "cmn/cmn_instant.hpp"

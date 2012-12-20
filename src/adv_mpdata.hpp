@@ -12,6 +12,11 @@
 #include "adv_upstream.hpp"
 #include "grd.hpp"
 
+#include <boost/ptr_container/ptr_vector.hpp>
+using boost::ptr_vector;
+
+#include "cmn/cmn_error.hpp"
+
 /** @brief
  *  C++ implementation of the second- and third-order accurate
  *  MPDATA scheme for solenoidal flows of scalar fields on a carthesian
