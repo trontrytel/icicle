@@ -855,7 +855,7 @@ static void sd_chem_equil(
       const thrust_size_t ij = stat.ij[id];
 
       // droplet volume
-      quantity<si::volume, real_t> V = 4./3 * M_PI * this->rw3_of_xi(stat.xi[id]) * si::cubic_metres;
+      quantity<si::volume, real_t> V = real_t(4./3 * M_PI) * this->rw3_of_xi(stat.xi[id]) * si::cubic_metres;
       // helper mass of S_VI for dissociation
       quantity<si::mass, real_t> m_S_VI = stat.c_aq[id + stat.n_part * S_VI] * si::kilograms;
 
