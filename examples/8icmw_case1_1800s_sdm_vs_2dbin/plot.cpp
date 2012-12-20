@@ -61,7 +61,7 @@ int main(int argc, char **argv)
   NcFile nf(dir+"/out.nc", NcFile::read);
 
   notice_macro("opening super-droplet netCDF file")
-  NcFile nf2("/users/arabas/devel/test2_100_part.nc", NcFile::read);
+//  NcFile nf2("/users/arabas/devel/test2.nc", NcFile::read);
 
   notice_macro("reading dt_out")
   quantity<si::time, real_t> dt_out;
@@ -119,7 +119,7 @@ int main(int argc, char **argv)
     notice_macro("generating frame at t=" << t)
     gp << "reset" << endl;
     // progressive-rock connoisseur palette ;)
-    gp << "set palette defined (0 '#ffffff', 1 '#993399', 2 '#00CCFF', 3 '#66CC00', 4 '#FFFF00', 5 '#FC8727', 6 '#FD0000') maxcolors 64" << endl; 
+    gp << "set palette defined (0 '#ffffff', 1 '#993399', 2 '#00CCFF', 3 '#66CC00', 4 '#FFFF00', 5 '#FC8727', 6 '#FD0000')" << endl; 
     gp << "set view map" << endl;
     gp << "set tics out scale .25" << endl;
 
@@ -136,7 +136,7 @@ int main(int argc, char **argv)
 //    gp << "set label 'icicle/sdm' at screen .25,.99 center" << endl;
 //    gp << "set label 'Zach''s 2D-bin' at screen .75,.99 center" << endl;
 
-    int cols = 1, rows = 8;
+    int cols = 2, rows = 4;
 
     if (ext == "png")
       gp << "set term png enhanced size " << cols * 500 << "," << rows * 500 << endl;
@@ -197,11 +197,12 @@ int main(int argc, char **argv)
       { 
         for (int i = 0; i < ns; ++i)
         {
-          nf2.getVar("QCDIST").getVar(start({tz,0,0,i}), count({1,ny,nx,1}), tmp.data());
+<<<<<<< HEAD
+//          nf2.getVar("QCDIST").getVar(start({t,0,0,i}), count({1,ny,nx,1}), tmp.data());
           for (int y = 0; y < ny; ++y) 
             tmps(i, y) = sum(tmp(y, blitz::Range::all())) / nx;
         }
-        nf2.getVar("GAC").getVar(start({tz,0,0}), count({1,ny,nx}), tmp.data());
+//        nf2.getVar("GAC").getVar(start({t,0,0}), count({1,ny,nx}), tmp.data());
         tmp.transposeSelf(secondDim, firstDim);
         tmps *= tmp; // kg-1 -> m-3
         tmps /= 1e6; // 1/m3 -> 1/cm3 

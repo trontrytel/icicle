@@ -118,7 +118,7 @@ namespace mtx
   template <typename real_t>
   real_t eps()
   {
-    return blitz::epsilon(real_t(0));
+    return blitz::tiny(real_t(0));
   }
 
   template <typename arr> void cycle(arr &a, arr &b) 

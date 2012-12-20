@@ -84,7 +84,7 @@ namespace phc
         real_t(rw3_eq_nokelvin(rd3, kappa, vap_ratio) / si::cubic_metres), // max
         boost::math::tools::eps_tolerance<real_t>(sizeof(real_t) * 8 / 2),
         iters // the highest attainable precision with the algorithm according to Boost docs
-      );
+      ); // TODO: ignore error?
       return (range.first + range.second) / 2 * si::cubic_metres;
     }
   };

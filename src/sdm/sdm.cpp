@@ -27,6 +27,8 @@ using std::ostringstream;
 using std::map;
 using std::pair;
 
+#include <boost/math/tools/toms748_solve.hpp>
+
 namespace sdm
 {
 
@@ -58,7 +60,8 @@ sdm<real_t, thrust_device_system>::sdm(
   xi_dfntn,
   sd_conc_mean,
   adve_sstp, sedi_sstp, cond_sstp, chem_sstp, coal_sstp,
-  outmoments
+  outmoments,
+  opt_gas
 ))
 {
   // TODO: assert that we use no paralellisation (in advection) or allow some parallelism!
@@ -111,10 +114,10 @@ sdm<real_t, thrust_device_system>::sdm(
   {
     case euler: switch (xi_dfntn)
     {
-      case id : pimpl->F_cond.reset(new ode_cond<real_t, algo_euler, xi_id<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid, pimpl->tmp_real)); break;
-      case ln : pimpl->F_cond.reset(new ode_cond<real_t, algo_euler, xi_ln<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid, pimpl->tmp_real)); break;
+//      case id : pimpl->F_cond.reset(new ode_cond<real_t, algo_euler, xi_id<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid, pimpl->tmp_real)); break;
+//      case ln : pimpl->F_cond.reset(new ode_cond<real_t, algo_euler, xi_ln<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid, pimpl->tmp_real)); break;
       case p2 : pimpl->F_cond.reset(new ode_cond<real_t, algo_euler, xi_p2<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid, pimpl->tmp_real)); break;
-      case p3 : pimpl->F_cond.reset(new ode_cond<real_t, algo_euler, xi_p3<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid, pimpl->tmp_real)); break;
+//      case p3 : pimpl->F_cond.reset(new ode_cond<real_t, algo_euler, xi_p3<real_t>>(pimpl->stat, pimpl->envi, pimpl->grid, pimpl->tmp_real)); break;
       default: assert(false);
     } 
     break;
@@ -144,10 +147,10 @@ sdm<real_t, thrust_device_system>::sdm(
   {
     case euler : switch (xi_dfntn)
     {
-      case id : pimpl->F_sedi.reset(new ode_sedi<real_t,algo_euler,xi_id<real_t>>(pimpl->stat, pimpl->envi)); break;
-      case ln : pimpl->F_sedi.reset(new ode_sedi<real_t,algo_euler,xi_ln<real_t>>(pimpl->stat, pimpl->envi)); break;
+//      case id : pimpl->F_sedi.reset(new ode_sedi<real_t,algo_euler,xi_id<real_t>>(pimpl->stat, pimpl->envi)); break;
+//      case ln : pimpl->F_sedi.reset(new ode_sedi<real_t,algo_euler,xi_ln<real_t>>(pimpl->stat, pimpl->envi)); break;
       case p2 : pimpl->F_sedi.reset(new ode_sedi<real_t,algo_euler,xi_p2<real_t>>(pimpl->stat, pimpl->envi)); break;
-      case p3 : pimpl->F_sedi.reset(new ode_sedi<real_t,algo_euler,xi_p3<real_t>>(pimpl->stat, pimpl->envi)); break;
+//      case p3 : pimpl->F_sedi.reset(new ode_sedi<real_t,algo_euler,xi_p3<real_t>>(pimpl->stat, pimpl->envi)); break;
       default: assert(false);
     }
     break;
@@ -178,10 +181,10 @@ sdm<real_t, thrust_device_system>::sdm(
     case euler : switch (xi_dfntn)
 
     {
-      case id : pimpl->F_chem.reset(new ode_chem<real_t,algo_euler,xi_id<real_t>>(pimpl->stat, pimpl->envi, opt_gas, opt_aq)); break;
-      case ln : pimpl->F_chem.reset(new ode_chem<real_t,algo_euler,xi_ln<real_t>>(pimpl->stat, pimpl->envi, opt_gas, opt_aq)); break;
+//      case id : pimpl->F_chem.reset(new ode_chem<real_t,algo_euler,xi_id<real_t>>(pimpl->stat, pimpl->envi, opt_gas, opt_aq)); break;
+//      case ln : pimpl->F_chem.reset(new ode_chem<real_t,algo_euler,xi_ln<real_t>>(pimpl->stat, pimpl->envi, opt_gas, opt_aq)); break;
       case p2 : pimpl->F_chem.reset(new ode_chem<real_t,algo_euler,xi_p2<real_t>>(pimpl->stat, pimpl->envi, opt_gas, opt_aq)); break;
-      case p3 : pimpl->F_chem.reset(new ode_chem<real_t,algo_euler,xi_p3<real_t>>(pimpl->stat, pimpl->envi, opt_gas, opt_aq)); break;
+//      case p3 : pimpl->F_chem.reset(new ode_chem<real_t,algo_euler,xi_p3<real_t>>(pimpl->stat, pimpl->envi, opt_gas, opt_aq)); break;
       default: assert(false);
     }
     break;
@@ -235,6 +238,9 @@ struct sdm<real_t, thrust_device_system>::detail
   unique_ptr<ode<real_t>> 
     F_adve, F_cond, F_sedi, F_chem;
 
+  //
+  map<enum chem_gas, quantity<phc::mixing_ratio, real_t>> opt_gas;
+
   // private fields for ODE timestep settings
   const int adve_sstp, cond_sstp, sedi_sstp, chem_sstp, coal_sstp;
 
@@ -258,7 +264,8 @@ struct sdm<real_t, thrust_device_system>::detail
     const enum xi_dfntns xi_dfntn,
     const real_t sd_conc_mean,
     const int adve_sstp, const int sedi_sstp, const int cond_sstp, const int chem_sstp, const int coal_sstp,
-    const map<int, vector<pair<quantity<si::length, real_t>, quantity<si::length, real_t>>>> &outmoments
+    const map<int, vector<pair<quantity<si::length, real_t>, quantity<si::length, real_t>>>> &outmoments,
+    const map<enum chem_gas, quantity<phc::mixing_ratio, real_t>> &opt_gas
   ) :
     opts(opts), 
     grid(grid), 
@@ -267,7 +274,8 @@ struct sdm<real_t, thrust_device_system>::detail
     envi(grid.nx(), grid.ny(), grid.dx() / si::metres, grid.dy() / si::metres),
     xi_dfntn(xi_dfntn),
     adve_sstp(adve_sstp), sedi_sstp(sedi_sstp), cond_sstp(cond_sstp), chem_sstp(chem_sstp), coal_sstp(coal_sstp),
-    outmoments(outmoments)
+    outmoments(outmoments),
+    opt_gas(opt_gas)
   {}
 
   // TODO: merge sd_init into ctr?
@@ -364,6 +372,11 @@ struct sdm<real_t, thrust_device_system>::detail
         stat.c_aq.begin() +  SO3      * stat.n_part,
         stat.c_aq.begin() + (SO3 + 1) * stat.n_part, 
         opt_aq[SO3]  / si::kilograms
+      );
+      thrust::fill(
+        stat.c_aq.begin() +  S_VI      * stat.n_part,
+        stat.c_aq.begin() + (S_VI + 1) * stat.n_part, 
+        0. //TODO?
       );
       thrust::fill(
         stat.c_aq.begin() +  HSO4      * stat.n_part,
@@ -641,7 +654,7 @@ static void sd_diag(
   if (true/* TODO opt[chem]*/)
   {
     typedef pair<enum chem_aq, string> keyval;
-    for (keyval &kv : list<keyval>({{SO3,"c_SO3"}}))
+    for (keyval &kv : list<keyval>({{SO2,"c_SO2"},{HSO3,"c_HSO3"},{H, "c_H"},{OH,"c_OH"},{S_VI, "c_S_VI"},{SO4, "c_SO4"}}))
     {
       // zeroing the temporary var
       thrust::fill(tmp_real.begin(), tmp_real.end(), 0); // TODO: is it needed
@@ -676,7 +689,41 @@ static void sd_diag(
     }
   }
 }
+/*  // calculating mass of S vs rd histogram
+  if (true) //TODO if opt[chem]
+  {
+    // zeroing the temporary var
+    thrust::fill(tmp_real.begin(), tmp_real.end(), 0); // TODO: is it needed
 
+    // doing the reduction, i.e. 
+    thrust::pair<
+      decltype(tmp_shrt.begin()),
+      decltype(tmp_real.begin())
+    > n;
+
+    n = thrust::reduce_by_key(
+      stat.sorted_ij.begin(), stat.sorted_ij.end(),
+      thrust::transform_iterator<
+        chem_counteri<real_t>,
+        decltype(stat.sorted_id.begin()),
+        real_t
+      >(stat.sorted_id.begin(), chem_counter<real_t>(stat, kv.first)),
+      tmp_shrt.begin(), // will store the grid cell indices
+      tmp_real.begin()  // will store the concentrations per grid cell
+    );
+
+    // writing to aux
+    mtx::arr<real_t> &out = aux.at(kv.second);
+    out(out.ijk) = real_t(0); // as some grid cells could be void of particles
+    thrust::counting_iterator<thrust_size_t> iter(0);
+    thrust::for_each(iter, iter + (n.first - tmp_shrt.begin()),
+      thrust2blitz<real_t>(
+        grid.nx(), tmp_shrt, tmp_real, out,
+        real_t(1) / grid.dx() / grid.dy() / grid.dz() * si::cubic_metres
+      )
+    );
+  }
+*/
 static void sd_advection(
   ode<real_t> &F_adve,
   stat_t<real_t> &stat,
@@ -780,6 +827,157 @@ static void sd_condevap(
   assert(*thrust::min_element(stat.xi.begin(), stat.xi.end()) > 0);
 }
 
+// equilibrum chemistry (dissolution of gases in the droplet + dissociation)
+static void sd_chem_equil(
+  stat_t<real_t> &stat,
+  envi_t<real_t> &envi,
+  map<enum chem_gas, quantity<phc::mixing_ratio, real_t>> &opt_gas
+)
+{
+  // do the chemistry
+  struct curie : xi_p2<real_t>
+  {
+    // member fields
+    stat_t<real_t> &stat;
+    envi_t<real_t> &envi;
+    map<enum chem_gas, quantity<phc::mixing_ratio, real_t>> &opt_gas;
+
+    // ctor
+    curie(stat_t<real_t> &stat, envi_t<real_t> &envi,
+      map<enum chem_gas, quantity<phc::mixing_ratio, real_t>> &opt_gas
+    ) :
+      stat(stat), envi(envi), opt_gas(opt_gas)
+    {}
+
+    // overloaded operator invoked by Thrust
+    void operator()(thrust_size_t id)
+    {
+      const thrust_size_t ij = stat.ij[id];
+
+      // droplet volume
+      quantity<si::volume, real_t> V = 4./3 * M_PI * this->rw3_of_xi(stat.xi[id]) * si::cubic_metres;
+      // helper mass of S_VI for dissociation
+      quantity<si::mass, real_t> m_S_VI = stat.c_aq[id + stat.n_part * S_VI] * si::kilograms;
+
+      // Henrys law (see Seinfeld & Pandis 1997 p 340)
+      // concentration of dissolved A = partial pressure of gas phase of A * Henrys coefficient for A
+      stat.c_aq[id + stat.n_part  * SO2] = 
+        phc::henry::H_SO2<real_t>() * opt_gas.at(gSO2) * (envi.p[ij] * si::pascals)
+        * V * phc::mass::M_SO2<real_t>() / si::kilograms;
+
+      stat.c_aq[id + stat.n_part * O3] = 
+        phc::henry::H_O3<real_t>() * opt_gas.at(gO3) * (envi.p[ij] * si::pascals)
+        * V * phc::mass::M_O3<real_t>() / si::kilograms;
+
+      stat.c_aq[id + stat.n_part * H2O2] =
+        phc::henry::H_H2O2<real_t>() * opt_gas.at(gH2O2) * (envi.p[ij] * si::pascals)
+        * V * phc::mass::M_H2O2<real_t>() / si::kilograms;
+
+      // dissociation: (iteratively)
+      // local functor to be passed to the minimisation func
+      struct f
+      {
+        const quantity<si::mass, real_t> m_SO2;
+        const quantity<si::volume, real_t> V;
+        const quantity<si::mass, real_t> m_S_VI;
+
+        real_t operator()(real_t m_H)
+        {
+          return (- m_H * si::kilograms + phc::mass::M_H<real_t>() * (
+            phc::dissociation::K_SO2<real_t>()               // HSO3 to SO3 dissoctation 
+            * phc::dissociation::K_HSO3<real_t>() 
+            / phc::mass::M_SO2<real_t>() 
+            * m_SO2
+            * pow<2>(phc::mass::M_H<real_t>() * V)
+            / pow<2>(m_H * si::kilograms)
+
+            +
+
+            phc::dissociation::K_SO2<real_t>()               // H20*SO2 to HSO3 dissociation
+            / phc::mass::M_SO2<real_t>()
+            * m_SO2
+            * phc::mass::M_H<real_t>() * V
+            / (m_H * si::kilograms)
+
+            +
+ 
+            phc::dissociation::K_H2O<real_t>()               // dissociation of pure water TODO - is it needed?
+            * phc::mass::M_OH<real_t>() 
+            * pow<2>(V)
+            / (m_H * si::kilograms)
+
+            +
+
+            (m_H * si::kilograms) * m_S_VI / V               // dissociation of S_VI to HSO4
+            / phc::mass::M_H2SO4<real_t>() / phc::mass::M_H<real_t>()  
+            / ((m_H * si::kilograms) / phc::mass::M_H<real_t>() / V + phc::dissociation::K_HSO4<real_t>())
+
+            +
+
+            phc::dissociation::K_HSO4<real_t>() * m_S_VI     // dissociation of HSO4 to SO4
+            / phc::mass::M_H2SO4<real_t>() 
+            / ((m_H * si::kilograms) / phc::mass::M_H<real_t>() / V + phc::dissociation::K_HSO4<real_t>())
+
+          )) / si::kilograms; 
+        }
+      };
+
+      boost::uintmax_t iters = 20;
+      std::pair<real_t, real_t> range = boost::math::tools::toms748_solve(
+        f({stat.c_aq[id + stat.n_part * SO2] * si::kilograms, V}),
+        real_t((real_t(1e-7) * si::moles / si::cubic_metres * phc::mass::M_H<real_t>() * V) / si::kilograms), // min -> pure water
+        real_t(1e-10), // max -> TODO
+        boost::math::tools::eps_tolerance<real_t>(sizeof(real_t) * 8 / 2),
+        iters
+      ); // TODO: ignore error?
+      stat.c_aq[id + stat.n_part * H] = (range.first + range.second) / 2;
+
+      // dissociation: pure water (TODO - is it needed?)
+      // dissociation constant for pure water is actually k*[H2O] (Seinfeld and Pandis p 345)
+      stat.c_aq[id + stat.n_part * OH] = pow<2>(V)
+             * phc::dissociation::K_H2O<real_t>()
+             * phc::mass::M_H<real_t>() 
+             * phc::mass::M_OH<real_t>() 
+             / si::kilograms / si::kilograms
+             / real_t(stat.c_aq[id + stat.n_part * H]);
+ 
+      // dissociation: HSO3 (diagnosing from H)
+      stat.c_aq[id + stat.n_part * HSO3] = V
+              * phc::mass::M_HSO3<real_t>()
+              * phc::dissociation::K_SO2<real_t>() / si::kilograms
+              * real_t(stat.c_aq[id + stat.n_part * SO2]) / real_t(stat.c_aq[id + stat.n_part * H])
+              * (phc::mass::M_H<real_t>() / phc::mass::M_SO2<real_t>());
+
+      // dissociation: SO3 (diagnosing from H)
+      stat.c_aq[id + stat.n_part * SO3] = V
+              * phc::mass::M_SO3<real_t>() 
+              * phc::dissociation::K_HSO3<real_t>() / si::kilograms 
+              * real_t(stat.c_aq[id + stat.n_part * HSO3]) / real_t(stat.c_aq[id + stat.n_part * H]) 
+              * (phc::mass::M_H<real_t>() / phc::mass::M_HSO3<real_t>());
+
+      // dissociation of S_VI to HSO4- and SO4-- (diagnosing from H) 
+      // assumes no S_VI_aq (see Seinfeld and Pandis p388)
+      stat.c_aq[id + stat.n_part * HSO4] =               
+              phc::mass::M_HSO3<real_t>() / phc::mass::M_H<real_t>() / phc::mass::M_H2SO4<real_t>()
+              * real_t(stat.c_aq[id + stat.n_part * H]) * si::kilograms
+              * real_t(stat.c_aq[id + stat.n_part * S_VI]) * si::kilograms
+              / V / si::kilograms
+              / ( real_t(stat.c_aq[id + stat.n_part * H]) * si::kilograms / phc::mass::M_H<real_t>() / V + phc::dissociation::K_HSO4<real_t>());
+
+      // dissociation of S_VI to HSO4- and SO4-- (diagnosing from H) 
+      // assumes no S_VI_aq (see Seinfeld and Pandis p388)
+      stat.c_aq[id + stat.n_part * SO4] = 
+              phc::mass::M_SO4<real_t>() / phc::mass::M_H2SO4<real_t>()
+              * phc::dissociation::K_HSO4<real_t>() / si::kilograms 
+              * real_t(stat.c_aq[id + stat.n_part * S_VI]) * si::kilograms
+              / ( real_t(stat.c_aq[id + stat.n_part * H]) * si::kilograms / phc::mass::M_H<real_t>() / V + phc::dissociation::K_HSO4<real_t>());
+    }
+  };
+  thrust::counting_iterator<thrust_size_t> zero(0);
+  thrust::for_each(zero, zero + stat.n_part, curie(stat, envi, opt_gas));
+}
+
+// reactions
 static void sd_chem(
   ode<real_t> &F_chem,
   stat_t<real_t> &stat,
@@ -787,7 +985,7 @@ static void sd_chem(
   const int n_steps
 )
 {
-  F_chem.advance(stat.c_aq, dt, n_steps); 
+  F_chem.advance(stat.c_aq, dt, n_steps);
   assert(*thrust::min_element(stat.c_aq.begin(), stat.c_aq.end()) >= 0);
 }
 
@@ -868,7 +1066,7 @@ static void sd_chem(
         * si::square_metres * phc::pi<real_t>() * pow(this->rw_of_xi(stat.xi[id1]) + this->rw_of_xi(stat.xi[id2]), 2) // geometrical cross-section
         * real_t(10); // collection efficiency TODO!!!
       assert(prob < 1);
-if (prob >= 1) std::cerr << "prob >= 1!" << std::endl;
+//if (prob >= 1) std::cerr << "prob >= 1!" << std::endl;
 
       // tossing a random number and returning if unlucky
       if (prob < rand()) return;
@@ -884,7 +1082,18 @@ if (prob >= 1) std::cerr << "prob >= 1!" << std::endl;
           this->rw3_of_xi(stat.xi[id2])
         ); 
         // dry radius change (eq. 13 in Shima et al. 2009)
-        stat.rd3[id2] = stat.rd3[id1] + stat.rd3[id2];
+        stat.rd3[id2]  = stat.rd3[id1]  + stat.rd3[id2];
+        // chem
+        stat.c_aq[id2 + stat.n_part * H]    = stat.c_aq[id1 + stat.n_part * H]    + stat.c_aq[id2 + stat.n_part * H];
+        stat.c_aq[id2 + stat.n_part * OH]   = stat.c_aq[id1 + stat.n_part * OH]   + stat.c_aq[id2 + stat.n_part * OH];
+        stat.c_aq[id2 + stat.n_part * SO2]  = stat.c_aq[id1 + stat.n_part * SO2]  + stat.c_aq[id2 + stat.n_part * SO2];
+        stat.c_aq[id2 + stat.n_part * O3]   = stat.c_aq[id1 + stat.n_part * O3]   + stat.c_aq[id2 + stat.n_part * O3];
+        stat.c_aq[id2 + stat.n_part * H2O2] = stat.c_aq[id1 + stat.n_part * H2O2] + stat.c_aq[id2 + stat.n_part * H2O2];
+        stat.c_aq[id2 + stat.n_part * HSO3] = stat.c_aq[id1 + stat.n_part * HSO3] + stat.c_aq[id2 + stat.n_part * HSO3];
+        stat.c_aq[id2 + stat.n_part * SO3]  = stat.c_aq[id1 + stat.n_part * SO3]  + stat.c_aq[id2 + stat.n_part * SO3];
+        stat.c_aq[id2 + stat.n_part * S_VI] = stat.c_aq[id1 + stat.n_part * S_VI] + stat.c_aq[id2 + stat.n_part * S_VI];
+        stat.c_aq[id2 + stat.n_part * HSO4] = stat.c_aq[id1 + stat.n_part * HSO4] + stat.c_aq[id2 + stat.n_part * HSO4];
+        stat.c_aq[id2 + stat.n_part * SO4]  = stat.c_aq[id1 + stat.n_part * SO4]  + stat.c_aq[id2 + stat.n_part * SO4];
       }
       else
       {
@@ -1019,6 +1228,7 @@ static void sd_coalescence(
     // chemistry
     if (pimpl->opts[chem]) 
     {
+      detail::sd_chem_equil(pimpl->stat, pimpl->envi, pimpl->opt_gas);
       detail::sd_chem(*pimpl->F_chem, pimpl->stat, dt, pimpl->chem_sstp);
     }
 

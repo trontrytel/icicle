@@ -87,8 +87,38 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
   }
 
   // auxliary variable for mean SO2 density within a droplet
-  ptr_map_insert(this->aux)("c_SO3", typename eqs<real_t>::axv({
-    "c_SO3", "<c_SO3> for r > r_min", this->quan2str(si::kilograms / si::cubic_metres),
+  ptr_map_insert(this->aux)("c_SO2", typename eqs<real_t>::axv({
+    "c_SO2", "<c_SO2> for r > r_min", this->quan2str(si::kilograms / si::cubic_metres),
+    typename eqs<real_t>::invariable(false),
+    vector<int>({0, 0, 0})
+  }));
+  // auxliary variable for mean HSO3 density within a droplet
+  ptr_map_insert(this->aux)("c_HSO3", typename eqs<real_t>::axv({
+    "c_HSO3", "<c_HSO3> for r > r_min", this->quan2str(si::kilograms / si::cubic_metres),
+    typename eqs<real_t>::invariable(false),
+    vector<int>({0, 0, 0})
+  }));
+  // auxliary variable for mean H density within a droplet
+  ptr_map_insert(this->aux)("c_H", typename eqs<real_t>::axv({
+    "c_H", "<c_H> for r > r_min", this->quan2str(si::kilograms / si::cubic_metres),
+    typename eqs<real_t>::invariable(false),
+    vector<int>({0, 0, 0})
+  }));
+  // auxliary variable for mean OH density within a droplet
+  ptr_map_insert(this->aux)("c_OH", typename eqs<real_t>::axv({
+    "c_OH", "<c_OH> for r > r_min", this->quan2str(si::kilograms / si::cubic_metres),
+    typename eqs<real_t>::invariable(false),
+    vector<int>({0, 0, 0})
+  }));
+  // auxliary variable for mean OH density within a droplet
+  ptr_map_insert(this->aux)("c_SO4", typename eqs<real_t>::axv({
+    "c_SO4", "<c_SO4> for r > r_min", this->quan2str(si::kilograms / si::cubic_metres),
+    typename eqs<real_t>::invariable(false),
+    vector<int>({0, 0, 0})
+  }));
+  // auxliary variable for mean OH density within a droplet
+  ptr_map_insert(this->aux)("c_S_VI", typename eqs<real_t>::axv({
+    "c_S_VI", "<c_S_VI> for r > r_min", this->quan2str(si::kilograms / si::cubic_metres),
     typename eqs<real_t>::invariable(false),
     vector<int>({0, 0, 0})
   }));

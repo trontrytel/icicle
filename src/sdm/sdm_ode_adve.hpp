@@ -19,14 +19,14 @@ namespace sdm
     class interpol
     {
       // private fields
-      private: const int n;
+      private: const thrust_size_t n;
       private: const thrust::device_vector<real_t> &vel;
       private: const real_t dxy;
       private: const stat_t<real_t> &stat;
 
       // ctor
       public: interpol(
-        const int n,
+        const thrust_size_t n,
         const thrust::device_vector<real_t> &vel,
         const real_t &dxy,
         const stat_t<real_t> &stat

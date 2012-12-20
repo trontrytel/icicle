@@ -17,9 +17,14 @@ namespace phc
   // TODO dissociation constants depend on temperature 
   // (provided values are for T=298K)
 
-    phc_declare_const_macro(K_H2O, 1e-16    *1e3, si::moles / si::cubic_metres) 
+    // bec. there are so few water ions instead of K we have K [H2O]
+    // see Seinfeld & Pandis p 345
+    phc_declare_const_macro(K_H2O, 1e-8    , si::moles * si::moles / si::cubic_metres / si::cubic_metres) 
+
     phc_declare_const_macro(K_SO2, 1.3*1e-2 *1e3, si::moles / si::cubic_metres) 
     phc_declare_const_macro(K_HSO3,6.6*1e-8 *1e3, si::moles / si::cubic_metres)
+
+    // assumes no not-dissociated H2SO4 (see Seinfeld & Pandiss p. 388)
     phc_declare_const_macro(K_HSO4,1.2*1e-2 *1e3, si::moles / si::cubic_metres) 
   }
 };

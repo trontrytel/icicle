@@ -25,6 +25,7 @@ namespace phc
 
     phc_declare_const_macro(M_HSO3, 81.*1e-3, si::kilograms/si::moles) 
     phc_declare_const_macro(M_SO3,  80.*1e-3, si::kilograms/si::moles) 
+    phc_declare_const_macro(M_H2SO4,98.*1e-3, si::kilograms/si::moles) 
     phc_declare_const_macro(M_HSO4, 97.*1e-3, si::kilograms/si::moles)
     phc_declare_const_macro(M_SO4,  96.*1e-3, si::kilograms/si::moles)
   }

@@ -22,17 +22,25 @@ class eqs_todo_mm : public eqs_todo<real_t>
 
   protected: params par;
 
+  private: const grd<real_t> &grid;
+
   // a container for storing options (i.e. which processes ar on/off)
-  public: enum processes {act, cond, acc, autoc, self, turb, sedi};
+  public: enum processes {act, cond, acc, autoc, turb, sedi};
   private: map<enum processes, bool> opts;
 
   // nested class
   private: template <bool fill_tmp> class activation;
   private: class activation_th;
   private: template <bool fill_tmp> class cond_evap;
+  private: template <bool fill_tmp> class ce_rain;
   private: class n_evap;
+  private: class nr_evap;
   private: class theta_cond_evap;
+  private: class theta_ce_rain;
   private: template <bool fill_tmp> class autoconv;
+  private: template <bool fill_tmp> class accretion;
+  private: class col_sink;
+  private: class terminal_velocity;
 
   // ctor
   public: eqs_todo_mm(
