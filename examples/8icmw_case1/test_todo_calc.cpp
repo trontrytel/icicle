@@ -67,8 +67,8 @@ const int
   iord = http_or_default("iord", int(2)),
   nsd = http_or_default("nsd", int(4));  
 const quantity<si::time, real_t> 
-  t_max = 100 * si::seconds, // 4 * 3600
-  dt_out = real_t(5) * si::seconds; // 300
+  t_max = 3600 * si::seconds, // 4 * 3600
+  dt_out = real_t(50) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = http_or_default("w_max", real_t(.6)) * si::metres_per_second; // .6 TODO: check it!
 
@@ -100,17 +100,17 @@ real_t
 int
   sdm_adve_sstp = 1,
   sdm_sedi_sstp = 1,
-  sdm_chem_sstp = 10,
-  sdm_cond_sstp = 10,
+  sdm_chem_sstp = 5,
+  sdm_cond_sstp = 5,
   sdm_coal_sstp = 1;
 bool 
   sdm_adve = http_or_default("sdm_adve", true),
   sdm_cond = http_or_default("sdm_cond", true),
-  sdm_coal = http_or_default("sdm_coal", true),
+  sdm_coal = http_or_default("sdm_coal", false),
   sdm_sedi = http_or_default("sdm_sedi", true),
-  sdm_chem = http_or_default("sdm_chem", false);
+  sdm_chem = http_or_default("sdm_chem", true);
 real_t 
-  sd_conc_mean = http_or_default("sd_conc_mean", 256);
+  sd_conc_mean = http_or_default("sd_conc_mean", 128);
 
 using wkc::icmw8_case1::micro_t;
 using wkc::icmw8_case1::bulk;
@@ -164,7 +164,7 @@ int main(int argc, char **argv)
 
     // TEMP TODO!
     if (micro == bulk) 
-      cmd << " --slv openmp --nsd " << nsd;
+        cmd << " --slv openmp --nsd " << nsd;
     else 
       cmd << " --slv serial";
 

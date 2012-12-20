@@ -23,6 +23,8 @@ namespace phc
 
     phc_declare_const_macro(K_SO2, 1.3*1e-2 *1e3, si::moles / si::cubic_metres) 
     phc_declare_const_macro(K_HSO3,6.6*1e-8 *1e3, si::moles / si::cubic_metres)
+
+    // assumes no not-dissociated H2SO4 (see Seinfeld & Pandiss p. 388)
     phc_declare_const_macro(K_HSO4,1.2*1e-2 *1e3, si::moles / si::cubic_metres) 
   }
 };

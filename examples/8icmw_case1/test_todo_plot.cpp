@@ -240,8 +240,8 @@ int main(int argc, char **argv)
     {
       // sdm-relevant plots:
       gp << "set title 'mean H mass in the droplet'" << endl;
-      gp << "set autoscale cb" << endl;
-//      gp << "set cbrange [0:1*1e-16]" << endl;
+//      gp << "set autoscale cb" << endl;
+      gp << "set cbrange [0:1*1e-19]" << endl;
       nf.getVar("c_H").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
       nf.getVar("n_tot").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp1.data());     
       tmp0 = tmp0 / tmp1;
@@ -249,18 +249,9 @@ int main(int argc, char **argv)
       gp << endl;
       gp.sendBinary(tmp0);
 
-      gp << "set title 'mean OH mass in the droplet'" << endl;
-      gp << "set autoscale cb" << endl;
-//      gp << "set cbrange [0:1*1e-16]" << endl;
-      nf.getVar("c_OH").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
-      nf.getVar("n_tot").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp1.data());     
-      tmp0 = tmp0 / tmp1;
-      gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";
-      gp << endl;
-      gp.sendBinary(tmp0);
-
       gp << "set title 'mean SO2 mass in the droplet'" << endl;
-      gp << "set cbrange [0:1*1e-22]" << endl;
+//      gp << "set autoscale cb" << endl;
+      gp << "set cbrange [0:2*1e-22]" << endl;
       nf.getVar("c_SO2").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
       nf.getVar("n_tot").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp1.data());     
       tmp0 = tmp0 / tmp1;
@@ -270,7 +261,7 @@ int main(int argc, char **argv)
 
       gp << "set title 'mean HSO3 mass in the droplet'" << endl;
 //      gp << "set autoscale cb" << endl;
-      gp << "set cbrange [0:1e-13]" << endl;
+      gp << "set cbrange [0:4*1e-18]" << endl;
       nf.getVar("c_HSO3").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
       nf.getVar("n_tot").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp1.data());     
       tmp0 = tmp0 / tmp1;
@@ -278,12 +269,32 @@ int main(int argc, char **argv)
       gp << endl;
       gp.sendBinary(tmp0);
 
-      gp << "set title 'super-droplet conc. [1/dx/dy/dz]'" << endl;
-      gp << "set cbrange [0:512]" << endl;
-      nf.getVar("sd_conc").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
+      gp << "set title 'mean S_6 mass in the droplet'" << endl;
+//      gp << "set autoscale cb" << endl;
+      gp << "set cbrange [0:5*1e-20]" << endl;
+      nf.getVar("c_S_VI").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
+      nf.getVar("n_tot").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp1.data());     
+      tmp0 = tmp0 / tmp1;
       gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";
       gp << endl;
       gp.sendBinary(tmp0);
+
+      gp << "set title 'mean SO4 mass in the droplet'" << endl;
+//      gp << "set autoscale cb" << endl;
+      gp << "set cbrange [0:5*1e-20]" << endl;
+      nf.getVar("c_SO4").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
+      nf.getVar("n_tot").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp1.data());     
+      tmp0 = tmp0 / tmp1;
+      gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";
+      gp << endl;
+      gp.sendBinary(tmp0);
+
+//      gp << "set title 'super-droplet conc. [1/dx/dy/dz]'" << endl;
+//      gp << "set cbrange [0:512]" << endl;
+//      nf.getVar("sd_conc").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
+//      gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";
+//      gp << endl;
+//      gp.sendBinary(tmp0);
 
       gp << "set title 'r ef'" << endl;
       gp << "set logscale cb" << endl;

@@ -63,23 +63,23 @@ int main(int argc, char **argv)
       << " --adv.mpdata.third_order " << false
     << " --dt " << real_t(1)
     << " --nt " << real_t(100) // 1800
-    << " --nout " << real_t(10) // 60
+    << " --nout " << real_t(5) // 60
     << " --out netcdf" 
     << " --out.netcdf.file " << dir << "/out.nc"
     << " --slv serial"
 
     << " --eqs.todo_sdm.adve.sstp " << 1
     << " --eqs.todo_sdm.sedi.sstp " << 1
-    << " --eqs.todo_sdm.cond.sstp " << 1
+    << " --eqs.todo_sdm.cond.sstp " << 5
     << " --eqs.todo_sdm.chem.sstp " << 0
-    << " --eqs.todo_sdm.coal.sstp " << 1
+    << " --eqs.todo_sdm.coal.sstp " << 10
 
     << " --eqs.todo_sdm.adve " << true
     << " --eqs.todo_sdm.cond " << true
     << " --eqs.todo_sdm.coal " << true
     << " --eqs.todo_sdm.sedi " << true
     << " --eqs.todo_sdm.chem " << false
-    << " --eqs.todo_sdm.sd_conc_mean " << 12
+    << " --eqs.todo_sdm.sd_conc_mean " << 128
 
     // Zach's output setting (mass-doubling layout)
     << " --eqs.todo_sdm.out_m0 \"";

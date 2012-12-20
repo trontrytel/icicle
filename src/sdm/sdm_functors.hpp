@@ -180,7 +180,29 @@ namespace sdm {
       }
     }
   };
+/*
+  //counter for histogram of mass vs rd
+  template <typename real_t, class xi>
+  class mass_S_VI_counter
+  { 
+    private: const stat_t<real_t> &stat;
+    private: const real_t rd_min, rd_max;
+    public: mass_S_VI_counter(
+      const stat_t<real_t> &stat,
+      const real_t rd_min,
+      const real_t rd_max
+    ) : 
+      stat(stat), 
+      rd_min(rd_min), 
+      rd_max(rd_max)
+    {}
 
+    public: real_t operator()(const thrust_size_t id) const
+    {   
+    return (pow<1/3>(stat.rd3[id]) > rd_min && pow<1/3>(stat.rd3[id]) <= rd_max) ? (real_t(stat.n[id]) * stat.c_aq[id + stat.n_part * S_VI]) : 0;
+    }
+  };
+*/
   template <typename real_t>
   class chem_counter 
   { 

@@ -78,13 +78,14 @@ namespace phc
       };
 
       boost::uintmax_t iters = 20;
-      return real_t(boost::math::tools::toms748_solve(
+      std::pair<real_t, real_t> range = boost::math::tools::toms748_solve(
         f({vap_ratio, rd3, kappa, T}), // the above-defined functor
         real_t(rd3 / si::cubic_metres), // min
         real_t(rw3_eq_nokelvin(rd3, kappa, vap_ratio) / si::cubic_metres), // max
         boost::math::tools::eps_tolerance<real_t>(sizeof(real_t) * 8 / 2),
         iters // the highest attainable precision with the algorithm according to Boost docs
-      ).first) * si::cubic_metres;
+      ); // TODO: ignore error?
+      return (range.first + range.second) / 2 * si::cubic_metres;
     }
   };
 };

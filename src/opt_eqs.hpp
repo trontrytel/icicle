@@ -91,12 +91,12 @@ inline void opt_eqs_desc(po::options_description &desc)
     ("eqs.todo_sdm.chem.env_H2O2", po::value<string>()->default_value("1e-10"), "volume mixing ratio of H2O2 [1]")
     // aqueous phase in the droplets
     //TODO initial conditions calculated to be consistent with environment and kappa!!!
-    ("eqs.todo_sdm.chem.ini_c_H", po::value<string>()->default_value("1e-25"), "initial mass of H+ [kg]") //dissociation of pure water: 1e-4
+    ("eqs.todo_sdm.chem.ini_c_H", po::value<string>()->default_value("1e-12"), "initial mass of H+ [kg]") //dissociation of pure water: 1e-4
     ("eqs.todo_sdm.chem.ini_c_OH", po::value<string>()->default_value("1e-25"), "initial mass of OH- [kg]") //dissociation of pure water:1e-4
     ("eqs.todo_sdm.chem.ini_c_SO2", po::value<string>()->default_value("0"), "initial mass of SO2*H2O [kg]")//1e-22
     ("eqs.todo_sdm.chem.ini_c_O3", po::value<string>()->default_value("0"), "initial mass of O3*H2O2 [kg]")
     ("eqs.todo_sdm.chem.ini_c_H2O2", po::value<string>()->default_value("0"), "initial mass of H2O2*H2O [kg]")
-    ("eqs.todo_sdm.chem.ini_c_HSO3", po::value<string>()->default_value("0"), "initial mass of HSO3- [kg]")
+    ("eqs.todo_sdm.chem.ini_c_HSO3", po::value<string>()->default_value("1e-12"), "initial mass of HSO3- [kg]")
     ("eqs.todo_sdm.chem.ini_c_SO3", po::value<string>()->default_value("0"), "initial mass of SO3-- [kg]")
     ;
 }

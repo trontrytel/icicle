@@ -110,8 +110,18 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
     typename eqs<real_t>::invariable(false),
     vector<int>({0, 0, 0})
   }));
-
-
+  // auxliary variable for mean OH density within a droplet
+  ptr_map_insert(this->aux)("c_SO4", typename eqs<real_t>::axv({
+    "c_SO4", "<c_SO4> for r > r_min", this->quan2str(si::kilograms / si::cubic_metres),
+    typename eqs<real_t>::invariable(false),
+    vector<int>({0, 0, 0})
+  }));
+  // auxliary variable for mean OH density within a droplet
+  ptr_map_insert(this->aux)("c_S_VI", typename eqs<real_t>::axv({
+    "c_S_VI", "<c_S_VI> for r > r_min", this->quan2str(si::kilograms / si::cubic_metres),
+    typename eqs<real_t>::invariable(false),
+    vector<int>({0, 0, 0})
+  }));
 
   // initialising super-droplets
   if (true) // TODO!
