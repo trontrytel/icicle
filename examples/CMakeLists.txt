@@ -1,2 +1,3 @@
 add_subdirectory(8icmw_case1)
+add_subdirectory(8icmw_case1_chem)
 add_subdirectory(8icmw_case1_1800s_sdm_vs_2dbin)

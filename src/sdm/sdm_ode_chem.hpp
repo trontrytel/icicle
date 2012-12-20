@@ -46,10 +46,10 @@ namespace sdm
       quantity<si::amount, real_t> H2O2_HSO3 = phc::react::R_S_H2O2_k<real_t>() / pow<2>(V) * nest.dt
         * real_t(nest.stat.c_aq[id + nest.stat.n_part * H2O2]) * si::kilograms / phc::mass::M_H2O2<real_t>() 
         * real_t(nest.stat.c_aq[id + nest.stat.n_part * H])    * si::kilograms / phc::mass::M_H<real_t>()
-        * real_t(nest.stat.c_aq[id + nest.stat.n_part * HSO3]) * si::kilograms / phc::mass::M_HSO3<real_t>();
-//        / real_t( 
-//            1. + phc::react::R_S_H2O2_K<real_t>() * real_t(nest.stat.c_aq[id + nest.stat.n_part * H]) * si::kilograms / phc::mass::M_H<real_t>() / V
-//          );
+        * real_t(nest.stat.c_aq[id + nest.stat.n_part * HSO3]) * si::kilograms / phc::mass::M_HSO3<real_t>()
+        / real_t( 
+            1. + phc::react::R_S_H2O2_K<real_t>() * real_t(nest.stat.c_aq[id + nest.stat.n_part * H]) * si::kilograms / phc::mass::M_H<real_t>() / V
+          );
 
         switch (chem)
         {
