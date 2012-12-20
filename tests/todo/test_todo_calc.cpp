@@ -87,7 +87,7 @@ const int
   iord = http_or_default("iord", int(1)),
   nsd = http_or_default("nsd", int(1));  
 const quantity<si::time, real_t> 
-  t_max = 300 * si::seconds, // 4 * 3600
+  t_max = 400 * si::seconds, // 4 * 3600
   dt_out = real_t(3) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = http_or_default("w_max", real_t(.6)) * si::metres / si::second; // .6 TODO: check it!
@@ -121,7 +121,7 @@ bool
   sdm_sedi = http_or_default("sdm_sedi", true),
   sdm_chem = http_or_default("sdm_chem", false);
 real_t 
-  sd_conc_mean = http_or_default("sd_conc_mean", 32),
+  sd_conc_mean = http_or_default("sd_conc_mean", 64), //32
   mean_rd1 = .04e-6,
   mean_rd2 = .15e-6,
   sdev_rd1 = 1.4,

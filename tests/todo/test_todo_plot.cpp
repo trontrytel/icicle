@@ -139,14 +139,15 @@ int main(int argc, char **argv)
     int rows = 2; //micro == "bulk" ? 2 : 3;
 
     if (ext == "png")
-      gp << "set term png enhanced size 1000," << rows * 500 << endl;
+      gp << "set term png enhanced size 500," << rows * 500 << endl;
     else if (ext == "eps")
-      gp << "set term postscript size 24cm," << 12 * rows << "cm solid enhanced color" << endl;
+      gp << "set term postscript size 12cm," << 12 * rows << "cm solid enhanced color" << endl;
     else assert(false);
 
     gp << "set output '" << dir << "/test_" << zeropad(t) << "." << ext << "'" << endl;
-    gp << "set multiplot layout " << rows << ",2" << endl;
-
+    //gp << "set multiplot layout " << rows << ",2" << endl;
+    gp << "set multiplot layout 2,1" << endl;
+/*
     gp << "set title 'water vapour mixing ratio [g/kg]'" << endl;
     gp << "set cbrange [6:8]" << endl;
     nf.getVar("rhod_rv").getVar(start({t,0,0,0}), count({1,nx,ny,1}), rv.data()); 
@@ -162,7 +163,7 @@ int main(int argc, char **argv)
     gp << "splot '-' binary" << gp.binfmt(th) << dxdy << " with image notitle";
     gp << endl;
     gp.sendBinary(th);
-
+*/
     if (micro == "bulk")
     {
       // bulk-relevant plots:
@@ -193,8 +194,8 @@ int main(int argc, char **argv)
       gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";
       gp << endl;
       gp.sendBinary(tmp0);
-*/
 
+*/
       gp << "set title 'particle (> 1 um) concentration [1/cm^3]'" << endl;
       gp << "set cbrange [0:150]" << endl;
       nf.getVar("m_0").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
@@ -226,6 +227,7 @@ int main(int argc, char **argv)
       gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";
       gp << endl;
       gp.sendBinary(tmp0);
+
     }
     else assert(false);
 
