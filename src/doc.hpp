@@ -35,14 +35,6 @@
  * Icicle's source code is publicly available under the terms of the @ref sec_COPYING
  * from a git repository at Github: http://github.com/slayoo/icicle/
  *
- * @section sec_EQUATIONS Supported equation sets
- * @table
- * | definition              | equation set | example |
- * ----------------------------------------------------
- * | eqs_scalar_advection    |              |         |
- * | eqs_harmonic_oscillator |              |         |
- * @endtable
- *
  * @section sec_CREDITS Credits
  *         
  * Icicle is an academic project developed by Sylwester Arabas, Anna Jaruga, 
