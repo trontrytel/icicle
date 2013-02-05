@@ -63,7 +63,7 @@ struct stp
     dt = dt_out;
     nout = 1;
 
-    velocity.populate_courant_fields(-1, -1, &Cx, &Cy, &Cz, dt, NULL, NULL, NULL); // TODO: only if vel->is_constant() !!!
+    velocity.populate_courant_fields(-1, -1, &Cx, &Cy, &Cz, /* dt = */ 1 * si::seconds, NULL, NULL, NULL); // TODO: only if vel->is_constant() !!!
     // Cx, Cy and Cz dimensions are not the same with Arakawa-C grid!
     //real_t cmax = max(sqrt(pow2(Cx) + pow2(Cy) + pow2(Cz))); // TODO: check if that's a correct way to calculate it?
     real_t cmax = max(abs(Cx)) + max(abs(Cy)) + max(abs(Cz));
