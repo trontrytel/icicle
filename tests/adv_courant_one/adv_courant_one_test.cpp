@@ -24,7 +24,6 @@ using std::cerr;
 using std::endl;
 
 #include "../../src/cfg/cfg_types.hpp"
-#include "../../src/cfg/cfg_boost_thread.hpp"
 
 int main()
 {
@@ -48,13 +47,7 @@ int main()
       for (int &t_max : list<int>({10,30})) 
       {
         for (string &slv : list<string>({
-          "serial",
-#if defined(_OPENMP)
-          "openmp",
-#endif
-#if defined(USE_BOOST_THREAD)
-          "threads",
-#endif
+          "serial"
         })) // TODO: fork+openmp, fork (output not ready), fork+threads, mpi
         {
           for (int &nsd : list<int>({1,2,4,5}))

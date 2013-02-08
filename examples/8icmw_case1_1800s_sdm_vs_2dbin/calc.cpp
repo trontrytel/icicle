@@ -79,7 +79,7 @@ int main(int argc, char **argv)
     << " --eqs.todo_sdm.coal " << true
     << " --eqs.todo_sdm.sedi " << true
     << " --eqs.todo_sdm.chem " << false
-    << " --eqs.todo_sdm.sd_conc_mean " << 12
+    << " --eqs.todo_sdm.sd_conc_mean " << 128
 
     // Zach's output setting (mass-doubling layout)
     << " --eqs.todo_sdm.out_m0 \"";

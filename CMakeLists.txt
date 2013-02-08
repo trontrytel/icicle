@@ -19,7 +19,10 @@ include(CheckCXXSourceCompiles)
 include(CheckCXXSourceRuns)
 include(CMakePushCheckState)
 
-set(CXX11_FLAG "-std=c++0x") # C++11 (name understandable for pre-2011 compilers)
+find_package(OpenMP)
+
+set(CXX11_FLAG "-std=c++0x ${OpenMP_CXX_FLAGS}") # C++11 (name understandable for pre-2011 compilers)
+set(CMAKE_CXX_FLAGS "${OpenMP_CXX_FLAGS}")
 set(CMAKE_CXX_FLAGS_RELEASE "${CXX11_FLAG} -DNDEBUG -Wfatal-errors" CACHE STRING "Release options." FORCE)
 if(CMAKE_COMPILER_IS_GNUCXX)
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3" CACHE STRING "Release options." FORCE)
@@ -112,8 +115,6 @@ icicle_option(USE_CUDA "GPU calculations using CUDA")
 set(tmp "")
 set(tmp "${tmp};src/slv_serial.cpp")
 set(tmp "${tmp};src/slv_parallel_serial.cpp")
-set(tmp "${tmp};src/slv_parallel_threads.cpp")
-set(tmp "${tmp};src/slv_parallel_openmp.cpp")
 set(tmp "${tmp};src/slv_parallel_distmem_fork.cpp")
 set(tmp "${tmp};src/slv_parallel_distmem_mpi.cpp")
 set(tmp "${tmp};src/eqs/eqs_harmonic_oscillator.cpp")
@@ -233,21 +234,6 @@ icicle_check(status "boost_units" FATAL_ERROR ""
 #  "#include <boost/program_options.hpp>\n int main() {boost::program_options::options_description d\;}"
 #)
 
-# Boost.Thread (optional)
-set(USE_BOOST_THREAD FALSE)
-if (DEFINED BOOST_THREAD AND NOT BOOST_THREAD)
-  message(STATUS "Building without Boost.Thread support (-DBOOST_THREAD=NO specified or CMake have not found it)")
-else()
-  icicle_check_boost_lib(
-    USE_BOOST_THREAD "boost_thread" WARNING "Threads parallelisation will not be available."
-    "#include <boost/thread.hpp>\n int main() { boost::thread th\; }"
-  )
-  if(status)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
-  endif()
-endif()
-icicle_option(USE_BOOST_THREAD "threads paralellisation using Boost.Thread")
-
 # Boost.Timer (optional) 
 set(USE_BOOST_TIMER FALSE) 
 if (DEFINED BOOST_TIMER AND NOT BOOST_TIMER)
@@ -295,23 +281,6 @@ else()
 endif()
 icicle_option(USE_BOOST_ODEINT "ODE integration with Boost.odeint")
 
-# OpenMP (optional, not using FIND_PACKAGE(OpenMP) as it relies on a C compiler)
-set(USE_OPENMP FALSE)
-if (DEFINED OPENMP AND NOT OPENMP)   
-  message(STATUS "Building without OpenMP support (-DOPENMP=NO specified or CMake have not found it)")
-else()
-  set(TMP ${CMAKE_CXX_FLAGS}) 
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
-  icicle_check(USE_OPENMP "openmp" WARNING 
-    "OpenMP parallelisation will not be available." 
-    "#include <omp.h>\n int main() { omp_set_num_threads(2)\;}"
-  )
-  if(NOT USE_OPENMP) 
-    set(CMAKE_CXX_FLAGS ${TMP}) 
-  endif()   
-endif()
-icicle_option(USE_OPENMP "OpenMP paralellisation")
-
 # NetCDF (optional)
 set(USE_NETCDF FALSE)
 if(DEFINED NETCDF AND NOT NETCDF) 
@@ -331,7 +300,6 @@ endif()
 icicle_option(USE_NETCDF "netCDF input/output")
 
 # Thrust (optional)
-set(USE_THRUST FALSE)
 if(DEFINED THRUST AND NOT THRUST) 
   message(STATUS "Building without Thrust support (-DTHRUST=NO specified or CMake have not found it)")
 else()
@@ -364,7 +332,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/cfg/cfg_netcdf.hpp.in ${CMAKE_CUR
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/cfg/cfg_thrust.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/src/cfg/cfg_thrust.hpp)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/cfg/cfg_boost_mpi.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/src/cfg/cfg_boost_mpi.hpp)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/cfg/cfg_boost_odeint.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/src/cfg/cfg_boost_odeint.hpp)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/cfg/cfg_boost_thread.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/src/cfg/cfg_boost_thread.hpp)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/cfg/cfg_boost_timer.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/src/cfg/cfg_boost_timer.hpp)
 
 #find_package(Doxygen)

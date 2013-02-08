@@ -57,6 +57,9 @@ int main(int argc, char **argv)
 
   string dir= argc > 1 ? argv[1] : "tmp";
  
+  int focus_t = 50, focus_x = 15, focus_y = 30;
+  std::map<real_t, real_t> focus;
+ 
   notice_macro("opening super-droplet netCDF file")
   NcFile nf(dir+"/out.nc", NcFile::read);
 
@@ -132,11 +135,10 @@ int main(int argc, char **argv)
     gp << "set cntrparam levels 0" << endl;
     gp << "set nokey" << endl;
 
-    gp << "set label 't = " << int(real_t(t) * dt_out / si::seconds) << " s' at screen .51,.99 center" << endl;
 //    gp << "set label 'icicle/sdm' at screen .25,.99 center" << endl;
 //    gp << "set label 'Zach''s 2D-bin' at screen .75,.99 center" << endl;
 
-    int cols = 1, rows = 8;
+    int cols = 3, rows = 2;
 
     if (ext == "png")
       gp << "set term png enhanced size " << cols * 500 << "," << rows * 500 << endl;
@@ -145,7 +147,8 @@ int main(int argc, char **argv)
     else assert(false);
 
     gp << "set output '" << dir << "/test_" << zeropad(t) << "." << ext << "'" << endl;
-    gp << "set multiplot layout " << rows << "," << cols << endl;
+    gp << "set multiplot layout " << rows << "," << cols 
+       << " title 't = " << int(real_t(t) * dt_out / si::seconds) << " s'" << endl;
 
     Array<real_t, 2> conc_aero(nx, ny), conc_cloud(nx, ny), conc_precip(nx, ny);
     conc_aero = 0;
@@ -185,6 +188,12 @@ int main(int argc, char **argv)
 
           for (int y = 0; y < ny; ++y) 
             tmps(i, y) = sum(tmp(blitz::Range::all(), y)) / nx;
+
+          if (t == focus_t) 
+            focus[left_edges[i] / si::metres / 1e-6] = sum(tmp(
+              blitz::Range(focus_x-1, focus_x+1), 
+              blitz::Range(focus_y-1, focus_y+1)
+            )) / 9 / 1e6;
         }
         tmps /= 1e6; // 1/m3 -> 1/cm3
         gp << "splot '-' binary" << gp.binfmt(tmps)
@@ -213,69 +222,12 @@ int main(int argc, char **argv)
 */
     }
 
+    gp << "unset logscale cb" << endl;
+ 
     gp << "set xlabel 'X [km]'" << endl;
     gp << "set xrange [" << 0 << ":" << nx * dx/1000 << "]" << endl;
     gp << "set xtics .5" << endl;
 
-    //// concentration plots
-    {
-      gp << "set title 'r<1 {/Symbol m}m particle conc. [1/cm^3]'" << endl;
-      gp << "splot '-' binary" << gp.binfmt(conc_aero) << dxdy << " using 1 with image notitle" << endl;
-      gp.sendBinary(conc_aero);
-
-      gp << "set title '1<r<25 {/Symbol m}m particle conc. [1/cm^3]'" << endl;
-      gp << "splot '-' binary" << gp.binfmt(conc_cloud) << dxdy << " using 1 with image notitle" << endl;
-      gp.sendBinary(conc_cloud);
-
-      gp << "set title 'r>25 {/Symbol m}m particle conc. [1/cm^3]'" << endl;
-      gp << "splot '-' binary" << gp.binfmt(conc_precip) << dxdy << " using 1 with image notitle" << endl;
-      gp.sendBinary(conc_precip);
-    }
-
-    gp << "unset logscale cb" << endl;
-
-    //// water vapour mixing ratio
-    {
-      Array<real_t, 2> tmp(nx, ny);
-
-      gp << "set title 'water vapour mixing ratio [g/kg]'" << endl;
-      gp << "set cbrange [6:8]" << endl;
-      // super-droplets
-      nf.getVar("rhod_rv").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp.data()); 
-      tmp /= rhod;
-      gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " using ($1*1000) with image notitle" << endl;
-      gp.sendBinary(tmp);
-      // 2D-bin
-/*
-      nf2.getVar("QV").getVar(start({tz,0,0}), count({1,ny,nx}), tmp.data()); 
-      tmp.transposeSelf(secondDim, firstDim);
-      gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " using ($1*1000) with image notitle" << endl;
-      gp.sendBinary(tmp);
-*/
-    }
-
-
-    //// potential temperature
-    {
-      Array<real_t, 2> tmp(nx, ny);
-
-      gp << "set title 'potential temperature [K]'" << endl;
-      gp << "set cbrange [288:293]" << endl;
-      // super-droplet
-      nf.getVar("rhod_th").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp.data()); 
-      tmp /= rhod;
-      gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " with image notitle" << endl;
-      gp.sendBinary(tmp);
-      // 2D-bin
-/*
-      nf2.getVar("THETA").getVar(start({tz,0,0}), count({1,ny,nx}), tmp.data()); 
-      tmp.transposeSelf(secondDim, firstDim);
-      gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " with image notitle" << endl;
-      gp.sendBinary(tmp);
-*/
-    }
-
- 
     //// super-droplet concentration
     {
       Array<real_t, 2> tmp(nx, ny);
@@ -309,8 +261,93 @@ int main(int argc, char **argv)
 //      gp << "splot 0" << endl;
     }
 
+    gp << "set logscale cb" << endl;
+    gp << "set cbrange [1:200]" << endl;
+
+    if (t == focus_t)
+    {
+      gp << "set arrow from " << (focus_x-1) * dx/1000 << ", 0 to " << (focus_x-1) * dx/1000 << ", " << ny*dy/1000 << " nohead front lw .5" << endl; 
+      gp << "set arrow from " << (focus_x+2) * dx/1000 << ", 0 to " << (focus_x+2) * dx/1000 << ", " << ny*dy/1000 << " nohead front lw .5" << endl; 
+      gp << "set arrow from 0, " << (focus_y-1) * dy/1000 << " to " << nx*dx/1000 << ", " << (focus_y-1) * dy/1000 << " nohead front lw .5" << endl; 
+      gp << "set arrow from 0, " << (focus_y+2) * dy/1000 << " to " << nx*dx/1000 << ", " << (focus_y+2) * dy/1000 << " nohead front lw .5" << endl; 
+    }
+
+    //// concentration plots
+    {
+      gp << "set title 'r<1 {/Symbol m}m particle conc. [1/cm^3]'" << endl;
+      gp << "splot '-' binary" << gp.binfmt(conc_aero) << dxdy << " using 1 with image notitle" << endl;
+      gp.sendBinary(conc_aero);
+
+      gp << "set title '1<r<25 {/Symbol m}m particle conc. [1/cm^3]'" << endl;
+      gp << "splot '-' binary" << gp.binfmt(conc_cloud) << dxdy << " using 1 with image notitle" << endl;
+      gp.sendBinary(conc_cloud);
+
+      gp << "set title 'r>25 {/Symbol m}m particle conc. [1/cm^3]'" << endl;
+      gp << "splot '-' binary" << gp.binfmt(conc_precip) << dxdy << " using 1 with image notitle" << endl;
+      gp.sendBinary(conc_precip);
+    }
+
+    gp << "unset arrow" << endl;
+
+    //// water vapour mixing ratio
+/*
+    {
+      Array<real_t, 2> tmp(nx, ny);
+
+      gp << "set title 'water vapour mixing ratio [g/kg]'" << endl;
+      gp << "set cbrange [6:8]" << endl;
+      // super-droplets
+      nf.getVar("rhod_rv").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp.data()); 
+      tmp /= rhod;
+      gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " using ($1*1000) with image notitle" << endl;
+      gp.sendBinary(tmp);
+      // 2D-bin
+//      nf2.getVar("QV").getVar(start({tz,0,0}), count({1,ny,nx}), tmp.data()); 
+//      tmp.transposeSelf(secondDim, firstDim);
+//      gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " using ($1*1000) with image notitle" << endl;
+//      gp.sendBinary(tmp);
+    }
+*/
+
+
+    //// potential temperature
+/*
+    {
+      Array<real_t, 2> tmp(nx, ny);
+
+      gp << "set title 'potential temperature [K]'" << endl;
+      gp << "set cbrange [288:293]" << endl;
+      // super-droplet
+      nf.getVar("rhod_th").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp.data()); 
+      tmp /= rhod;
+      gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " with image notitle" << endl;
+      gp.sendBinary(tmp);
+      // 2D-bin
+//      nf2.getVar("THETA").getVar(start({tz,0,0}), count({1,ny,nx}), tmp.data()); 
+//      tmp.transposeSelf(secondDim, firstDim);
+//      gp << "splot '-' binary" << gp.binfmt(tmp) << dxdy << " with image notitle" << endl;
+//      gp.sendBinary(tmp);
+    }
+*/
+
     gp << "unset multiplot" << endl;
     gp << "unset label" << endl;
+
+    if (t == focus_t)
+    {
+      gp << "reset" << endl;
+      gp << "set term postscript size 20cm,15cm solid enhanced color" << endl;
+      gp << "set output '" << dir << "/focus.eps'" << endl;
+      gp << "set logscale xy" << endl;
+      gp << "set yrange [.001:100]" << endl;
+      gp << "set title 'x/dx=" << focus_x << "+/-1    y/dy=" << focus_y << "+/-1     t/dt=" << t << endl;
+      gp << "set ylabel 'particle concentration (per bin) [1/cm^3]'" << endl;
+      gp << "set xlabel 'particle wet radius [{/Symbol m}m]'" << endl;
+      gp << "set grid" << endl;
+      gp << "plot '-' with steps lw 3 notitle" << endl;
+      gp.send(focus);
+      break;
+    }
   }
 
   string cmd="convert -monitor -delay 10 -loop 1 " + dir + "/test_*.png " + dir + "/todo.gif 1>&2";
