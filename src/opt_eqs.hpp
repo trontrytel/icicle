@@ -11,7 +11,6 @@
 #include "eqs/eqs_scalar_advection.hpp"
 #include "eqs/eqs_shallow_water.hpp"
 #include "eqs/eqs_isentropic.hpp"
-#include "eqs/eqs_harmonic_oscillator.hpp"
 #include "eqs/eqs_todo_bulk_ode.hpp"
 #include "eqs/eqs_todo_mm.hpp"
 #include "eqs/eqs_todo_sdm.hpp"
@@ -32,8 +31,6 @@ inline void opt_eqs_desc(po::options_description &desc)
     ("eqs.isentropic.abslev", po::value<int>(), "absorber lowermost level")
     ("eqs.isentropic.absamp", po::value<string>()->default_value("1"), "absorber amplitude [1]") 
 
-    ("eqs.harmonic_oscillator.omega", po::value<string>(), "omega [Hz]") 
-    
     ("eqs.todo_bulk.cond", po::value<bool>(), "cloud water condensation [on/off]")
     ("eqs.todo_bulk.cevp", po::value<bool>(), "cloud water evaporation [on/off]")
     ("eqs.todo_bulk.conv", po::value<bool>(), "conversion of cloud water into rain [on/off]")
@@ -129,11 +126,6 @@ eqs<real_t> *opt_eqs(
     );
   }
   else
-  if (initype == "harmonic_oscillator")
-    return new eqs_harmonic_oscillator<real_t>(
-      real_cast<real_t>(vm, "eqs.harmonic_oscillator.omega") / si::seconds
-    );
-  else 
   if (initype == "todo_bulk")
     return new eqs_todo_bulk_ode<real_t>(grid,
       map<enum eqs_todo_bulk<real_t>::processes, bool>({
