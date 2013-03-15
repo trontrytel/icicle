@@ -154,7 +154,6 @@ int main(int argc, char **argv)
 //    << " --nt " << real_t(3000)  //4*3600
 //    << " --nout " << real_t(100)   //600
 
-// TODO TEMP TODO TEMP !!!
     << " --dt " << real_t(1.)
     << " --nt " << real_t(120)
     << " --nout " << real_t(10)
