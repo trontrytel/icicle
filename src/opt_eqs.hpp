@@ -9,7 +9,6 @@
 
 #include "opt.hpp"
 #include "eqs/eqs_scalar_advection.hpp"
-#include "eqs/eqs_shallow_water.hpp"
 #include "eqs/eqs_isentropic.hpp"
 #include "eqs/eqs_todo_bulk_ode.hpp"
 #include "eqs/eqs_todo_mm.hpp"
@@ -23,7 +22,7 @@
 inline void opt_eqs_desc(po::options_description &desc)
 {
   desc.add_options()
-    ("eqs", po::value<string>(), "equation system: shallow_water, isentropic, ...")
+    ("eqs", po::value<string>(), "equation system: todo, isentropic, ...")
 
     ("eqs.isentropic.nlev", po::value<int>(), "number of fluid layers")
     ("eqs.isentropic.p_top", po::value<string>()->default_value("0"), "pressure at the uppermost surface [Pa]")
@@ -110,9 +109,6 @@ eqs<real_t> *opt_eqs(
   if (initype == "scalar_advection")
     return new eqs_scalar_advection<real_t>();
   else 
-  if (initype == "shallow_water")
-    return new eqs_shallow_water<real_t>(grid);
-  else
   if (initype == "isentropic")
   {
     if (!vm.count("eqs.isentropic.nlev")) error_macro("TODO")
