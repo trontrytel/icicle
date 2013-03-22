@@ -61,6 +61,7 @@ class eqs_todo_sdm : public eqs_todo<real_t>
     //initial chemical conditions (in air and droplets)
     map<enum sdm::chem_gas, quantity<phc::mixing_ratio, real_t>> opt_gas, 
     map<enum sdm::chem_aq, quantity<si::mass, real_t>> opt_aq,
+    map<int, vector<pair<quantity<si::length, real_t>, quantity<si::length, real_t>>>>, 
     map<int, vector<pair<quantity<si::length, real_t>, quantity<si::length, real_t>>>> 
   )
 #if !defined(USE_BOOST_ODEINT) || !defined(USE_THRUST)

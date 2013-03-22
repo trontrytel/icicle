@@ -121,11 +121,12 @@ int main(int argc, char **argv)
     << " --eqs.todo_sdm.chem " << sdm_chem
     << " --eqs.todo_sdm.sd_conc_mean " << sd_conc_mean
 
-    // TEMP...
-    << " --eqs.todo_sdm.out_m0 \"";
-      for (int i = 0; i < 25; ++i) cmd << i << "e-6:" << i + 1 << "e-6;";
-      for (int i = 0; i < 7; ++i) cmd << 25 * int(pow(2,i)) << "e-6:" << 25 * int(pow(2,i+1)) << "e-6;";
-      cmd << "\"";
+    // dry radius bins: .01  ...  .1  ...  1  ...  10 (32 bins in total)
+    << " --eqs.todo_sdm.out_md0 \"";
+  for (int i = 0; i < 32; ++i) cmd 
+    << 1e-6 * pow(10, -2 +   i   * .125) << ":" 
+    << 1e-6 * pow(10, -2 + (i+1) * .125) << ";";
+  cmd << "\"";
     
   if (EXIT_SUCCESS != system(cmd.str().c_str()))
     error_macro("model run failed: " << cmd.str())

@@ -82,7 +82,7 @@ int main(int argc, char **argv)
     << " --eqs.todo_sdm.sd_conc_mean " << 128
 
     // Zach's output setting (mass-doubling layout)
-    << " --eqs.todo_sdm.out_m0 \"";
+    << " --eqs.todo_sdm.out_mw0 \"";
   vector<quantity<si::length, real_t>> left_edges = bins();
   for (int i = 0; i < left_edges.size()-1; ++i) 
     cmd << real_t(left_edges[i] / si::metres) << ":" << real_t(left_edges[i + 1] / si::metres) << ";";

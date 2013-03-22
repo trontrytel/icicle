@@ -199,7 +199,7 @@ int main(int argc, char **argv)
         << " --eqs.todo_sdm.sd_conc_mean " << sd_conc_mean
 
         // TEMP...
-        << " --eqs.todo_sdm.out_m0 \"";
+        << " --eqs.todo_sdm.out_mw0 \"";
       for (int i = 0; i < 25; ++i) cmd << i << "e-6:" << i + 1 << "e-6;";
       for (int i = 0; i < 7; ++i) cmd << 25 * int(pow(2,i)) << "e-6:" << 25 * int(pow(2,i+1)) << "e-6;";
       cmd << "\"";

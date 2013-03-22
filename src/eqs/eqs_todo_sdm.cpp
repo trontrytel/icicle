@@ -48,7 +48,10 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
   map<enum sdm::chem_aq, quantity<si::mass, real_t>> opt_aq,
   map<int, vector<pair<
     quantity<si::length, real_t>, quantity<si::length, real_t>
-  >>> outmoments
+  >>> outmoments_wet,
+  map<int, vector<pair<
+    quantity<si::length, real_t>, quantity<si::length, real_t>
+  >>> outmoments_dry
 ) : eqs_todo<real_t>(grid, &this->par), pimpl(new detail())
 {
   // auxliary variable for super-droplet conc
@@ -66,13 +69,13 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
     vector<int>({0, 0, 0})
   }));
 
-  for (auto moment : outmoments)
+  for (auto &moment : outmoments_wet)
   {
     int r = 0;
     for (auto range : moment.second)
     {
       ostringstream name, desc, unit;
-      name << "m_" << moment.first;
+      name << "mw_" << moment.first;
       if (moment.second.size() > 1) name << "_" << r;
       desc << "<r^" << moment.first << "> for r > " << range.first << " and r <= " << range.second;
       unit << "1 meter^" << moment.first -3;
@@ -124,7 +127,6 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
   }));
 
   // initialising super-droplets
-  if (true) // TODO!
     pimpl->particles.reset(new sdm::sdm<real_t, sdm::openmp>(
       grid,
       velocity,
@@ -144,32 +146,9 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
       kappa,
       opt_gas, 
       opt_aq,
-      outmoments
+      outmoments_wet,
+      outmoments_dry
 ));
-/*
-  else
-    pimpl->particles.reset(new sdm::sdm<real_t, sdm::cuda>(
-      grid, 
-      velocity,
-      opts,
-      xi_dfntn,
-      adve_algo, sedi_algo, cond_algo, chem_algo,
-      adve_sstp, sedi_sstp, cond_sstp, chem_sstp, coal_sstp,
-      sd_conc_mean,
-      min_rd,
-      max_rd, 
-      mean_rd1, // dry aerosol initial distribution parameters
-      mean_rd2, // TODO: encapsulate in a map/enum
-      sdev_rd1,
-      sdev_rd2,
-      n1_tot,
-      n2_tot,
-      kappa,
-      opt_gas, 
-      opt_aq,
-      outmoments 
-));
-*/
 }
 
 template <typename real_t>

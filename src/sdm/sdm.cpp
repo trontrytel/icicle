@@ -52,7 +52,8 @@ sdm<real_t, thrust_device_system>::sdm(
   const real_t kappa,
   map<enum chem_gas, quantity<phc::mixing_ratio, real_t>> opt_gas,
   map<enum chem_aq, quantity<si::mass, real_t>> opt_aq,
-  const map<int, vector<pair<quantity<si::length, real_t>, quantity<si::length, real_t>>>> &outmoments
+  const map<int, vector<pair<quantity<si::length, real_t>, quantity<si::length, real_t>>>> &outmoments_wet,
+  const map<int, vector<pair<quantity<si::length, real_t>, quantity<si::length, real_t>>>> &outmoments_dry
 ) : pimpl(new detail(
   grid, 
   velocity,
@@ -60,7 +61,8 @@ sdm<real_t, thrust_device_system>::sdm(
   xi_dfntn,
   sd_conc_mean,
   adve_sstp, sedi_sstp, cond_sstp, chem_sstp, coal_sstp,
-  outmoments,
+  outmoments_wet,
+  outmoments_dry,
   opt_gas
 ))
 {
@@ -232,7 +234,7 @@ struct sdm<real_t, thrust_device_system>::detail
   const map<int, vector<pair<
     quantity<si::length, real_t>, 
     quantity<si::length, real_t>
-  >>> outmoments;
+  >>> outmoments_wet, outmoments_dry;
 
   // private fields for ODE machinery
   unique_ptr<ode<real_t>> 
@@ -264,7 +266,8 @@ struct sdm<real_t, thrust_device_system>::detail
     const enum xi_dfntns xi_dfntn,
     const real_t sd_conc_mean,
     const int adve_sstp, const int sedi_sstp, const int cond_sstp, const int chem_sstp, const int coal_sstp,
-    const map<int, vector<pair<quantity<si::length, real_t>, quantity<si::length, real_t>>>> &outmoments,
+    const map<int, vector<pair<quantity<si::length, real_t>, quantity<si::length, real_t>>>> &outmoments_wet,
+    const map<int, vector<pair<quantity<si::length, real_t>, quantity<si::length, real_t>>>> &outmoments_dry,
     const map<enum chem_gas, quantity<phc::mixing_ratio, real_t>> &opt_gas
   ) :
     opts(opts), 
@@ -274,7 +277,8 @@ struct sdm<real_t, thrust_device_system>::detail
     envi(grid.nx(), grid.ny(), grid.dx() / si::metres, grid.dy() / si::metres),
     xi_dfntn(xi_dfntn),
     adve_sstp(adve_sstp), sedi_sstp(sedi_sstp), cond_sstp(cond_sstp), chem_sstp(chem_sstp), coal_sstp(coal_sstp),
-    outmoments(outmoments),
+    outmoments_wet(outmoments_wet),
+    outmoments_dry(outmoments_dry),
     opt_gas(opt_gas)
   {}
 
@@ -545,7 +549,8 @@ static void sd_diag(
   thrust::device_vector<int> &tmp_shrt, 
   thrust::device_vector<real_t> &tmp_real,
   const enum xi_dfntns xi_dfntn,
-  const map<int, vector<pair<quantity<si::length, real_t>, quantity<si::length, real_t>>>> &outmoments
+  const map<int, vector<pair<quantity<si::length, real_t>, quantity<si::length, real_t>>>> &outmoments_wet,
+  const map<int, vector<pair<quantity<si::length, real_t>, quantity<si::length, real_t>>>> &outmoments_dry
 )
 {
   // calculating super-droplet concentration (per grid cell)
@@ -606,7 +611,7 @@ static void sd_diag(
   }
 
   // calculating k-th moment of the particle distribution (for particles with radius greater than a given threshold)
-  for (auto moment : outmoments)
+  for (auto &moment : outmoments_wet)
   {
     int k = moment.first, r = 0;
     for (auto range : moment.second)
@@ -1270,7 +1275,8 @@ static void sd_coalescence(
       pimpl->tmp_shrt, 
       pimpl->tmp_real, 
       pimpl->xi_dfntn,
-      pimpl->outmoments
+      pimpl->outmoments_wet,
+      pimpl->outmoments_dry
     ); 
 
     // syncing out data to the Eulerian grid (rhod_rv and rhod_th)

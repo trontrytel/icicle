@@ -299,8 +299,8 @@ int main(int argc, char **argv)
       gp << "set title 'r ef'" << endl;
       gp << "set logscale cb" << endl;
       gp << "set cbrange [1:500]" << endl;
-      nf.getVar("m_3").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
-      nf.getVar("m_2").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp1.data()); 
+      nf.getVar("mw_3").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp0.data()); 
+      nf.getVar("mw_2").getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp1.data()); 
       tmp0 /= tmp1;
       tmp0 *= 1e6;
       gp << "splot '-' binary" << gp.binfmt(tmp0) << dxdy << " using 1 with image notitle";
