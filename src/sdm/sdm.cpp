@@ -373,10 +373,14 @@ struct sdm<real_t, thrust_device_system>::detail
         stat.c_aq.begin() + (SO3 + 1) * stat.n_part, 
         opt_aq[SO3]  / si::kilograms
       );
-      thrust::fill(
+     // filling initial mass of S_VI based on dry density and assumed size distribution
+     // so far only one chemical compound of dry density = 1.8 g/cm3
+      struct md_chem { real_t operator()(real_t r3) { return 4./3 * M_PI * (1.8 * 1e3 ) * r3; } };
+      thrust::transform(
+        stat.rd3.begin(), 
+        stat.rd3.end(),
         stat.c_aq.begin() +  S_VI      * stat.n_part,
-        stat.c_aq.begin() + (S_VI + 1) * stat.n_part, 
-        0. //TODO?
+        md_chem() //TODO?
       );
       thrust::fill(
         stat.c_aq.begin() +  HSO4      * stat.n_part,
@@ -975,6 +979,13 @@ static void sd_chem_equil(
   };
   thrust::counting_iterator<thrust_size_t> zero(0);
   thrust::for_each(zero, zero + stat.n_part, curie(stat, envi, opt_gas));
+  //calculating rd based on the mass of irreversibly dissolved chemical species
+  struct rd_chem { real_t operator()(real_t m) { return 3./4/M_PI / (1.8 * 1e3 ) * m; } };
+  thrust::transform(stat.c_aq.begin() + stat.n_part * S_VI, 
+                    stat.c_aq.begin() + stat.n_part * (S_VI+1), 
+                    stat.rd3.begin(), 
+                    rd_chem()
+                  );
 }
 
 // reactions

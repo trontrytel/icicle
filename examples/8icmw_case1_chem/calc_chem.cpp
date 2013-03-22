@@ -29,12 +29,18 @@ using boost::units::detail::get_value;
 #include "../../src/cmn/cmn_error.hpp"
 #include "../../src/cmn/cmn_units.hpp"
 #include "../../src/phc/phc.hpp"
-#include "../../src/wkc/wkc_icmw8_case1.hpp"
+#include "../../src/wkc/wkc_chem_tmp.hpp"
 
 typedef float real_t;
 
+const real_t 
+  dt = 1,
+  nt = 10, // 1800
+  nout = 2; // 60
+
 // simulation parameteters (the 8th WMO Cloud Modelling Workshop: Case 1    
 // by W.W.Grabowski: http://rap.ucar.edu/~gthompsn/workshop2012/case1/case1.pdf  
+// chemistry based on Kreidenweis 2002
 const size_t 
   nx = size_t(76),                   // 75 
   ny = size_t(76);                    // 75 
@@ -56,9 +62,6 @@ const int
 const quantity<si::velocity, real_t>
   w_max = real_t(.6) * si::metres_per_second; // .6 TODO: check it!
 
-// options for microphysics
-std::string micro_opt = string("sdm"); 
-
 int
   sdm_adve_sstp = 1,
   sdm_sedi_sstp = 1,
@@ -74,9 +77,6 @@ bool
 real_t 
   sd_conc_mean = 128;
 
-using wkc::icmw8_case1::micro_t;
-using wkc::icmw8_case1::sdm;
-
 int main(int argc, char **argv)
 {
   string dir = argc > 1 ? argv[1] : "tmp";
@@ -84,8 +84,7 @@ int main(int argc, char **argv)
   boost::filesystem::create_directory(dir);
 
   notice_macro("creating input files ...")
-  string opts = wkc::icmw8_case1::create_files(
-    sdm,
+  string opts = wkc::tmp_chem::create_files(
     dir + "/rho.nc", 
     dir + "/ini.nc",
     nx, ny, dx, dy, th_0, rt_0, w_max
@@ -100,9 +99,9 @@ int main(int argc, char **argv)
       << " --adv.mpdata.iord " << iord
       << " --adv.mpdata.third_order " << toa
 
-    << " --dt " << real_t(1)
-    << " --nt " << real_t(3600) // 1800
-    << " --nout " << real_t(30) // 60
+    << " --dt " << dt
+    << " --nt " << nt
+    << " --nout " << nout
 
     << " --out netcdf" 
     << " --out.netcdf.file " << dir << "/out.nc"

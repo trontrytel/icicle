@@ -41,8 +41,6 @@
   - CUDA's nvcc compiler .... http://developer.nvidia.com/cuda/
 
   - Boost C++ libraries, incl.: ............. http://boost.org/
-    - Boost.Thread (headers & shared library)
-    - Boost.MPI (headers & shared library + MPI - see below)
     - Boost.Timer & Boost.System (header & shared library)
 
   - NetCDF C++ library .... http://www.unidata.ucar.edu/netcdf/
@@ -65,47 +63,12 @@
   - GNU Cgicc .................. http://gnu.org/software/cgicc/
     (only used in web interfaces to the test programs)
 
-* MPI requirements:
-
-  - MPI libraries with C++ bindings (optional), e.g.:
-    - Open MPI ....................... http://www.open-mpi.org/
-      (with --enable-mpi-threads if MPI+threads is to be used)
-    - MPICH ................ http://www.mcs.anl.gov/mpi/mpich2/
-    - LAM/MPI (obsolete -> Open MPI) .. http://www.lam-mpi.org/
-
-  - MPI-enabled HDF5 library ...... TODO
-
-  - HDF5-enabled netCDF4 library .. TODO
-
 * Hints concerning use of packages:
 
   - All library packages have to be installed with the header
     files. For Debian/Ubuntu this means one needs to install
     the -dev suffixed packages (e.g. libboost-dev). For Fedora
     such packages have a -devel suffix (e.g. boost-devel)
-
-  - Use of any Blitz++ package is discouraged. As of 2012 Q1 
-    they are all largely outdated (better use the repository 
-    version). Additionally, Blitz++ in principle should be 
-    built with the same compiler as the software which is 
-    using it.
-
-  - MPI support is usually not enabled by default in packages.
-    Furthermore, the user has to chose an MPI implementation.
-    On Macports, Boost.MPI is enabled e.g. via the "openmpi" 
-    variant of the boost port (port install boost+openmpi).
-    On Fedora, one needs to install e.g. boost-mpich2-devel or
-    boost-openmpi-devel (MPICH and OpenMPI variants,
-    respectively). The Debian/Ubuntu counterparts of the above 
-    are libboost-mpi-dev. 
-
-    The MPI-enabled installation of netcdf with the new netCDF4 
-    C++ API may be obtained on Macports by combining the 
-    openmpi and netcdf4 variants of the netcdf port 
-    (port install netcdf +netcdf4+openmpi).
-
-    On Fedora the MPI-enabled netcdf packages are called 
-    netcdf-openmpi and netcdf-mpich2.
 
 --------------------------------------------------------------
 * in-tree compilation / tests / clean-up:
@@ -114,7 +77,6 @@
     [-DNETCDF=NO]
     [-DTHREADS=NO]
     [-DOPENMP=NO]
-    [-DMPI=NO]
     [-DTIMER=NO]
     [-DODEINT=NO]
     [-DFLOAT=NO]
@@ -125,7 +87,7 @@
   $ make clean 
 
   To chose a non-defalt compiler or library path:
-   -DCMAKE_CXX_COMPILER=openmpic++
+   -DCMAKE_CXX_COMPILER=clang++
    -DCMAKE_PREFIX_PATH=/usr/local/
 
 --------------------------------------------------------------

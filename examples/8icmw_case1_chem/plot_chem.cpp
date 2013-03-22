@@ -117,7 +117,7 @@ int main(int argc, char **argv)
   notice_macro("setting-up plot parameters")
   Gnuplot gp;
 
-  for (size_t t = 0 ; t < nt; ++t) for (string &ext : list<string>({"eps"/*,"png"*/}))
+  for (size_t t = 0 ; t < nt; ++t) for (string &ext : list<string>({/*"eps",*/"png"}))
   {
     notice_macro("generating frame at t=" << t)
     gp << "reset" << endl;
@@ -143,7 +143,7 @@ int main(int argc, char **argv)
       assert(false);
 
     if (ext == "png")
-      gp << "set term png enhanced size 1400," << 1300 << endl;
+      gp << "set term png enhanced size 1200," << 700 << endl;
     else if (ext == "eps")
       gp << "set term postscript size 40cm, 25cm solid enhanced color font 'Helvetica, 12'" << endl;
     else assert(false);

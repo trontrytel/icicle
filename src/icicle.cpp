@@ -10,7 +10,6 @@
 #include "mdl.hpp"
 #include "cfg/cfg_types.hpp"
 #include "cfg/cfg_boost_mpi.hpp"
-#include "cfg/cfg_boost_thread.hpp"
 
 int main(int ac, char* av[])
 {
