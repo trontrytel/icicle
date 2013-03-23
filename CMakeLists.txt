@@ -103,17 +103,6 @@ function(icicle_check_boost_lib stat libname bhvr msg code)
   set(${stat} ${status} PARENT_SCOPE)
 endfunction()
 
-# CUDA (optional)
-set(USE_CUDA FALSE)
-if (DEFINED CUDA AND NOT CUDA)
-  message(STATUS "Building without CUDA support (-DCUDA=NO specified or CMake have not found it)")
-else()
-  find_package(CUDA QUIET)
-  set(CUDA_PROPAGATE_HOST_FLAGS OFF)
-  set(USE_CUDA ${CUDA_FOUND})
-endif()
-icicle_option(USE_CUDA "GPU calculations using CUDA")
-
 set(tmp "")
 set(tmp "${tmp};src/slv_serial.cpp")
 set(tmp "${tmp};src/slv_parallel_serial.cpp")
@@ -143,45 +132,13 @@ set(tmp "${tmp};src/out_gnuplot.cpp")
 set(tmp "${tmp};src/out_debug.cpp")
 set(tmp "${tmp};src/icicle.cpp")
 
-if(USE_CUDA)
-  set(tmp "${tmp};src/sdm/sdm_cuda.cu")
-  cuda_add_executable(icicle ${tmp})
-else()
-  add_executable(icicle ${tmp})
-endif()
+add_executable(icicle ${tmp})
 
 # FLOAT, DOUBLE, LDOUBLE and FLOAT128
-set(USE_FLOAT TRUE)
-if(DEFINED FLOAT AND NOT FLOAT)
-  message(STATUS "Building without float support (-DFLOAT=NO specified)")
-  set(USE_FLOAT FALSE)
-endif()
-icicle_option(USE_FLOAT "'float' type support (i.e. single precision, 32 bits)")
-
+set(USE_FLOAT FALSE)
 set(USE_DOUBLE TRUE)
-if(DEFINED DOUBLE AND NOT DOUBLE)
-  message(STATUS "Building without double support (-DDOUBLE=NO specified)")
-  set(USE_DOUBLE FALSE)
-endif()    
-icicle_option(USE_DOUBLE "'double' type support (i.e. double precision, 64 bits)")
-
-set(USE_LDOUBLE TRUE)
-if(DEFINED LDOUBLE AND NOT LDOUBLE)
-  message(STATUS "Building without long double support (-DLDOUBLE=NO specified)")
-  set(USE_LDOUBLE FALSE)
-endif()
-icicle_option(USE_LDOUBLE "'long double' type support (compiler-dependent, 80 bits for GCC on x86_64)")
-
+set(USE_LDOUBLE FALSE)
 set(USE_FLOAT128 FALSE)      
-if(DEFINED FLOAT128 AND FLOAT128)
-  set(USE_FLOAT128 TRUE)
-endif()
-icicle_option(USE_FLOAT128 "'__float128' type support (GNU extension, 128 bits)" ON) 
-# TODO: check if __float128 is actually supported by the compiler...
-
-if(NOT USE_FLOAT AND NOT USE_DOUBLE AND NOT USE_LDOUBLE AND NOT USE_FLOAT128)
-  message(FATAL_ERROR "-DFLOAD=NO -DDOUBLE=NO -DLDBOULBE=NO and -DFLOAT128=NO may not be specified all at once!")
-endif() 
 
 # checking if fork() requires librt
 set(code "#include <boost/interprocess/ipc/message_queue.hpp>\n int main() {  boost::interprocess::message_queue q(boost::interprocess::open_or_create, \"n\", 1, sizeof(bool))\; }")
@@ -311,7 +268,7 @@ else()
     }
   ")
 endif() 
-icicle_option(USE_THRUST "Thrust (OpenMP/CUDA parallelisation)")
+icicle_option(USE_THRUST "Thrust (OpenMP parallelisation)")
 
 
 # TODO: document
@@ -327,25 +284,16 @@ execute_process(COMMAND "hostname" OUTPUT_VARIABLE INFO_HOSTNAME OUTPUT_STRIP_TR
 execute_process(COMMAND "${CMAKE_CXX_COMPILER}" "--version" COMMAND "head" "-1" OUTPUT_VARIABLE INFO_CXX_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/cfg/cfg_types.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/src/cfg/cfg_types.hpp)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/cfg/cfg_info.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/src/cfg/cfg_info.hpp)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/cfg/cfg_cuda.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/src/cfg/cfg_cuda.hpp)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/cfg/cfg_netcdf.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/src/cfg/cfg_netcdf.hpp)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/cfg/cfg_thrust.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/src/cfg/cfg_thrust.hpp)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/cfg/cfg_boost_mpi.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/src/cfg/cfg_boost_mpi.hpp)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/cfg/cfg_boost_odeint.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/src/cfg/cfg_boost_odeint.hpp)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/cfg/cfg_boost_timer.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/src/cfg/cfg_boost_timer.hpp)
 
-#find_package(Doxygen)
-#if (DOXYGEN_FOUND)
-#  #add_subdirectory(doc) (FIXME - cmake-controlled doc build)
-#else()
-#  message(WARNING "Doxygent not found - 'make doc' will not be available.")
-#endif()
-
 enable_testing()
 
 add_subdirectory(tests)
 add_subdirectory(examples)
-#add_subdirectory(src) 
 
 message(STATUS "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --")
 message(STATUS "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --")
