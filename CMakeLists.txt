@@ -129,7 +129,6 @@ set(tmp "${tmp};src/ini_func_boxcar.cpp")
 set(tmp "${tmp};src/ini_func_pks_wwg_1989.cpp")
 set(tmp "${tmp};src/out_netcdf.cpp")
 set(tmp "${tmp};src/out_gnuplot.cpp")
-set(tmp "${tmp};src/out_debug.cpp")
 set(tmp "${tmp};src/icicle.cpp")
 
 add_executable(icicle ${tmp})
