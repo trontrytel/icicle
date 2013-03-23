@@ -89,7 +89,7 @@ namespace sdm
       j.resize(n_part);      // particle's grid cell j
       ij.resize(n_part);     // partcile's grid cell id = i*nx+j 
       n.resize(n_part);      // particle's multiplicity
-      c_aq.resize(9 * n_part);  // particle's aq. phase mass (H+, OH-, SO2*H2O, O3*H2O, H2O2*H20, HSO3-, SO3--, HSO4-, SO4--)
+      c_aq.resize(10 * n_part);  // particle's aq. phase mass (H+, OH-, SO2*H2O, O3*H2O, H2O2*H20, HSO3-, SO3--, S_VI,HSO4-, SO4--)
 
       sorted_ij.resize(n_part);
       sorted_id.resize(n_part);

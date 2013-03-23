@@ -88,7 +88,8 @@ namespace sdm
       //initial chemical conditions (in air and droplets)
       map<enum chem_gas, quantity<phc::mixing_ratio, real_t>> opt_gas, 
       map<enum chem_aq, quantity<si::mass, real_t>> opt_aq,
-      const map<int, vector<pair<quantity<si::length, real_t>, quantity<si::length, real_t>>>> &outmoments
+      const map<int, vector<pair<quantity<si::length, real_t>, quantity<si::length, real_t>>>> &outmoments_wet,
+      const map<int, vector<pair<quantity<si::length, real_t>, quantity<si::length, real_t>>>> &outmoments_dry
     );
 
     public: void adjustments(

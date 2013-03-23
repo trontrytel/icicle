@@ -67,8 +67,8 @@ const int
   iord = http_or_default("iord", int(2)),
   nsd = http_or_default("nsd", int(4));  
 const quantity<si::time, real_t> 
-  t_max = 100 * si::seconds, // 4 * 3600
-  dt_out = real_t(5) * si::seconds; // 300
+  t_max = 120 * si::seconds, // 4 * 3600
+  dt_out = real_t(10) * si::seconds; // 300
 const quantity<si::velocity, real_t>
   w_max = http_or_default("w_max", real_t(.6)) * si::metres_per_second; // .6 TODO: check it!
 
@@ -100,17 +100,17 @@ real_t
 int
   sdm_adve_sstp = 1,
   sdm_sedi_sstp = 1,
-  sdm_chem_sstp = 10,
-  sdm_cond_sstp = 10,
+  sdm_chem_sstp = 5,
+  sdm_cond_sstp = 5,
   sdm_coal_sstp = 1;
 bool 
   sdm_adve = http_or_default("sdm_adve", true),
   sdm_cond = http_or_default("sdm_cond", true),
-  sdm_coal = http_or_default("sdm_coal", true),
+  sdm_coal = http_or_default("sdm_coal", false),
   sdm_sedi = http_or_default("sdm_sedi", true),
-  sdm_chem = http_or_default("sdm_chem", false);
+  sdm_chem = http_or_default("sdm_chem", true);
 real_t 
-  sd_conc_mean = http_or_default("sd_conc_mean", 256);
+  sd_conc_mean = http_or_default("sd_conc_mean", 128);
 
 using wkc::icmw8_case1::micro_t;
 using wkc::icmw8_case1::bulk;
@@ -145,26 +145,25 @@ int main(int argc, char **argv)
       << " --adv.mpdata.fct " << fct
       << " --adv.mpdata.iord " << iord
       << " --adv.mpdata.third_order " << toa
-    << " --t_max " << real_t(t_max / si::seconds)
-    << " --dt " << "auto" 
-    << " --dt_out " << real_t(dt_out / si::seconds)
+//    << " --t_max " << real_t(t_max / si::seconds)
+//    << " --dt " << "auto" 
+//    << " --dt_out " << real_t(dt_out / si::seconds)
 
 // TODO TEMP TODO TEMP for mm !!!
 //    << " --dt " << real_t(1.)
 //    << " --nt " << real_t(3000)  //4*3600
 //    << " --nout " << real_t(100)   //600
 
-// TODO TEMP TODO TEMP !!!
-//    << " --dt " << real_t(1.)
-//    << " --nt " << real_t(1800)
-//    << " --nout " << real_t(10)
+    << " --dt " << real_t(1.)
+    << " --nt " << real_t(120)
+    << " --nout " << real_t(10)
 
     << " --out netcdf" 
     << " --out.netcdf.file " << dir << "/out.nc";
 
     // TEMP TODO!
     if (micro == bulk) 
-      cmd << " --slv openmp --nsd " << nsd;
+        cmd << " --slv openmp --nsd " << nsd;
     else 
       cmd << " --slv serial";
 
@@ -200,7 +199,7 @@ int main(int argc, char **argv)
         << " --eqs.todo_sdm.sd_conc_mean " << sd_conc_mean
 
         // TEMP...
-        << " --eqs.todo_sdm.out_m0 \"";
+        << " --eqs.todo_sdm.out_mw0 \"";
       for (int i = 0; i < 25; ++i) cmd << i << "e-6:" << i + 1 << "e-6;";
       for (int i = 0; i < 7; ++i) cmd << 25 * int(pow(2,i)) << "e-6:" << 25 * int(pow(2,i+1)) << "e-6;";
       cmd << "\"";

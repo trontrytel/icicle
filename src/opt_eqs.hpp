@@ -75,11 +75,16 @@ inline void opt_eqs_desc(po::options_description &desc)
     ("eqs.todo_sdm.n1_tot", po::value<string>(), "first mode total concentration [m-3]") 
     ("eqs.todo_sdm.n2_tot", po::value<string>(), "second mode total concentration [m-3]")
     ("eqs.todo_sdm.kappa", po::value<string>(), "hygroscopicity parameter kappa [1]")
-    ("eqs.todo_sdm.out_m0", po::value<string>()->default_value(".5e-6:25e-6"), "radius ranges for the 0-th moments [m]")
-    ("eqs.todo_sdm.out_m1", po::value<string>()->default_value(".5e-6:25e-6"), "radius ranges for the 1-st moments [m]")
-    ("eqs.todo_sdm.out_m2", po::value<string>()->default_value(".5e-6:25e-6"), "radius ranges for the 2-nd moments [m]")
-    ("eqs.todo_sdm.out_m3", po::value<string>()->default_value(".5e-6:25e-6"), "radius ranges for the 3-rd moments [m]")
-    ("eqs.todo_sdm.out_m6", po::value<string>()->default_value(""), "radius ranges for the 6-th moments [m]")
+    ("eqs.todo_sdm.out_mw0", po::value<string>()->default_value(".5e-6:25e-6"), "wet radius ranges for the 0-th moments [m]")
+    ("eqs.todo_sdm.out_mw1", po::value<string>()->default_value(".5e-6:25e-6"), "wet radius ranges for the 1-st moments [m]")
+    ("eqs.todo_sdm.out_mw2", po::value<string>()->default_value(".5e-6:25e-6"), "wet radius ranges for the 2-nd moments [m]")
+    ("eqs.todo_sdm.out_mw3", po::value<string>()->default_value(".5e-6:25e-6"), "wet radius ranges for the 3-rd moments [m]")
+    ("eqs.todo_sdm.out_mw6", po::value<string>()->default_value(""), "wet radius ranges for the 6-th moments [m]")
+    ("eqs.todo_sdm.out_md0", po::value<string>()->default_value(""), "dry radius ranges for the 0-th moments [m]")
+    ("eqs.todo_sdm.out_md1", po::value<string>()->default_value(""), "dry radius ranges for the 1-th moments [m]")
+    ("eqs.todo_sdm.out_md2", po::value<string>()->default_value(""), "dry radius ranges for the 2-th moments [m]")
+    ("eqs.todo_sdm.out_md3", po::value<string>()->default_value(""), "dry radius ranges for the 3-th moments [m]")
+    ("eqs.todo_sdm.out_md6", po::value<string>()->default_value(""), "dry radius ranges for the 6-th moments [m]")
     // initial parameters of chemical compounds:
     // gas phase in the air
     ("eqs.todo_sdm.chem.env_SO2", po::value<string>()->default_value("1e-10"), "volume mixing ratio of SO2 [1]")
@@ -87,12 +92,12 @@ inline void opt_eqs_desc(po::options_description &desc)
     ("eqs.todo_sdm.chem.env_H2O2", po::value<string>()->default_value("1e-10"), "volume mixing ratio of H2O2 [1]")
     // aqueous phase in the droplets
     //TODO initial conditions calculated to be consistent with environment and kappa!!!
-    ("eqs.todo_sdm.chem.ini_c_H", po::value<string>()->default_value("1e-25"), "initial mass of H+ [kg]") //dissociation of pure water: 1e-4
+    ("eqs.todo_sdm.chem.ini_c_H", po::value<string>()->default_value("1e-12"), "initial mass of H+ [kg]") //dissociation of pure water: 1e-4
     ("eqs.todo_sdm.chem.ini_c_OH", po::value<string>()->default_value("1e-25"), "initial mass of OH- [kg]") //dissociation of pure water:1e-4
     ("eqs.todo_sdm.chem.ini_c_SO2", po::value<string>()->default_value("0"), "initial mass of SO2*H2O [kg]")//1e-22
     ("eqs.todo_sdm.chem.ini_c_O3", po::value<string>()->default_value("0"), "initial mass of O3*H2O2 [kg]")
     ("eqs.todo_sdm.chem.ini_c_H2O2", po::value<string>()->default_value("0"), "initial mass of H2O2*H2O [kg]")
-    ("eqs.todo_sdm.chem.ini_c_HSO3", po::value<string>()->default_value("0"), "initial mass of HSO3- [kg]")
+    ("eqs.todo_sdm.chem.ini_c_HSO3", po::value<string>()->default_value("1e-12"), "initial mass of HSO3- [kg]")
     ("eqs.todo_sdm.chem.ini_c_SO3", po::value<string>()->default_value("0"), "initial mass of SO3-- [kg]")
     ;
 }
@@ -167,11 +172,13 @@ eqs<real_t> *opt_eqs(
     map<int, vector<pair<
       quantity<si::length, real_t>, 
       quantity<si::length, real_t>
-    >>> outmoments;
-    for (int &k : std::list<int>({0,1,2,3,6})) 
+    >>> outmoments_wet, outmoments_dry;
+    const map<char, decltype(&outmoments_wet)> oms({{'w', &outmoments_wet}, {'d', &outmoments_dry}});
+
+    for (auto &wd : oms) for (int &k : std::list<int>({0,1,2,3,6})) 
     {
       ostringstream opt;
-      opt << "eqs.todo_sdm.out_m" << k;
+      opt << "eqs.todo_sdm.out_m" << wd.first << k;
       string str = vm[opt.str()].as<string>();
 
       std::vector<pair<std::string, std::string>> ranges;
@@ -192,7 +199,7 @@ eqs<real_t> *opt_eqs(
       {
         try 
         {
-          outmoments[k].push_back({
+          (*wd.second)[k].push_back({
             boost::lexical_cast<real_t>(range.first) * si::metres,
             boost::lexical_cast<real_t>(range.second) * si::metres
           });
@@ -249,7 +256,8 @@ eqs<real_t> *opt_eqs(
         {sdm::HSO3, real_cast<real_t>(vm, "eqs.todo_sdm.chem.ini_c_HSO3")*si::kilograms},
         {sdm::SO3,  real_cast<real_t>(vm, "eqs.todo_sdm.chem.ini_c_SO3") *si::kilograms}
       }),
-      outmoments
+      outmoments_wet,
+      outmoments_dry
     );
   }
   else 

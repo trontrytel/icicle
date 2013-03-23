@@ -177,7 +177,7 @@ int main(int argc, char **argv)
         for (int i = 0; i < ns; ++i)
         {
           ostringstream name;
-          name << "m_0_" << i;
+          name << "mw_0_" << i;
           nfI.getVar(name.str()).getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp.data());
 
           if (left_edges[i+1] / si::metres < 1e-6)

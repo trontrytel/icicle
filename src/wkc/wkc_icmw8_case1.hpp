@@ -91,8 +91,9 @@ namespace wkc
           << " --eqs.todo_sdm.sdev_rd2 " << 1.6
           << " --eqs.todo_sdm.n1_tot " << 60e6
           << " --eqs.todo_sdm.n2_tot " << 40e6
-          << " --eqs.todo_sdm.kappa " << 0.61; // ammonium sulphate
-         //kappa = 1.28; // sodium chloride
+          << " --eqs.todo_sdm.kappa " << 0.61; // ammonium sulphate  (NH4)2SO4
+         //kappa = 1.28; // sodium chloride NaCl
+         //kappa = .9; // H2SO4
       }
       // initial dry aerosol spectra as defined in case 1 of 8icmw
       //(ony one mode TODO)
