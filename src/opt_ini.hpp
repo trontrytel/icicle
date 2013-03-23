@@ -10,7 +10,6 @@
 #  include "opt.hpp"
 #  include "grd.hpp"
 #  include "ini_func_boxcar.hpp"
-#  include "ini_func_pks_wwg_1989.hpp"
 #  include "ini_func_cone.hpp"
 #  include "ini_netcdf.hpp"
 #  include "ini_func_gauss.hpp"
@@ -18,7 +17,7 @@
 inline void opt_ini_desc(po::options_description &desc)
 {
   desc.add_options()
-    ("ini", po::value<string>(), "initical condition: boxcar, cone, pks_wwg_1989")
+    ("ini", po::value<string>(), "initical condition: boxcar, cone")
 
     ("ini.boxcar.ax", po::value<string>()->default_value("0"), "ax [m]")
     ("ini.boxcar.bx", po::value<string>(), "bx [m]")
@@ -52,9 +51,7 @@ template <typename real_t>
 ini<real_t> *opt_ini(const po::variables_map& vm, const grd<real_t> &grid)
 {
   string initype= vm.count("ini") ? vm["ini"].as<string>() : "<unspecified>";
-  if (initype == "pks_wwg_1989")
-    return new ini_func_pks_wwg_1989<real_t>(grid);
-  else if (initype == "boxcar")
+  if (initype == "boxcar")
   {
     quantity<si::length, real_t> 
       ax = real_cast<real_t>(vm, "ini.boxcar.ax") * si::metres,
