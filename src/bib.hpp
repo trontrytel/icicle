@@ -8,14 +8,6 @@
  */
 
 /// @brief
-/// A comparison of numerical solutions of the advective equation.
-/// J. Atmos. Sci., 31, 1500-1506.
-/// @details
-/// [Anderson and Fattahi 1974]: http://dx.doi.org/10.1175/1520-0469(1974)031<1500:ACONSO>2.0.CO;2
-/// [Anderson and Fattahi 1974][]
-typedef void Anderson_and_Fattahi_1974;
-
-/// @brief
 /// Terminal Velocities of Droplets and Crystals: Power Laws with Continuous Parameters over the Size Spectrum.
 /// J. Atmos. Sci., 59, 1872-1884.
 /// @details 
@@ -46,11 +38,3 @@ typedef void Rogers_and_Yau_1989;
 /// [Shima et al. 2009]: http://dx.doi.org/10.1002/qj.441
 /// [Shima et al. 2009][]
 typedef void Shima_et_al_2009;
-
-/// @brief
-/// A fully multidimensional positive definite advection transport algorithm with small implicit diffusion
-/// J. Comp. Phys., 54, 352-362.
-/// @details
-/// [Smolarkiewicz 1984]: http://dx.doi.org/10.1016/0021-9991(84)90121-9
-/// [Smolarkiewicz 1984][]
-typedef void Smolarkiewicz_1984;

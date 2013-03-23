@@ -10,14 +10,13 @@
 #  include "opt.hpp"
 #  include "grd.hpp"
 #  include "ini_func_boxcar.hpp"
-#  include "ini_func_cone.hpp"
 #  include "ini_netcdf.hpp"
 #  include "ini_func_gauss.hpp"
 
 inline void opt_ini_desc(po::options_description &desc)
 {
   desc.add_options()
-    ("ini", po::value<string>(), "initical condition: boxcar, cone")
+    ("ini", po::value<string>(), "initical condition: boxcar")
 
     ("ini.boxcar.ax", po::value<string>()->default_value("0"), "ax [m]")
     ("ini.boxcar.bx", po::value<string>(), "bx [m]")
@@ -27,12 +26,6 @@ inline void opt_ini_desc(po::options_description &desc)
     ("ini.boxcar.bz", po::value<string>()->default_value("+1"), "bz [m]")
     ("ini.boxcar.A", po::value<string>()->default_value("1"), "A [1]")
     ("ini.boxcar.A0", po::value<string>()->default_value("0"), "A0 [1]")
-
-    ("ini.cone.h", po::value<string>()->default_value("3.87"), "h [m]")
-    ("ini.cone.x0", po::value<string>()->default_value("75"), "x0 [m]")
-    ("ini.cone.z0", po::value<string>()->default_value("50"), "z0 [m]")
-    ("ini.cone.r", po::value<string>()->default_value("15"), "r [m]")
-    ("ini.cone.h0", po::value<string>()->default_value("0"), "h0 [m]")
 
     ("ini.gauss.A", po::value<string>(), "A [1]")
     ("ini.gauss.A0", po::value<string>()->default_value("0"), "A0 [1]")
@@ -64,16 +57,6 @@ ini<real_t> *opt_ini(const po::variables_map& vm, const grd<real_t> &grid)
       A  = real_cast<real_t>(vm, "ini.boxcar.A"),
       A0 = real_cast<real_t>(vm, "ini.boxcar.A0");
     return new ini_func_boxcar<real_t>(grid, ax, bx, ay, by, az, bz, A, A0);
-  }
-  else if (initype == "cone")
-  {
-    quantity<si::length, real_t> 
-      h  = real_cast<real_t>(vm, "ini.cone.h" ) * si::metres,
-      x0 = real_cast<real_t>(vm, "ini.cone.x0") * si::metres,
-      z0 = real_cast<real_t>(vm, "ini.cone.z0") * si::metres,
-      r  = real_cast<real_t>(vm, "ini.cone.r" ) * si::metres,
-      h0 = real_cast<real_t>(vm, "ini.cone.h0") * si::metres;
-    return new ini_func_cone<real_t>(grid, h, x0, z0, r, h0);
   }
 #  ifdef USE_NETCDF
   else if (initype == "netcdf")
