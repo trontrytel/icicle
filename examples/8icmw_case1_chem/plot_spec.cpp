@@ -48,19 +48,20 @@ using blitz::Range;
 
 typedef float real_t;
 
+#include "bins.hpp"
+
 int main()
 {
   // focus to the gridbox from where the size distribution is plotted
-  int focus_x = 15, focus_y = 40, focus_t=1;
-  std::map<real_t, real_t> focus;
+  int focus_x = 15, focus_y = 46;
+  std::map<real_t, real_t> focus_d;
+  std::map<real_t, real_t> focus_w;
 
   //info on the number and location of histogram edges
-  //TODO get those from the command line or calc_chem
-  int nsd = 30;
-  int nsw = 50;
-  float left_edges_rd[nsd], left_edges_rw[nsw];
-  for (int i = 0; i < nsd; ++i) left_edges_rd[i] = 1e-6 * pow(10, -3 + i * .1);  //TODO * si::metres
-  for (int i = 0; i < nsw; ++i) left_edges_rw[i] = 1e-6 * pow(10, -3 + i * .1);  //TODO * si::metres
+  vector<quantity<si::length, real_t>> left_edges_rd = bins_dry();
+  int nsd = left_edges_rd.size() - 1;
+  vector<quantity<si::length, real_t>> left_edges_rw = bins_wet();
+  int nsw = left_edges_rw.size() - 1;
  
   notice_macro("opening netCDF file")
   NcFile nf("tmp/out.nc", NcFile::read);
@@ -99,16 +100,31 @@ int main()
     dy -= tmp;
   }
 
-//  for (size_t t = 0 ; t < nt; t + dt_out / si::seconds)
-//  {
+  for (size_t t = 1 ; t < nt; t++ / si::seconds)
+  {
+    Array<real_t, 2> tmp_d(nx, ny);
+    Array<real_t, 2> tmp_w(nx, ny);
+
+    for (int i = 0; i < nsd; ++i)
+    {
+      ostringstream name;
+      name << "md_0_" << i;
+      nf.getVar(name.str()).getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp_d.data());
+
+      focus_d[left_edges_rd[i] / real_t(1e-6) / si::metres] = sum(tmp_d(
+	blitz::Range(focus_x-1, focus_x+1),
+	blitz::Range(focus_y-1, focus_y+1)
+      )) / 9 / 1e6;
+    }
+
     Array<real_t, 2> tmp(nx, ny);
     for (int i = 0; i < nsw; ++i)
     {
       ostringstream name;
       name << "mw_0_" << i;
-      nf.getVar(name.str()).getVar(start({focus_t,0,0,0}), count({1,nx,ny,1}), tmp.data());
+      nf.getVar(name.str()).getVar(start({t,0,0,0}), count({1,nx,ny,1}), tmp_w.data());
 
-      focus[left_edges_rw[i] / 1e-6] = sum(tmp(
+      focus_w[left_edges_rw[i] / real_t(1e-6) / si::metres] = sum(tmp_w(
 	blitz::Range(focus_x-1, focus_x+1),
 	blitz::Range(focus_y-1, focus_y+1)
       )) / 9 / 1e6;
@@ -126,7 +142,7 @@ int main()
       gp << "set term postscript size 40cm, 25cm solid enhanced color font 'Helvetica, 12'" << endl;
     else assert(false);
 
-    gp << "set output 'tmp/focus_" << focus_t << ".png'" << endl;
+    gp << "set output 'tmp/focus_" << int(t * (dt_out / si::seconds)) << "_s.png'" << endl;
 
   //  gp << "set title 'x/dx=" << focus_x << "+/-1    y/dy=" << focus_y << "+/-1     t/dt=" << t << endl;
     gp << "set logscale xy" << endl;
@@ -135,12 +151,15 @@ int main()
   //  for (int i = 0; i < left_edges.size()-1; i+=9)
   //    gp << (i!=0?",":"") << "\"" << format("%4.3g") % real_t(left_edges[i] / si::metres / real_t(1e-6)) << "\" " << i;
   //  gp << ")" << endl;
-    gp << "set xlabel 'particle (dry) radius [{/Symbol m}m]'" << endl;
+    gp << "set xlabel 'particle radius [{/Symbol m}m]'" << endl;
     gp << "set yrange [.001:100]" << endl;
     gp << "set ylabel 'particle concentration (per bin) [1/cm^3]'" << endl;
     gp << "set grid" << endl;
-    gp << "plot '-' with steps lw 3 notitle" << endl;
-    gp.send(focus);
-  //}
+    gp << "plot" 
+       << "'-' with steps lw 3  title 'wet radius'," 
+       << "'-' with steps lw 3  title 'dry radius'" << endl;
+    gp.send(focus_w);
+    gp.send(focus_d);
+  }
 }
 
