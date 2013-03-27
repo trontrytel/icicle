@@ -611,51 +611,75 @@ static void sd_diag(
   }
 
   // calculating k-th moment of the particle distribution (for particles with radius greater than a given threshold)
-  for (auto &moment : outmoments_wet)
+  const map<char, decltype(&outmoments_wet)> oms({{'w', &outmoments_wet}, {'d', &outmoments_dry}});
+
+  for (auto &wd : oms) 
   {
-    int k = moment.first, r = 0;
-    for (auto range : moment.second)
+    for (auto &moment : *(wd.second))
     {
-      // zeroing the temporary var
-      thrust::fill(tmp_real.begin(), tmp_real.end(), 0); // TODO: is it needed
-
-      // doing the reduction, i.e. 
-      thrust::pair<
-        decltype(tmp_shrt.begin()),
-        decltype(tmp_real.begin()) 
-      > n;
-
-      switch (xi_dfntn)
+      int k = moment.first, r = 0;
+      for (auto range : moment.second)
       {
-        case p2:
-        n = thrust::reduce_by_key(
-          stat.sorted_ij.begin(), stat.sorted_ij.end(),
-          thrust::transform_iterator<
-            moment_counter<real_t, xi_p2<real_t>>,
-            decltype(stat.sorted_id.begin()),
-            real_t
-          >(stat.sorted_id.begin(), moment_counter<real_t, xi_p2<real_t>>(stat, range.first / si::metres, range.second / si::metres, k)),
-          tmp_shrt.begin(), // will store the grid cell indices
-          tmp_real.begin()  // will store the concentrations per grid cell
-        );
-        break;
-        default: error_macro("assert!") //TODO: ln, p3, id, ...
-      }
+	// zeroing the temporary var
+	thrust::fill(tmp_real.begin(), tmp_real.end(), 0); // TODO: is it needed
 
-      // writing to aux
-      ostringstream tmp;
-      tmp << "m_" << k;
-      if (moment.second.size() > 1) tmp << "_" << r;
-      mtx::arr<real_t> &out = aux.at(tmp.str());
-      out(out.ijk) = real_t(0); // as some grid cells could be void of particles
-      thrust::counting_iterator<thrust_size_t> iter(0);
-      thrust::for_each(iter, iter + (n.first - tmp_shrt.begin()), 
-        thrust2blitz<real_t>( 
-          grid.nx(), tmp_shrt, tmp_real, out, 
-          real_t(1) / grid.dx() / grid.dy() / grid.dz() * si::cubic_metres
-        )
-      );
-      ++r;
+	thrust::pair<
+	  decltype(tmp_shrt.begin()),
+	  decltype(tmp_real.begin()) 
+	> n;
+
+	switch (wd.first)
+	{
+	  case 'w': switch (xi_dfntn)
+	  {
+	    case p2:
+	    n = thrust::reduce_by_key(
+	      stat.sorted_ij.begin(), stat.sorted_ij.end(),
+	      thrust::transform_iterator<
+		moment_counter_wet<real_t, xi_p2<real_t>>,
+		decltype(stat.sorted_id.begin()),
+		real_t
+	      >(stat.sorted_id.begin(), moment_counter_wet<real_t, xi_p2<real_t>>(stat, range.first / si::metres, range.second / si::metres, k)),
+	      tmp_shrt.begin(), // will store the grid cell indices
+	      tmp_real.begin()  // will store the concentrations per grid cell
+	    );
+	    break;
+	    default: error_macro("assert!") //TODO: ln, p3, id, ...
+	  }
+	  break;
+	  case 'd':
+	  {
+	    n = thrust::reduce_by_key(
+	      stat.sorted_ij.begin(), stat.sorted_ij.end(),
+	      thrust::transform_iterator<
+		moment_counter_dry<real_t>,
+		decltype(stat.sorted_id.begin()),
+		real_t
+	      >(stat.sorted_id.begin(), moment_counter_dry<real_t>(stat, range.first / si::metres, range.second / si::metres, k)),
+	      tmp_shrt.begin(), // will store the grid cell indices
+	      tmp_real.begin()  // will store the concentrations per grid cell
+	    );
+	  }
+	  break; 
+	  default: assert(false);
+	}
+	
+
+	// writing to aux
+	ostringstream tmp;
+	tmp << "m" << wd.first << "_" << k;
+	if (moment.second.size() > 1) tmp << "_" << r;
+	mtx::arr<real_t> &out = aux.at(tmp.str());
+	out(out.ijk) = real_t(0); // as some grid cells could be void of particles
+	thrust::counting_iterator<thrust_size_t> iter(0);
+	thrust::for_each(iter, iter + (n.first - tmp_shrt.begin()), 
+	  thrust2blitz<real_t>( 
+	    grid.nx(), tmp_shrt, tmp_real, out, 
+	    real_t(1) / grid.dx() / grid.dy() / grid.dz() * si::cubic_metres
+	  )
+	);
+	++r;
+      }
     }
   }
 
