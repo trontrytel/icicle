@@ -128,11 +128,11 @@ int main(int argc, char **argv)
     << 1e-6 * pow(10, -3 + (i+1) * .1) << ";";
   cmd << "\"";
 
-    // wet radius bins: 5  ...  50 ... 500 (80 bins in total)
+    // wet radius bins: .001  ...  100 (50 bins in total)
   cmd  << " --eqs.todo_sdm.out_mw0 \"";
-  for (int i = 0; i < 80; ++i) cmd 
-    << 1e-6 * 5 *  pow(10, 0 +   i   * .025) << ":" 
-    << 1e-6 * 5 *  pow(10, 0 + (i+1) * .025) << ";";
+  for (int i = 0; i < 50; ++i) cmd 
+    << 1e-6 * 5 *  pow(10, -3 +   i   * .1) << ":" 
+    << 1e-6 * 5 *  pow(10, -3 + (i+1) * .1) << ";";
   cmd << "\"";
     
   if (EXIT_SUCCESS != system(cmd.str().c_str()))

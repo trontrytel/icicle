@@ -51,16 +51,16 @@ typedef float real_t;
 int main()
 {
   // focus to the gridbox from where the size distribution is plotted
-  int focus_x = 15, focus_y = 55, focus_t=10;
+  int focus_x = 15, focus_y = 40, focus_t=1;
   std::map<real_t, real_t> focus;
 
   //info on the number and location of histogram edges
   //TODO get those from the command line or calc_chem
   int nsd = 30;
-  int nsw = 80;
+  int nsw = 50;
   float left_edges_rd[nsd], left_edges_rw[nsw];
-  for (int i = 0; i < nsd; ++i) left_edges_rd[i] = 1e-6 * pow(10, -3 + i * .1 );  //TODO * si::metres
-  for (int i = 0; i < nsw; ++i) left_edges_rw[i] = 1e-6 *  5 * pow(10,  0 + i * .025);  //TODO * si::metres
+  for (int i = 0; i < nsd; ++i) left_edges_rd[i] = 1e-6 * pow(10, -3 + i * .1);  //TODO * si::metres
+  for (int i = 0; i < nsw; ++i) left_edges_rw[i] = 1e-6 * pow(10, -3 + i * .1);  //TODO * si::metres
  
   notice_macro("opening netCDF file")
   NcFile nf("tmp/out.nc", NcFile::read);
@@ -130,7 +130,7 @@ int main()
 
   //  gp << "set title 'x/dx=" << focus_x << "+/-1    y/dy=" << focus_y << "+/-1     t/dt=" << t << endl;
     gp << "set logscale xy" << endl;
-    gp << "set xrange [5:50]" << endl;
+    gp << "set xrange [.001:100]" << endl;
   //  gp << "set xtics (";
   //  for (int i = 0; i < left_edges.size()-1; i+=9)
   //    gp << (i!=0?",":"") << "\"" << format("%4.3g") % real_t(left_edges[i] / si::metres / real_t(1e-6)) << "\" " << i;
