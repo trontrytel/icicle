@@ -38,19 +38,15 @@
 
 * optional libraries/tools:
 
-  - CUDA's nvcc compiler .... http://developer.nvidia.com/cuda/
-
   - Boost C++ libraries, incl.: ............. http://boost.org/
     - Boost.Timer & Boost.System (header & shared library)
+    - Boost.odeint (headers only) 
 
   - NetCDF C++ library .... http://www.unidata.ucar.edu/netcdf/
     (configured with netCDF4 support)
 
   - NetCDF C++4 bindings .. http://www.unidata.ucar.edu/netcdf/
     (ver >= 4.2 beta) .. ftp://ftp.unidata.ucar.edu/pub/netcdf/
-
-  - Boost Sandbox libs: http://boost.org/community/sandbox.html
-    - Boost.odeint (headers only) 
 
   - Thrust (ver >= 1.6) ............. http://thrust.github.com/
 
@@ -63,13 +59,6 @@
   - GNU Cgicc .................. http://gnu.org/software/cgicc/
     (only used in web interfaces to the test programs)
 
-* Hints concerning use of packages:
-
-  - All library packages have to be installed with the header
-    files. For Debian/Ubuntu this means one needs to install
-    the -dev suffixed packages (e.g. libboost-dev). For Fedora
-    such packages have a -devel suffix (e.g. boost-devel)
-
 --------------------------------------------------------------
 * in-tree compilation / tests / clean-up:
 
@@ -79,9 +68,6 @@
     [-DOPENMP=NO]
     [-DTIMER=NO]
     [-DODEINT=NO]
-    [-DFLOAT=NO]
-    [-DDOUBLE=NO]
-    [-DLDOUBLE=NO]
   $ [VERBOSE=1] make [-j N]
   $ make [-j N] test 
   $ make clean 
@@ -89,16 +75,3 @@
   To chose a non-defalt compiler or library path:
    -DCMAKE_CXX_COMPILER=clang++
    -DCMAKE_PREFIX_PATH=/usr/local/
-
---------------------------------------------------------------
-* usage:
-
-  $ ./icicle --help
-  $ ./icicle ... --slv serial
-  $ ./icicle ... --slv threads --nsd N
-  $ ./icicle ... --slv openmp --nsd N
-  $ [open]mpirun -np N ./icicle ... --slv mpi --nsd N
-
---------------------------------------------------------------
-* users' & developers' documentation draft:
-  - see doc/doxygen/html/index.html (cd doc; doxygen # if 404)
