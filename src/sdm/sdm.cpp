@@ -722,41 +722,7 @@ static void sd_diag(
     }
   }
 }
-/*  // calculating mass of S vs rd histogram
-  if (true) //TODO if opt[chem]
-  {
-    // zeroing the temporary var
-    thrust::fill(tmp_real.begin(), tmp_real.end(), 0); // TODO: is it needed
 
-    // doing the reduction, i.e. 
-    thrust::pair<
-      decltype(tmp_shrt.begin()),
-      decltype(tmp_real.begin())
-    > n;
-
-    n = thrust::reduce_by_key(
-      stat.sorted_ij.begin(), stat.sorted_ij.end(),
-      thrust::transform_iterator<
-        chem_counteri<real_t>,
-        decltype(stat.sorted_id.begin()),
-        real_t
-      >(stat.sorted_id.begin(), chem_counter<real_t>(stat, kv.first)),
-      tmp_shrt.begin(), // will store the grid cell indices
-      tmp_real.begin()  // will store the concentrations per grid cell
-    );
-
-    // writing to aux
-    mtx::arr<real_t> &out = aux.at(kv.second);
-    out(out.ijk) = real_t(0); // as some grid cells could be void of particles
-    thrust::counting_iterator<thrust_size_t> iter(0);
-    thrust::for_each(iter, iter + (n.first - tmp_shrt.begin()),
-      thrust2blitz<real_t>(
-        grid.nx(), tmp_shrt, tmp_real, out,
-        real_t(1) / grid.dx() / grid.dy() / grid.dz() * si::cubic_metres
-      )
-    );
-  }
-*/
 static void sd_advection(
   ode<real_t> &F_adve,
   stat_t<real_t> &stat,
