@@ -48,12 +48,19 @@ using blitz::Range;
 
 typedef float real_t;
 
+string zeropad(int n)
+{
+  ostringstream tmp;
+  tmp << std::setw(4) << std::setfill('0') << n;
+  return tmp.str();
+}
+
 #include "bins.hpp"
 
 int main()
 {
   // focus to the gridbox from where the size distribution is plotted
-  int focus_x = 15, focus_y = 46;
+  int focus_x = 50, focus_y = 65;
   std::map<real_t, real_t> focus_d;
   std::map<real_t, real_t> focus_w;
 
@@ -130,7 +137,7 @@ int main()
       )) / 9 / 1e6;
     }
 
-    string ext = "png";
+    string ext = "eps";
     notice_macro("setting-up plot parameters");
     Gnuplot gp;
 
@@ -139,25 +146,20 @@ int main()
     if (ext == "png")
       gp << "set term png enhanced size 1200," << 700 << endl;
     else if (ext == "eps")
-      gp << "set term postscript size 40cm, 25cm solid enhanced color font 'Helvetica, 12'" << endl;
+      gp << "set term postscript size 35cm, 25cm solid enhanced color font 'Helvetica, 35'" << endl;
     else assert(false);
 
-    gp << "set output 'tmp/focus_" << int(t * (dt_out / si::seconds)) << "_s.png'" << endl;
+    gp << "set output 'tmp/focus_" << zeropad(int(t * (dt_out / si::seconds))) << "_s." << ext << "'" << endl;
 
-  //  gp << "set title 'x/dx=" << focus_x << "+/-1    y/dy=" << focus_y << "+/-1     t/dt=" << t << endl;
     gp << "set logscale xy" << endl;
     gp << "set xrange [.001:100]" << endl;
-  //  gp << "set xtics (";
-  //  for (int i = 0; i < left_edges.size()-1; i+=9)
-  //    gp << (i!=0?",":"") << "\"" << format("%4.3g") % real_t(left_edges[i] / si::metres / real_t(1e-6)) << "\" " << i;
-  //  gp << ")" << endl;
     gp << "set xlabel 'particle radius [{/Symbol m}m]'" << endl;
-    gp << "set yrange [.001:100]" << endl;
+    gp << "set yrange [.001:200]" << endl;
     gp << "set ylabel 'particle concentration (per bin) [1/cm^3]'" << endl;
     gp << "set grid" << endl;
     gp << "plot" 
-       << "'-' with steps lw 3  title 'wet radius'," 
-       << "'-' with steps lw 3  title 'dry radius'" << endl;
+       << "'-' with steps title 'wet radius' lw 10 lc rgb 'blue'," 
+       << "'-' with steps title 'dry radius' lw 10 lc rgb 'red'" << endl;
     gp.send(focus_w);
     gp.send(focus_d);
   }
