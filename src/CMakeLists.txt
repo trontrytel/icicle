@@ -1,0 +1,27 @@
+# requireing C++11  TODO-check if the compiler supports it!
+set(CMAKE_CXX_FLAGS "-std=c++11")
+
+
+find_package(OpenMP)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+
+find_path(GNUPLOT-IOSTREAM_INCLUDE_DIR PATH_SUFFIXES gnuplot-iostream/ NAMES gnuplot-iostream.h)
+#TODO: the same for blitz, libcloudph, libmpdata
+#TODO: add the above paths to compiler flags
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I../../libcloudphxx") # TODO: handle it correctly!!!
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I../../libmpdataxx") # TODO: handle it correctly!!!
+
+add_executable(icicle icicle.cpp)
+
+find_package(Boost COMPONENTS thread iostreams system timer REQUIRED)
+target_link_libraries(icicle ${Boost_LIBRARIES})
+
+#TODO: obtain optimisation flags from libpdataxx-config?
+
+
+# handling Blitz debuging options in CMake's DEBUG mode
+set(CMAKE_CXX_FLAGS_DEBUG "-DBZ_DEBUG -g")
+set_target_properties(icicle PROPERTIES LINK_FLAGS_DEBUG "-lblitz")
