@@ -1,11 +1,9 @@
-#include "cloud_common.hpp"
+#include "kin_cloud_2d_common.hpp"
 
 #include <libcloudph++/blk_1m/options.hpp>
 #include <libcloudph++/blk_1m/adjustments.hpp>
 #include <libcloudph++/blk_1m/forcings_elementwise.hpp>
 #include <libcloudph++/blk_1m/forcings_columnwise.hpp>
-
-using namespace advoocat; // TODO: not here?
 
 // @brief a minimalistic kinematic cloud model with bulk microphysics
 //        built on top of the mpdata_2d solver (by extending it with
@@ -20,9 +18,9 @@ template <
   int rhod_rr_ix, // rain water density
   int n_eqs = 4
 >
-class cloud : public cloud_common<real_t, n_iters, inhomo, n_eqs>
+class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<real_t, n_iters, inhomo, n_eqs>
 {
-  using parent_t = cloud_common<real_t, n_iters, inhomo, n_eqs>;
+  using parent_t = kin_cloud_2d_common<real_t, n_iters, inhomo, n_eqs>;
 
   void condevap()
   {
@@ -95,7 +93,7 @@ class cloud : public cloud_common<real_t, n_iters, inhomo, n_eqs>
   };
 
   // ctor
-  cloud( 
+  kin_cloud_2d_blk_1m( 
     typename parent_t::ctor_args_t args, 
     const params_t &p
   ) : 

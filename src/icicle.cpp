@@ -2,28 +2,22 @@
 #include <advoocat/concurr/threads.hpp>
 #include <advoocat/output/gnuplot.hpp>
 
-#include "cloud_bulk.hpp"
+#include "kin_cloud_2d_blk_1m.hpp"
 
-// for initial condition
-#include <libcloudph++/common/hydrostatic.hpp>
-#include <libcloudph++/common/theta_std.hpp>
-
-using namespace advoocat;
-
-enum {rhod_th_ix, rhod_rv_ix, rhod_rc_ix, rhod_rr_ix }; // variables
 enum {x, z}; // dimensions
 using real_t = double;
 
+enum {rhod_th_ix, rhod_rv_ix, rhod_rc_ix, rhod_rr_ix }; // variables
+
 // 8th ICMW case 1 by Wojciech Grabowski)
 #include "icmw8_case1.hpp"
-
 
 // simulation and output parameters
 template <class T>
 void setopts(T &params, int nt, int n_iters)
 {
   params.outfreq = nt / 50; 
-  //params.gnuplot_zrange = p.gnuplot_cbrange = "[.5:2.5]";
+  //params.gnuplot_zrange = p.gnuplot_cbrange = "[.5:2.5]"; // TODO: per variable!
   params.gnuplot_view = "map";
   {
     std::ostringstream tmp;
@@ -53,7 +47,7 @@ int main()
   const int n_iters = 2;
 
   // helper type to shorten the code below
-  using solver_t = output::gnuplot<cloud<real_t, n_iters, solvers::strang,
+  using solver_t = output::gnuplot<kin_cloud_2d_blk_1m<real_t, n_iters, solvers::strang,
     rhod_th_ix, 
     rhod_rv_ix,
     rhod_rc_ix,

@@ -9,7 +9,7 @@ template <
   solvers::inhomo_e inhomo,
   int n_eqs
 >
-class cloud_common : public solvers::inhomo_solver<solvers::mpdata_2d<real_t, n_iters, n_eqs>, inhomo>
+class kin_cloud_2d_common : public solvers::inhomo_solver<solvers::mpdata_2d<real_t, n_iters, n_eqs>, inhomo>
 {
   using parent_t = solvers::inhomo_solver<solvers::mpdata_2d<real_t, n_iters, n_eqs>, inhomo>;
 
@@ -25,7 +25,7 @@ class cloud_common : public solvers::inhomo_solver<solvers::mpdata_2d<real_t, n_
   };
 
   // ctor
-  cloud_common( 
+  kin_cloud_2d_common( 
     typename parent_t::ctor_args_t args, 
     const params_t &p
   ) : 

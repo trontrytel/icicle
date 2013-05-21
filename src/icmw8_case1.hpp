@@ -1,6 +1,8 @@
 #pragma once
 
-// TODO: includes!
+// TODO: other includes?
+#include <libcloudph++/common/hydrostatic.hpp>
+#include <libcloudph++/common/theta_std.hpp>
 
 // 8th ICMW case 1 by Wojciech Grabowski)
 namespace icmw8_case1
