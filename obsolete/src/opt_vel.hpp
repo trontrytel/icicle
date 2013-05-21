@@ -11,23 +11,19 @@
 #  include "grd.hpp"
 #  include "vel_func_uniform.hpp"
 #  include "vel_func_stream_rasinski.hpp"
-#  include "vel_func_test.hpp"
 #  include "vel_momeq_extrapol.hpp"
 
 inline void opt_vel_desc(po::options_description &desc)
 {
   desc.add_options()
-    ("vel", po::value<string>(), "velocity field: uniform, rasinski, test, momeq_extrapol")
+    ("vel", po::value<string>(), "velocity field: uniform, rasinski, momeq_extrapol")
 
     ("vel.uniform.u", po::value<string>()->default_value("0"), "velocity (X) [m/s]")
     ("vel.uniform.v", po::value<string>()->default_value("0"), "velocity (Y) [m/s]")
     ("vel.uniform.w", po::value<string>()->default_value("0"), "velocity (Z) [m/s]")
 
     ("vel.rasinski.file", po::value<string>(), "netCDF filename (rho(z) profile)")
-    ("vel.rasinski.A", po::value<string>(), "amplitude [kg/m/s]")
-
-    ("vel.test.omega", po::value<string>(), "frequency [1/s]")
-    ("vel.test.v", po::value<string>()->default_value("0"), "Y velocity [m/s]");
+    ("vel.rasinski.A", po::value<string>(), "amplitude [kg/m/s]");
 }
 
 template <typename real_t>
@@ -41,13 +37,6 @@ vel<real_t> *opt_vel(const po::variables_map& vm, const grd<real_t> &grid)
       v = real_cast<real_t>(vm, "vel.uniform.v") * si::metres / si::seconds,
       w = real_cast<real_t>(vm, "vel.uniform.w") * si::metres / si::seconds;
     return new vel_func_uniform<real_t>(grid, u, v, w);
-  }
-  else if (veltype == "test")
-  {
-    if (!vm.count("vel.test.omega")) error_macro("vel.test.omega must be specified")
-    quantity<si::frequency, real_t> omega = real_cast<real_t>(vm, "vel.test.omega") / si::seconds;
-    quantity<si::velocity, real_t> v = real_cast<real_t>(vm, "vel.test.v") * si::metres / si::seconds;
-    return new vel_func_test<real_t>(grid, omega, real_t(.5 * grid.nx()) * grid.dx(), real_t(.5 * grid.nz()) * grid.dz(), v); // TODO: we pass grid, so part of it could be calculated in the ctor
   }
   else if (veltype == "momeq_extrapol")
   {
