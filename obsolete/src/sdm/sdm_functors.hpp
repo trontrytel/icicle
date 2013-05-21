@@ -148,20 +148,20 @@ namespace sdm {
   };
 
   template <typename real_t, class xi>
-  class moment_counter
+  class moment_counter_wet
   { 
     private: const stat_t<real_t> &stat;
-    private: const real_t rmin, rmax;
+    private: const real_t ximin, ximax;
     private: int k;
-    public: moment_counter(
+    public: moment_counter_wet(
       const stat_t<real_t> &stat,
       const real_t rmin,
       const real_t rmax,
       const int k
     ) : 
       stat(stat), 
-      rmin(xi::xi_of_rw(rmin)), 
-      rmax(xi::xi_of_rw(rmax)), 
+      ximin(xi::xi_of_rw(rmin)), 
+      ximax(xi::xi_of_rw(rmax)), 
       k(k) 
     {}
 
@@ -169,40 +169,49 @@ namespace sdm {
     {   
       switch (k)
       {
-        case 0 : return (stat.xi[id] > rmin && stat.xi[id] <= rmax) ? (real_t(stat.n[id])) : 0;
-        //                                                            ^^^^^^ this cast is absolutely needed!!!
-        //                                                                   otherwise gcc optimisations result in 
-        //                                                                   negative values from real_t(size_t) conversion
-        case 1 : return (stat.xi[id] > rmin && stat.xi[id] <= rmax) ? (real_t(stat.n[id]) * xi::rw_of_xi(stat.xi[id])) : 0; 
-        case 2 : return (stat.xi[id] > rmin && stat.xi[id] <= rmax) ? (real_t(stat.n[id]) * xi::rw2_of_xi(stat.xi[id])) : 0;
-        case 3 : return (stat.xi[id] > rmin && stat.xi[id] <= rmax) ? (real_t(stat.n[id]) * xi::rw3_of_xi(stat.xi[id])) : 0;
-        default: return (stat.xi[id] > rmin && stat.xi[id] <= rmax) ? (real_t(stat.n[id]) * pow(xi::rw_of_xi(stat.xi[id]), k)) : 0;
+        case 0 : return (stat.xi[id] > ximin && stat.xi[id] <= ximax) ? (real_t(stat.n[id])) : 0;
+        //                                                               ^^^^^^ this cast is absolutely needed!!!
+        //                                                                      otherwise gcc optimisations result in 
+        //                                                                      negative values from real_t(size_t) conversion
+        case 1 : return (stat.xi[id] > ximin && stat.xi[id] <= ximax) ? (real_t(stat.n[id]) * xi::rw_of_xi(stat.xi[id])) : 0; 
+        case 2 : return (stat.xi[id] > ximin && stat.xi[id] <= ximax) ? (real_t(stat.n[id]) * xi::rw2_of_xi(stat.xi[id])) : 0;
+        case 3 : return (stat.xi[id] > ximin && stat.xi[id] <= ximax) ? (real_t(stat.n[id]) * xi::rw3_of_xi(stat.xi[id])) : 0;
+        default: return (stat.xi[id] > ximin && stat.xi[id] <= ximax) ? (real_t(stat.n[id]) * pow(xi::rw_of_xi(stat.xi[id]), k)) : 0;
       }
     }
   };
-/*
-  //counter for histogram of mass vs rd
-  template <typename real_t, class xi>
-  class mass_S_VI_counter
+
+  template <typename real_t>
+  class moment_counter_dry
   { 
     private: const stat_t<real_t> &stat;
-    private: const real_t rd_min, rd_max;
-    public: mass_S_VI_counter(
+    private: const real_t rd3min, rd3max;
+    private: int k;
+    public: moment_counter_dry(
       const stat_t<real_t> &stat,
-      const real_t rd_min,
-      const real_t rd_max
+      const real_t rmin,
+      const real_t rmax,
+      const int k
     ) : 
       stat(stat), 
-      rd_min(rd_min), 
-      rd_max(rd_max)
+      rd3min(pow(rmin, 3)), 
+      rd3max(pow(rmax, 3)), 
+      k(k) 
     {}
 
     public: real_t operator()(const thrust_size_t id) const
     {   
-    return (pow<1/3>(stat.rd3[id]) > rd_min && pow<1/3>(stat.rd3[id]) <= rd_max) ? (real_t(stat.n[id]) * stat.c_aq[id + stat.n_part * S_VI]) : 0;
+      switch (k)
+      {
+        case 0 : return (stat.rd3[id] > rd3min && stat.rd3[id] <= rd3max) ? (real_t(stat.n[id])) : 0;
+        //                                                                   ^^^^^^ this cast is absolutely needed!!!
+        //                                                                          otherwise gcc optimisations result in 
+        //                                                                          negative values from real_t(size_t) conversion
+        default: assert(false);
+      }
     }
   };
-*/
+
   template <typename real_t>
   class chem_counter 
   { 

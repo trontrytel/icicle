@@ -313,8 +313,8 @@ int main(int argc, char **argv)
     gp << "unset label" << endl;
   }
 
-  string cmd="convert -monitor -delay 10 -loop 1 " + dir + "/test_*.png " + dir + "/todo.gif 1>&2";
-  int status = system(cmd.c_str());
-  notice_macro("done.")
+//  string cmd="convert -monitor -delay 10 -loop 1 +dither " + dir + "/test_*.png " + dir + "/todo.gif 1>&2";
+//  int status = system(cmd.c_str());
+//  notice_macro("done.")
 }
 

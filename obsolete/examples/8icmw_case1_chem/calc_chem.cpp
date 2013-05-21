@@ -33,10 +33,12 @@ using boost::units::detail::get_value;
 
 typedef float real_t;
 
+#include "bins.hpp"
+
 const real_t 
   dt = 1,
-  nt = 10, // 1800
-  nout = 2; // 60
+  nt = 20, // 1800
+  nout = 4; // 60
 
 // simulation parameteters (the 8th WMO Cloud Modelling Workshop: Case 1    
 // by W.W.Grabowski: http://rap.ucar.edu/~gthompsn/workshop2012/case1/case1.pdf  
@@ -119,13 +121,24 @@ int main(int argc, char **argv)
     << " --eqs.todo_sdm.coal " << sdm_coal
     << " --eqs.todo_sdm.sedi " << sdm_sedi
     << " --eqs.todo_sdm.chem " << sdm_chem
-    << " --eqs.todo_sdm.sd_conc_mean " << sd_conc_mean
+    << " --eqs.todo_sdm.sd_conc_mean " << sd_conc_mean;
 
-    // dry radius bins: .01  ...  .1  ...  1  ...  10 (32 bins in total)
-    << " --eqs.todo_sdm.out_md0 \"";
-  for (int i = 0; i < 32; ++i) cmd 
-    << 1e-6 * pow(10, -2 +   i   * .125) << ":" 
-    << 1e-6 * pow(10, -2 + (i+1) * .125) << ";";
+  // dry radius bins: .001  ...  1 (30 bins in total)
+  cmd  << " --eqs.todo_sdm.out_md0 \"";
+  {
+    vector<quantity<si::length, real_t>> left_edges = bins_dry();
+    for (int i = 0; i < left_edges.size()-1; ++i)
+      cmd << real_t(left_edges[i] / si::metres) << ":" << real_t(left_edges[i + 1] / si::metres) << ";";
+  }
+  cmd << "\"";
+
+  // wet radius bins: .001  ...  100 (50 bins in total)
+  cmd  << " --eqs.todo_sdm.out_mw0 \"";
+  {
+    vector<quantity<si::length, real_t>> left_edges = bins_wet();
+    for (int i = 0; i < left_edges.size()-1; ++i)
+      cmd << real_t(left_edges[i] / si::metres) << ":" << real_t(left_edges[i + 1] / si::metres) << ";";
+  }
   cmd << "\"";
     
   if (EXIT_SUCCESS != system(cmd.str().c_str()))

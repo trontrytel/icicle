@@ -69,15 +69,17 @@ eqs_todo_sdm<real_t>::eqs_todo_sdm(
     vector<int>({0, 0, 0})
   }));
 
-  for (auto &moment : outmoments_wet)
+  const map<char, decltype(&outmoments_wet)> oms({{'w', &outmoments_wet}, {'d', &outmoments_dry}});
+
+  for (auto &wd : oms) for (auto &moment : *(wd.second))
   {
     int r = 0;
     for (auto range : moment.second)
     {
       ostringstream name, desc, unit;
-      name << "mw_" << moment.first;
+      name << "m" << wd.first << "_" << moment.first;
       if (moment.second.size() > 1) name << "_" << r;
-      desc << "<r^" << moment.first << "> for r > " << range.first << " and r <= " << range.second;
+      desc << "<r_" << wd.first << "^" << moment.first << "> for r_" << wd.first << " > " << range.first << " and r_" << wd.first << " <= " << range.second;
       unit << "1 meter^" << moment.first -3;
       // auxliary variable for concentration 
       ptr_map_insert(this->aux)(name.str(), typename eqs<real_t>::axv({
