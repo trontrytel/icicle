@@ -13,8 +13,8 @@ add_dependencies(${tmp} icicle)
 target_link_libraries(${tmp} "-lnetcdf_c++4 -lblitz") # TODO! 
 target_link_libraries(${tmp} ${Boost_LIBRARIES})
 
-set(tmp plot_spec)
-add_executable(${tmp} ${tmp}.cpp)
-add_dependencies(${tmp} icicle)
-target_link_libraries(${tmp} "-lnetcdf_c++4 -lblitz") # TODO! 
-target_link_libraries(${tmp} ${Boost_LIBRARIES})
+#set(tmp plot_spec)
+#add_executable(${tmp} ${tmp}.cpp)
+#add_dependencies(${tmp} icicle)
+#target_link_libraries(${tmp} "-lnetcdf_c++4 -lblitz") # TODO! 
+#target_link_libraries(${tmp} ${Boost_LIBRARIES})

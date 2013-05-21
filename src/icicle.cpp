@@ -1,6 +1,6 @@
-#include <advoocat/bcond/cyclic_2d.hpp>
-#include <advoocat/concurr/threads.hpp>
-#include <advoocat/output/gnuplot.hpp>
+#include <libmpdata++/bcond/cyclic_2d.hpp>
+#include <libmpdata++/concurr/threads.hpp>
+#include <libmpdata++/output/gnuplot.hpp>
 
 #include "kin_cloud_2d_blk_1m.hpp"
 

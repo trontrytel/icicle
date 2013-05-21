@@ -1,7 +1,7 @@
-#include <advoocat/solvers/mpdata_2d.hpp>
-#include <advoocat/solvers/solver_inhomo.hpp>
+#include <libmpdata++/solvers/mpdata_2d.hpp>
+#include <libmpdata++/solvers/solver_inhomo.hpp>
 
-using namespace advoocat; // TODO: not here?
+using namespace libmpdataxx; // TODO: not here?
 
 template <
   typename real_t, 
@@ -42,7 +42,7 @@ class kin_cloud_2d_common : public solvers::inhomo_solver<solvers::mpdata_2d<rea
 
   static void alloc(typename parent_t::mem_t *mem, const int nx, const int ny)
   {
-    using namespace advoocat::arakawa_c;
+    using namespace libmpdataxx::arakawa_c;
     parent_t::alloc(mem, nx, ny);
     const rng_t i(0, nx-1), j(0, ny-1);
     mem->tmp[__FILE__].push_back(new arrvec_t<typename parent_t::arr_t>());
