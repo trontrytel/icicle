@@ -36,7 +36,6 @@ absamp = 1 # 1 ?
 uscal = 10.  # 10. # [m/s]
 p_surf = 101300.
 th_surf = 300.
-fct = 1 # 1
 iord = 2 # 2
 nt = 1000 # 8000
 nout = 25 # 2000
@@ -142,7 +141,6 @@ cmd = (
   '--grd.dx',str(dx),
   '--grd.nx',str(nx),
   '--adv','mpdata', 
-    '--adv.mpdata.fct',str(fct),
     '--adv.mpdata.iord',str(iord),
   '--vel','momeq_extrapol',
   '--nt',str(nt),'--dt',str(dt),'--nout',str(nout),

@@ -58,7 +58,6 @@ const quantity<phc::mixing_ratio, real_t>
 // http://www.rap.ucar.edu/~gthompsn/workshop2012/case1/kinematic_wrain.vocals.v3.for
 const int 
   bits = int(64),
-  fct = int(0),  
   toa = int(0),
   iord = int(2);
 const quantity<si::velocity, real_t>
@@ -97,7 +96,6 @@ int main(int argc, char **argv)
   cmd
     << "../../icicle " << opts 
     << " --adv mpdata"
-      << " --adv.mpdata.fct " << fct
       << " --adv.mpdata.iord " << iord
       << " --adv.mpdata.third_order " << toa
 

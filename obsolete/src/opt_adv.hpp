@@ -10,7 +10,6 @@
 #  include "opt.hpp"
 #  include "adv_upstream.hpp"
 #  include "adv_mpdata.hpp"
-#  include "adv_mpdata_fct.hpp"
 #  include "adv_leapfrog.hpp"
 
 inline void opt_adv_desc(po::options_description &desc)
@@ -20,7 +19,7 @@ inline void opt_adv_desc(po::options_description &desc)
     ("adv.mpdata.iord", po::value<int>()->default_value(2), "MPDATA iteration count: 1, 2, ...")
     ("adv.mpdata.cross_terms", po::value<bool>()->default_value(true), "MPDATA cross terms: 0 (off) or 1 (on)")
     ("adv.mpdata.third_order", po::value<bool>()->default_value(false), "MPDATA 3rd order terms: 0 (off) or 1 (on)")
-    ("adv.mpdata.fct", po::value<bool>()->default_value(0), "MPDATA FCT option: 0 (off) or 1 (on)");
+    ;
 }
 
 template <typename real_t>
@@ -34,13 +33,6 @@ adv<real_t> *opt_adv(const po::variables_map& vm)
     return new adv_upstream<real_t>();
   else if (advscheme == "mpdata")
   {
-    if (vm["adv.mpdata.fct"].as<bool>())
-      return new adv_mpdata_fct<real_t>(
-        vm["adv.mpdata.iord"].as<int>(),
-        vm["adv.mpdata.cross_terms"].as<bool>(),
-        vm["adv.mpdata.third_order"].as<bool>()
-      );
-    else
       return new adv_mpdata<real_t>(
         vm["adv.mpdata.iord"].as<int>(),
         vm["adv.mpdata.cross_terms"].as<bool>(),

@@ -62,8 +62,7 @@ int main()
                 "mpdata",
                 "mpdata --adv.mpdata.iord 1",
                 "mpdata --adv.mpdata.iord 3",
-                "leapfrog",
-                "mpdata --adv.mpdata.fct 1",
+                "leapfrog"
               }))
               {
                 // combinations that does not make sense

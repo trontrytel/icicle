@@ -58,7 +58,6 @@ int main(int argc, char **argv)
   cmd
     << "../../icicle " << opts 
     << " --adv mpdata"
-      << " --adv.mpdata.fct " << false
       << " --adv.mpdata.iord " << 2
       << " --adv.mpdata.third_order " << false
     << " --dt " << real_t(1)

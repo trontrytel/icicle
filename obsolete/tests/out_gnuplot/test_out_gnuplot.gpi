@@ -37,7 +37,7 @@ cmd = "../../icicle --eqs scalar_advection" \
   ." --slv serial" \
   ." --out gnuplot --out.gnuplot.using 1:-2:2" \
   ." --ini gauss --ini.gauss.A0 -.5 --ini.gauss.A 1 --ini.gauss.sx 2 --ini.gauss.x0 5" 
-set multiplot layout 3,3
+set multiplot layout 3,2
   unset colorbox
   set title "upstream"
   splot "<".cmd." --adv upstream" using 1:-2:2 notitle with lines palette
@@ -45,16 +45,10 @@ set multiplot layout 3,3
   splot "<".cmd." --adv leapfrog" using 1:-2:2 notitle with lines palette
   set title "MPDATA (iord=2)"
   splot "<".cmd." --adv mpdata  " using 1:-2:2 notitle with lines palette
-  set title "MPDATA (iord=2,fct=1)"
-  splot "<".cmd." --adv mpdata --adv.mpdata.fct 1" using 1:-2:2 notitle with lines palette
   set title "MPDATA (iord=3,toa=0)"
   splot "<".cmd." --adv mpdata --adv.mpdata.iord 3" using 1:-2:2 notitle with lines palette
+  set colorbox horiz user origin .7,.2 size .25, .04
   set title "MPDATA (iord=3,toa=1)"
   splot "<".cmd." --adv mpdata --adv.mpdata.iord 3 --adv.mpdata.third_order 1" using 1:-2:2 notitle with lines palette
-  set title "MPDATA (iord=3,fct=1)"
-  splot "<".cmd." --adv mpdata --adv.mpdata.iord 3 --adv.mpdata.fct 1" using 1:-2:2 notitle with lines palette
-  set colorbox horiz user origin .7,.2 size .25, .04
-  set title "MPDATA (iord=3,fct=1,toa=1)"
-  splot "<".cmd." --adv mpdata --adv.mpdata.iord 3 --adv.mpdata.third_order 1 --adv.mpdata.fct 1" using 1:-2:2 notitle with lines palette
   unset colorbox
 #unset multiplot

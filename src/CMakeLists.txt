@@ -14,7 +14,10 @@ find_path(GNUPLOT-IOSTREAM_INCLUDE_DIR PATH_SUFFIXES gnuplot-iostream/ NAMES gnu
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I../../libcloudphxx") # TODO: handle it correctly!!!
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I../../libmpdataxx") # TODO: handle it correctly!!!
 
+
 add_executable(icicle icicle.cpp)
+
+# TODO: target_compile_options() // added to CMake on Jun 3rd 2013
 
 find_package(Boost COMPONENTS thread iostreams system timer REQUIRED)
 target_link_libraries(icicle ${Boost_LIBRARIES})
