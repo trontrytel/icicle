@@ -1,5 +1,7 @@
-#include <libmpdata++/solvers/mpdata_2d.hpp>
-#include <libmpdata++/solvers/solver_inhomo.hpp>
+#pragma once
+
+#include <libmpdata++/solvers/adv/mpdata_2d.hpp>
+#include <libmpdata++/solvers/adv+rhs/solver_inhomo.hpp>
 
 using namespace libmpdataxx; // TODO: not here?
 
@@ -7,6 +9,7 @@ template <
   typename real_t, 
   int n_iters, 
   solvers::inhomo_e inhomo,
+  typename ix_t,
   int n_eqs
 >
 class kin_cloud_2d_common : public solvers::inhomo_solver<solvers::mpdata_2d<real_t, n_iters, n_eqs>, inhomo>
@@ -18,6 +21,8 @@ class kin_cloud_2d_common : public solvers::inhomo_solver<solvers::mpdata_2d<rea
   typename parent_t::arr_t rhod;
 
   public:
+
+  typedef ix_t ix;
 
   struct params_t : parent_t::params_t 
   { 

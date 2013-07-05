@@ -7,8 +7,12 @@
 // 8th ICMW case 1 by Wojciech Grabowski)
 namespace icmw8_case1
 {
+  using real_t = double;
+
   namespace hydrostatic = libcloudphxx::common::hydrostatic;
   namespace theta = libcloudphxx::common::theta_std;
+
+  enum {x, z}; // dimensions
 
   const quantity<si::temperature, real_t> 
     th_0 = 289 * si::kelvins;
@@ -66,9 +70,11 @@ namespace icmw8_case1
 
 
   // function expecting a libmpdata++ solver as argument
-  template <class T>
-  void intcond(T &solver)
+  template <class concurr_t>
+  void intcond(concurr_t &solver)
   {
+    using ix = typename concurr_t::solver_t::ix;
+
     // helper ondex placeholders
     blitz::firstIndex i;
     blitz::secondIndex j;
@@ -82,17 +88,13 @@ namespace icmw8_case1
       dz = nzdz / si::metres / nz; 
 
     // constant potential temperature & water vapour mixing ratio profiles
-    solver.state(rhod_th_ix) = rhod((j+.5)*dz) * (th_0 / si::kelvins); // TODO: should be theta_dry and is theta
-    solver.state(rhod_rv_ix) = rhod((j+.5)*dz) * real_t(rv_0);
-
-    // TODO: only for bulk!
-    solver.state(rhod_rc_ix) = 0;
-    solver.state(rhod_rr_ix) = 0;
+    solver.state(ix::rhod_th) = rhod((j+.5)*dz) * (th_0 / si::kelvins); // TODO: should be theta_dry and is theta
+    solver.state(ix::rhod_rv) = rhod((j+.5)*dz) * real_t(rv_0);
 
     // velocity field obtained by numerically differentiating a stream function
     {
       real_t A = (w_max / si::metres_per_second) * solver.state().extent(x) * dx / pi<real_t>();
-    
+
       solver.courant(x) = - A * (
 	psi(i/real_t(nx), (j+.5+.5)/nz)-
 	psi(i/real_t(nx), (j+.5-.5)/nz)

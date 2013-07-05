@@ -12,23 +12,20 @@ template <
   typename real_t, 
   int n_iters, 
   solvers::inhomo_e inhomo,
-  int rhod_th_ix, // dry static energy density divided by c_pd (= dry air density times theta)
-  int rhod_rv_ix, // water vapour density
-  int rhod_rc_ix, // cloud water density
-  int rhod_rr_ix, // rain water density
+  typename ix,
   int n_eqs = 4
 >
-class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<real_t, n_iters, inhomo, n_eqs>
+class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<real_t, n_iters, inhomo, ix, n_eqs>
 {
-  using parent_t = kin_cloud_2d_common<real_t, n_iters, inhomo, n_eqs>;
+  using parent_t = kin_cloud_2d_common<real_t, n_iters, inhomo, ix, n_eqs>;
 
   void condevap()
   {
     auto 
-      rhod_th = this->state(rhod_th_ix)(this->ijk),
-      rhod_rv = this->state(rhod_rv_ix)(this->ijk),
-      rhod_rc = this->state(rhod_rc_ix)(this->ijk),
-      rhod_rr = this->state(rhod_rr_ix)(this->ijk);
+      rhod_th = this->state(ix::rhod_th)(this->ijk), // dry static energy density divided by c_pd (= dry air density times theta)
+      rhod_rv = this->state(ix::rhod_rv)(this->ijk), // water vapour density
+      rhod_rc = this->state(ix::rhod_rc)(this->ijk), // cloud water density
+      rhod_rr = this->state(ix::rhod_rr)(this->ijk); // rain water density
     auto const
       rhod    = this->rhod(this->ijk);
       
@@ -37,26 +34,38 @@ class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<real_t, n_iters, inhomo, 
     );
   }
 
+  void zero_if_uninitialised(int e)
+  {
+    if (!finite(sum(this->state(e)(this->ijk)))) 
+      this->state(e)(this->ijk) = 0;
+  }
+
   protected:
 
   // deals with initial supersaturation
   void hook_ante_loop(int nt)
   {
+    // if uninitialised fill with zeros
+    zero_if_uninitialised(ix::rhod_rc);
+    zero_if_uninitialised(ix::rhod_rr);
+
+    // deal with initial supersaturation
     condevap();
+
     parent_t::hook_ante_loop(nt); // forcings after adjustments
   }
 
   //
-  void update_forcings(typename parent_t::arrvec_t &rhs)
+  void update_forcings(libmpdataxx::arrvec_t<typename parent_t::arr_t> &rhs)
   {
     parent_t::update_forcings(rhs);
  
     auto 
-      drhod_rc = rhs.at(rhod_rc_ix),
-      drhod_rr = rhs.at(rhod_rr_ix);
+      drhod_rc = rhs.at(ix::rhod_rc),
+      drhod_rr = rhs.at(ix::rhod_rr);
     const auto 
-      rhod_rc  = this->state(rhod_rc_ix),
-      rhod_rr  = this->state(rhod_rr_ix),
+      rhod_rc  = this->state(ix::rhod_rc),
+      rhod_rr  = this->state(ix::rhod_rr),
       rhod     = this->rhod;
 
     // element-wise
@@ -89,7 +98,7 @@ class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<real_t, n_iters, inhomo, 
   struct params_t : parent_t::params_t 
   { 
     real_t dz = 0;
-    libcloudphxx::blk_1m::opts<real_t> bulk_opts;
+    libcloudphxx::blk_1m::opts<real_t> cloudph_opts;
   };
 
   // ctor
@@ -99,7 +108,7 @@ class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<real_t, n_iters, inhomo, 
   ) : 
     parent_t(args, p),
     dz(p.dz),
-    opts(p.bulk_opts)
+    opts(p.cloudph_opts)
   {
     assert(p.dz != 0);
     assert(p.dt != 0);
