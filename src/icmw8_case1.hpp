@@ -4,6 +4,8 @@
 #include <libcloudph++/common/hydrostatic.hpp>
 #include <libcloudph++/common/theta_std.hpp>
 
+// TODO: relaxation terms still missing
+
 // 8th ICMW case 1 by Wojciech Grabowski)
 namespace icmw8_case1
 {

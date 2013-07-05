@@ -26,7 +26,7 @@ struct error: virtual boost::exception, virtual std::exception { };
 
 // some globals for option handling
 int ac;
-char** av;
+char** av; // TODO: write it down to a file as in icicle ... write the default (i.e. not specified) values as well!
 
 
 
@@ -43,7 +43,7 @@ void setopts(
 {
   po::options_description opts_general("Single-moment bulk microphysics options"); 
   opts_general.add_options()
-    ("micro", po::value<string>()->required(), "")
+    ("micro", po::value<string>()->required(), "blk_1m")
     ("cevp", po::value<bool>()->default_value(true) , "cloud water evaporation (on/off)")
     ("revp", po::value<bool>()->default_value(true) , "rain water evaporation (on/off)")
     ("conv", po::value<bool>()->default_value(true) , "conversion of cloud water into rain (on/off)")
@@ -144,10 +144,10 @@ int main(int argc, char** argv)
       ("help", "produce a help message (see also --micro X --help)")
     ;
     po::variables_map vm;
-    po::store(po::parse_command_line(ac, av, opts_general), vm); // could be exchanged with a config file parser
+    po::store(po::command_line_parser(ac, av).options(opts_general).allow_unregistered().run(), vm); // ignores unknown
 
     // hendling the "help" option
-    if (vm.count("help") && !vm.count("micro")) 
+    if (ac == 1 || (vm.count("help") && !vm.count("micro"))) 
     {
       std::cout << opts_general;
       exit(EXIT_SUCCESS);

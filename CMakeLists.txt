@@ -3,7 +3,7 @@ project(icicle CXX C)
 
 add_subdirectory(src) 
 
-# TODO: automate "make doc"
+# TODO: automate "make doc", Some hints here: http://www.cmake.org/pipermail/cmake/2007-February/012803.html
 
 # tests
 enable_testing()
