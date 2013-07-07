@@ -9,6 +9,8 @@
 #include <libmpdata++/concurr/threads.hpp>
 #include <libmpdata++/output/gnuplot.hpp>
 
+#include <libcloudph++/common/prtcls/particles.hpp>
+
 #include "kin_cloud_2d_blk_1m.hpp"
 #include "kin_cloud_2d_blk_2m.hpp"
 #include "kin_cloud_2d_lgrngn.hpp"
@@ -223,6 +225,11 @@ int main(int argc, char** argv)
     else 
     if (micro == "lgrngn")
     {
+      // WORK IN PROGRESS !!
+      std::unique_ptr<libcloudphxx::common::prtcls::particles_proto<float>> prtcls(
+        libcloudphxx::common::prtcls::factory<float>()
+      );
+      // !!
       struct ix { enum {rhod_th, rhod_rv}; };
       run<output::gnuplot<kin_cloud_2d_lgrngn<icmw8_case1::real_t, n_iters, solvers::strang, ix>>>(nx, nz, nt);
     }
