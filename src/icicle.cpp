@@ -232,7 +232,7 @@ int main(int argc, char** argv)
       )
     );
   }
-  catch (exception &e)
+  catch (std::exception &e)
   {
     std::cerr << boost::current_exception_diagnostic_information();
     exit(EXIT_FAILURE);
