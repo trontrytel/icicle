@@ -10,6 +10,7 @@
 #include <libmpdata++/output/gnuplot.hpp>
 
 #include "kin_cloud_2d_blk_1m.hpp"
+#include "kin_cloud_2d_blk_2m.hpp"
 #include "kin_cloud_2d_lgrngn.hpp"
 
 #include "icmw8_case1.hpp" // 8th ICMW case 1 by Wojciech Grabowski)
@@ -41,8 +42,8 @@ void setopts(
   >::value>::type* = 0
 )
 {
-  po::options_description opts_general("Single-moment bulk microphysics options"); 
-  opts_general.add_options()
+  po::options_description opts("Single-moment bulk microphysics options"); 
+  opts.add_options()
     ("micro", po::value<string>()->required(), "blk_1m")
     ("cevp", po::value<bool>()->default_value(true) , "cloud water evaporation (on/off)")
     ("revp", po::value<bool>()->default_value(true) , "rain water evaporation (on/off)")
@@ -53,12 +54,12 @@ void setopts(
     ("help", "produce a help message")
   ;
   po::variables_map vm;
-  po::store(po::parse_command_line(ac, av, opts_general), vm); // could be exchanged with a config file parser
+  po::store(po::parse_command_line(ac, av, opts), vm); // could be exchanged with a config file parser
 
   // hendling the "help" option
   if (vm.count("help")) 
   {
-    std::cout << opts_general;
+    std::cout << opts;
     exit(EXIT_SUCCESS);
   }
 
@@ -81,6 +82,50 @@ void setopts(
   params.cloudph_opts.revp = vm["revp"].as<bool>();
   params.cloudph_opts.conv = vm["conv"].as<bool>();
   params.cloudph_opts.clct = vm["clct"].as<bool>();
+  params.cloudph_opts.sedi = vm["sedi"].as<bool>();
+}
+
+
+
+// simulation and output parameters for micro=blk_2m
+template <class solver_t>
+void setopts(
+  typename solver_t::params_t &params, 
+  int nt,
+  typename std::enable_if<std::is_same<
+    decltype(solver_t::params_t::cloudph_opts),
+    libcloudphxx::blk_2m::opts<typename solver_t::real_t>
+  >::value>::type* = 0
+)
+{
+  po::options_description opts("Double-moment bulk microphysics options"); 
+  opts.add_options()
+    ("micro", po::value<string>()->required(), "blk_2m")
+    ("acti", po::value<bool>()->default_value(true) , "TODO (on/off)")
+    ("cond", po::value<bool>()->default_value(true) , "TODO (on/off)")
+    ("accr", po::value<bool>()->default_value(true) , "TODO (on/off)")
+    ("acnv", po::value<bool>()->default_value(true) , "TODO (on/off)")
+    ("turb", po::value<bool>()->default_value(true) , "TODO (on/off)")
+    ("sedi", po::value<bool>()->default_value(true) , "TODO (on/off)")
+//TODO: venti
+    ("help", "produce a help message")
+  ;
+  po::variables_map vm;
+  po::store(po::parse_command_line(ac, av, opts), vm); // could be exchanged with a config file parser
+
+  // hendling the "help" option
+  if (vm.count("help")) 
+  {
+    std::cout << opts;
+    exit(EXIT_SUCCESS);
+  }
+
+  // Morrison and Grabowski 2007 scheme options
+  params.cloudph_opts.acti = vm["acti"].as<bool>();
+  params.cloudph_opts.cond = vm["cond"].as<bool>();
+  params.cloudph_opts.accr = vm["accr"].as<bool>();
+  params.cloudph_opts.acnv = vm["acnv"].as<bool>();
+  params.cloudph_opts.turb = vm["turb"].as<bool>();
   params.cloudph_opts.sedi = vm["sedi"].as<bool>();
 }
 
@@ -135,8 +180,8 @@ int main(int argc, char** argv)
 
   try
   {
-    po::options_description opts_general("General options"); 
-    opts_general.add_options()
+    po::options_description opts("General options"); 
+    opts.add_options()
       ("micro", po::value<string>()->required(), "one of: blk_1m, blk_2m, lgrngn")
       ("nx", po::value<int>()->default_value(32) , "grid cell count in horizontal")
       ("nz", po::value<int>()->default_value(32) , "grid cell count in vertical")
@@ -144,12 +189,12 @@ int main(int argc, char** argv)
       ("help", "produce a help message (see also --micro X --help)")
     ;
     po::variables_map vm;
-    po::store(po::command_line_parser(ac, av).options(opts_general).allow_unregistered().run(), vm); // ignores unknown
+    po::store(po::command_line_parser(ac, av).options(opts).allow_unregistered().run(), vm); // ignores unknown
 
     // hendling the "help" option
     if (ac == 1 || (vm.count("help") && !vm.count("micro"))) 
     {
-      std::cout << opts_general;
+      std::cout << opts;
       exit(EXIT_SUCCESS);
     }
 
@@ -169,7 +214,14 @@ int main(int argc, char** argv)
       struct ix { enum {rhod_th, rhod_rv, rhod_rc, rhod_rr}; };
       run<output::gnuplot<kin_cloud_2d_blk_1m<icmw8_case1::real_t, n_iters, solvers::strang, ix>>>(nx, nz, nt);
     }
-    else if (micro == "lgrngn")
+    else
+    if (micro == "blk_2m")
+    {
+      struct ix { enum {rhod_th, rhod_rv, rhod_rc, rhod_rr, rhod_nc, rhod_nr}; };
+      run<output::gnuplot<kin_cloud_2d_blk_2m<icmw8_case1::real_t, n_iters, solvers::strang, ix>>>(nx, nz, nt);
+    }
+    else 
+    if (micro == "lgrngn")
     {
       struct ix { enum {rhod_th, rhod_rv}; };
       run<output::gnuplot<kin_cloud_2d_lgrngn<icmw8_case1::real_t, n_iters, solvers::strang, ix>>>(nx, nz, nt);
