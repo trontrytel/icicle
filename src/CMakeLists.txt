@@ -11,8 +11,7 @@ find_path(GNUPLOT-IOSTREAM_INCLUDE_DIR PATH_SUFFIXES gnuplot-iostream/ NAMES gnu
 #TODO: the same for blitz, libcloudph, libmpdata
 #TODO: add the above paths to compiler flags
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I../../libcloudphxx") # TODO: handle it correctly!!!
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I../../libmpdataxx") # TODO: handle it correctly!!!
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${CMAKE_SOURCE_DIR}/../libmpdataxx") # TODO: handle it correctly!!!
 
 
 add_executable(icicle icicle.cpp)
