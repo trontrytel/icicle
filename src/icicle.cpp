@@ -44,7 +44,7 @@ void setopts(
 {
   po::options_description opts("Single-moment bulk microphysics options"); 
   opts.add_options()
-    ("micro", po::value<string>()->required(), "blk_1m")
+    ("micro", po::value<std::string>()->required(), "blk_1m")
     ("cevp", po::value<bool>()->default_value(true) , "cloud water evaporation (on/off)")
     ("revp", po::value<bool>()->default_value(true) , "rain water evaporation (on/off)")
     ("conv", po::value<bool>()->default_value(true) , "conversion of cloud water into rain (on/off)")
@@ -100,7 +100,7 @@ void setopts(
 {
   po::options_description opts("Double-moment bulk microphysics options"); 
   opts.add_options()
-    ("micro", po::value<string>()->required(), "blk_2m")
+    ("micro", po::value<std::string>()->required(), "blk_2m")
     ("acti", po::value<bool>()->default_value(true) , "TODO (on/off)")
     ("cond", po::value<bool>()->default_value(true) , "TODO (on/off)")
     ("accr", po::value<bool>()->default_value(true) , "TODO (on/off)")
@@ -182,7 +182,7 @@ int main(int argc, char** argv)
   {
     po::options_description opts("General options"); 
     opts.add_options()
-      ("micro", po::value<string>()->required(), "one of: blk_1m, blk_2m, lgrngn")
+      ("micro", po::value<std::string>()->required(), "one of: blk_1m, blk_2m, lgrngn")
       ("nx", po::value<int>()->default_value(32) , "grid cell count in horizontal")
       ("nz", po::value<int>()->default_value(32) , "grid cell count in vertical")
       ("nt", po::value<int>()->default_value(500) , "timestep count")
@@ -208,7 +208,7 @@ int main(int argc, char** argv)
       nt = vm["nt"].as<int>();
 
     // handling the "micro" option
-    std::string micro = vm["micro"].as<string>();
+    std::string micro = vm["micro"].as<std::string>();
     if (micro == "blk_1m")
     {
       struct ix { enum {rhod_th, rhod_rv, rhod_rc, rhod_rr}; };
