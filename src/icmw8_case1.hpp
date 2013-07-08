@@ -32,21 +32,25 @@ namespace icmw8_case1
     dt = 4 * si::seconds;
 
   // density profile as a function of altitude
-  real_t rhod(real_t z)
+  struct rhod
   {
-    quantity<si::pressure, real_t> p = hydrostatic::p(
-      z * si::metres, th_0, rv_0, z_0, p_0
-    );
-    
-    quantity<si::mass_density, real_t> rhod = theta::rhod(
-      p, th_0, rv_0
-    );
+    real_t operator()(real_t z) const
+    {
+      quantity<si::pressure, real_t> p = hydrostatic::p(
+	z * si::metres, th_0, rv_0, z_0, p_0
+      );
+      
+      quantity<si::mass_density, real_t> rhod = theta::rhod(
+	p, th_0, rv_0
+      );
 
-    return rhod / si::kilograms * si::cubic_metres;
-  }
+      return rhod / si::kilograms * si::cubic_metres;
+    }
 
-  // to make the rhod() function accept Blitz arrays as arguments
-  BZ_DECLARE_FUNCTION(rhod);
+    // to make the rhod() functor accept Blitz arrays as arguments
+    BZ_DECLARE_FUNCTOR(rhod);
+  };
+
 
 
   /// (similar to eq. 2 in @copydetails Rasinski_et_al_2011, Atmos. Res. 102)
@@ -67,7 +71,7 @@ namespace icmw8_case1
 
     params.rhod.resize(nz);
     for (int j = 0; j < nz; ++j)
-      params.rhod[j] = rhod((j+.5) * params.dz);
+      params.rhod[j] = rhod()((j+.5) * params.dz);
   }
 
 
@@ -90,8 +94,8 @@ namespace icmw8_case1
       dz = nzdz / si::metres / nz; 
 
     // constant potential temperature & water vapour mixing ratio profiles
-    solver.state(ix::rhod_th) = rhod((j+.5)*dz) * (th_0 / si::kelvins); // TODO: should be theta_dry and is theta
-    solver.state(ix::rhod_rv) = rhod((j+.5)*dz) * real_t(rv_0);
+    solver.state(ix::rhod_th) = rhod()((j+.5)*dz) * (th_0 / si::kelvins); // TODO: should be theta_dry and is theta
+    solver.state(ix::rhod_rv) = rhod()((j+.5)*dz) * real_t(rv_0);
 
     // velocity field obtained by numerically differentiating a stream function
     {
@@ -101,14 +105,14 @@ namespace icmw8_case1
 	psi(i/real_t(nx), (j+.5+.5)/nz)-
 	psi(i/real_t(nx), (j+.5-.5)/nz)
       ) / dz             // numerical derivative
-      / rhod((j+.5)* dz) // psi defines rho_d times velocity
+      / rhod()((j+.5)* dz) // psi defines rho_d times velocity
       * (dt / si::seconds) / dx;         // converting to Courant number
 
       solver.courant(z) = A * (
 	psi((i+.5+.5)/nx, j/real_t(nz)) -
 	psi((i+.5-.5)/nx, j/real_t(nz))
       ) / dx 
-      / rhod(j * dz)
+      / rhod()(j * dz)
       * (dt / si::seconds) / dz; 
     }
   }
