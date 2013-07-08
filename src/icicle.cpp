@@ -64,6 +64,7 @@ void setopts(
     std::cout << opts;
     exit(EXIT_SUCCESS);
   }
+  po::notify(vm); 
 
   using ix = typename solver_t::ix;
 
@@ -121,6 +122,7 @@ void setopts(
     std::cout << opts;
     exit(EXIT_SUCCESS);
   }
+  po::notify(vm); 
 
   // Morrison and Grabowski 2007 scheme options
   params.cloudph_opts.acti = vm["acti"].as<bool>();
@@ -144,6 +146,29 @@ void setopts(
   >::value>::type* = 0
 )
 {
+  po::options_description opts("Double-moment bulk microphysics options"); 
+  opts.add_options()
+    ("micro", po::value<std::string>()->required(), "blk_2m")
+    ("sd_conc_mean", po::value<int>()->required() , "mean super-droplet concentration per grid cell (int)")
+  ;
+  po::variables_map vm;
+  po::store(po::parse_command_line(ac, av, opts), vm); // could be exchanged with a config file parser
+
+  // hendling the "help" option
+  if (vm.count("help")) 
+  {
+    std::cout << opts;
+    exit(EXIT_SUCCESS);
+  }
+  po::notify(vm); 
+      
+
+      // WORK IN PROGRESS !!
+// TODO: what if nvcc downgraded real_t=double to float? (a warning at least)
+      std::unique_ptr<libcloudphxx::common::prtcls::particles_proto<icmw8_case1::real_t>> prtcls(
+        libcloudphxx::common::prtcls::factory<icmw8_case1::real_t>(vm["sd_conc_mean"].as<int>())
+      );
+      // !!
 }
 
 
@@ -225,11 +250,6 @@ int main(int argc, char** argv)
     else 
     if (micro == "lgrngn")
     {
-      // WORK IN PROGRESS !!
-      std::unique_ptr<libcloudphxx::common::prtcls::particles_proto<float>> prtcls(
-        libcloudphxx::common::prtcls::factory<float>()
-      );
-      // !!
       struct ix { enum {rhod_th, rhod_rv}; };
       run<output::gnuplot<kin_cloud_2d_lgrngn<icmw8_case1::real_t, n_iters, solvers::strang, ix>>>(nx, nz, nt);
     }
