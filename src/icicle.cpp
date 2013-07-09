@@ -165,8 +165,8 @@ void setopts(
 
       // WORK IN PROGRESS !!
 // TODO: what if nvcc downgraded real_t=double to float? (a warning at least)
-      std::unique_ptr<libcloudphxx::common::prtcls::particles_proto<icmw8_case1::real_t>> prtcls(
-        libcloudphxx::common::prtcls::factory<icmw8_case1::real_t>(vm["sd_conc_mean"].as<int>())
+      std::unique_ptr<libcloudphxx::common::prtcls::particles_proto<float>> prtcls(
+        libcloudphxx::common::prtcls::factory<float>(vm["sd_conc_mean"].as<int>())
       );
       // !!
 }
