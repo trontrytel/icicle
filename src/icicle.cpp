@@ -168,6 +168,7 @@ void setopts(
       std::unique_ptr<libcloudphxx::common::prtcls::particles_proto<icmw8_case1::real_t>> prtcls(
         libcloudphxx::common::prtcls::factory<icmw8_case1::real_t>(vm["sd_conc_mean"].as<int>())
       );
+      prtcls->init();
       // !!
 }
 
