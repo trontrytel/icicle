@@ -146,21 +146,29 @@ void setopts(
   >::value>::type* = 0
 )
 {
+  using thrust_real_t = float; // TODO: option, warning, ...?  (if nvcc downgraded real_t=double to float)
+
   po::options_description opts("Double-moment bulk microphysics options"); 
   opts.add_options()
     ("micro", po::value<std::string>()->required(), "blk_2m")
     ("sd_conc_mean", po::value<int>()->required() , "mean super-droplet concentration per grid cell (int)")
+    ("rd_min_init", po::value<thrust_real_t>()->default_value(1e-9) , "minimum initial dry aerosol radius [m]")
+    ("rd_max_init", po::value<thrust_real_t>()->default_value(1e-6) , "maximum initial dry aerosol radius [m]")
+    ("help", "produce a help message")
   ;
   po::variables_map vm;
   handle_opts(opts, vm);
       
+// TODO: thrust backend choice!
 
       // WORK IN PROGRESS !!
-// TODO: what if nvcc downgraded real_t=double to float? (a warning at least)
-      std::unique_ptr<libcloudphxx::common::prtcls::particles_proto<float>> prtcls(
-        libcloudphxx::common::prtcls::factory<float>(vm["sd_conc_mean"].as<int>(), nx, 0, nz)
+      std::unique_ptr<libcloudphxx::common::prtcls::particles_proto<thrust_real_t>> prtcls(
+        libcloudphxx::common::prtcls::factory<thrust_real_t>(vm["sd_conc_mean"].as<int>(), nx, 0, nz)
       );
-      prtcls->init();
+      prtcls->init(
+        vm["rd_min_init"].as<thrust_real_t>(),
+        vm["rd_max_init"].as<thrust_real_t>()
+      );
       // !!
 }
 
