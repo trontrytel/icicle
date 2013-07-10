@@ -32,12 +32,28 @@ int ac;
 char** av; // TODO: write it down to a file as in icicle ... write the default (i.e. not specified) values as well!
 
 
+void handle_opts(
+  po::options_description &opts,
+  po::variables_map &vm
+)
+{
+  po::store(po::parse_command_line(ac, av, opts), vm); // could be exchanged with a config file parser
+
+  // hendling the "help" option
+  if (vm.count("help"))
+  {
+    std::cout << opts;
+    exit(EXIT_SUCCESS);
+  }
+  po::notify(vm); // includes checks for required options
+}
+
 
 // simulation and output parameters for micro=blk_1m
 template <class solver_t>
 void setopts(
   typename solver_t::params_t &params, 
-  int nt,
+  int nx, int nz, int nt,
   typename std::enable_if<std::is_same<
     decltype(solver_t::params_t::cloudph_opts),
     libcloudphxx::blk_1m::opts<typename solver_t::real_t>
@@ -56,15 +72,7 @@ void setopts(
     ("help", "produce a help message")
   ;
   po::variables_map vm;
-  po::store(po::parse_command_line(ac, av, opts), vm); // could be exchanged with a config file parser
-
-  // hendling the "help" option
-  if (vm.count("help")) 
-  {
-    std::cout << opts;
-    exit(EXIT_SUCCESS);
-  }
-  po::notify(vm); 
+  handle_opts(opts, vm);
 
   using ix = typename solver_t::ix;
 
@@ -94,7 +102,7 @@ void setopts(
 template <class solver_t>
 void setopts(
   typename solver_t::params_t &params, 
-  int nt,
+  int nx, int nz, int nt,
   typename std::enable_if<std::is_same<
     decltype(solver_t::params_t::cloudph_opts),
     libcloudphxx::blk_2m::opts<typename solver_t::real_t>
@@ -114,15 +122,7 @@ void setopts(
     ("help", "produce a help message")
   ;
   po::variables_map vm;
-  po::store(po::parse_command_line(ac, av, opts), vm); // could be exchanged with a config file parser
-
-  // hendling the "help" option
-  if (vm.count("help")) 
-  {
-    std::cout << opts;
-    exit(EXIT_SUCCESS);
-  }
-  po::notify(vm); 
+  handle_opts(opts, vm);
 
   // Morrison and Grabowski 2007 scheme options
   params.cloudph_opts.acti = vm["acti"].as<bool>();
@@ -139,7 +139,7 @@ void setopts(
 template <class solver_t>
 void setopts(
   typename solver_t::params_t &params, 
-  int nt,
+  int nx, int nz, int nt,
   typename std::enable_if<std::is_same<
     decltype(solver_t::params_t::cloudph_opts),
     libcloudphxx::lgrngn::opts<typename solver_t::real_t>
@@ -152,21 +152,13 @@ void setopts(
     ("sd_conc_mean", po::value<int>()->required() , "mean super-droplet concentration per grid cell (int)")
   ;
   po::variables_map vm;
-  po::store(po::parse_command_line(ac, av, opts), vm); // could be exchanged with a config file parser
-
-  // hendling the "help" option
-  if (vm.count("help")) 
-  {
-    std::cout << opts;
-    exit(EXIT_SUCCESS);
-  }
-  po::notify(vm); 
+  handle_opts(opts, vm);
       
 
       // WORK IN PROGRESS !!
 // TODO: what if nvcc downgraded real_t=double to float? (a warning at least)
       std::unique_ptr<libcloudphxx::common::prtcls::particles_proto<float>> prtcls(
-        libcloudphxx::common::prtcls::factory<float>(vm["sd_conc_mean"].as<int>())
+        libcloudphxx::common::prtcls::factory<float>(vm["sd_conc_mean"].as<int>(), nx, 0, nz)
       );
       prtcls->init();
       // !!
@@ -182,7 +174,7 @@ void run(int nx, int nz, int nt)
   typename solver_t::params_t p;
 
   // output and simulation parameters
-  setopts<solver_t>(p, nt);
+  setopts<solver_t>(p, nx, nz, nt);
   icmw8_case1::setopts(p, nz);
 
   // solver instantiation
