@@ -30,6 +30,7 @@ struct error: virtual boost::exception, virtual std::exception { };
 // some globals for option handling
 int ac;
 char** av; // TODO: write it down to a file as in icicle ... write the default (i.e. not specified) values as well!
+po::options_description opts_main("General options"); 
 
 
 void handle_opts(
@@ -37,6 +38,7 @@ void handle_opts(
   po::variables_map &vm
 )
 {
+  opts.add(opts_main);
   po::store(po::parse_command_line(ac, av, opts), vm); // could be exchanged with a config file parser
 
   // hendling the "help" option
@@ -62,14 +64,12 @@ void setopts(
 {
   po::options_description opts("Single-moment bulk microphysics options"); 
   opts.add_options()
-    ("micro", po::value<std::string>()->required(), "blk_1m")
     ("cevp", po::value<bool>()->default_value(true) , "cloud water evaporation (on/off)")
     ("revp", po::value<bool>()->default_value(true) , "rain water evaporation (on/off)")
     ("conv", po::value<bool>()->default_value(true) , "conversion of cloud water into rain (on/off)")
     ("clct", po::value<bool>()->default_value(true) , "cloud water collection by rain (on/off)")
     ("sedi", po::value<bool>()->default_value(true) , "rain water sedimentation (on/off)")
 //TODO: venti
-    ("help", "produce a help message")
   ;
   po::variables_map vm;
   handle_opts(opts, vm);
@@ -111,7 +111,6 @@ void setopts(
 {
   po::options_description opts("Double-moment bulk microphysics options"); 
   opts.add_options()
-    ("micro", po::value<std::string>()->required(), "blk_2m")
     ("acti", po::value<bool>()->default_value(true) , "TODO (on/off)")
     ("cond", po::value<bool>()->default_value(true) , "TODO (on/off)")
     ("accr", po::value<bool>()->default_value(true) , "TODO (on/off)")
@@ -119,7 +118,6 @@ void setopts(
     ("turb", po::value<bool>()->default_value(true) , "TODO (on/off)")
     ("sedi", po::value<bool>()->default_value(true) , "TODO (on/off)")
 //TODO: venti
-    ("help", "produce a help message")
   ;
   po::variables_map vm;
   handle_opts(opts, vm);
@@ -150,9 +148,7 @@ void setopts(
 
   po::options_description opts("Double-moment bulk microphysics options"); 
   opts.add_options()
-    ("micro", po::value<std::string>()->required(), "blk_2m")
     ("sd_conc_mean", po::value<thrust_real_t>()->required() , "mean super-droplet concentration per grid cell (int)")
-    ("help", "produce a help message")
   ;
   po::variables_map vm;
   handle_opts(opts, vm);
@@ -204,8 +200,7 @@ int main(int argc, char** argv)
 
   try
   {
-    po::options_description opts("General options"); 
-    opts.add_options()
+    opts_main.add_options()
       ("micro", po::value<std::string>()->required(), "one of: blk_1m, blk_2m, lgrngn")
       ("nx", po::value<int>()->default_value(32) , "grid cell count in horizontal")
       ("nz", po::value<int>()->default_value(32) , "grid cell count in vertical")
@@ -213,12 +208,12 @@ int main(int argc, char** argv)
       ("help", "produce a help message (see also --micro X --help)")
     ;
     po::variables_map vm;
-    po::store(po::command_line_parser(ac, av).options(opts).allow_unregistered().run(), vm); // ignores unknown
+    po::store(po::command_line_parser(ac, av).options(opts_main).allow_unregistered().run(), vm); // ignores unknown
 
     // hendling the "help" option
     if (ac == 1 || (vm.count("help") && !vm.count("micro"))) 
     {
-      std::cout << opts;
+      std::cout << opts_main;
       exit(EXIT_SUCCESS);
     }
 
