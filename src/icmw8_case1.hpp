@@ -3,6 +3,8 @@
 // TODO: other includes?
 #include <libcloudph++/common/hydrostatic.hpp>
 #include <libcloudph++/common/theta_std.hpp>
+#include <libcloudph++/common/lognormal.hpp>
+#include <libcloudph++/common/unary_function.hpp>
 
 // TODO: relaxation terms still missing
 
@@ -13,6 +15,7 @@ namespace icmw8_case1
 
   namespace hydrostatic = libcloudphxx::common::hydrostatic;
   namespace theta = libcloudphxx::common::theta_std;
+  namespace lognormal = libcloudphxx::common::lognormal;
 
   enum {x, z}; // dimensions
 
@@ -30,6 +33,16 @@ namespace icmw8_case1
     nxdx = 1500 * si::metres;
   const quantity<si::time, real_t>
     dt = 4 * si::seconds;
+
+  const quantity<si::length, real_t>
+    mean_rd1 = .04e-6 / 2 * si::metres,
+    mean_rd2 = .15e-6 / 2 * si::metres;
+  const quantity<si::dimensionless, real_t>
+    sdev_rd1 = 1.4,
+    sdev_rd2 = 1.6;
+  const quantity<power_typeof_helper<si::length, static_rational<-3>>::type, real_t>
+    n1_tot = 60e6 / si::cubic_metres,
+    n2_tot = 40e6 / si::cubic_metres;
 
   // density profile as a function of altitude
   struct rhod
@@ -116,4 +129,18 @@ namespace icmw8_case1
       * (dt / si::seconds) / dz; 
     }
   }
+
+  // lognormal aerosol distribution
+  template <typename T>
+  struct log_dry_radii : public libcloudphxx::common::unary_function<T>
+  {
+    T funval(const T lnrd) const
+    {
+      return T((
+          lognormal::n_e(mean_rd1, sdev_rd1, n1_tot, quantity<si::dimensionless, real_t>(lnrd)) +
+          lognormal::n_e(mean_rd2, sdev_rd2, n2_tot, quantity<si::dimensionless, real_t>(lnrd)) 
+        ) * si::cubic_metres
+      );
+    }
+  };
 };

@@ -9,7 +9,7 @@
 #include <libmpdata++/concurr/threads.hpp>
 #include <libmpdata++/output/gnuplot.hpp>
 
-#include <libcloudph++/common/prtcls/particles.hpp>
+#include <libcloudph++/lgrngn/particles.hpp> // TODO: here???
 
 #include "kin_cloud_2d_blk_1m.hpp"
 #include "kin_cloud_2d_blk_2m.hpp"
@@ -151,25 +151,21 @@ void setopts(
   po::options_description opts("Double-moment bulk microphysics options"); 
   opts.add_options()
     ("micro", po::value<std::string>()->required(), "blk_2m")
-    ("sd_conc_mean", po::value<int>()->required() , "mean super-droplet concentration per grid cell (int)")
-    ("rd_min_init", po::value<thrust_real_t>()->default_value(1e-9) , "minimum initial dry aerosol radius [m]")
-    ("rd_max_init", po::value<thrust_real_t>()->default_value(1e-6) , "maximum initial dry aerosol radius [m]")
+    ("sd_conc_mean", po::value<thrust_real_t>()->required() , "mean super-droplet concentration per grid cell (int)")
     ("help", "produce a help message")
   ;
   po::variables_map vm;
   handle_opts(opts, vm);
       
-// TODO: thrust backend choice!
+  std::unique_ptr<libcloudphxx::common::prtcls::particles_proto<thrust_real_t>> prtcls;
+  prtcls.reset(libcloudphxx::common::prtcls::factory<thrust_real_t>(
+    vm["sd_conc_mean"].as<thrust_real_t>(), nx, 0, nz)
+  );
 
-      // WORK IN PROGRESS !!
-      std::unique_ptr<libcloudphxx::common::prtcls::particles_proto<thrust_real_t>> prtcls(
-        libcloudphxx::common::prtcls::factory<thrust_real_t>(vm["sd_conc_mean"].as<int>(), nx, 0, nz)
-      );
-      prtcls->init(
-        vm["rd_min_init"].as<thrust_real_t>(),
-        vm["rd_max_init"].as<thrust_real_t>()
-      );
-      // !!
+  // TODO: move to hook_ante_loop...
+  //struct : public std::unary_function<thrust_real_t, thrust_real_t> { thrust_real_t operator()(thrust_real_t x) { return x; } } pdf;
+  icmw8_case1::log_dry_radii<thrust_real_t> pdf;
+  prtcls->init(&pdf);
 }
 
 

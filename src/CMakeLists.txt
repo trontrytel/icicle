@@ -24,7 +24,7 @@ target_link_libraries(icicle ${Boost_LIBRARIES})
 #TODO: obtain optimisation flags from libpdataxx-config?
 
 #TODO: check if it's there
-target_link_libraries(icicle cloudphxx_common_prtcls)
+target_link_libraries(icicle cloudphxx_lgrngn)
 
 
 # handling Blitz debuging options in CMake's DEBUG mode
