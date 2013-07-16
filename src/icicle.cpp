@@ -163,7 +163,8 @@ void setopts(
   else if (backend_str == "serial") backend = libcloudphxx::lgrngn::cpp;
 
   prtcls.reset(libcloudphxx::lgrngn::factory<thrust_real_t>(backend,
-    vm["sd_conc_mean"].as<thrust_real_t>(), nx, 0, nz
+    vm["sd_conc_mean"].as<thrust_real_t>(), 
+    nx, nz, params.dx, params.dz
   ));
 
   // TODO: move to hook_ante_loop...
@@ -182,8 +183,8 @@ void run(int nx, int nz, int nt)
   typename solver_t::params_t p;
 
   // output and simulation parameters
-  setopts<solver_t>(p, nx, nz, nt);
   icmw8_case1::setopts(p, nz);
+  setopts<solver_t>(p, nx, nz, nt);
 
   // solver instantiation
   concurr::threads<solver_t, bcond::cyclic, bcond::cyclic> slv(nx, nz, p);
