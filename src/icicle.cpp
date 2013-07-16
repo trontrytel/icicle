@@ -34,17 +34,17 @@ po::options_description opts_main("General options");
 
 
 void handle_opts(
-  po::options_description &opts,
+  po::options_description &opts_micro,
   po::variables_map &vm
 )
 {
-  opts.add(opts_main);
-  po::store(po::parse_command_line(ac, av, opts), vm); // could be exchanged with a config file parser
+  opts_main.add(opts_micro);
+  po::store(po::parse_command_line(ac, av, opts_main), vm); // could be exchanged with a config file parser
 
   // hendling the "help" option
   if (vm.count("help"))
   {
-    std::cout << opts;
+    std::cout << opts_main;
     exit(EXIT_SUCCESS);
   }
   po::notify(vm); // includes checks for required options
@@ -64,11 +64,11 @@ void setopts(
 {
   po::options_description opts("Single-moment bulk microphysics options"); 
   opts.add_options()
-    ("cevp", po::value<bool>()->default_value(true) , "cloud water evaporation (on/off)")
-    ("revp", po::value<bool>()->default_value(true) , "rain water evaporation (on/off)")
-    ("conv", po::value<bool>()->default_value(true) , "conversion of cloud water into rain (on/off)")
-    ("clct", po::value<bool>()->default_value(true) , "cloud water collection by rain (on/off)")
-    ("sedi", po::value<bool>()->default_value(true) , "rain water sedimentation (on/off)")
+    ("cevp", po::value<bool>()->default_value(true) , "cloud water evaporation (1=on, 0=off)")
+    ("revp", po::value<bool>()->default_value(true) , "rain water evaporation (1=on, 0=off)")
+    ("conv", po::value<bool>()->default_value(true) , "conversion of cloud water into rain (1=on, 0=off)")
+    ("clct", po::value<bool>()->default_value(true) , "cloud water collection by rain (1=on, 0=off)")
+    ("sedi", po::value<bool>()->default_value(true) , "rain water sedimentation (1=on, 0=off)")
 //TODO: venti
   ;
   po::variables_map vm;
