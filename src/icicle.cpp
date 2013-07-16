@@ -154,15 +154,15 @@ void setopts(
   po::variables_map vm;
   handle_opts(opts, vm);
       
-  std::unique_ptr<libcloudphxx::common::prtcls::particles_proto<thrust_real_t>> prtcls;
+  std::unique_ptr<libcloudphxx::lgrngn::particles_proto<thrust_real_t>> prtcls;
 
   int backend = -1;
   std::string backend_str = vm["backend"].as<std::string>();
-  if (backend_str == "CUDA") backend = libcloudphxx::common::prtcls::cuda;
-  else if (backend_str == "OpenMP") backend = libcloudphxx::common::prtcls::omp;
-  else if (backend_str == "serial") backend = libcloudphxx::common::prtcls::cpp;
+  if (backend_str == "CUDA") backend = libcloudphxx::lgrngn::cuda;
+  else if (backend_str == "OpenMP") backend = libcloudphxx::lgrngn::omp;
+  else if (backend_str == "serial") backend = libcloudphxx::lgrngn::cpp;
 
-  prtcls.reset(libcloudphxx::common::prtcls::factory<thrust_real_t>(backend,
+  prtcls.reset(libcloudphxx::lgrngn::factory<thrust_real_t>(backend,
     vm["sd_conc_mean"].as<thrust_real_t>(), nx, 0, nz
   ));
 
