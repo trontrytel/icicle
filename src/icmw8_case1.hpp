@@ -77,16 +77,16 @@ namespace icmw8_case1
 
   // function expecting a libmpdata solver parameters struct as argument
   template <class T>
-  void setopts(T &params, int nz)
+  void setopts(T &params, int nx, int nz)
   {
     params.dt = dt / si::seconds;
+    params.dx = nxdx / si::metres / nx;
     params.dz = nzdz / si::metres / nz;
 
     params.rhod.resize(nz);
     for (int j = 0; j < nz; ++j)
       params.rhod[j] = rhod()((j+.5) * params.dz);
   }
-
 
   // function expecting a libmpdata++ solver as argument
   template <class concurr_t>

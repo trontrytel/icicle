@@ -97,7 +97,7 @@ class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<real_t, n_iters, inhomo, 
 
   struct params_t : parent_t::params_t 
   { 
-    real_t dz = 0;
+    real_t dx = 0, dz = 0; // TODO: dx not needed here, move to common or even to solver_common!
     libcloudphxx::blk_1m::opts<real_t> cloudph_opts;
   };
 

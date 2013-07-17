@@ -26,7 +26,7 @@ class kin_cloud_2d_blk_2m : public kin_cloud_2d_common<real_t, n_iters, inhomo, 
 
   struct params_t : parent_t::params_t 
   { 
-    real_t dz = 0;
+    real_t dx = 0, dz = 0; // TODO: move to common?
     libcloudphxx::blk_2m::opts<real_t> cloudph_opts;
   };
 

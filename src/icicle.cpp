@@ -183,7 +183,7 @@ void run(int nx, int nz, int nt)
   typename solver_t::params_t p;
 
   // output and simulation parameters
-  icmw8_case1::setopts(p, nz);
+  icmw8_case1::setopts(p, nx, nz);
   setopts<solver_t>(p, nx, nz, nt);
 
   // solver instantiation
