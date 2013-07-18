@@ -170,6 +170,9 @@ void setopts(
   // TODO: move to hook_ante_loop... (otherwise timing does not cover initialisation)
   icmw8_case1::log_dry_radii<thrust_real_t> pdf;
   prtcls->init(&pdf);
+
+  // TODO: move to hook_post_step or hook_ante_step?
+  prtcls->step();
 }
 
 
