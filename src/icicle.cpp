@@ -167,8 +167,7 @@ void setopts(
     nx, nz, params.dx, params.dz
   ));
 
-  // TODO: move to hook_ante_loop...
-  //struct : public std::unary_function<thrust_real_t, thrust_real_t> { thrust_real_t operator()(thrust_real_t x) { return x; } } pdf;
+  // TODO: move to hook_ante_loop... (otherwise timing does not cover initialisation)
   icmw8_case1::log_dry_radii<thrust_real_t> pdf;
   prtcls->init(&pdf);
 }

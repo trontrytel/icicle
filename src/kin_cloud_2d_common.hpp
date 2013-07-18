@@ -1,6 +1,7 @@
 #pragma once
 
 #include <libmpdata++/solvers/adv/mpdata_2d.hpp>
+// note: FCT cannot be used as of now as the density is not constant in space here!
 #include <libmpdata++/solvers/adv+rhs/solver_inhomo.hpp>
 
 using namespace libmpdataxx; // TODO: not here?
