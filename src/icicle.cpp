@@ -7,9 +7,8 @@
 
 #include <libmpdata++/bcond/cyclic_2d.hpp>
 #include <libmpdata++/concurr/threads.hpp>
-#include <libmpdata++/output/gnuplot.hpp>
 
-#include <libcloudph++/lgrngn/particles.hpp> // TODO: here???
+#include <boost/assign/ptr_map_inserter.hpp>  // for 'ptr_map_insert()'
 
 #include "kin_cloud_2d_blk_1m.hpp"
 #include "kin_cloud_2d_blk_2m.hpp"
@@ -74,20 +73,6 @@ void setopts(
   po::variables_map vm;
   handle_opts(opts, vm);
 
-  using ix = typename solver_t::ix;
-
-  params.outfreq = nt / 50;  // TODO: into general options?
-  //params.gnuplot_zrange = p.gnuplot_cbrange = "[.5:2.5]"; // TODO: per variable!
-  params.gnuplot_view = "map";
-  params.gnuplot_output = "output/figure_%s_%d.svg";
-  params.outvars = 
-  {
-    {ix::rhod_th, {.name = "\\rho_d \\theta", .unit = "kg/m^{-3} K"}},
-    {ix::rhod_rv, {.name = "\\rho_v", .unit = "kg/m^{-3}"}},
-    {ix::rhod_rc, {.name = "\\rho_c", .unit = "kg/m^{-3}"}},
-    {ix::rhod_rr, {.name = "\\rho_r", .unit = "kg/m^{-3}"}}
-  };
-
   // Kessler scheme options
   params.cloudph_opts.cevp = vm["cevp"].as<bool>();
   params.cloudph_opts.revp = vm["revp"].as<bool>();
@@ -144,7 +129,7 @@ void setopts(
   >::value>::type* = 0
 )
 {
-  using thrust_real_t = float; // TODO: option, warning, ...?  (if nvcc downgraded real_t=double to float)
+  using thrust_real_t = double; //float; // TODO: option, warning, ...?  (if nvcc downgraded real_t=double to float)
 
   po::options_description opts("Lagrangian microphysics options"); 
   opts.add_options()
@@ -154,25 +139,22 @@ void setopts(
   po::variables_map vm;
   handle_opts(opts, vm);
       
-  std::unique_ptr<libcloudphxx::lgrngn::particles_proto<thrust_real_t>> prtcls;
-
   int backend = -1;
   std::string backend_str = vm["backend"].as<std::string>();
   if (backend_str == "CUDA") backend = libcloudphxx::lgrngn::cuda;
   else if (backend_str == "OpenMP") backend = libcloudphxx::lgrngn::omp;
   else if (backend_str == "serial") backend = libcloudphxx::lgrngn::cpp;
 
-  prtcls.reset(libcloudphxx::lgrngn::factory<thrust_real_t>(backend,
+  thrust_real_t kappa = .5; // TODO!
+
+  typename libcloudphxx::lgrngn::opts_t<thrust_real_t>::dry_distros_t dry_distros;
+  boost::assign::ptr_map_insert<icmw8_case1::log_dry_radii<thrust_real_t>>(dry_distros)(kappa);
+
+  params.prtcls.reset(libcloudphxx::lgrngn::factory<thrust_real_t>::make(backend,
     vm["sd_conc_mean"].as<thrust_real_t>(), 
+    dry_distros,
     nx, nz, params.dx, params.dz
   ));
-
-  // TODO: move to hook_ante_loop... (otherwise timing does not cover initialisation)
-  icmw8_case1::log_dry_radii<thrust_real_t> pdf;
-  prtcls->init(&pdf);
-
-  // TODO: move to hook_post_step or hook_ante_step?
-  prtcls->step();
 }
 
 
@@ -242,19 +224,19 @@ int main(int argc, char** argv)
     if (micro == "blk_1m")
     {
       struct ix { enum {rhod_th, rhod_rv, rhod_rc, rhod_rr}; };
-      run<output::gnuplot<kin_cloud_2d_blk_1m<icmw8_case1::real_t, n_iters, solvers::strang, ix>>>(nx, nz, nt);
+      run<kin_cloud_2d_blk_1m<icmw8_case1::real_t, n_iters, solvers::strang, ix>>(nx, nz, nt);
     }
     else
     if (micro == "blk_2m")
     {
       struct ix { enum {rhod_th, rhod_rv, rhod_rc, rhod_rr, rhod_nc, rhod_nr}; };
-      run<output::gnuplot<kin_cloud_2d_blk_2m<icmw8_case1::real_t, n_iters, solvers::strang, ix>>>(nx, nz, nt);
+      run<kin_cloud_2d_blk_2m<icmw8_case1::real_t, n_iters, solvers::strang, ix>>(nx, nz, nt);
     }
     else 
     if (micro == "lgrngn")
     {
       struct ix { enum {rhod_th, rhod_rv}; };
-      run<output::gnuplot<kin_cloud_2d_lgrngn<icmw8_case1::real_t, n_iters, solvers::strang, ix>>>(nx, nz, nt);
+      run<kin_cloud_2d_lgrngn<icmw8_case1::real_t, n_iters, solvers::strang, ix>>(nx, nz, nt);
     }
     else BOOST_THROW_EXCEPTION(
       po::validation_error(

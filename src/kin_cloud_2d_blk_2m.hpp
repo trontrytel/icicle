@@ -33,7 +33,7 @@ class kin_cloud_2d_blk_2m : public kin_cloud_2d_common<real_t, n_iters, inhomo, 
   // ctor
   kin_cloud_2d_blk_2m( 
     typename parent_t::ctor_args_t args, 
-    const params_t &p
+    params_t &p
   ) : 
     parent_t(args, p),
     dz(p.dz),

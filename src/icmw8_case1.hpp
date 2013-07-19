@@ -142,5 +142,8 @@ namespace icmw8_case1
         ) * si::cubic_metres
       );
     }
+
+    log_dry_radii *do_clone() const 
+    { return new log_dry_radii( *this ); }
   };
 };

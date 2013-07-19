@@ -33,7 +33,7 @@ class kin_cloud_2d_common : public solvers::inhomo_solver<solvers::mpdata_2d<rea
   // ctor
   kin_cloud_2d_common( 
     typename parent_t::ctor_args_t args, 
-    const params_t &p
+    params_t &p
   ) : 
     parent_t(args, p),
     rhod(args.mem->tmp[__FILE__][0][0])
