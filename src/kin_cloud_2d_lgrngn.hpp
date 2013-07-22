@@ -27,16 +27,7 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, inhomo, 
   libcloudphxx::lgrngn::opts<real_t> opts;
   std::unique_ptr<libcloudphxx::lgrngn::particles_proto<real_t>> prtcls;
 
-  // helper method
-  typename decltype(prtcls)::element_type::arrinfo_t arrinfo(
-    const typename parent_t::arr_t &arr
-  ) 
-  {
-    return typename decltype(prtcls)::element_type::arrinfo_t({
-      arr.dataZero(),
-      arr.stride().data()
-    });
-  }
+      //arr.stride().data()
 
   protected:
 
@@ -47,12 +38,12 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, inhomo, 
     parent_t::hook_ante_loop(nt); // forcings after adjustments
     if (this->mem->rank() == 0) 
     {
-      prtcls->sync_e2l(
-	arrinfo(this->state(ix::rhod_th)),
-	arrinfo(this->state(ix::rhod_rv)),
-	arrinfo(this->rhod)
-      );
-      prtcls->init(); 
+      prtcls->init(
+        this->rhod.stride().data(),
+	this->state(ix::rhod_th).dataZero(),
+	this->state(ix::rhod_rv).dataZero(),
+	this->rhod.dataZero()
+      ); 
     }
   }
 
@@ -62,15 +53,10 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, inhomo, 
     parent_t::hook_post_step();
     if (this->mem->rank() == 0) 
     {
-      prtcls->sync_e2l(
-	arrinfo(this->state(ix::rhod_th)),
-	arrinfo(this->state(ix::rhod_rv))
-      );
-      prtcls->step(); 
-      prtcls->sync_l2e(
-	arrinfo(this->state(ix::rhod_th)),
-	arrinfo(this->state(ix::rhod_rv))
-      );
+      prtcls->step(
+	this->state(ix::rhod_th).dataZero(),
+	this->state(ix::rhod_rv).dataZero()
+      ); 
     }
   }
 

@@ -153,7 +153,7 @@ void setopts(
   params.prtcls.reset(libcloudphxx::lgrngn::factory<thrust_real_t>::make(backend,
     vm["sd_conc_mean"].as<thrust_real_t>(), 
     dry_distros,
-    nx, nz, params.dx, params.dz
+    nx, params.dx, nz, params.dz
   ));
 }
 
