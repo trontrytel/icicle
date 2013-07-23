@@ -26,7 +26,7 @@ target_link_libraries(icicle ${Boost_LIBRARIES})
 #TODO: check if it's there
 target_link_libraries(icicle cloudphxx_lgrngn)
 
-find_package(HDF5 COMPONENTS CXX REQUIRED QUIET)
+find_package(HDF5 COMPONENTS CXX HL REQUIRED QUIET)
 target_link_libraries(icicle ${HDF5_LIBRARIES})
 
 # handling Blitz debuging options in CMake's DEBUG mode

@@ -178,13 +178,14 @@ void setopts_micro(
 
 // model run logic - the same for any microphysics
 template <class solver_t>
-void run(int nx, int nz, int nt, std::string &outfile)
+void run(int nx, int nz, int nt, const std::string &outfile, const int &outfreq)
 {
   // instantiation of structure containing simulation parameters
   typename solver_t::params_t p;
 
   // output and simulation parameters
   p.outfile = outfile;
+  p.outfreq = outfreq;
   icmw8_case1::setopts(p, nx, nz);
   setopts_micro<solver_t>(p, nx, nz, nt);
 
@@ -217,6 +218,7 @@ int main(int argc, char** argv)
       ("nz", po::value<int>()->default_value(32) , "grid cell count in vertical")
       ("nt", po::value<int>()->default_value(500) , "timestep count")
       ("outfile", po::value<std::string>()->required(), "output file name (HDF5)")
+      ("outfreq", po::value<int>()->required(), "output rate (timestep interval)")
       ("help", "produce a help message (see also --micro X --help)")
     ;
     po::variables_map vm;
@@ -240,25 +242,26 @@ int main(int argc, char** argv)
 
     // handling the "outfile" option
     std::string outfile = vm["outfile"].as<std::string>();
+    int outfreq = vm["outfreq"].as<int>();
 
     // handling the "micro" option
     std::string micro = vm["micro"].as<std::string>();
     if (micro == "blk_1m")
     {
       struct ix { enum {rhod_th, rhod_rv, rhod_rc, rhod_rr}; };
-      run<kin_cloud_2d_blk_1m<icmw8_case1::real_t, n_iters, ix>>(nx, nz, nt, outfile);
+      run<kin_cloud_2d_blk_1m<icmw8_case1::real_t, n_iters, ix>>(nx, nz, nt, outfile, outfreq);
     }
     else
     if (micro == "blk_2m")
     {
       struct ix { enum {rhod_th, rhod_rv, rhod_rc, rhod_rr, rhod_nc, rhod_nr}; };
-      run<kin_cloud_2d_blk_2m<icmw8_case1::real_t, n_iters, ix>>(nx, nz, nt, outfile);
+      run<kin_cloud_2d_blk_2m<icmw8_case1::real_t, n_iters, ix>>(nx, nz, nt, outfile, outfreq);
     }
     else 
     if (micro == "lgrngn")
     {
       struct ix { enum {rhod_th, rhod_rv}; };
-      run<kin_cloud_2d_lgrngn<icmw8_case1::real_t, n_iters, ix>>(nx, nz, nt, outfile);
+      run<kin_cloud_2d_lgrngn<icmw8_case1::real_t, n_iters, ix>>(nx, nz, nt, outfile, outfreq);
     }
     else BOOST_THROW_EXCEPTION(
       po::validation_error(
