@@ -5,13 +5,12 @@
 template <
   typename real_t, 
   int n_iters, 
-  solvers::inhomo_e inhomo,
   typename ix,
   int n_eqs = 6
 >
-class kin_cloud_2d_blk_2m : public kin_cloud_2d_common<real_t, n_iters, inhomo, ix, n_eqs>
+class kin_cloud_2d_blk_2m : public kin_cloud_2d_common<real_t, n_iters, ix, n_eqs>
 {
-  using parent_t = kin_cloud_2d_common<real_t, n_iters, inhomo, ix, n_eqs>;
+  using parent_t = kin_cloud_2d_common<real_t, n_iters, ix, n_eqs>;
 
   //
   void update_forcings(libmpdataxx::arrvec_t<typename parent_t::arr_t> &rhs)

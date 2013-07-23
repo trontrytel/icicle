@@ -1,6 +1,7 @@
 #pragma once
 
 #include <libmpdata++/solvers/adv/mpdata_2d.hpp>
+#include <libmpdata++/output/hdf5.hpp>
 // note: FCT cannot be used as of now as the density is not constant in space here!
 #include <libmpdata++/solvers/adv+rhs/solver_inhomo.hpp>
 
@@ -9,13 +10,18 @@ using namespace libmpdataxx; // TODO: not here?
 template <
   typename real_t, 
   int n_iters, 
-  solvers::inhomo_e inhomo,
   typename ix_t,
   int n_eqs
 >
-class kin_cloud_2d_common : public solvers::inhomo_solver<solvers::mpdata_2d<real_t, n_iters, n_eqs>, inhomo>
+class kin_cloud_2d_common : public 
+  output::hdf5<
+    solvers::inhomo_solver<
+      solvers::mpdata_2d<real_t, n_iters, n_eqs>, 
+      solvers::strang
+    >
+  >
 {
-  using parent_t = solvers::inhomo_solver<solvers::mpdata_2d<real_t, n_iters, n_eqs>, inhomo>;
+  using parent_t = output::hdf5<solvers::inhomo_solver<solvers::mpdata_2d<real_t, n_iters, n_eqs>, solvers::strang>>;
 
   protected:
 

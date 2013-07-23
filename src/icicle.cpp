@@ -22,7 +22,7 @@
 namespace po = boost::program_options;
 
 #include <boost/exception/all.hpp>
-struct error: virtual boost::exception, virtual std::exception { }; 
+//struct error: virtual boost::exception, virtual std::exception { }; 
 
 
 
@@ -224,19 +224,19 @@ int main(int argc, char** argv)
     if (micro == "blk_1m")
     {
       struct ix { enum {rhod_th, rhod_rv, rhod_rc, rhod_rr}; };
-      run<kin_cloud_2d_blk_1m<icmw8_case1::real_t, n_iters, solvers::strang, ix>>(nx, nz, nt);
+      run<kin_cloud_2d_blk_1m<icmw8_case1::real_t, n_iters, ix>>(nx, nz, nt);
     }
     else
     if (micro == "blk_2m")
     {
       struct ix { enum {rhod_th, rhod_rv, rhod_rc, rhod_rr, rhod_nc, rhod_nr}; };
-      run<kin_cloud_2d_blk_2m<icmw8_case1::real_t, n_iters, solvers::strang, ix>>(nx, nz, nt);
+      run<kin_cloud_2d_blk_2m<icmw8_case1::real_t, n_iters, ix>>(nx, nz, nt);
     }
     else 
     if (micro == "lgrngn")
     {
       struct ix { enum {rhod_th, rhod_rv}; };
-      run<kin_cloud_2d_lgrngn<icmw8_case1::real_t, n_iters, solvers::strang, ix>>(nx, nz, nt);
+      run<kin_cloud_2d_lgrngn<icmw8_case1::real_t, n_iters, ix>>(nx, nz, nt);
     }
     else BOOST_THROW_EXCEPTION(
       po::validation_error(
