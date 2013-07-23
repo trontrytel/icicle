@@ -22,7 +22,6 @@
 namespace po = boost::program_options;
 
 #include <boost/exception/all.hpp>
-//struct error: virtual boost::exception, virtual std::exception { }; 
 
 
 
@@ -52,7 +51,7 @@ void handle_opts(
 
 // simulation and output parameters for micro=blk_1m
 template <class solver_t>
-void setopts(
+void setopts_micro(
   typename solver_t::params_t &params, 
   int nx, int nz, int nt,
   typename std::enable_if<std::is_same<
@@ -79,13 +78,23 @@ void setopts(
   params.cloudph_opts.conv = vm["conv"].as<bool>();
   params.cloudph_opts.clct = vm["clct"].as<bool>();
   params.cloudph_opts.sedi = vm["sedi"].as<bool>();
+
+  // output variables
+  params.outvars = {
+    // <TODO>: make it common among all three micro?
+    {solver_t::ix::rhod_th, {"rhod_th", "[K kg m-3]"}},
+    {solver_t::ix::rhod_rv, {"rhod_rv", "[kg m-3]"}},
+    // </TODO>
+    {solver_t::ix::rhod_rc, {"rhod_rc", "[kg m-3]"}},
+    {solver_t::ix::rhod_rr, {"rhod_rr", "[kg m-3]"}}
+  };
 }
 
 
 
 // simulation and output parameters for micro=blk_2m
 template <class solver_t>
-void setopts(
+void setopts_micro(
   typename solver_t::params_t &params, 
   int nx, int nz, int nt,
   typename std::enable_if<std::is_same<
@@ -120,7 +129,7 @@ void setopts(
 
 // simulation and output parameters for micro=lgrngn
 template <class solver_t>
-void setopts(
+void setopts_micro(
   typename solver_t::params_t &params, 
   int nx, int nz, int nt,
   typename std::enable_if<std::is_same<
@@ -155,6 +164,14 @@ void setopts(
     dry_distros,
     nx, params.dx, nz, params.dz
   ));
+
+  // output variables
+  params.outvars = {
+    // <TODO>: make it common among all three micro?
+    {solver_t::ix::rhod_th, {"rhod_th", "[K kg m-3]"}},
+    {solver_t::ix::rhod_rv, {"rhod_rv", "[kg m-3]"}}
+    // </TODO>
+  };
 }
 
 
@@ -169,7 +186,7 @@ void run(int nx, int nz, int nt, std::string &outfile)
   // output and simulation parameters
   p.outfile = outfile;
   icmw8_case1::setopts(p, nx, nz);
-  setopts<solver_t>(p, nx, nz, nt);
+  setopts_micro<solver_t>(p, nx, nz, nt);
 
   // solver instantiation
   concurr::threads<solver_t, bcond::cyclic, bcond::cyclic> slv(nx, nz, p);
