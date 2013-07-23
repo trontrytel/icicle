@@ -27,8 +27,6 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
   libcloudphxx::lgrngn::opts<real_t> opts;
   std::unique_ptr<libcloudphxx::lgrngn::particles_proto<real_t>> prtcls;
 
-      //arr.stride().data()
-
   protected:
 
   // deals with initial supersaturation
@@ -41,8 +39,8 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
     {
       prtcls->init(
         this->rhod.stride().data(),
-	this->state(ix::rhod_th).dataZero(),
-	this->state(ix::rhod_rv).dataZero(),
+	this->mem->state(ix::rhod_th).dataZero(),
+	this->mem->state(ix::rhod_rv).dataZero(),
 	this->rhod.dataZero()
       ); 
     }
