@@ -1,6 +1,4 @@
 add_subdirectory(adv_courant_one)
-add_subdirectory(out_netcdf)
-add_subdirectory(out_gnuplot)
 add_subdirectory(phc_terminal_vel)
 add_subdirectory(phc_kappa_koehler)
 add_subdirectory(wkc_icmw8_case1_t0)

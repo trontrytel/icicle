@@ -62,7 +62,6 @@ const quantity<phc::mixing_ratio, real_t>
 // http://www.rap.ucar.edu/~gthompsn/workshop2012/case1/kinematic_wrain.vocals.v3.for
 const int 
   bits = http_or_default("bits", int(64)),
-  toa = http_or_default("toa", int(0)),
   iord = http_or_default("iord", int(2)),
   nsd = http_or_default("nsd", int(4));  
 const quantity<si::time, real_t> 
@@ -142,7 +141,6 @@ int main(int argc, char **argv)
     << "../../icicle " << opts 
     << " --adv mpdata"
       << " --adv.mpdata.iord " << iord
-      << " --adv.mpdata.third_order " << toa
 //    << " --t_max " << real_t(t_max / si::seconds)
 //    << " --dt " << "auto" 
 //    << " --dt_out " << real_t(dt_out / si::seconds)

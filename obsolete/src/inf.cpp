@@ -52,25 +52,5 @@ map<string,string> inf::get_map()
     im["runtime_user"] =tmp;
   }   
 
-#ifdef USE_BOOST_TIMER
-  {
-    boost::timer::cpu_times t = tmr.elapsed(); // in nanoseconds
-    {
-      ostringstream tmp;
-      tmp << double(t.wall) * 1e-9;
-      im["wall_time_seconds"] = tmp.str();
-    }
-    {
-      ostringstream tmp;
-      tmp << double(t.user) * 1e-9;
-      im["user_time_seconds"] = tmp.str();
-    }
-    {
-      ostringstream tmp;
-      tmp << double(t.system) * 1e-9;
-      im["system_time_seconds"] = tmp.str();
-    }
-  }
-#endif
   return im;
 }

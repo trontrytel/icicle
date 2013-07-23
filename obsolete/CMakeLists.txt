@@ -186,19 +186,6 @@ icicle_check(status "boost_units" FATAL_ERROR ""
 #  "#include <boost/program_options.hpp>\n int main() {boost::program_options::options_description d\;}"
 #)
 
-# Boost.Timer (optional) 
-set(USE_BOOST_TIMER FALSE) 
-if (DEFINED BOOST_TIMER AND NOT BOOST_TIMER)
-  message(STATUS "Building without Boost.Timer support (-DBOOST_TIMER=NO specified or CMake have not found it)")
-else()
-  icicle_check_boost_lib(
-    USE_BOOST_TIMER "boost_timer" WARNING "Simulation timing will not be available."
-    "#include <boost/timer/timer.hpp>\n int main() { boost::timer::auto_cpu_timer t\; }" 
-    "boost_system"
-  )
-endif()                                                                
-icicle_option(USE_BOOST_TIMER "Simulation timing using Boost.Timer")
-
 # Boost.MPI (optional)
 set(USE_BOOST_MPI FALSE)
 if (DEFINED BOOST_MPI AND NOT BOOST_MPI)

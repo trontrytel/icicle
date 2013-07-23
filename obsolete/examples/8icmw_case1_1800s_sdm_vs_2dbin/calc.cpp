@@ -59,7 +59,6 @@ int main(int argc, char **argv)
     << "../../icicle " << opts 
     << " --adv mpdata"
       << " --adv.mpdata.iord " << 2
-      << " --adv.mpdata.third_order " << false
     << " --dt " << real_t(1)
     << " --nt " << real_t(100) // 1800
     << " --nout " << real_t(10) // 60
