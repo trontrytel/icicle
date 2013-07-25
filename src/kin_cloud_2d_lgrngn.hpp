@@ -23,8 +23,8 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
   // TODO: lgrngn has no inhomo - just adjustments
 
   // member fields
-  real_t dx, dy, dz;
-  libcloudphxx::lgrngn::opts<real_t> opts;
+  real_t dx, dz;
+  libcloudphxx::lgrngn::opts_t<real_t> opts;
   std::unique_ptr<libcloudphxx::lgrngn::particles_proto<real_t>> prtcls;
 
   protected:
@@ -67,25 +67,34 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
   struct params_t : parent_t::params_t 
   { 
     real_t dx = 0, dz = 0;
-    libcloudphxx::lgrngn::opts<real_t> cloudph_opts;
-    std::unique_ptr<libcloudphxx::lgrngn::particles_proto<real_t>> prtcls;
+    int backend = -1;
+    libcloudphxx::lgrngn::opts_t<real_t> cloudph_opts;
   };
 
   // ctor
   kin_cloud_2d_lgrngn( 
     typename parent_t::ctor_args_t args, 
-    params_t &p
+    const params_t &p
   ) : 
     parent_t(args, p),
     dx(p.dx),
-    dy(1),
     dz(p.dz),
-    opts(p.cloudph_opts),
-    prtcls(std::move(p.prtcls))
+    opts(p.cloudph_opts)
   {
     assert(p.dx != 0);
     assert(p.dz != 0);
     assert(p.dt != 0); 
-    opts.dt = p.dt;
+    assert(p.backend != -1);
+    //opts.dt = p.dt;
+
+    prtcls.reset(libcloudphxx::lgrngn::factory<real_t>::make(
+      p.backend, 
+      p.cloudph_opts.sd_conc_mean,
+      p.cloudph_opts.dry_distros,
+      p.cloudph_opts.nx,
+      p.dx,
+      p.cloudph_opts.nz,
+      p.dz      
+    ));
   }  
 };

@@ -39,7 +39,7 @@ class kin_cloud_2d_common : public
   // ctor
   kin_cloud_2d_common( 
     typename parent_t::ctor_args_t args, 
-    params_t &p
+    const params_t &p
   ) : 
     parent_t(args, p),
     rhod(args.mem->tmp[__FILE__][0][0])

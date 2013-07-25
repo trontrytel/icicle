@@ -19,20 +19,20 @@ class kin_cloud_2d_blk_2m : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
   }
 
   real_t dz; // TODO: all the dz stuff could perhaps go to common?
-  libcloudphxx::blk_2m::opts<real_t> opts;
+  libcloudphxx::blk_2m::opts_t<real_t> opts;
 
   public:
 
   struct params_t : parent_t::params_t 
   { 
     real_t dx = 0, dz = 0; // TODO: move to common?
-    libcloudphxx::blk_2m::opts<real_t> cloudph_opts;
+    libcloudphxx::blk_2m::opts_t<real_t> cloudph_opts;
   };
 
   // ctor
   kin_cloud_2d_blk_2m( 
     typename parent_t::ctor_args_t args, 
-    params_t &p
+    const params_t &p
   ) : 
     parent_t(args, p),
     dz(p.dz),

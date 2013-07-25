@@ -56,7 +56,7 @@ void setopts_micro(
   int nx, int nz, int nt,
   typename std::enable_if<std::is_same<
     decltype(solver_t::params_t::cloudph_opts),
-    libcloudphxx::blk_1m::opts<typename solver_t::real_t>
+    libcloudphxx::blk_1m::opts_t<typename solver_t::real_t>
   >::value>::type* = 0
 )
 {
@@ -99,7 +99,7 @@ void setopts_micro(
   int nx, int nz, int nt,
   typename std::enable_if<std::is_same<
     decltype(solver_t::params_t::cloudph_opts),
-    libcloudphxx::blk_2m::opts<typename solver_t::real_t>
+    libcloudphxx::blk_2m::opts_t<typename solver_t::real_t>
   >::value>::type* = 0
 )
 {
@@ -134,7 +134,7 @@ void setopts_micro(
   int nx, int nz, int nt,
   typename std::enable_if<std::is_same<
     decltype(solver_t::params_t::cloudph_opts),
-    libcloudphxx::lgrngn::opts<typename solver_t::real_t>
+    libcloudphxx::lgrngn::opts_t<typename solver_t::real_t>
   >::value>::type* = 0
 )
 {
@@ -148,22 +148,31 @@ void setopts_micro(
   po::variables_map vm;
   handle_opts(opts, vm);
       
-  int backend = -1;
-  std::string backend_str = vm["backend"].as<std::string>();
-  if (backend_str == "CUDA") backend = libcloudphxx::lgrngn::cuda;
-  else if (backend_str == "OpenMP") backend = libcloudphxx::lgrngn::omp;
-  else if (backend_str == "serial") backend = libcloudphxx::lgrngn::cpp;
-
   thrust_real_t kappa = .5; // TODO!
 
-  typename libcloudphxx::lgrngn::opts_t<thrust_real_t>::dry_distros_t dry_distros;
-  boost::assign::ptr_map_insert<icmw8_case1::log_dry_radii<thrust_real_t>>(dry_distros)(kappa);
-
-  params.prtcls.reset(libcloudphxx::lgrngn::factory<thrust_real_t>::make(backend,
+  //typename libcloudphxx::lgrngn::opts_t<thrust_real_t>::dry_distros_t dry_distros;
+/*
+  prtcls.reset(libcloudphxx::lgrngn::factory<thrust_real_t>::make(backend,
     vm["sd_conc_mean"].as<thrust_real_t>(), 
     dry_distros,
     nx, params.dx, nz, params.dz
   ));
+*/
+  std::string backend_str = vm["backend"].as<std::string>();
+  if (backend_str == "CUDA") params.backend = libcloudphxx::lgrngn::cuda;
+  else if (backend_str == "OpenMP") params.backend = libcloudphxx::lgrngn::omp;
+  else if (backend_str == "serial") params.backend = libcloudphxx::lgrngn::cpp;
+
+  params.cloudph_opts.sd_conc_mean = vm["sd_conc_mean"].as<thrust_real_t>();;
+  params.cloudph_opts.nx = nx;
+  params.cloudph_opts.nz = nz;
+  boost::assign::ptr_map_insert<
+    icmw8_case1::log_dry_radii<thrust_real_t> // value type
+  >(
+    params.cloudph_opts.dry_distros // map
+  )(
+    kappa // key
+  );
 
   // output variables
   params.outvars = {
@@ -217,7 +226,7 @@ int main(int argc, char** argv)
       ("nx", po::value<int>()->default_value(32) , "grid cell count in horizontal")
       ("nz", po::value<int>()->default_value(32) , "grid cell count in vertical")
       ("nt", po::value<int>()->default_value(500) , "timestep count")
-      ("outfile", po::value<std::string>()->required(), "output file name (HDF5)")
+      ("outfile", po::value<std::string>()->required(), "output file name (netCDF-compatible HDF5)")
       ("outfreq", po::value<int>()->required(), "output rate (timestep interval)")
       ("help", "produce a help message (see also --micro X --help)")
     ;

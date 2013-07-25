@@ -90,20 +90,20 @@ class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
   }
 
   real_t dz;
-  libcloudphxx::blk_1m::opts<real_t> opts;
+  libcloudphxx::blk_1m::opts_t<real_t> opts;
 
   public:
 
   struct params_t : parent_t::params_t 
   { 
     real_t dx = 0, dz = 0; // TODO: dx not needed here, move to common or even to solver_common!
-    libcloudphxx::blk_1m::opts<real_t> cloudph_opts;
+    libcloudphxx::blk_1m::opts_t<real_t> cloudph_opts;
   };
 
   // ctor
   kin_cloud_2d_blk_1m( 
     typename parent_t::ctor_args_t args, 
-    params_t &p
+    const params_t &p
   ) : 
     parent_t(args, p),
     dz(p.dz),
