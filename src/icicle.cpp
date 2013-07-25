@@ -148,16 +148,8 @@ void setopts_micro(
   po::variables_map vm;
   handle_opts(opts, vm);
       
-  thrust_real_t kappa = .5; // TODO!
+  thrust_real_t kappa = .5; // TODO!!!
 
-  //typename libcloudphxx::lgrngn::opts_t<thrust_real_t>::dry_distros_t dry_distros;
-/*
-  prtcls.reset(libcloudphxx::lgrngn::factory<thrust_real_t>::make(backend,
-    vm["sd_conc_mean"].as<thrust_real_t>(), 
-    dry_distros,
-    nx, params.dx, nz, params.dz
-  ));
-*/
   std::string backend_str = vm["backend"].as<std::string>();
   if (backend_str == "CUDA") params.backend = libcloudphxx::lgrngn::cuda;
   else if (backend_str == "OpenMP") params.backend = libcloudphxx::lgrngn::omp;
