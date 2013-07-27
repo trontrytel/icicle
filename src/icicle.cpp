@@ -16,20 +16,30 @@
 
 #include "icmw8_case1.hpp" // 8th ICMW case 1 by Wojciech Grabowski)
 
+//
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/variables_map.hpp>
 #include <boost/program_options/parsers.hpp>
 namespace po = boost::program_options;
 
+//
 #include <boost/exception/all.hpp>
 
-
+// 
+#if defined(__linux__)
+#  include <signal.h>
+#endif
 
 // some globals for option handling
 int ac;
 char** av; // TODO: write it down to a file as in icicle ... write the default (i.e. not specified) values as well!
 po::options_description opts_main("General options"); 
+bool *panic;
 
+void panic_handler(int)
+{
+  *panic = true;
+}
 
 void handle_opts(
   po::options_description &opts_micro,
@@ -196,6 +206,13 @@ void run(int nx, int nz, int nt, const std::string &outfile, const int &outfreq)
   // initial condition
   icmw8_case1::intcond(slv);
 
+  // setup panic pointer and the signal handler
+  panic = slv.panic_ptr();
+#if defined(__linux__)
+  const struct sigaction sa({.sa_handler = panic_handler});
+  for (auto &s : std::set<int>({SIGTERM, SIGINT})) sigaction(s, &sa, NULL);
+#endif
+ 
   // timestepping
   slv.advance(nt);
 }
