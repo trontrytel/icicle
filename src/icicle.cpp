@@ -16,6 +16,8 @@
 
 #include "icmw8_case1.hpp" // 8th ICMW case 1 by Wojciech Grabowski)
 
+#include <libmpdata++/output/hdf5.hpp>
+
 //
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/variables_map.hpp>
@@ -188,9 +190,11 @@ void setopts_micro(
 
 
 // model run logic - the same for any microphysics
-template <class solver_t>
+template <class solver_t_>
 void run(int nx, int nz, int nt, const std::string &outfile, const int &outfreq)
 {
+  using solver_t = output::hdf5<solver_t_>;
+
   // instantiation of structure containing simulation parameters
   typename solver_t::params_t p;
 

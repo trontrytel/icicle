@@ -23,7 +23,6 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
   // TODO: lgrngn has no inhomo - just adjustments
 
   // member fields
-  real_t dx, dz;
   libcloudphxx::lgrngn::opts_t<real_t> opts;
   std::unique_ptr<libcloudphxx::lgrngn::particles_proto<real_t>> prtcls;
 
@@ -66,7 +65,6 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
 
   struct params_t : parent_t::params_t 
   { 
-    real_t dx = 0, dz = 0;
     int backend = -1;
     libcloudphxx::lgrngn::opts_t<real_t> cloudph_opts;
   };
@@ -77,15 +75,9 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
     const params_t &p
   ) : 
     parent_t(args, p),
-    dx(p.dx),
-    dz(p.dz),
     opts(p.cloudph_opts)
   {
-    assert(p.dx != 0);
-    assert(p.dz != 0);
-    assert(p.dt != 0); 
     assert(p.backend != -1);
-    //opts.dt = p.dt;
 
     prtcls.reset(libcloudphxx::lgrngn::factory<real_t>::make(
       p.backend, 

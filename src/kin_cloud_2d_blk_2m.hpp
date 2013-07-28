@@ -18,14 +18,12 @@ class kin_cloud_2d_blk_2m : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
     parent_t::update_forcings(rhs);
   }
 
-  real_t dz; // TODO: all the dz stuff could perhaps go to common?
   libcloudphxx::blk_2m::opts_t<real_t> opts;
 
   public:
 
   struct params_t : parent_t::params_t 
   { 
-    real_t dx = 0, dz = 0; // TODO: move to common?
     libcloudphxx::blk_2m::opts_t<real_t> cloudph_opts;
   };
 
@@ -35,10 +33,7 @@ class kin_cloud_2d_blk_2m : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
     const params_t &p
   ) : 
     parent_t(args, p),
-    dz(p.dz),
     opts(p.cloudph_opts)
-  { 
-    assert(p.dz != 0);
-  }  
+  { }  
 };
 

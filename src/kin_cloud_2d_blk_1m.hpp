@@ -31,6 +31,7 @@ class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
     libcloudphxx::blk_1m::adjustments<real_t>( 
       opts, rhod, rhod_th, rhod_rv, rhod_rc, rhod_rr
     );
+    this->mem->barrier(); 
   }
 
   void zero_if_uninitialised(int e)
@@ -77,7 +78,7 @@ class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
     {
       const rng_t j = this->j;
       for (int i = this->i.first(); i <= this->i.last(); ++i)
-	libcloudphxx::blk_1m::forcings_columnwise<real_t>(opts, drhod_rr(i,j), rhod(i,j), rhod_rr(i,j), dz);
+	libcloudphxx::blk_1m::forcings_columnwise<real_t>(opts, drhod_rr(i,j), rhod(i,j), rhod_rr(i,j), this->dz);
     }
   }
 
@@ -89,14 +90,12 @@ class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
     // TODO: shouldn't condevap() be called again here to ensure adjusted field is output?
   }
 
-  real_t dz;
   libcloudphxx::blk_1m::opts_t<real_t> opts;
 
   public:
 
   struct params_t : parent_t::params_t 
   { 
-    real_t dx = 0, dz = 0; // TODO: dx not needed here, move to common or even to solver_common!
     libcloudphxx::blk_1m::opts_t<real_t> cloudph_opts;
   };
 
@@ -106,10 +105,8 @@ class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
     const params_t &p
   ) : 
     parent_t(args, p),
-    dz(p.dz),
     opts(p.cloudph_opts)
   {
-    assert(p.dz != 0);
     assert(p.dt != 0);
     opts.dt = p.dt;
   }  
