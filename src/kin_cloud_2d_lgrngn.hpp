@@ -26,6 +26,13 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
   libcloudphxx::lgrngn::opts_t<real_t> opts;
   std::unique_ptr<libcloudphxx::lgrngn::particles_proto<real_t>> prtcls;
 
+  void diag()
+  {
+    prtcls->diag();
+    // TODO: specify somehow what to record... and pass it to record_aux()
+    this->record_aux();
+  } 
+
   protected:
 
   // deals with initial supersaturation
@@ -42,6 +49,7 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
 	this->mem->state(ix::rhod_rv).dataZero(),
 	this->rhod.dataZero()
       ); 
+      diag();
     }
     // TODO: barrier?
   }
@@ -57,11 +65,7 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
 	this->state(ix::rhod_th).dataZero(),
 	this->state(ix::rhod_rv).dataZero()
       ); 
-      if (this->timestep % this->outfreq == 0) 
-      {
-        prtcls->diag();
-        this->record_aux();
-      } 
+      if (this->timestep % this->outfreq == 0) diag();
     }
     // TODO: barrier?
   }
