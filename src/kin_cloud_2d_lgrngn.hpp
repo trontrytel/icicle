@@ -32,7 +32,7 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
   void hook_ante_loop(int nt)
   {
     // TODO: max supersaturation for spin-up?
-    parent_t::hook_ante_loop(nt); // forcings after adjustments
+    parent_t::hook_ante_loop(nt); 
     // TODO: barrier?
     if (this->mem->rank() == 0) 
     {
@@ -57,6 +57,11 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
 	this->state(ix::rhod_th).dataZero(),
 	this->state(ix::rhod_rv).dataZero()
       ); 
+      if (this->timestep % this->outfreq == 0) 
+      {
+        prtcls->diag();
+        this->record_aux();
+      } 
     }
     // TODO: barrier?
   }

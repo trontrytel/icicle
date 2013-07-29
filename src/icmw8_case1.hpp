@@ -34,6 +34,7 @@ namespace icmw8_case1
   const quantity<si::time, real_t>
     dt = 4 * si::seconds;
 
+  // aerosol size spectrum parameters
   const quantity<si::length, real_t>
     mean_rd1 = .04e-6 / 2 * si::metres,
     mean_rd2 = .15e-6 / 2 * si::metres;
@@ -43,6 +44,10 @@ namespace icmw8_case1
   const quantity<power_typeof_helper<si::length, static_rational<-3>>::type, real_t>
     n1_tot = 60e6 / si::cubic_metres,
     n2_tot = 40e6 / si::cubic_metres;
+
+  // aerosol composition parameters
+  // TODO: kappa for lgrngn
+  // TODO: beta & b for blk_2m 
 
   // density profile as a function of altitude
   struct rhod

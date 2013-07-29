@@ -15,8 +15,7 @@
 #include "kin_cloud_2d_lgrngn.hpp"
 
 #include "icmw8_case1.hpp" // 8th ICMW case 1 by Wojciech Grabowski)
-
-#include <libmpdata++/output/hdf5.hpp>
+namespace setup = icmw8_case1;
 
 //
 #include <boost/program_options/options_description.hpp>
@@ -171,7 +170,7 @@ void setopts_micro(
   params.cloudph_opts.nx = nx;
   params.cloudph_opts.nz = nz;
   boost::assign::ptr_map_insert<
-    icmw8_case1::log_dry_radii<thrust_real_t> // value type
+    setup::log_dry_radii<thrust_real_t> // value type
   >(
     params.cloudph_opts.dry_distros // map
   )(
@@ -190,25 +189,23 @@ void setopts_micro(
 
 
 // model run logic - the same for any microphysics
-template <class solver_t_>
+template <class solver_t>
 void run(int nx, int nz, int nt, const std::string &outfile, const int &outfreq)
 {
-  using solver_t = output::hdf5<solver_t_>;
-
   // instantiation of structure containing simulation parameters
   typename solver_t::params_t p;
 
   // output and simulation parameters
   p.outfile = outfile;
   p.outfreq = outfreq;
-  icmw8_case1::setopts(p, nx, nz);
+  setup::setopts(p, nx, nz);
   setopts_micro<solver_t>(p, nx, nz, nt);
 
   // solver instantiation
   concurr::threads<solver_t, bcond::cyclic, bcond::cyclic> slv(nx, nz, p);
 
   // initial condition
-  icmw8_case1::intcond(slv);
+  setup::intcond(slv);
 
   // setup panic pointer and the signal handler
   panic = slv.panic_ptr();
@@ -271,19 +268,19 @@ int main(int argc, char** argv)
     if (micro == "blk_1m")
     {
       struct ix { enum {rhod_th, rhod_rv, rhod_rc, rhod_rr}; };
-      run<kin_cloud_2d_blk_1m<icmw8_case1::real_t, n_iters, ix>>(nx, nz, nt, outfile, outfreq);
+      run<kin_cloud_2d_blk_1m<setup::real_t, n_iters, ix>>(nx, nz, nt, outfile, outfreq);
     }
     else
     if (micro == "blk_2m")
     {
       struct ix { enum {rhod_th, rhod_rv, rhod_rc, rhod_rr, rhod_nc, rhod_nr}; };
-      run<kin_cloud_2d_blk_2m<icmw8_case1::real_t, n_iters, ix>>(nx, nz, nt, outfile, outfreq);
+      run<kin_cloud_2d_blk_2m<setup::real_t, n_iters, ix>>(nx, nz, nt, outfile, outfreq);
     }
     else 
     if (micro == "lgrngn")
     {
       struct ix { enum {rhod_th, rhod_rv}; };
-      run<kin_cloud_2d_lgrngn<icmw8_case1::real_t, n_iters, ix>>(nx, nz, nt, outfile, outfreq);
+      run<kin_cloud_2d_lgrngn<setup::real_t, n_iters, ix>>(nx, nz, nt, outfile, outfreq);
     }
     else BOOST_THROW_EXCEPTION(
       po::validation_error(

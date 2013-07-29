@@ -108,6 +108,6 @@ class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
     opts(p.cloudph_opts)
   {
     assert(p.dt != 0);
-    opts.dt = p.dt;
+    opts.dt = p.dt; // advection timestep = microphysics timestep
   }  
 };
