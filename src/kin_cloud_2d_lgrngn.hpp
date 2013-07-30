@@ -28,9 +28,11 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
 
   void diag()
   {
+    assert(this->mem->rank() == 0);
     prtcls->diag();
     // TODO: specify somehow what to record... and pass it to record_aux()
-    this->record_aux();
+    this->record_aux("sd_conc", prtcls->outbuf());
+    //                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ TODO!!!
   } 
 
   protected:
@@ -40,9 +42,12 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
   {
     // TODO: max supersaturation for spin-up?
     parent_t::hook_ante_loop(nt); 
+
     // TODO: barrier?
     if (this->mem->rank() == 0) 
     {
+      this->setup_aux("sd_conc"); // TODO: setup other fields, units?
+
       prtcls->init(
         this->rhod.stride().data(),
 	this->mem->state(ix::rhod_th).dataZero(),
@@ -57,7 +62,7 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
   // 
   void hook_post_step()
   {
-    parent_t::hook_post_step();
+    parent_t::hook_post_step(); // includes output
     // TODO: barrier?
     if (this->mem->rank() == 0) 
     {

@@ -75,7 +75,7 @@ void setopts_micro(
   opts.add_options()
     ("cevp", po::value<bool>()->default_value(true) , "cloud water evaporation (1=on, 0=off)")
     ("revp", po::value<bool>()->default_value(true) , "rain water evaporation (1=on, 0=off)")
-    ("conv", po::value<bool>()->default_value(true) , "conversion of cloud water into rain (1=on, 0=off)")
+    ("conv", po::value<bool>()->default_value(true) , "autoconversion of cloud water into rain (1=on, 0=off)")
     ("clct", po::value<bool>()->default_value(true) , "cloud water collection by rain (1=on, 0=off)")
     ("sedi", po::value<bool>()->default_value(true) , "rain water sedimentation (1=on, 0=off)")
 //TODO: venti
@@ -231,13 +231,14 @@ int main(int argc, char** argv)
 
   try
   {
+    // note: all options should have default values here to make "--micro=? --help" work
     opts_main.add_options()
       ("micro", po::value<std::string>()->required(), "one of: blk_1m, blk_2m, lgrngn")
       ("nx", po::value<int>()->default_value(32) , "grid cell count in horizontal")
       ("nz", po::value<int>()->default_value(32) , "grid cell count in vertical")
       ("nt", po::value<int>()->default_value(500) , "timestep count")
-      ("outfile", po::value<std::string>()->required(), "output file name (netCDF-compatible HDF5)")
-      ("outfreq", po::value<int>()->required(), "output rate (timestep interval)")
+      ("outfile", po::value<std::string>(), "output file name (netCDF-compatible HDF5)")
+      ("outfreq", po::value<int>(), "output rate (timestep interval)")
       ("help", "produce a help message (see also --micro X --help)")
     ;
     po::variables_map vm;
@@ -252,16 +253,23 @@ int main(int argc, char** argv)
 
     // checking if all required options present
     po::notify(vm); 
+    
+    // handling outfile && outfreq
+    std::string outfile; 
+    int outfreq;
+    if (!vm.count("help"))
+    {
+      if (!vm.count("outfile")) BOOST_THROW_EXCEPTION(po::required_option("outfile"));
+      if (!vm.count("outfreq")) BOOST_THROW_EXCEPTION(po::required_option("outfreq"));
+      outfile = vm["outfile"].as<std::string>();
+      outfreq = vm["outfreq"].as<int>();
+    }
 
     // handling nx, nz, nt options
     int 
       nx = vm["nx"].as<int>(),
       nz = vm["nz"].as<int>(),
       nt = vm["nt"].as<int>();
-
-    // handling the "outfile" option
-    std::string outfile = vm["outfile"].as<std::string>();
-    int outfreq = vm["outfreq"].as<int>();
 
     // handling the "micro" option
     std::string micro = vm["micro"].as<std::string>();
