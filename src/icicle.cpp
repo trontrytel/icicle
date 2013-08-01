@@ -155,6 +155,11 @@ void setopts_micro(
   opts.add_options()
     ("backend", po::value<std::string>()->required() , "backend (one of: CUDA, OpenMP, serial)")
     ("sd_conc_mean", po::value<thrust_real_t>()->required() , "mean super-droplet concentration per grid cell (int)")
+    ("adve", po::value<bool>()->default_value(true) , "particle advection             (1=on, 0=off)")
+    ("sedi", po::value<bool>()->default_value(true) , "particle sedimentation         (1=on, 0=off)")
+    ("rcyc", po::value<bool>()->default_value(true) , "particle recycling             (1=on, 0=off)")
+    ("cond", po::value<bool>()->default_value(true) , "particle condensational growth (1=on, 0=off)")
+    ("coal", po::value<bool>()->default_value(true) , "particle collisional growth    (1=on, 0=off)")
   ;
   po::variables_map vm;
   handle_opts(opts, vm);
@@ -184,6 +189,13 @@ void setopts_micro(
     {solver_t::ix::rhod_rv, {"rhod_rv", "[kg m-3]"}}
     // </TODO>
   };
+
+  // process toggling
+  params.cloudph_opts.adve = vm["adve"].as<bool>();
+  params.cloudph_opts.sedi = vm["sedi"].as<bool>();
+  params.cloudph_opts.rcyc = vm["rcyc"].as<bool>();
+  params.cloudph_opts.cond = vm["cond"].as<bool>();
+  params.cloudph_opts.coal = vm["coal"].as<bool>();
 }
 
 
