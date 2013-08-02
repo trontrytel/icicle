@@ -2,14 +2,15 @@
 
 #include <libmpdata++/solvers/adv/mpdata_2d.hpp>
 // note: FCT cannot be used as of now as the density is not constant in space here!
+#include <libmpdata++/solvers/adv/mpdata_fct_2d.hpp>
 #include <libmpdata++/solvers/adv+rhs/solver_inhomo.hpp>
 #include <libmpdata++/output/hdf5.hpp>
 
 using namespace libmpdataxx; // TODO: not here?
 
 template <
-  typename real_t, 
-  int n_iters, 
+  typename real_t,
+  int n_iters,
   typename ix_t,
   int n_eqs
 >

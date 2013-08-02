@@ -32,9 +32,9 @@ namespace icmw8_case1
     nzdz = 1500 * si::metres, 
     nxdx = 1500 * si::metres;
   const quantity<si::time, real_t>
-    dt = 4 * si::seconds;
+    dt = .1 * si::seconds;//4 * si::seconds;
 
-  // aerosol size spectrum parameters
+  //aerosol bimodal lognormal dist. for super droplets
   const quantity<si::length, real_t>
     mean_rd1 = .04e-6 / 2 * si::metres,
     mean_rd2 = .15e-6 / 2 * si::metres;
@@ -45,9 +45,13 @@ namespace icmw8_case1
     n1_tot = 60e6 / si::cubic_metres,
     n2_tot = 40e6 / si::cubic_metres;
 
-  // aerosol composition parameters
-  // TODO: kappa for lgrngn
-  // TODO: beta & b for blk_2m 
+  //aerosol lognormal dist. for 2-moment bulk scheme (needed for activation)
+  auto mean_rd = mean_rd2;
+  auto sdev_rd = sdev_rd2;
+  auto N_tot   = n2_tot;
+  //aerosol chemical composition parameter (needed for activation)
+  const quantity<si::dimensionless, real_t> chem_b = .55; //ammonium sulphate
+                                          //chem_b = 1.33; // sodium chloride
 
   // density profile as a function of altitude
   struct rhod
