@@ -15,6 +15,7 @@
 #include "kin_cloud_2d_lgrngn.hpp"
 
 #include "icmw8_case1.hpp" // 8th ICMW case 1 by Wojciech Grabowski)
+namespace setup = icmw8_case1;
 
 #include <libmpdata++/output/hdf5.hpp>
 
@@ -123,6 +124,10 @@ void setopts_micro(
     ("acnv", po::value<bool>()->default_value(true) , "TODO (on/off)")
     ("turb", po::value<bool>()->default_value(true) , "TODO (on/off)")
     ("sedi", po::value<bool>()->default_value(true) , "TODO (on/off)")
+    ("mean_rd", po::value<setup::real_t>()->default_value(setup::mean_rd / si::metres) , "TODO")
+    ("sdev_rd", po::value<setup::real_t>()->default_value(setup::sdev_rd) , "TODO")
+    ("N_tot",   po::value<setup::real_t>()->default_value(setup::N_tot * si::cubic_metres  ) , "TODO")
+    ("chem_b",  po::value<setup::real_t>()->default_value(setup::chem_b ) , "TODO")
 //TODO: venti
   ;
   po::variables_map vm;
@@ -135,6 +140,22 @@ void setopts_micro(
   params.cloudph_opts.acnv = vm["acnv"].as<bool>();
   params.cloudph_opts.turb = vm["turb"].as<bool>();
   params.cloudph_opts.sedi = vm["sedi"].as<bool>();
+  params.cloudph_opts.mean_rd = vm["mean_rd"].as<setup::real_t>() * si::metres;
+  params.cloudph_opts.sdev_rd = vm["sdev_rd"].as<setup::real_t>();
+  params.cloudph_opts.N_tot   = vm["N_tot"].as<setup::real_t>() / si::cubic_metres;
+  params.cloudph_opts.chem_b  = vm["chem_b"].as<setup::real_t>();
+
+  // output variables
+  params.outvars = {
+    // <TODO>: make it common among all three micro?
+    {solver_t::ix::rhod_th, {"rhod_th", "[K kg m-3]"}},
+    {solver_t::ix::rhod_rv, {"rhod_rv", "[kg m-3]"}},
+    // </TODO>
+    {solver_t::ix::rhod_rc, {"rhod_rc", "[kg m-3]"}},
+    {solver_t::ix::rhod_rr, {"rhod_rr", "[kg m-3]"}},
+    {solver_t::ix::rhod_nc, {"rhod_nc", "[m-3]"}},
+    {solver_t::ix::rhod_nr, {"rhod_nr", "[m-3]"}}
+  };
 }
 
 
