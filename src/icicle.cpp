@@ -17,8 +17,6 @@
 #include "icmw8_case1.hpp" // 8th ICMW case 1 by Wojciech Grabowski)
 namespace setup = icmw8_case1;
 
-#include <libmpdata++/output/hdf5.hpp>
-
 //
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/variables_map.hpp>
@@ -77,7 +75,7 @@ void setopts_micro(
   opts.add_options()
     ("cevp", po::value<bool>()->default_value(true) , "cloud water evaporation (1=on, 0=off)")
     ("revp", po::value<bool>()->default_value(true) , "rain water evaporation (1=on, 0=off)")
-    ("conv", po::value<bool>()->default_value(true) , "conversion of cloud water into rain (1=on, 0=off)")
+    ("conv", po::value<bool>()->default_value(true) , "autoconversion of cloud water into rain (1=on, 0=off)")
     ("clct", po::value<bool>()->default_value(true) , "cloud water collection by rain (1=on, 0=off)")
     ("sedi", po::value<bool>()->default_value(true) , "rain water sedimentation (1=on, 0=off)")
 //TODO: venti
@@ -177,6 +175,11 @@ void setopts_micro(
   opts.add_options()
     ("backend", po::value<std::string>()->required() , "backend (one of: CUDA, OpenMP, serial)")
     ("sd_conc_mean", po::value<thrust_real_t>()->required() , "mean super-droplet concentration per grid cell (int)")
+    ("adve", po::value<bool>()->default_value(true) , "particle advection             (1=on, 0=off)")
+    ("sedi", po::value<bool>()->default_value(true) , "particle sedimentation         (1=on, 0=off)")
+    ("rcyc", po::value<bool>()->default_value(true) , "particle recycling             (1=on, 0=off)")
+    ("cond", po::value<bool>()->default_value(true) , "particle condensational growth (1=on, 0=off)")
+    ("coal", po::value<bool>()->default_value(true) , "particle collisional growth    (1=on, 0=off)")
   ;
   po::variables_map vm;
   handle_opts(opts, vm);
@@ -192,7 +195,7 @@ void setopts_micro(
   params.cloudph_opts.nx = nx;
   params.cloudph_opts.nz = nz;
   boost::assign::ptr_map_insert<
-    icmw8_case1::log_dry_radii<thrust_real_t> // value type
+    setup::log_dry_radii<thrust_real_t> // value type
   >(
     params.cloudph_opts.dry_distros // map
   )(
@@ -206,30 +209,35 @@ void setopts_micro(
     {solver_t::ix::rhod_rv, {"rhod_rv", "[kg m-3]"}}
     // </TODO>
   };
+
+  // process toggling
+  params.cloudph_opts.adve = vm["adve"].as<bool>();
+  params.cloudph_opts.sedi = vm["sedi"].as<bool>();
+  params.cloudph_opts.rcyc = vm["rcyc"].as<bool>();
+  params.cloudph_opts.cond = vm["cond"].as<bool>();
+  params.cloudph_opts.coal = vm["coal"].as<bool>();
 }
 
 
 
 // model run logic - the same for any microphysics
-template <class solver_t_>
+template <class solver_t>
 void run(int nx, int nz, int nt, const std::string &outfile, const int &outfreq)
 {
-  using solver_t = output::hdf5<solver_t_>;
-
   // instantiation of structure containing simulation parameters
   typename solver_t::params_t p;
 
   // output and simulation parameters
   p.outfile = outfile;
   p.outfreq = outfreq;
-  icmw8_case1::setopts(p, nx, nz);
+  setup::setopts(p, nx, nz);
   setopts_micro<solver_t>(p, nx, nz, nt);
 
   // solver instantiation
   concurr::threads<solver_t, bcond::cyclic, bcond::cyclic> slv(nx, nz, p);
 
   // initial condition
-  icmw8_case1::intcond(slv);
+  setup::intcond(slv);
 
   // setup panic pointer and the signal handler
   panic = slv.panic_ptr();
@@ -255,13 +263,14 @@ int main(int argc, char** argv)
 
   try
   {
+    // note: all options should have default values here to make "--micro=? --help" work
     opts_main.add_options()
       ("micro", po::value<std::string>()->required(), "one of: blk_1m, blk_2m, lgrngn")
       ("nx", po::value<int>()->default_value(32) , "grid cell count in horizontal")
       ("nz", po::value<int>()->default_value(32) , "grid cell count in vertical")
       ("nt", po::value<int>()->default_value(500) , "timestep count")
-      ("outfile", po::value<std::string>()->required(), "output file name (netCDF-compatible HDF5)")
-      ("outfreq", po::value<int>()->required(), "output rate (timestep interval)")
+      ("outfile", po::value<std::string>(), "output file name (netCDF-compatible HDF5)")
+      ("outfreq", po::value<int>(), "output rate (timestep interval)")
       ("help", "produce a help message (see also --micro X --help)")
     ;
     po::variables_map vm;
@@ -276,6 +285,17 @@ int main(int argc, char** argv)
 
     // checking if all required options present
     po::notify(vm); 
+    
+    // handling outfile && outfreq
+    std::string outfile; 
+    int outfreq;
+    if (!vm.count("help"))
+    {
+      if (!vm.count("outfile")) BOOST_THROW_EXCEPTION(po::required_option("outfile"));
+      if (!vm.count("outfreq")) BOOST_THROW_EXCEPTION(po::required_option("outfreq"));
+      outfile = vm["outfile"].as<std::string>();
+      outfreq = vm["outfreq"].as<int>();
+    }
 
     // handling nx, nz, nt options
     int 
@@ -283,28 +303,24 @@ int main(int argc, char** argv)
       nz = vm["nz"].as<int>(),
       nt = vm["nt"].as<int>();
 
-    // handling the "outfile" option
-    std::string outfile = vm["outfile"].as<std::string>();
-    int outfreq = vm["outfreq"].as<int>();
-
     // handling the "micro" option
     std::string micro = vm["micro"].as<std::string>();
     if (micro == "blk_1m")
     {
       struct ix { enum {rhod_th, rhod_rv, rhod_rc, rhod_rr}; };
-      run<kin_cloud_2d_blk_1m<icmw8_case1::real_t, n_iters, ix>>(nx, nz, nt, outfile, outfreq);
+      run<kin_cloud_2d_blk_1m<setup::real_t, n_iters, ix>>(nx, nz, nt, outfile, outfreq);
     }
     else
     if (micro == "blk_2m")
     {
       struct ix { enum {rhod_th, rhod_rv, rhod_rc, rhod_rr, rhod_nc, rhod_nr}; };
-      run<kin_cloud_2d_blk_2m<icmw8_case1::real_t, n_iters, ix>>(nx, nz, nt, outfile, outfreq);
+      run<kin_cloud_2d_blk_2m<setup::real_t, n_iters, ix>>(nx, nz, nt, outfile, outfreq);
     }
     else 
     if (micro == "lgrngn")
     {
       struct ix { enum {rhod_th, rhod_rv}; };
-      run<kin_cloud_2d_lgrngn<icmw8_case1::real_t, n_iters, ix>>(nx, nz, nt, outfile, outfreq);
+      run<kin_cloud_2d_lgrngn<setup::real_t, n_iters, ix>>(nx, nz, nt, outfile, outfreq);
     }
     else BOOST_THROW_EXCEPTION(
       po::validation_error(
