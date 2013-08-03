@@ -18,18 +18,7 @@ namespace setup = icmw8_case1;
 // exception handling
 #include <boost/exception/all.hpp>
 
-// signal handling (kill, Ctrl+c)
-#if defined(__linux__)
-#  include <signal.h>
-#endif
-
-bool *panic;
-
-void panic_handler(int)
-{
-  *panic = true;
-}
-
+#include "panic.hpp"
 
 // model run logic - the same for any microphysics
 template <class solver_t>
@@ -52,10 +41,7 @@ void run(int nx, int nz, int nt, const std::string &outfile, const int &outfreq)
 
   // setup panic pointer and the signal handler
   panic = slv.panic_ptr();
-#if defined(__linux__)
-  const struct sigaction sa({.sa_handler = panic_handler});
-  for (auto &s : std::set<int>({SIGTERM, SIGINT})) sigaction(s, &sa, NULL);
-#endif
+  set_sigaction();
  
   // timestepping
   slv.advance(nt);

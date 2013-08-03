@@ -82,5 +82,5 @@ void setopts_micro(
   params.cloudph_opts.coal = vm["coal"].as<bool>();
 
   // output moments
-  
+   
 }
