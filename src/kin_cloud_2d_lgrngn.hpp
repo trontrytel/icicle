@@ -55,14 +55,18 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
     if (this->mem->rank() == 0) 
     {
       this->setup_aux("sd_conc"); // TODO: setup other fields, units?
+      //for (auto &rng_num : opts.out_dry) ;
+      //for (auto &rng_num : opts.out_wet) ;
 
       prtcls->init(
         make_arrinfo(this->mem->state(ix::rhod_th)),
         make_arrinfo(this->mem->state(ix::rhod_rv)),
 	make_arrinfo(this->rhod),
-        make_arrinfo(this->mem->courant(0)), //(rng_t::all(), rng_t(0, this->mem->span[1]-1)).reindex({0,0})),  // TODO: is reindexing needed here?
-        make_arrinfo(this->mem->courant(1)) //(rng_t(0, this->mem->span[0]-1), rng_t::all()).reindex({0,0})) 
+        make_arrinfo(this->mem->courant(0)),
+        make_arrinfo(this->mem->courant(1))
       ); 
+
+      // writing diagnostic data for the initial condition
       diag();
     }
     // TODO: barrier?
