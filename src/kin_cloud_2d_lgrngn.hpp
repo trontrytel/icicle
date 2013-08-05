@@ -60,8 +60,8 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
         make_arrinfo(this->mem->state(ix::rhod_th)),
         make_arrinfo(this->mem->state(ix::rhod_rv)),
 	make_arrinfo(this->rhod),
-        make_arrinfo(this->mem->courant(0)),
-        make_arrinfo(this->mem->courant(1))
+        make_arrinfo(this->mem->courant(0)), //(rng_t::all(), rng_t(0, this->mem->span[1]-1)).reindex({0,0})),  // TODO: is reindexing needed here?
+        make_arrinfo(this->mem->courant(1)) //(rng_t(0, this->mem->span[0]-1), rng_t::all()).reindex({0,0})) 
       ); 
       diag();
     }
@@ -103,8 +103,11 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
 
 // TODO: repeated elswhere, and works on a copy... 
     assert(p.dt != 0); 
-    auto opts = p.cloudph_opts;
+
+    auto opts = p.cloudph_opts; // making copy as p is constant
     opts.dt = p.dt; // advection timestep = microphysics timestep
+    opts.dx = p.dx;
+    opts.dz = p.dz;
 
     prtcls.reset(libcloudphxx::lgrngn::factory<real_t>::make(p.backend, opts));
   }  
