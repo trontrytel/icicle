@@ -86,15 +86,17 @@ void setopts_micro(
   {
     namespace qi = boost::spirit::qi;
     namespace phoenix = boost::phoenix;
+    using outmom_t = libcloudphxx::lgrngn::opts_t<setup::real_t>::outmom_t;
 
     std::string val = vm[opt].as<std::string>();
     auto first = val.begin();
     auto last  = val.end();
 
     std::vector<std::pair<std::string, std::string>> min_maxnum;
-    libcloudphxx::lgrngn::opts_t<setup::real_t>::outmom_t moms = opt == "out_dry"
-      ? params.cloudph_opts.out_dry
-      : params.cloudph_opts.out_wet;
+    outmom_t &moms = 
+      opt == "out_dry"
+        ? params.cloudph_opts.out_dry
+        : params.cloudph_opts.out_wet;
 
     const bool result = qi::phrase_parse(first, last, 
       *(
@@ -111,10 +113,10 @@ void setopts_micro(
     {
       int sep = ss.second.find('|'); 
 
-      auto iter_status = moms.insert(decltype(moms)::value_type({decltype(moms)::key_type(
+      auto iter_status = moms.insert(outmom_t::value_type({outmom_t::key_type(
         boost::lexical_cast<setup::real_t>(ss.first) * si::metres,
         boost::lexical_cast<setup::real_t>(ss.second.substr(0, sep)) * si::metres
-      ), decltype(moms)::mapped_type()}));
+      ), outmom_t::mapped_type()}));
 
       // TODO catch (boost::bad_lexical_cast &)
 
