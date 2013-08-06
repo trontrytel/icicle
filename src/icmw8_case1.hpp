@@ -32,7 +32,7 @@ namespace icmw8_case1
     nzdz = 1500 * si::metres, 
     nxdx = 1500 * si::metres;
   const quantity<si::time, real_t>
-    dt = 4 * si::seconds;//4 * si::seconds;
+    dt = 1. * si::seconds;//4 * si::seconds;
 
   //aerosol bimodal lognormal dist. for super droplets
   const quantity<si::length, real_t>

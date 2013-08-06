@@ -41,9 +41,12 @@ class kin_cloud_2d_blk_2m : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
 
     // element-wise
     {
+      this->mem->barrier(); //TODO is it really needed?
+
       const rng_t &i = this->i, &j = this->j;
       libcloudphxx::blk_2m::forcings_elementwise<real_t>(opts,     drhod_th(i,j), drhod_rv(i,j), drhod_rc(i,j), drhod_nc(i,j), 
 		                                         rhod(i,j), rhod_th(i,j),  rhod_rv(i,j),  rhod_rc(i,j),  rhod_nc(i,j));
+      this->mem->barrier(); //TODO is it really needed?
     }
 
   }
