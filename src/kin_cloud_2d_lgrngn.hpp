@@ -1,6 +1,7 @@
 #pragma once
 
 #include "kin_cloud_2d_common.hpp"
+#include "outmom.hpp"
 
 #include <libcloudph++/lgrngn/options.hpp>
 #include <libcloudph++/lgrngn/particles.hpp>
@@ -22,8 +23,8 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
   using parent_t = kin_cloud_2d_common<real_t, n_iters, ix, n_eqs>; // TODO: lgrngn has no inhomo - just adjustments
 
   // member fields
-  libcloudphxx::lgrngn::opts_t<real_t> opts; // a copy 
   std::unique_ptr<libcloudphxx::lgrngn::particles_proto<real_t>> prtcls;
+  outmom_t<real_t> out_dry, out_wet;
 
   // helper methods
   void diag()
@@ -37,24 +38,32 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
     // recording requested statistical moments
     {
       // dry
-      int rng = -1;
-      for (auto &rng_moms : opts.out_dry)
+      int rng_num = 0;
+      for (auto &rng_moms : out_dry)
       {
-        ++rng;
-        prtcls->diag_rd_moms(rng);
-//        for (auto &mom : rng_moms.second)
-//          this->record_aux(aux_name("rd", rng, mom), prtcls->outbuf(mom));
+        auto &rng(rng_moms.first);
+        prtcls->diag_dry_rng(rng.first / si::metres, rng.second / si::metres);
+        for (auto &mom : rng_moms.second)
+        {
+          prtcls->diag_dry_mom(mom);
+          this->record_aux(aux_name("rd", rng_num, mom), prtcls->outbuf());
+        }
+        rng_num++;
       }
     }
     {
       // wet
-      int rng = -1;
-      for (auto &rng_moms : opts.out_wet)
+      int rng_num = 0;
+      for (auto &rng_moms : out_wet)
       {
-        ++rng;
-        prtcls->diag_rw_moms(rng);
-//        for (auto &mom : rng_moms.second)
-//          this->record_aux(aux_name("rw", rng, mom), prtcls->outbuf(mom));
+        auto &rng(rng_moms.first);
+        prtcls->diag_wet_rng(rng.first / si::metres, rng.second / si::metres);
+        for (auto &mom : rng_moms.second)
+        {
+          prtcls->diag_wet_mom(mom);
+          this->record_aux(aux_name("rw", rng_num, mom), prtcls->outbuf());
+        }
+        rng_num++;
       }
     }
   } 
@@ -81,7 +90,7 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
 
   void setup_aux_helper(
     const std::string pfx, 
-    const typename libcloudphxx::lgrngn::opts_t<real_t>::outmom_t &outmoms
+    const outmom_t<real_t> &outmoms
   )
   {
     // TODO: attributes incl. units?
@@ -107,8 +116,8 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
     // TODO: barrier?
     if (this->mem->rank() == 0) 
     {
-      setup_aux_helper("rd", opts.out_dry); 
-      setup_aux_helper("rw", opts.out_wet); 
+      setup_aux_helper("rd", out_dry); 
+      setup_aux_helper("rw", out_wet); 
       this->setup_aux("sd_conc"); 
 
       prtcls->init(
@@ -147,6 +156,7 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
   { 
     int backend = -1;
     libcloudphxx::lgrngn::opts_t<real_t> cloudph_opts;
+    outmom_t<real_t> out_dry, out_wet;
   };
 
   // ctor
@@ -155,13 +165,15 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
     const params_t &p
   ) : 
     parent_t(args, p),
-    opts(p.cloudph_opts) // unnecesarily per each thread!
+    out_dry(p.out_dry), // TODO: unnecesarily per each thread!
+    out_wet(p.out_wet)  // ditto
   {
     if (this->mem->rank() == 0)
     {
       assert(p.backend != -1);
       assert(p.dt != 0); 
 
+      auto opts(p.cloudph_opts); // making a copy to be able to modify it
       opts.dt = p.dt; // advection timestep = microphysics timestep
       opts.dx = p.dx;
       opts.dz = p.dz;

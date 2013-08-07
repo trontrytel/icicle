@@ -28,7 +28,7 @@ void setopts_micro(
   >::value>::type* = 0
 )
 {
-  using thrust_real_t = double; //float; // TODO: option, warning, ...?  (if nvcc downgraded real_t=double to float)
+  using thrust_real_t = setup::real_t; // TODO: make it a choice?
 
   po::options_description opts("Lagrangian microphysics options"); 
   opts.add_options()
@@ -86,17 +86,16 @@ void setopts_micro(
   {
     namespace qi = boost::spirit::qi;
     namespace phoenix = boost::phoenix;
-    using outmom_t = libcloudphxx::lgrngn::opts_t<setup::real_t>::outmom_t;
 
     std::string val = vm[opt].as<std::string>();
     auto first = val.begin();
     auto last  = val.end();
 
     std::vector<std::pair<std::string, std::string>> min_maxnum;
-    outmom_t &moms = 
+    outmom_t<thrust_real_t> &moms = 
       opt == "out_dry"
-        ? params.cloudph_opts.out_dry
-        : params.cloudph_opts.out_wet;
+        ? params.out_dry
+        : params.out_wet;
 
     const bool result = qi::phrase_parse(first, last, 
       *(
@@ -113,10 +112,10 @@ void setopts_micro(
     {
       int sep = ss.second.find('|'); 
 
-      auto iter_status = moms.insert(outmom_t::value_type({outmom_t::key_type(
+      auto iter_status = moms.insert(outmom_t<thrust_real_t>::value_type({outmom_t<thrust_real_t>::key_type(
         boost::lexical_cast<setup::real_t>(ss.first) * si::metres,
         boost::lexical_cast<setup::real_t>(ss.second.substr(0, sep)) * si::metres
-      ), outmom_t::mapped_type()}));
+      ), outmom_t<setup::real_t>::mapped_type()}));
 
       // TODO catch (boost::bad_lexical_cast &)
 
