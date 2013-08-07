@@ -12,7 +12,7 @@
 namespace setup = icmw8_case1;
 
 #include "opts_blk_1m.hpp"
-//#include "opts_blk_2m.hpp"
+#include "opts_blk_2m.hpp"
 #include "opts_lgrngn.hpp"
 
 // exception handling
@@ -108,14 +108,12 @@ int main(int argc, char** argv)
       run<kin_cloud_2d_blk_1m<setup::real_t, n_iters, ix>>(nx, nz, nt, outfile, outfreq);
     }
     else
-/*
     if (micro == "blk_2m")
     {
       struct ix { enum {rhod_th, rhod_rv, rhod_rc, rhod_rr, rhod_nc, rhod_nr}; };
       run<kin_cloud_2d_blk_2m<setup::real_t, n_iters, ix>>(nx, nz, nt, outfile, outfreq);
     }
     else 
-*/
     if (micro == "lgrngn")
     {
       struct ix { enum {rhod_th, rhod_rv}; };
