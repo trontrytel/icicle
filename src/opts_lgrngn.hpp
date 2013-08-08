@@ -35,11 +35,11 @@ void setopts_micro(
     ("backend", po::value<std::string>()->required() , "backend (one of: CUDA, OpenMP, serial)")
     ("sd_conc_mean", po::value<thrust_real_t>()->required() , "mean super-droplet concentration per grid cell (int)")
     // processes
-    ("adve", po::value<bool>()->default_value(true) , "particle advection             (1=on, 0=off)")
-    ("sedi", po::value<bool>()->default_value(true) , "particle sedimentation         (1=on, 0=off)")
-    ("rcyc", po::value<bool>()->default_value(true) , "particle recycling             (1=on, 0=off)")
-    ("cond", po::value<bool>()->default_value(true) , "particle condensational growth (1=on, 0=off)")
-    ("coal", po::value<bool>()->default_value(true) , "particle collisional growth    (1=on, 0=off)")
+    ("adve", po::value<bool>()->default_value(true) , "particle advection     (1=on, 0=off)")
+    ("sedi", po::value<bool>()->default_value(true) , "particle sedimentation (1=on, 0=off)")
+    ("rcyc", po::value<bool>()->default_value(true) , "particle recycling     (1=on, 0=off)")
+    ("cond", po::value<bool>()->default_value(true) , "condensational growth  (1=on, 0=off)")
+    ("coal", po::value<bool>()->default_value(true) , "collisional growth     (1=on, 0=off)")
     // 
     ("out_dry", po::value<std::string>()->default_value(".5e-6:25e-6|0"),       "dry radius ranges and moment numbers (r1:r2|n1,n2...;...)")
     ("out_wet", po::value<std::string>()->default_value(".5e-6:25e-6|0,1,2,3"),  "wet radius ranges and moment numbers (r1:r2|n1,n2...;...)")
