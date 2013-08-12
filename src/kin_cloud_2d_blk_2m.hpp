@@ -2,6 +2,7 @@
 
 #include <libcloudph++/blk_2m/options.hpp>
 #include <libcloudph++/blk_2m/forcings_elementwise.hpp>
+#include <libcloudph++/blk_2m/forcings_columnwise.hpp>
 
 template <
   typename real_t, 
@@ -41,14 +42,29 @@ class kin_cloud_2d_blk_2m : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
 
     // element-wise
     {
-      this->mem->barrier(); //TODO is it really needed?
+      this->mem->barrier();
 
       const rng_t &i = this->i, &j = this->j;
-      libcloudphxx::blk_2m::forcings_elementwise<real_t>(opts,     drhod_th(i,j), drhod_rv(i,j), drhod_rc(i,j), drhod_nc(i,j), 
-		                                         rhod(i,j), rhod_th(i,j),  rhod_rv(i,j),  rhod_rc(i,j),  rhod_nc(i,j));
-      this->mem->barrier(); //TODO is it really needed?
+
+      libcloudphxx::blk_2m::forcings_elementwise<real_t>(
+        opts,     drhod_th(i,j), drhod_rv(i,j), drhod_rc(i,j), drhod_nc(i,j), drhod_rr(i,j), drhod_nr(i,j),
+	rhod(i,j), rhod_th(i,j),  rhod_rv(i,j),  rhod_rc(i,j),  rhod_nc(i,j),  rhod_rr(i,j),  rhod_nr(i,j)
+      );
+
+      this->mem->barrier();
     }
 
+    // column-wise
+    {
+      this->mem->barrier();
+
+      const rng_t j = this->j;
+
+      for (int i = this->i.first(); i <= this->i.last(); ++i)
+        libcloudphxx::blk_2m::forcings_columnwise<real_t>(opts, rhod(i,j), rhod_rr(i,j), rhod_nr(i,j), drhod_rr(i,j), drhod_nr(i,j), this->dz);
+
+      this->mem->barrier();
+    }
   }
 
   libcloudphxx::blk_2m::opts_t<real_t> opts;
@@ -61,7 +77,7 @@ class kin_cloud_2d_blk_2m : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
     zero_if_uninitialised(ix::rhod_rc);
     zero_if_uninitialised(ix::rhod_nc);
     zero_if_uninitialised(ix::rhod_rr);
-    zero_if_uninitialised(ix::rhod_nc);
+    zero_if_uninitialised(ix::rhod_nr);
 
     parent_t::hook_ante_loop(nt); // forcings after adjustments
   }

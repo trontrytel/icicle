@@ -87,7 +87,6 @@ class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
   {
     condevap(); // treat saturation adjustment as post-advection, pre-rhs adjustment
     parent_t::hook_post_step(); // includes the above forcings
-    // TODO: shouldn't condevap() be called again here to ensure adjusted field is output?
   }
 
   libcloudphxx::blk_1m::opts_t<real_t> opts;
