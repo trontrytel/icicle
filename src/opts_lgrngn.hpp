@@ -43,6 +43,7 @@ void setopts_micro(
     // 
     ("out_dry", po::value<std::string>()->default_value(".5e-6:25e-6|0"),       "dry radius ranges and moment numbers (r1:r2|n1,n2...;...)")
     ("out_wet", po::value<std::string>()->default_value(".5e-6:25e-6|0,1,2,3"),  "wet radius ranges and moment numbers (r1:r2|n1,n2...;...)")
+    // TODO: MAC, HAC, vent_coef
   ;
   po::variables_map vm;
   handle_opts(opts, vm);

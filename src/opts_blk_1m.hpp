@@ -28,7 +28,7 @@ void setopts_micro(
     ("conv", po::value<bool>()->default_value(true) , "autoconversion of cloud water into rain (1=on, 0=off)")
     ("clct", po::value<bool>()->default_value(true) , "cloud water collection by rain (1=on, 0=off)")
     ("sedi", po::value<bool>()->default_value(true) , "rain water sedimentation (1=on, 0=off)")
-//TODO: venti
+//TODO: venti, autoconv_threshold
   ;
   po::variables_map vm;
   handle_opts(opts, vm);
