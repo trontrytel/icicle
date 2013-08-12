@@ -1,7 +1,4 @@
 # requireing C++11  TODO-check if the compiler supports it!
-set(CMAKE_CXX_FLAGS "-std=c++11")
-#set(CMAKE_CXX_FLAGS "-std=c++11 -Wfatal-errors")
-
 
 find_package(OpenMP)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
