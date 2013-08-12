@@ -3,7 +3,7 @@
 #include <libmpdata++/solvers/adv/donorcell_2d.hpp>
 #include <libmpdata++/solvers/adv/mpdata_2d.hpp>
 // note: FCT cannot be used as of now as the density is not constant in space here!
-//#include <libmpdata++/solvers/adv/mpdata_fct_2d.hpp>
+#include <libmpdata++/solvers/adv/mpdata_fct_2d.hpp>
 #include <libmpdata++/solvers/adv+rhs/solver_inhomo.hpp>
 #include <libmpdata++/output/hdf5.hpp>
 
@@ -19,14 +19,14 @@ class kin_cloud_2d_common : public
     output::hdf5<
       solvers::inhomo_solver<
 //	solvers::mpdata_fct_2d<real_t, n_iters, n_eqs, formulae::mpdata::iga>, 
-	solvers::mpdata_2d<real_t, n_iters, n_eqs>, 
-//	solvers::donorcell_2d<real_t, n_eqs>, 
+//	solvers::mpdata_2d<real_t, n_iters, n_eqs>, 
+	solvers::donorcell_2d<real_t, n_eqs>, 
 	solvers::strang
     >
   >
 {
-  using parent_t = output::hdf5<solvers::inhomo_solver<solvers::mpdata_2d<real_t, n_iters, n_eqs>, solvers::strang>>;
-//  using parent_t = output::hdf5<solvers::inhomo_solver<solvers::donorcell_2d<real_t, n_eqs>, solvers::strang>>;
+//  using parent_t = output::hdf5<solvers::inhomo_solver<solvers::mpdata_fct_2d<real_t, n_iters, n_eqs, formulae::mpdata::iga>, solvers::strang>>;
+  using parent_t = output::hdf5<solvers::inhomo_solver<solvers::donorcell_2d<real_t, n_eqs>, solvers::strang>>;
 
   protected:
 

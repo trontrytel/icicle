@@ -28,7 +28,6 @@ void setopts_micro(
     ("cond", po::value<bool>()->default_value(true) , "TODO (on/off)")
     ("accr", po::value<bool>()->default_value(true) , "TODO (on/off)")
     ("acnv", po::value<bool>()->default_value(true) , "TODO (on/off)")
-    ("turb", po::value<bool>()->default_value(true) , "TODO (on/off)")
     ("sedi", po::value<bool>()->default_value(true) , "TODO (on/off)")
     ("mean_rd", po::value<setup::real_t>()->default_value(setup::mean_rd / si::metres) , "TODO")
     ("sdev_rd", po::value<setup::real_t>()->default_value(setup::sdev_rd) , "TODO")
@@ -44,7 +43,6 @@ void setopts_micro(
   params.cloudph_opts.cond = vm["cond"].as<bool>();
   params.cloudph_opts.accr = vm["accr"].as<bool>();
   params.cloudph_opts.acnv = vm["acnv"].as<bool>();
-  params.cloudph_opts.turb = vm["turb"].as<bool>();
   params.cloudph_opts.sedi = vm["sedi"].as<bool>();
   params.cloudph_opts.mean_rd = vm["mean_rd"].as<setup::real_t>() * si::metres;
   params.cloudph_opts.sdev_rd = vm["sdev_rd"].as<setup::real_t>();
