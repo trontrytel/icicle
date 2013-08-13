@@ -37,13 +37,13 @@ void setopts_micro(
     // processes
     ("adve", po::value<bool>()->default_value(true) , "particle advection     (1=on, 0=off)")
     ("sedi", po::value<bool>()->default_value(true) , "particle sedimentation (1=on, 0=off)")
-    ("rcyc", po::value<bool>()->default_value(true) , "particle recycling     (1=on, 0=off)")
     ("cond", po::value<bool>()->default_value(true) , "condensational growth  (1=on, 0=off)")
     ("coal", po::value<bool>()->default_value(true) , "collisional growth     (1=on, 0=off)")
+    ("rcyc", po::value<bool>()->default_value(false) , "particle recycling    (1=on, 0=off)")
+    ("chem", po::value<bool>()->default_value(false) , "aqueous chemistry     (1=on, 0=off)")
     // free parameters
     ("sstp_cond", po::value<int>()->default_value(100), "no. of substeps for condensation")
     ("sstp_coal", po::value<int>()->default_value(1), "no. of substeps for coalescence")
-    ("sstp_sedi", po::value<int>()->default_value(1), "no. of substeps for sedimentation")
     ("RH_max", po::value<setup::real_t>()->default_value(1.01), "RH limit for drop growth equation")
     // 
     ("out_dry", po::value<std::string>()->default_value(".5e-6:25e-6|0"),       "dry radius ranges and moment numbers (r1:r2|n1,n2...;...)")
@@ -82,14 +82,14 @@ void setopts_micro(
   // process toggling
   params.cloudph_opts.adve = vm["adve"].as<bool>();
   params.cloudph_opts.sedi = vm["sedi"].as<bool>();
-  params.cloudph_opts.rcyc = vm["rcyc"].as<bool>();
   params.cloudph_opts.cond = vm["cond"].as<bool>();
   params.cloudph_opts.coal = vm["coal"].as<bool>();
+  params.cloudph_opts.rcyc = vm["rcyc"].as<bool>();
+  params.cloudph_opts.chem = vm["chem"].as<bool>();
 
   // free parameters
   params.cloudph_opts.sstp_cond = vm["sstp_cond"].as<int>();
   params.cloudph_opts.sstp_coal = vm["sstp_coal"].as<int>();
-  params.cloudph_opts.sstp_sedi = vm["sstp_sedi"].as<int>();
   params.cloudph_opts.RH_max = vm["RH_max"].as<thrust_real_t>();
 
   // parsing --out_dry and --out_wet options values
