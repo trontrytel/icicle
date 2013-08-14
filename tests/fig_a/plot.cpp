@@ -7,7 +7,7 @@ int main(int ac, char** av)
   if (ac != 2) error_macro("expecting 1 argument: CMAKE_BINARY_DIR")
 
   string dir = string(av[1]) + "/tests/fig_a/";
-  set<string> files({"out_blk_1m.h5", "out_blk_2m.h5", "out_lgrngn.h5"});
+  set<string> files({"out_blk_1m.h5", "out_blk_2m.h5"/*, "out_lgrngn.h5"*/});
 
   Gnuplot gp;
   gp << "set term svg\n";
