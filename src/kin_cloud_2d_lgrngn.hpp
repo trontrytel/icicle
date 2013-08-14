@@ -7,8 +7,6 @@
 #include <libcloudph++/lgrngn/particles.hpp>
 
 
-// TODO: what should the CPU do while waining for GPU working on particles stuff?
-
 // @brief a minimalistic kinematic cloud model with lagrangian microphysics
 //        built on top of the mpdata_2d solver (by extending it with
 //        custom hook_ante_loop() and hook_post_step() methods)
@@ -24,7 +22,6 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
 
   // member fields
   std::unique_ptr<libcloudphxx::lgrngn::particles_proto<real_t>> prtcls;
-  outmom_t<real_t> out_dry, out_wet;
 
   // helper methods
   void diag()
@@ -39,7 +36,7 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
     {
       // dry
       int rng_num = 0;
-      for (auto &rng_moms : out_dry)
+      for (auto &rng_moms : params.out_dry)
       {
         auto &rng(rng_moms.first);
         prtcls->diag_dry_rng(rng.first / si::metres, rng.second / si::metres);
@@ -54,7 +51,7 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
     {
       // wet
       int rng_num = 0;
-      for (auto &rng_moms : out_wet)
+      for (auto &rng_moms : params.out_wet)
       {
         auto &rng(rng_moms.first);
         prtcls->diag_wet_rng(rng.first / si::metres, rng.second / si::metres);
@@ -110,14 +107,22 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
   // deals with initial supersaturation
   void hook_ante_loop(int nt)
   {
-    // TODO: max supersaturation for spin-up?
     parent_t::hook_ante_loop(nt); 
 
     // TODO: barrier?
     if (this->mem->rank() == 0) 
     {
-      setup_aux_helper("rd", out_dry); 
-      setup_aux_helper("rw", out_wet); 
+      assert(params.backend != -1);
+      assert(params.dt != 0); 
+
+      params.cloudph_opts.dt = params.dt; // advection timestep = microphysics timestep
+      params.cloudph_opts.dx = params.dx;
+      params.cloudph_opts.dz = params.dz;
+
+      prtcls.reset(libcloudphxx::lgrngn::factory<real_t>::make(params.backend, params.cloudph_opts));
+
+      setup_aux_helper("rd", params.out_dry); 
+      setup_aux_helper("rw", params.out_wet); 
       this->setup_aux("sd_conc"); 
 
       prtcls->init(
@@ -159,26 +164,22 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
     outmom_t<real_t> out_dry, out_wet;
   };
 
+  private:
+
+  // per-thread copy of params
+  params_t params;
+
+  public:
+
   // ctor
   kin_cloud_2d_lgrngn( 
     typename parent_t::ctor_args_t args, 
     const params_t &p
   ) : 
     parent_t(args, p),
-    out_dry(p.out_dry), // TODO: unnecesarily per each thread!
-    out_wet(p.out_wet)  // ditto
+    params(p)
   {
-    if (this->mem->rank() == 0)
-    {
-      assert(p.backend != -1);
-      assert(p.dt != 0); 
-
-      auto opts(p.cloudph_opts); // making a copy to be able to modify it
-      opts.dt = p.dt; // advection timestep = microphysics timestep
-      opts.dx = p.dx;
-      opts.dz = p.dz;
-
-      prtcls.reset(libcloudphxx::lgrngn::factory<real_t>::make(p.backend, opts));
-    }
+    // delaying any initialisation to ante_loop as rank() does not function within ctor!
+    // TODO: equip rank() in libmpdata with an assert() checking if not in serial block
   }  
 };

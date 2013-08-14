@@ -21,6 +21,7 @@ void setopts_micro(
   >::value>::type* = 0
 )
 {
+std::cerr << "setopts_blk_1m" << std::endl;
   po::options_description opts("Single-moment bulk microphysics options"); 
   opts.add_options()
     ("cevp", po::value<bool>()->default_value(true) , "cloud water evaporation (1=on, 0=off)")
