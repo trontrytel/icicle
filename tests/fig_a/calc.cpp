@@ -14,11 +14,11 @@ int main(int ac, char** av)
   if (ac != 2) error_macro("expecting one argument - CMAKE_BINARY_DIR");
 
   string opts_common = 
-    "--outfreq=10 --nt 10";
+    "--outfreq=500 --nt=500 --nx=50 --nz=50";
   set<string> opts_micro({
-    "--micro=blk_1m --outfile=out_blk_1m.h5",
-    "--micro=blk_2m --outfile=out_blk_2m.h5",
-    "--micro=lgrngn --outfile=out_lgrngn.h5 --backend=CUDA --sd_conc_mean=64 --sstp_cond=20 --RH_max 1.2" // TODO!
+//    "--micro=blk_1m --outfile=out_blk_1m.h5",
+//    "--micro=blk_2m --outfile=out_blk_2m.h5",
+    "--micro=lgrngn --outfile=out_lgrngn.h5 --backend=CUDA --sd_conc_mean=24 --sstp_cond=20" // TODO!
   });
 
   for (auto &opts_m : opts_micro)

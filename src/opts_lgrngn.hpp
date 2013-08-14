@@ -28,6 +28,7 @@ void setopts_micro(
   >::value>::type* = 0
 )
 {
+std::cerr << "setopts_lgrngn" << std::endl;
   using thrust_real_t = setup::real_t; // TODO: make it a choice?
 
   po::options_description opts("Lagrangian microphysics options"); 
@@ -35,12 +36,12 @@ void setopts_micro(
     ("backend", po::value<std::string>()->required() , "backend (one of: CUDA, OpenMP, serial)")
     ("sd_conc_mean", po::value<thrust_real_t>()->required() , "mean super-droplet concentration per grid cell (int)")
     // processes
-    ("adve", po::value<bool>()->default_value(true) , "particle advection     (1=on, 0=off)")
-    ("sedi", po::value<bool>()->default_value(true) , "particle sedimentation (1=on, 0=off)")
-    ("cond", po::value<bool>()->default_value(true) , "condensational growth  (1=on, 0=off)")
-    ("coal", po::value<bool>()->default_value(true) , "collisional growth     (1=on, 0=off)")
-    ("rcyc", po::value<bool>()->default_value(false) , "particle recycling    (1=on, 0=off)")
-    ("chem", po::value<bool>()->default_value(false) , "aqueous chemistry     (1=on, 0=off)")
+    ("adve", po::value<bool>()->default_value(true ) , "particle advection     (1=on, 0=off)")
+    ("sedi", po::value<bool>()->default_value(true ) , "particle sedimentation (1=on, 0=off)")
+    ("cond", po::value<bool>()->default_value(true ) , "condensational growth  (1=on, 0=off)")
+    ("coal", po::value<bool>()->default_value(true ) , "collisional growth     (1=on, 0=off)")
+    ("rcyc", po::value<bool>()->default_value(false) , "particle recycling     (1=on, 0=off)")
+    ("chem", po::value<bool>()->default_value(false) , "aqueous chemistry      (1=on, 0=off)")
     // free parameters
     ("sstp_cond", po::value<int>()->default_value(100), "no. of substeps for condensation")
     ("sstp_coal", po::value<int>()->default_value(1), "no. of substeps for coalescence")

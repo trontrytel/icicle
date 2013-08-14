@@ -22,6 +22,7 @@ void setopts_micro(
   >::value>::type* = 0
 )
 {
+std::cerr << "setopts_blk_2m" << std::endl;
   po::options_description opts("Double-moment bulk microphysics options"); 
   opts.add_options()
     ("acti", po::value<bool>()->default_value(true) , "TODO (on/off)")
