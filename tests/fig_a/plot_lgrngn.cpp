@@ -6,31 +6,73 @@ int main(int ac, char** av)
 {
   if (ac != 2) error_macro("expecting 1 argument: CMAKE_BINARY_DIR")
 
-  string file = string(av[1]) + "/tests/fig_a/out_lgrngn.h5";
+  std::string
+    dir = string(av[1]) + "/tests/fig_a/",
+    h5  = dir + "out_lgrngn.h5",
+    svg = dir + "out_lgrngn.svg";
 
   Gnuplot gp;
+  init(gp, svg, 3, 2);
 
-  gp << "set term svg size 700, 700 fname \"Verdana\" fsize 9 \n";
-  // progressive-rock connoisseur palette ;)
-  gp << "set palette defined (0 '#FFFFFF', 1 '#993399', 2 '#00CCFF', 3 '#66CC00', 4 '#FFFF00', 5 '#FC8727', 6 '#FD0000')\n";
-  gp << "set view map\n";
 
-  gp << "set output '" << av[1] << "/tests/fig_a/lgrngn.svg'\n";
+  // liquid water content
+  { //                                                   rho_w  kg2g
+    auto tmp = h5load(h5, "rw_rng0_mom3") * 4./3 * 3.14 * 1e3 * 1e3;
+    gp << "set title 'liquid water content [g/m^3]'\n";
+    gp << "set cbrange [0:1.5]\n";
+    plot(gp, tmp);
+  }
 
-  gp << "set multiplot layout 2,2\n";
-  gp << "set xlabel \"x/dx\"\n";
-  gp << "set ylabel \"y/dy\"\n";
+  // rain water content
+  { //                                                   rho_w  kg2g
+    auto tmp = h5load(h5, "rw_rng1_mom3") * 4./3 * 3.14 * 1e3 * 1e3;
+    gp << "set title 'rain water content [g/m^3]'\n";
+    gp << "set cbrange [0:1]\n";
+    plot(gp, tmp);
+  }
 
-  auto r_eff = h5load(file, "rw_rng0_mom3") / h5load(file, "rw_rng0_mom2") * 1e6;
-  gp << "set title \"r_eff [um]\" \n";
-  plot(gp, r_eff);
-  auto N = h5load(file, "rw_rng0_mom0");
-  gp << "set title \"N [1/m3]\" \n";
-  plot(gp, N);
-  auto sd_conc = h5load(file, "sd_conc");
-  gp << "set title \"sd_conc [1/m3]\" \n";
-  plot(gp, sd_conc);
-  auto rhod_rl = h5load(file, "rw_rng0_mom3") * 4./3 * 3.14 * 1 * 1000;
-  gp << "set title \"rhod_rl [g/m3]\" \n";
-  plot(gp, rhod_rl);
+  // cloud particle concentration
+  {
+    auto tmp = 1e-6 * h5load(h5, "rw_rng0_mom0");
+    gp << "set title 'cloud droplet concentration [cm^{-3}]'\n";
+    gp << "set cbrange [0:100]\n";
+    plot(gp, tmp);
+  }
+
+  // rain particle concentration
+  {
+    auto tmp = 1e-6 * h5load(h5, "rw_rng1_mom0");
+    gp << "set title 'rain drop concentration [cm^{-3}]'\n";
+    gp << "set cbrange [0:5]\n";
+    plot(gp, tmp);
+  }
+
+  // effective radius
+  {
+    auto r_eff = h5load(h5, "rw_rng0_mom3") / h5load(h5, "rw_rng0_mom2") * 1e6;
+    gp << "set title 'effective radius [um]'\n"; // TODO: Symbol nie dziala...
+    gp << "set cbrange [1:20]\n";
+    plot(gp, r_eff);
+  }
+
+  // radar reflectivity
+  {
+    auto m0 = h5load(h5, "rw_rng1_mom0");
+    auto m6 = h5load(h5, "rw_rng1_mom6");
+    float minval = -80, maxval = -40;
+    gp << "set cbrange [" << minval << ":" << maxval << "]\n";
+    auto dbZ = where(
+      // if
+      m0==0, 
+      // then
+      minval,
+      // else
+      10 * log10(    // reflectivity -> decibels of reflectivity
+        pow(2e3,6) * // radii in metres -> diameters in milimetres
+        m6 / m0      // sixth moment per unit volume
+      )
+    );
+    gp << "set title 'radar reflectivity [dB]'\n";
+    plot(gp, dbZ);
+  }
 }

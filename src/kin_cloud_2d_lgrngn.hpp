@@ -146,11 +146,40 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
     // TODO: barrier?
     if (this->mem->rank() == 0) 
     {
-      prtcls->step(
+      // assuring previous async step finished (but not in first timestep)
+      if (params.async && ftr.valid()) ftr.get();
+
+      // running synchronous stuff
+      prtcls->step_sync(
         make_arrinfo(this->mem->state(ix::rhod_th)),
         make_arrinfo(this->mem->state(ix::rhod_rv))
       ); 
-      if (this->timestep % this->outfreq == 0) diag();
+
+      // running asynchronous stuff
+      {
+        using libcloudphxx::lgrngn::particles;
+        using libcloudphxx::lgrngn::cuda;
+
+        if (params.async && params.backend == cuda)
+        {
+          ftr = std::async(
+            std::launch::async, 
+            &particles<real_t, cuda>::step_async, 
+            dynamic_cast<particles<real_t, cuda>*>(prtcls.get())
+          );
+        } else prtcls->step_async();
+      }
+
+      // performing diagnostics
+      if (this->timestep % this->outfreq == 0) 
+      { 
+        if (params.async)
+        {
+          assert(ftr.valid());
+          ftr.get();
+        }
+        diag();
+      }
     }
     // TODO: barrier?
   }
@@ -160,6 +189,7 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
   struct params_t : parent_t::params_t 
   { 
     int backend = -1;
+    bool async = true;
     libcloudphxx::lgrngn::opts_t<real_t> cloudph_opts;
     outmom_t<real_t> out_dry, out_wet;
   };
