@@ -35,7 +35,7 @@ int main(int ac, char** av)
   {
     auto tmp = 1e-6 * h5load(h5, "rw_rng0_mom0");
     gp << "set title 'cloud droplet concentration [cm^{-3}]'\n";
-    gp << "set cbrange [0:100]\n";
+    gp << "set cbrange [0:150]\n";
     plot(gp, tmp);
   }
 
@@ -43,8 +43,10 @@ int main(int ac, char** av)
   {
     auto tmp = 1e-6 * h5load(h5, "rw_rng1_mom0");
     gp << "set title 'rain drop concentration [cm^{-3}]'\n";
-    gp << "set cbrange [0:5]\n";
+    gp << "set cbrange [.01:10]\n";
+    gp << "set logscale cb\n";
     plot(gp, tmp);
+    gp << "unset logscale cb\n";
   }
 
   // effective radius

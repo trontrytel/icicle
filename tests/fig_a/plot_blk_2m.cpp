@@ -31,14 +31,15 @@ int main(int ac, char** av)
   {
     auto rhod_nc = h5load(h5, "rhod_nc") * 1e-6;
     gp << "set title 'cloud droplet concentration [cm^{-3}]'\n";
-    gp << "set cbrange [0:100]\n";
+    gp << "set cbrange [0:150]\n";
     plot(gp, rhod_nc);
   }
 
   {
     auto rhod_nr = h5load(h5, "rhod_nr") * 1e-6;
     gp << "set title 'rain drop concentration [cm^{-3}]'\n";
-    gp << "set cbrange [0:5]\n";
+    gp << "set cbrange [0.01:10]\n";
+    gp << "set logscale cb\n";
     plot(gp, rhod_nr);
   }
 }
