@@ -17,7 +17,7 @@ int main(int ac, char** av)
 
   // liquid water content
   { //                                                   rho_w  kg2g
-    auto tmp = h5load(h5, "rw_rng0_mom3") * 4./3 * 3.14 * 1e3 * 1e3;
+    auto tmp = h5load(h5, "rw_rng000_mom3") * 4./3 * 3.14 * 1e3 * 1e3;
     gp << "set title 'liquid water content [g/m^3]'\n";
     gp << "set cbrange [0:1.5]\n";
     plot(gp, tmp);
@@ -25,7 +25,7 @@ int main(int ac, char** av)
 
   // rain water content
   { //                                                   rho_w  kg2g
-    auto tmp = h5load(h5, "rw_rng1_mom3") * 4./3 * 3.14 * 1e3 * 1e3;
+    auto tmp = h5load(h5, "rw_rng001_mom3") * 4./3 * 3.14 * 1e3 * 1e3;
     gp << "set title 'rain water content [g/m^3]'\n";
     gp << "set cbrange [0:1]\n";
     plot(gp, tmp);
@@ -33,7 +33,7 @@ int main(int ac, char** av)
 
   // cloud particle concentration
   {
-    auto tmp = 1e-6 * h5load(h5, "rw_rng0_mom0");
+    auto tmp = 1e-6 * h5load(h5, "rw_rng000_mom0");
     gp << "set title 'cloud droplet concentration [cm^{-3}]'\n";
     gp << "set cbrange [0:150]\n";
     plot(gp, tmp);
@@ -41,7 +41,7 @@ int main(int ac, char** av)
 
   // rain particle concentration
   {
-    auto tmp = 1e-6 * h5load(h5, "rw_rng1_mom0");
+    auto tmp = 1e-6 * h5load(h5, "rw_rng001_mom0");
     gp << "set title 'rain drop concentration [cm^{-3}]'\n";
     gp << "set cbrange [.01:10]\n";
     gp << "set logscale cb\n";
@@ -51,7 +51,7 @@ int main(int ac, char** av)
 
   // effective radius
   {
-    auto r_eff = h5load(h5, "rw_rng0_mom3") / h5load(h5, "rw_rng0_mom2") * 1e6;
+    auto r_eff = h5load(h5, "rw_rng000_mom3") / h5load(h5, "rw_rng000_mom2") * 1e6;
     gp << "set title 'effective radius [um]'\n"; // TODO: Symbol nie dziala...
     gp << "set cbrange [1:20]\n";
     plot(gp, r_eff);
@@ -59,8 +59,8 @@ int main(int ac, char** av)
 
   // radar reflectivity
   {
-    auto m0 = h5load(h5, "rw_rng1_mom0");
-    auto m6 = h5load(h5, "rw_rng1_mom6");
+    auto m0 = h5load(h5, "rw_rng001_mom0");
+    auto m6 = h5load(h5, "rw_rng001_mom6");
     float minval = -80, maxval = -40;
     gp << "set cbrange [" << minval << ":" << maxval << "]\n";
     auto dbZ = where(
