@@ -6,6 +6,7 @@
 #include <libcloudph++/lgrngn/options.hpp>
 #include <libcloudph++/lgrngn/particles.hpp>
 
+#include <future>
 
 // @brief a minimalistic kinematic cloud model with lagrangian microphysics
 //        built on top of the mpdata_2d solver (by extending it with
@@ -138,6 +139,8 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
     }
     // TODO: barrier?
   }
+
+  std::future<void> ftr;
 
   // 
   void hook_post_step()
