@@ -128,23 +128,26 @@ std::cerr << "setopts_lgrngn" << std::endl;
     {
       int sep = ss.second.find('|'); 
 
-      auto iter_status = moms.insert(outmom_t<thrust_real_t>::value_type({outmom_t<thrust_real_t>::key_type(
-        boost::lexical_cast<setup::real_t>(ss.first) * si::metres,
-        boost::lexical_cast<setup::real_t>(ss.second.substr(0, sep)) * si::metres
-      ), outmom_t<setup::real_t>::mapped_type()}));
+      moms.push_back(outmom_t<thrust_real_t>::value_type({
+        outmom_t<thrust_real_t>::value_type::first_type(
+          boost::lexical_cast<setup::real_t>(ss.first) * si::metres,
+          boost::lexical_cast<setup::real_t>(ss.second.substr(0, sep)) * si::metres
+        ), 
+        outmom_t<setup::real_t>::value_type::second_type()
+      }));
 
       // TODO catch (boost::bad_lexical_cast &)
-
-      assert(iter_status.second); // TODO: this does not seem to report anything, ranges should be unique!
 
       std::string nums = ss.second.substr(sep+1);;
       auto nums_first = nums.begin();
       auto nums_last  = nums.end();
 
-      const bool result = qi::phrase_parse(nums_first, nums_last, 
+      const bool result = qi::phrase_parse(
+        nums_first, 
+        nums_last, 
 	(
-	  qi::int_[phoenix::push_back(phoenix::ref(iter_status.first->second), qi::_1)]
-	      >> *(',' >> qi::int_[phoenix::push_back(phoenix::ref(iter_status.first->second), qi::_1)])
+	  qi::int_[phoenix::push_back(phoenix::ref(moms.back().second), qi::_1)]
+	      >> *(',' >> qi::int_[phoenix::push_back(phoenix::ref(moms.back().second), qi::_1)])
 	),
 	boost::spirit::ascii::space
       );    

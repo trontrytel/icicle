@@ -82,7 +82,7 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
   )
   { 
     std::ostringstream tmp;
-    tmp << pfx << "_rng" << rng << "_mom" << mom;
+    tmp << pfx << "_rng" << std::setw(3) << std::setfill('0') << rng << "_mom" << mom;
     return tmp.str();
   }
 
