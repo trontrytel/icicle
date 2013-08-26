@@ -33,7 +33,8 @@ std::cerr << "setopts_lgrngn" << std::endl;
 
   po::options_description opts("Lagrangian microphysics options"); 
   opts.add_options()
-    ("backend", po::value<std::string>()->required() , "backend (one of: CUDA, OpenMP, serial)")
+    ("backend", po::value<std::string>()->required() , "one of: CUDA, OpenMP, serial")
+    ("async", po::value<bool>()->default_value(true), "use CPU for advection while GPU does micro (ignored if backend != CUDA)")
     ("sd_conc_mean", po::value<thrust_real_t>()->required() , "mean super-droplet concentration per grid cell (int)")
     // processes
     ("adve", po::value<bool>()->default_value(true ) , "particle advection     (1=on, 0=off)")
@@ -60,6 +61,8 @@ std::cerr << "setopts_lgrngn" << std::endl;
   if (backend_str == "CUDA") params.backend = libcloudphxx::lgrngn::cuda;
   else if (backend_str == "OpenMP") params.backend = libcloudphxx::lgrngn::omp;
   else if (backend_str == "serial") params.backend = libcloudphxx::lgrngn::cpp;
+
+  params.async = vm["async"].as<bool>();
 
   params.cloudph_opts.sd_conc_mean = vm["sd_conc_mean"].as<thrust_real_t>();;
   params.cloudph_opts.nx = nx;
