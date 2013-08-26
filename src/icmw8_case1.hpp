@@ -48,7 +48,7 @@ namespace icmw8_case1
   //aerosol lognormal dist. for 2-moment bulk scheme (needed for activation)
   auto mean_rd = mean_rd2;
   auto sdev_rd = sdev_rd2;
-  auto N_tot   = n1_tot + n2_tot; // (sic!)
+  auto N_tot   = n1_tot + n2_tot; // (sic!) 
   //aerosol chemical composition parameter (needed for activation)
   const quantity<si::dimensionless, real_t> chem_b = .55; //ammonium sulphate
                                           //chem_b = 1.33; // sodium chloride
