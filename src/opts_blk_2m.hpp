@@ -32,7 +32,7 @@ std::cerr << "setopts_blk_2m" << std::endl;
     ("sedi", po::value<bool>()->default_value(true) , "TODO (on/off)")
     ("mean_rd", po::value<setup::real_t>()->default_value(setup::mean_rd / si::metres) , "TODO")
     ("sdev_rd", po::value<setup::real_t>()->default_value(setup::sdev_rd) , "TODO")
-    ("N_tot",   po::value<setup::real_t>()->default_value(setup::N_tot * si::cubic_metres  ) , "TODO")
+    ("N_stp",   po::value<setup::real_t>()->default_value(setup::N_stp * si::cubic_metres  ) , "TODO")
     ("chem_b",  po::value<setup::real_t>()->default_value(setup::chem_b ) , "TODO")
 //TODO: venti
   ;
@@ -47,7 +47,7 @@ std::cerr << "setopts_blk_2m" << std::endl;
   params.cloudph_opts.sedi = vm["sedi"].as<bool>();
   params.cloudph_opts.mean_rd = vm["mean_rd"].as<setup::real_t>() * si::metres;
   params.cloudph_opts.sdev_rd = vm["sdev_rd"].as<setup::real_t>();
-  params.cloudph_opts.N_tot   = vm["N_tot"].as<setup::real_t>() / si::cubic_metres;
+  params.cloudph_opts.N_stp   = vm["N_stp"].as<setup::real_t>() / si::cubic_metres;
   params.cloudph_opts.chem_b  = vm["chem_b"].as<setup::real_t>();
 
   // output variables
