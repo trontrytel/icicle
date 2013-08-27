@@ -42,13 +42,14 @@ namespace icmw8_case1
     sdev_rd1 = 1.4,
     sdev_rd2 = 1.6;
   const quantity<power_typeof_helper<si::length, static_rational<-3>>::type, real_t>
-    n1_tot = 60e6 / si::cubic_metres,
-    n2_tot = 40e6 / si::cubic_metres;
+    n1_stp = 60e6 / si::cubic_metres,
+    n2_stp = 40e6 / si::cubic_metres;
+// TODO: kappa!!!
 
   //aerosol lognormal dist. for 2-moment bulk scheme (needed for activation)
   auto mean_rd = mean_rd2;
   auto sdev_rd = sdev_rd2;
-  auto N_tot   = n1_tot + n2_tot; // (sic!) 
+  auto N_stp   = n1_stp + n2_stp; // (sic!) // TODO: discuss it
   //aerosol chemical composition parameter (needed for activation)
   const quantity<si::dimensionless, real_t> chem_b = .55; //ammonium sulphate
                                           //chem_b = 1.33; // sodium chloride
@@ -146,8 +147,8 @@ namespace icmw8_case1
     T funval(const T lnrd) const
     {
       return T((
-          lognormal::n_e(mean_rd1, sdev_rd1, n1_tot, quantity<si::dimensionless, real_t>(lnrd)) +
-          lognormal::n_e(mean_rd2, sdev_rd2, n2_tot, quantity<si::dimensionless, real_t>(lnrd)) 
+          lognormal::n_e(mean_rd1, sdev_rd1, n1_stp, quantity<si::dimensionless, real_t>(lnrd)) +
+          lognormal::n_e(mean_rd2, sdev_rd2, n2_stp, quantity<si::dimensionless, real_t>(lnrd)) 
         ) * si::cubic_metres
       );
     }

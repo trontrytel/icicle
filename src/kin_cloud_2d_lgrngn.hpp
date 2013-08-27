@@ -6,7 +6,9 @@
 #include <libcloudph++/lgrngn/options.hpp>
 #include <libcloudph++/lgrngn/particles.hpp>
 
-#include <future>
+#if defined(CUDA_FOUND)
+#  include <future>
+#endif
 
 // @brief a minimalistic kinematic cloud model with lagrangian microphysics
 //        built on top of the mpdata_2d solver (by extending it with
@@ -140,7 +142,9 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
     // TODO: barrier?
   }
 
+#if defined(CUDA_FOUND)
   std::future<void> ftr;
+#endif
 
   // 
   void hook_post_step()
@@ -150,7 +154,9 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
     if (this->mem->rank() == 0) 
     {
       // assuring previous async step finished (but not in first timestep)
+#if defined(CUDA_FOUND)
       if (params.async && ftr.valid()) ftr.get();
+#endif
 
       // running synchronous stuff
       prtcls->step_sync(
@@ -163,6 +169,7 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
         using libcloudphxx::lgrngn::particles;
         using libcloudphxx::lgrngn::cuda;
 
+#if defined(CUDA_FOUND)
         if (params.async && params.backend == cuda)
         {
           ftr = std::async(
@@ -170,17 +177,21 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
             &particles<real_t, cuda>::step_async, 
             dynamic_cast<particles<real_t, cuda>*>(prtcls.get())
           );
-        } else prtcls->step_async();
+        } else 
+#endif
+          prtcls->step_async();
       }
 
       // performing diagnostics
       if (this->timestep % this->outfreq == 0) 
       { 
+#if defined(CUDA_FOUND)
         if (params.async)
         {
           assert(ftr.valid());
           ftr.get();
         }
+#endif
         diag();
       }
     }
