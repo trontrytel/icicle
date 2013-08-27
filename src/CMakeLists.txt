@@ -11,6 +11,12 @@ find_path(GNUPLOT-IOSTREAM_INCLUDE_DIR PATH_SUFFIXES gnuplot-iostream/ NAMES gnu
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${CMAKE_SOURCE_DIR}/../libmpdataxx") # TODO: handle it correctly!!!
 
+#
+include(CheckCXXSourceCompiles)
+check_cxx_source_compiles("#include <future>\n int main() { std::future<void> f; }\n" STD_FUTURE_WORKS)
+if(${STD_FUTURE_WORKS})
+  add_definitions(-DSTD_FUTURE_WORKS)
+endif()
 
 add_executable(icicle icicle.cpp)
 

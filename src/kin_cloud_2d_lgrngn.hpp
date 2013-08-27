@@ -6,7 +6,7 @@
 #include <libcloudph++/lgrngn/options.hpp>
 #include <libcloudph++/lgrngn/particles.hpp>
 
-#if defined(CUDA_FOUND)
+#if defined(STD_FUTURE_WORKS)
 #  include <future>
 #endif
 
@@ -142,7 +142,7 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
     // TODO: barrier?
   }
 
-#if defined(CUDA_FOUND)
+#if defined(STD_FUTURE_WORKS)
   std::future<void> ftr;
 #endif
 
@@ -154,7 +154,7 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
     if (this->mem->rank() == 0) 
     {
       // assuring previous async step finished (but not in first timestep)
-#if defined(CUDA_FOUND)
+#if defined(STD_FUTURE_WORKS)
       if (params.async && ftr.valid()) ftr.get();
 #endif
 
@@ -169,7 +169,7 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
         using libcloudphxx::lgrngn::particles;
         using libcloudphxx::lgrngn::cuda;
 
-#if defined(CUDA_FOUND)
+#if defined(STD_FUTURE_WORKS)
         if (params.async && params.backend == cuda)
         {
           ftr = std::async(
@@ -185,7 +185,7 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
       // performing diagnostics
       if (this->timestep % this->outfreq == 0) 
       { 
-#if defined(CUDA_FOUND)
+#if defined(STD_FUTURE_WORKS)
         if (params.async)
         {
           assert(ftr.valid());
