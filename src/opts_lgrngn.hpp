@@ -48,8 +48,8 @@ std::cerr << "setopts_lgrngn" << std::endl;
     ("sstp_coal", po::value<int>()->default_value(1), "no. of substeps for coalescence")
     ("RH_max", po::value<setup::real_t>()->default_value(1.01), "RH limit for drop growth equation")
     // 
-    ("out_dry", po::value<std::string>()->default_value(".5e-6:25e-6|0"),       "dry radius ranges and moment numbers (r1:r2|n1,n2...;...)")
-    ("out_wet", po::value<std::string>()->default_value(".5e-6:25e-6|0,1,2,3"),  "wet radius ranges and moment numbers (r1:r2|n1,n2...;...)")
+    ("out_dry", po::value<std::string>()->default_value("0:1|0"),       "dry radius ranges and moment numbers (r1:r2|n1,n2...;...)")
+    ("out_wet", po::value<std::string>()->default_value(".5e-6:25e-6|0,1,2,3;25e-6:1|0,3,6"),  "wet radius ranges and moment numbers (r1:r2|n1,n2...;...)")
     // TODO: MAC, HAC, vent_coef
   ;
   po::variables_map vm;
