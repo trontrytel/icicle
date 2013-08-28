@@ -17,7 +17,7 @@ template <
   typename real_t, 
   int n_iters, 
   typename ix,
-  int n_eqs = 4
+  int n_eqs = 2
 >
 class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eqs>
 {
@@ -118,6 +118,9 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
       assert(params.backend != -1);
       assert(params.dt != 0); 
 
+      // async does not make sense without CUDA
+      if (params.backend != libcloudphxx::lgrngn::cuda) params.async = false;
+
       params.cloudph_opts.dt = params.dt; // advection timestep = microphysics timestep
       params.cloudph_opts.dx = params.dx;
       params.cloudph_opts.dz = params.dz;
@@ -150,12 +153,21 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
   void hook_post_step()
   {
     parent_t::hook_post_step(); // includes output
-    // TODO: barrier?
+
+    this->mem->barrier();
+
     if (this->mem->rank() == 0) 
     {
-      // assuring previous async step finished (but not in first timestep)
+      // assuring previous async step finished ...
 #if defined(STD_FUTURE_WORKS)
-      if (params.async && ftr.valid()) ftr.get();
+      if (
+        params.async && 
+        this->timestep != 0 && // ... but not in first timestep ...
+        ((this->timestep - 1) % this->outfreq != 0) // ... and not after diag call
+      ) {
+        assert(ftr.valid());
+        ftr.get();
+      } else assert(!ftr.valid());
 #endif
 
       // running synchronous stuff
@@ -170,13 +182,15 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
         using libcloudphxx::lgrngn::cuda;
 
 #if defined(STD_FUTURE_WORKS)
-        if (params.async && params.backend == cuda)
+        if (params.async)
         {
+          assert(!ftr.valid());
           ftr = std::async(
             std::launch::async, 
             &particles<real_t, cuda>::step_async, 
             dynamic_cast<particles<real_t, cuda>*>(prtcls.get())
           );
+          assert(ftr.valid());
         } else 
 #endif
           prtcls->step_async();
@@ -195,7 +209,8 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
         diag();
       }
     }
-    // TODO: barrier?
+
+    this->mem->barrier();
   }
 
   public:
