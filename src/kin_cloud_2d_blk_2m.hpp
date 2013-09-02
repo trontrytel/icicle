@@ -24,47 +24,51 @@ class kin_cloud_2d_blk_2m : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
   {
     parent_t::update_forcings(rhs);
 
-    auto
-      drhod_th = rhs.at(ix::rhod_th),       //TODO used just once -> probably an overkill
-      drhod_rv = rhs.at(ix::rhod_rv),
-      drhod_rc = rhs.at(ix::rhod_rc),
-      drhod_rr = rhs.at(ix::rhod_rr),
-      drhod_nc = rhs.at(ix::rhod_nc),
-      drhod_nr = rhs.at(ix::rhod_nr);
-    const auto
-      rhod     = this->rhod,
-      rhod_th  = this->state(ix::rhod_th),
-      rhod_rv  = this->state(ix::rhod_rv),
-      rhod_rc  = this->state(ix::rhod_rc),
-      rhod_rr  = this->state(ix::rhod_rr),
-      rhod_nc  = this->state(ix::rhod_nc),
-      rhod_nr  = this->state(ix::rhod_nr);
+    this->mem->barrier(); // TODO: if neccesarry, then move to adv_rhs/....hpp
 
     // element-wise
     {
-      this->mem->barrier();
-
-      const rng_t &i = this->i, &j = this->j;
+      auto
+	dot_rhod_th = rhs.at(ix::rhod_th)(this->i, this->j),
+	dot_rhod_rv = rhs.at(ix::rhod_rv)(this->i, this->j),
+	dot_rhod_rc = rhs.at(ix::rhod_rc)(this->i, this->j),
+	dot_rhod_rr = rhs.at(ix::rhod_rr)(this->i, this->j),
+	dot_rhod_nc = rhs.at(ix::rhod_nc)(this->i, this->j),
+	dot_rhod_nr = rhs.at(ix::rhod_nr)(this->i, this->j);
+      const auto
+	rhod     = this->rhod(this->i, this->j),
+	rhod_th  = this->state(ix::rhod_th)(this->i, this->j),
+	rhod_rv  = this->state(ix::rhod_rv)(this->i, this->j),
+	rhod_rc  = this->state(ix::rhod_rc)(this->i, this->j),
+	rhod_rr  = this->state(ix::rhod_rr)(this->i, this->j),
+	rhod_nc  = this->state(ix::rhod_nc)(this->i, this->j),
+	rhod_nr  = this->state(ix::rhod_nr)(this->i, this->j);
 
       libcloudphxx::blk_2m::forcings_elementwise<real_t>(
-        opts,     drhod_th(i,j), drhod_rv(i,j), drhod_rc(i,j), drhod_nc(i,j), drhod_rr(i,j), drhod_nr(i,j),
-	rhod(i,j), rhod_th(i,j),  rhod_rv(i,j),  rhod_rc(i,j),  rhod_nc(i,j),  rhod_rr(i,j),  rhod_nr(i,j)
+        opts, dot_rhod_th, dot_rhod_rv, dot_rhod_rc, dot_rhod_nc, dot_rhod_rr, dot_rhod_nr,
+	rhod,     rhod_th,     rhod_rv,     rhod_rc,     rhod_nc,     rhod_rr,     rhod_nr
       );
-
-      this->mem->barrier();
     }
 
     // column-wise
+    for (int i = this->i.first(); i <= this->i.last(); ++i)
     {
-      this->mem->barrier();
+      auto
+	dot_rhod_rr = rhs.at(ix::rhod_rr)(i, this->j),
+	dot_rhod_nr = rhs.at(ix::rhod_nr)(i, this->j);
+      const auto
+	rhod_rr  = this->state(ix::rhod_rr)(i, this->j),
+	rhod_nr  = this->state(ix::rhod_nr)(i, this->j);
 
-      const rng_t j = this->j;
-
-      for (int i = this->i.first(); i <= this->i.last(); ++i)
-        libcloudphxx::blk_2m::forcings_columnwise<real_t>(opts, rhod(i,j), rhod_rr(i,j), rhod_nr(i,j), drhod_rr(i,j), drhod_nr(i,j), this->dz);
-
-      this->mem->barrier();
+      libcloudphxx::blk_2m::forcings_columnwise<real_t>(
+        opts, 
+        dot_rhod_rr, dot_rhod_nr, 
+            rhod_rr,     rhod_nr, 
+	this->dz
+      );
     }
+
+    this->mem->barrier(); // TODO: if needed, move to adv+rhs
   }
 
   libcloudphxx::blk_2m::opts_t<real_t> opts;
