@@ -60,25 +60,27 @@ class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
   {
     parent_t::update_forcings(rhs);
  
-    auto 
-      drhod_rc = rhs.at(ix::rhod_rc),
-      drhod_rr = rhs.at(ix::rhod_rr);
-    const auto 
-      rhod_rc  = this->state(ix::rhod_rc),
-      rhod_rr  = this->state(ix::rhod_rr),
-      rhod     = this->rhod;
-
     // element-wise
     {
-      const rng_t &i = this->i, &j = this->j;
-      libcloudphxx::blk_1m::forcings_elementwise<real_t>(opts, drhod_rc(i,j), drhod_rr(i,j), rhod(i,j), rhod_rc(i,j), rhod_rr(i,j));
+      auto 
+	dot_rhod_rc = rhs.at(ix::rhod_rc)(this->i, this->j),
+	dot_rhod_rr = rhs.at(ix::rhod_rr)(this->i, this->j);
+      const auto 
+	rhod_rc  = this->state(ix::rhod_rc)(this->i, this->j),
+	rhod_rr  = this->state(ix::rhod_rr)(this->i, this->j),
+	rhod     = this->rhod(this->i, this->j);
+      libcloudphxx::blk_1m::forcings_elementwise<real_t>(opts, dot_rhod_rc, dot_rhod_rr, rhod, rhod_rc, rhod_rr);
     }
 
     // column-wise
+    for (int i = this->i.first(); i <= this->i.last(); ++i)
     {
-      const rng_t j = this->j;
-      for (int i = this->i.first(); i <= this->i.last(); ++i)
-	libcloudphxx::blk_1m::forcings_columnwise<real_t>(opts, drhod_rr(i,j), rhod(i,j), rhod_rr(i,j), this->dz);
+      auto 
+	dot_rhod_rr = rhs.at(ix::rhod_rr)(i, this->j);
+      const auto 
+	rhod_rr  = this->state(ix::rhod_rr)(i, this->j),
+	rhod     = this->rhod(i, this->j);
+      libcloudphxx::blk_1m::forcings_columnwise<real_t>(opts, dot_rhod_rr, rhod, rhod_rr, this->dz);
     }
   }
 

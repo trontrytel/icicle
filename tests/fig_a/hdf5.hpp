@@ -8,10 +8,10 @@ blitz::Array<float, 2> h5load(
   const string &dataset
 )
 {
-  notice_macro("about to open file: " << file)
+  //notice_macro("about to open file: " << file)
   H5::H5File h5f(file, H5F_ACC_RDONLY);
 
-  notice_macro("about to read dataset: " << dataset)
+  //notice_macro("about to read dataset: " << dataset)
   H5::DataSet h5d = h5f.openDataSet(dataset);
   H5::DataSpace h5s = h5d.getSpace();
 

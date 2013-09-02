@@ -23,9 +23,11 @@ int main(int ac, char** av)
 
   {
     auto rhod_rr = h5load(h5, "rhod_rr") * 1e3;
+    gp << "set logscale cb\n";
     gp << "set title 'rain water content [g/m^3]'\n";
-    gp << "set cbrange [0:1]\n";
+    gp << "set cbrange [1e-2:1]\n";
     plot(gp, rhod_rr);
+    gp << "unset logscale cb\n";
   }
 
   {
