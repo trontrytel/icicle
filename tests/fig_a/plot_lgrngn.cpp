@@ -22,16 +22,18 @@ int main(int ac, char** av)
       auto &x = pr.first;
       auto &y = pr.second;
 
+//TODO: make the square and label more visible somehow??
+
       // square
       gp << "set arrow from " << x-1 << "," << y-1 << " to " << x+2 << "," << y-1 << " nohead lw 1 front\n";
       gp << "set arrow from " << x-1 << "," << y+2 << " to " << x+2 << "," << y+2 << " nohead lw 1 front\n";
       gp << "set arrow from " << x-1 << "," << y-1 << " to " << x-1 << "," << y+2 << " nohead lw 1 front\n";
       gp << "set arrow from " << x+2 << "," << y-1 << " to " << x+2 << "," << y+2 << " nohead lw 1 front\n";
-      // cross
-      gp << "set arrow from " << x-2 << "," << y+.5 << " to " << x+3 << "," << y+.5 << " nohead lw 1 front\n";
-      gp << "set arrow from " << x+.5 << "," << y-2 << " to " << x+.5 << "," << y+3 << " nohead lw 1 front\n";
+      // cross 
+      //gp << "set arrow from " << x-2 << "," << y+.5 << " to " << x+3 << "," << y+.5 << " nohead lw 1 front\n";
+      //gp << "set arrow from " << x+.5 << "," << y-2 << " to " << x+.5 << "," << y+3 << " nohead lw 1 front\n";
       // labels
-      gp << "set label " << int(lbl) << " '(" << lbl << ")' at " << x+(lbl%2?-8:+4) << "," << y+.5 << " front\n";
+      gp << "set label " << int(lbl) << " '" << lbl << "' at " << x+(lbl%2?-8:+4) << "," << y+.5 << " front\n";
 
       ++lbl;
     }

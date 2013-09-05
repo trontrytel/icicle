@@ -30,7 +30,7 @@ int main(int ac, char** av)
   gp << "set logscale xy\n";
   gp << "set xrange [.002:100]\n";
   gp << "set yrange [" << ymin << ":" << ymax << "]\n";
-  gp << "set ylabel '[cm^{-3} um^{-1}]'\n";
+  gp << "set ylabel '[cm^{-3} um^{-1}]'\n"; // TODO: add textual description (PDF?)
   gp << "set grid\n";
   //gp << "set format y '%1.0e'\n";
   gp << "set nokey\n";
@@ -41,7 +41,10 @@ int main(int ac, char** av)
 
   gp << "set xlabel offset 0,1.5 'particle radius [um]'\n";
   gp << "set key samplen 1.2\n";
-  gp << "set xtics rotate by 65 right (.002, .01, .05, .1, .5, 1, 2, 5, 10, 25, 100) \n";
+  gp << "set xtics rotate by 65 right (.01, .1, 1, 10, 100) \n";
+  //gp << "set x2tics rotate by 65 right (.5, 25) \n"; TODO
+
+// TODO: use dashed lines to allow pronting with black and white... same in image plots
 
   assert(focus.first.size() == focus.second.size());
   gp << "set multiplot layout " << focus.first.size() << ",2 columnsfirst upwards\n";

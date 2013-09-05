@@ -45,9 +45,9 @@ std::cerr << "setopts_blk_2m" << std::endl;
   params.cloudph_opts.accr = vm["accr"].as<bool>();
   params.cloudph_opts.acnv = vm["acnv"].as<bool>();
   params.cloudph_opts.sedi = vm["sedi"].as<bool>();
-  params.cloudph_opts.mean_rd = vm["mean_rd"].as<setup::real_t>() * si::metres;
+  params.cloudph_opts.mean_rd = vm["mean_rd"].as<setup::real_t>();
   params.cloudph_opts.sdev_rd = vm["sdev_rd"].as<setup::real_t>();
-  params.cloudph_opts.N_stp   = vm["N_stp"].as<setup::real_t>() / si::cubic_metres;
+  params.cloudph_opts.N_stp   = vm["N_stp"].as<setup::real_t>();
   params.cloudph_opts.chem_b  = vm["chem_b"].as<setup::real_t>();
 
   // output variables
