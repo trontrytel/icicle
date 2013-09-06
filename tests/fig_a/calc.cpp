@@ -3,7 +3,8 @@
 #include <string>
 #include <sstream> // std::ostringstream
 
-#include "common.hpp"
+#include "../common.hpp"
+#include "bins.hpp"
 
 using std::ostringstream;
 using std::set;
@@ -36,7 +37,7 @@ int main(int ac, char** av)
   set<string> opts_micro({
     "--micro=blk_1m --outfile=out_blk_1m.h5",
     "--micro=blk_2m --outfile=out_blk_2m.h5",
-    "--micro=lgrngn --outfile=out_lgrngn.h5 --backend=CUDA --sd_conc_mean=64 --sstp_cond=20 --sstp_coal=10"
+    "--micro=lgrngn --outfile=out_lgrngn.h5 --backend=CUDA --sd_conc_mean=64 --sstp_cond=20 --sstp_coal=10" // TODO: use defaults?
       " --out_wet=\""
         ".5e-6:25e-6|0,1,2,3;" // FSSP
         "25e-6:1|0,3,6;"       // "rain"

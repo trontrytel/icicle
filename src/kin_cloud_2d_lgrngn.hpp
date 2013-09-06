@@ -5,6 +5,7 @@
 
 #include <libcloudph++/lgrngn/options.hpp>
 #include <libcloudph++/lgrngn/particles.hpp>
+#include <libcloudph++/lgrngn/factory.hpp>
 
 #if defined(STD_FUTURE_WORKS)
 #  include <future>

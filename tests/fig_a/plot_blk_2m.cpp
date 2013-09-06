@@ -1,4 +1,5 @@
-#include "common.hpp"
+#include "../common.hpp"
+#include "bins.hpp"
 #include "gnuplot.hpp"
 #include "hdf5.hpp"
 

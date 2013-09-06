@@ -15,4 +15,3 @@ add_executable(plot_lgrngn_spec plot_lgrngn_spec.cpp)
 add_test(plot_lgrngn_spec plot_lgrngn_spec ${CMAKE_BINARY_DIR})
 target_link_libraries(plot_lgrngn_spec ${HDF5_LIBRARIES})
 target_link_libraries(plot_lgrngn_spec ${Boost_LIBRARIES})
-

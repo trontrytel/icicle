@@ -41,11 +41,11 @@ std::cerr << "setopts_lgrngn" << std::endl;
     ("sedi", po::value<bool>()->default_value(true ) , "particle sedimentation (1=on, 0=off)")
     ("cond", po::value<bool>()->default_value(true ) , "condensational growth  (1=on, 0=off)")
     ("coal", po::value<bool>()->default_value(true ) , "collisional growth     (1=on, 0=off)")
-    ("rcyc", po::value<bool>()->default_value(false) , "particle recycling     (1=on, 0=off)")
-    ("chem", po::value<bool>()->default_value(false) , "aqueous chemistry      (1=on, 0=off)")
+    //("rcyc", po::value<bool>()->default_value(false) , "particle recycling     (1=on, 0=off)")
+    //("chem", po::value<bool>()->default_value(false) , "aqueous chemistry      (1=on, 0=off)")
     // free parameters
-    ("sstp_cond", po::value<int>()->default_value(100), "no. of substeps for condensation")
-    ("sstp_coal", po::value<int>()->default_value(1), "no. of substeps for coalescence")
+    ("sstp_cond", po::value<int>()->default_value(10), "no. of substeps for condensation")
+    ("sstp_coal", po::value<int>()->default_value(10), "no. of substeps for coalescence")
     ("RH_max", po::value<setup::real_t>()->default_value(1.01), "RH limit for drop growth equation")
     // 
     ("out_dry", po::value<std::string>()->default_value("0:1|0"),       "dry radius ranges and moment numbers (r1:r2|n1,n2...;...)")
@@ -88,8 +88,8 @@ std::cerr << "setopts_lgrngn" << std::endl;
   params.cloudph_opts.sedi = vm["sedi"].as<bool>();
   params.cloudph_opts.cond = vm["cond"].as<bool>();
   params.cloudph_opts.coal = vm["coal"].as<bool>();
-  params.cloudph_opts.rcyc = vm["rcyc"].as<bool>();
-  params.cloudph_opts.chem = vm["chem"].as<bool>();
+  //params.cloudph_opts.rcyc = vm["rcyc"].as<bool>();
+  //params.cloudph_opts.chem = vm["chem"].as<bool>();
 
   // free parameters
   params.cloudph_opts.sstp_cond = vm["sstp_cond"].as<int>();

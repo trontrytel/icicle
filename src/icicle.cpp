@@ -6,7 +6,7 @@
  */
 
 #include <libmpdata++/bcond/cyclic_2d.hpp>
-#include <libmpdata++/concurr/threads.hpp>
+#include <libmpdata++/concurr/serial.hpp>
 
 #include "icmw8_case1.hpp" // 8th ICMW case 1 by Wojciech Grabowski)
 namespace setup = icmw8_case1;
@@ -34,7 +34,7 @@ void run(int nx, int nz, int nt, const std::string &outfile, const int &outfreq)
   setopts_micro<solver_t>(p, nx, nz, nt);
 
   // solver instantiation
-  concurr::threads<solver_t, bcond::cyclic, bcond::cyclic> slv(nx, nz, p);
+  concurr::serial<solver_t, bcond::cyclic, bcond::cyclic> slv(nx, nz, p);
 
   // initial condition
   setup::intcond(slv);
