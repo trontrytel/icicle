@@ -17,7 +17,7 @@ int main(int ac, char** av)
 {
   if (ac != 2) error_macro("expecting one argument - CMAKE_BINARY_DIR");
 
-  int nt_load = 3, nt_calc = 9, n_rpt = 3;
+  int nt_load = 1, nt_calc = 10, n_rpt = 3;
 
   using str = std::string;
   using mss = std::map<str,str>;
@@ -72,7 +72,7 @@ std::cout << "# " << micro << " " << backend << " " << env << " " << sd_conc << 
 	  for (auto prcs : list<string>({"a___","ac__","acc_","accs"}))
 	  {
 	    // multiplynig the time of the simulation to avoid measuring too short wall times
-	    int mlt = micro == "lgrngn" ? 1 : 5;
+	    int mlt = micro != "lgrngn" ? 5 : (sd_conc == "--sd_conc_mean=8" ? 3 : 1);
 
 	    double time_avg = 0;
 	    for (auto &nt : list<int>({nt_load, nt_calc}))
@@ -85,7 +85,7 @@ std::cout << "# " << micro << " " << backend << " " << env << " " << sd_conc << 
 		<< " --outfreq=" << nt * mlt << " --nt=" << nt * mlt
 		<< " --micro=" << micro << " " << backend << " " << sd_conc << " " << proc.at(micro).at(prcs);  
 
-	      if (micro == "lgrngn") cmd << " --sstp_cond=1 --sstp_coal=1"; // 44
+	      if (micro == "lgrngn") cmd << " --sstp_cond=10 --sstp_coal=10"; // 44
 
 	      notice_macro("about to call: " << cmd.str())
 

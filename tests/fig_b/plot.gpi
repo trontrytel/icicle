@@ -1,40 +1,49 @@
 reset
 
-set term svg dynamic font ",10"
+set term svg size 900,390 font ",13"
 
-set ylabel "wall time per timestep [s]"
+set ylabel "wall time per timestep [s]" offset 2,0
 set xlabel "toggled processes"
-set xtics ("advection" 0, "+condensation" 1, "+coalescence" 2, "+sedimentation" 3)
-set xrange [-.35:3.35]
+set x2label " " offset 6
+set xtics (\
+  "advection" 0.225, \
+  "+condens." 1.225, \
+  "+coalesc." 2.225, \
+  "+sediment." 3.225  \
+) center scale 0
+set x2tics (\
+  "bulk" 0, "bulk" 1, "bulk" 2, "bulk" 3, \
+  "8/cell" 0.15, "8/cell" 1.15, "8/cell" 2.15, "8/cell" 3.15, \
+  "32/cell" 0.3, "32/cell" 1.3, "32/cell" 2.3, "32/cell" 3.3, \
+  "128/cell" 0.45, "128/cell" 1.45, "128/cell" 2.45, "128/cell" 3.45 \
+) rotate by 70
+set grid x2tics ytics
+set xrange [-.2:3.65]
 set logscale y
-set yrange [.008:300]
-set key top left Left reverse invert
+set yrange [.01:30]
+set key outside Left reverse invert
 
-datafile = "out.01"
+datafile = "out.10_float"
 idx_cpp = "lgrngn --backend=serial  --sd_conc_mean="
 idx_om2 = "lgrngn --backend=OpenMP OMP_NUM_THREADS=2 --sd_conc_mean="
 idx_om4 = "lgrngn --backend=OpenMP OMP_NUM_THREADS=4 --sd_conc_mean="
 idx_cda = "lgrngn --backend=CUDA  --sd_conc_mean="
 
-set output "plot_01.svg"
-set label "Δt' = Δt'' = Δt" at 2.5,150 center font ",16" 
-plot \
-  datafile index "blk_1m"      using 0:1 w linesp lt 1 lw 1 t "single-moment bulk", \
-  datafile index "blk_2m"      using 0:1 w linesp lt 2 lw 1 t "double-moment bulk", \
-  datafile index idx_cda."8"   using 0:1 w linesp lt 3 lw 4 t "particles / 8 per cell / CUDA", \
-  datafile index idx_om4."8"   using 0:1 w linesp lt 3 lw 3 t "particles / 8 per cell / OpenMP 4", \
-  datafile index idx_om2."8"   using 0:1 w linesp lt 3 lw 2 t "particles / 8 per cell / OpenMP 2", \
-  datafile index idx_cpp."8"   using 0:1 w linesp lt 3 lw 1 t "particles / 8 per cell / serial", \
-  datafile index idx_cda."32"  using 0:1 w linesp lt 4 lw 4 t "particles / 32 per cell / CUDA", \
-  datafile index idx_om4."32"  using 0:1 w linesp lt 4 lw 3 t "particles / 32 per cell / OpenMP 4", \
-  datafile index idx_om2."32"  using 0:1 w linesp lt 4 lw 2 t "particles / 32 per cell / OpenMP 2", \
-  datafile index idx_cpp."32"  using 0:1 w linesp lt 4 lw 1 t "particles / 32 per cell / serial", \
-  datafile index idx_cda."128" using 0:1 w linesp lt 5 lw 4 t "particles / 128 per cell / CUDA", \
-  datafile index idx_om4."128" using 0:1 w linesp lt 5 lw 3 t "particles / 128 per cell / OpenMP 4", \
-  datafile index idx_om2."128" using 0:1 w linesp lt 5 lw 2 t "particles / 128 per cell / OpenMP 2", \
-  datafile index idx_cpp."128" using 0:1 w linesp lt 5 lw 1 t "particles / 128 per cell / serial"
+set key font ",12" samplen .75 spacing .82
+set output "plot_10.svg"
 
-set nokey
-datafile = "out.44"
-set output "plot_44.svg"
-replot
+plot \
+  datafile index "blk_1m"      using ($0+.00):1 w linespoints lt 1 lw 2 t "single-moment bulk", \
+  datafile index "blk_2m"      using ($0+.00):1 w linespoints lt 3 lw 2 t "double-moment bulk", \
+  datafile index idx_cda."8"   using ($0+.15):1 w linespoints lt 5 lw 2 t "particles / 8 per cell / CUDA", \
+  datafile index idx_om4."8"   using ($0+.15):1 w      points lt 6 lw 2 t "particles / 8 per cell / OpenMP / 4 threads", \
+  datafile index idx_om2."8"   using ($0+.15):1 w      points lt 7 lw 2 t "particles / 8 per cell / OpenMP / 2 threads", \
+  datafile index idx_cpp."8"   using ($0+.15):1 w      points lt 8 lw 2 t "particles / 8 per cell / serial", \
+  datafile index idx_cda."32"  using ($0+.30):1 w linespoints lt 5 lw 2 t "particles / 32 per cell / CUDA", \
+  datafile index idx_om4."32"  using ($0+.30):1 w      points lt 6 lw 2 t "particles / 32 per cell / OpenMP / 4 threads", \
+  datafile index idx_om2."32"  using ($0+.30):1 w      points lt 7 lw 2 t "particles / 32 per cell / OpenMP / 2 threads", \
+  datafile index idx_cpp."32"  using ($0+.30):1 w      points lt 8 lw 2 t "particles / 32 per cell / serial", \
+  datafile index idx_cda."128" using ($0+.45):1 w linespoints lt 5 lw 2 t "particles / 128 per cell / CUDA", \
+  datafile index idx_om4."128" using ($0+.45):1 w      points lt 6 lw 2 t "particles / 128 per cell / OpenMP / 4 threads", \
+  datafile index idx_om2."128" using ($0+.45):1 w      points lt 7 lw 2 t "particles / 128 per cell / OpenMP / 2 threads", \
+  datafile index idx_cpp."128" using ($0+.45):1 w      points lt 8 lw 2 t "particles / 128 per cell / serial"
