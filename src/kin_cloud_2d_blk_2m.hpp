@@ -46,7 +46,8 @@ class kin_cloud_2d_blk_2m : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
 
       libcloudphxx::blk_2m::forcings_elementwise<real_t>(
         opts, dot_rhod_th, dot_rhod_rv, dot_rhod_rc, dot_rhod_nc, dot_rhod_rr, dot_rhod_nr,
-	rhod,     rhod_th,     rhod_rv,     rhod_rc,     rhod_nc,     rhod_rr,     rhod_nr
+	rhod,     rhod_th,     rhod_rv,     rhod_rc,     rhod_nc,     rhod_rr,     rhod_nr,
+        this->dt
       );
     }
 
@@ -102,7 +103,6 @@ class kin_cloud_2d_blk_2m : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
     opts(p.cloudph_opts)
   { 
     assert(p.dt != 0);
-    opts.dt = p.dt;
   }  
 };
 

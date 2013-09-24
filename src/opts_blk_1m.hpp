@@ -28,7 +28,7 @@ std::cerr << "setopts_blk_1m" << std::endl;
     ("cevp", po::value<bool>()->default_value(true) , "cloud water evaporation (1=on, 0=off)")
     ("revp", po::value<bool>()->default_value(true) , "rain water evaporation (1=on, 0=off)")
     ("conv", po::value<bool>()->default_value(true) , "autoconversion of cloud water into rain (1=on, 0=off)")
-    ("clct", po::value<bool>()->default_value(true) , "cloud water collection by rain (1=on, 0=off)")
+    ("accr", po::value<bool>()->default_value(true) , "cloud water collection by rain (1=on, 0=off)")
     ("sedi", po::value<bool>()->default_value(true) , "rain water sedimentation (1=on, 0=off)")
 //TODO: venti, autoconv_threshold
   ;
@@ -40,7 +40,7 @@ std::cerr << "setopts_blk_1m" << std::endl;
   params.cloudph_opts.cevp = vm["cevp"].as<bool>();
   params.cloudph_opts.revp = vm["revp"].as<bool>();
   params.cloudph_opts.conv = vm["conv"].as<bool>();
-  params.cloudph_opts.clct = vm["clct"].as<bool>();
+  params.cloudph_opts.accr = vm["accr"].as<bool>();
   params.cloudph_opts.sedi = vm["sedi"].as<bool>();
 
   // output variables

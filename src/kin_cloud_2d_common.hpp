@@ -31,6 +31,33 @@ class kin_cloud_2d_common : public
   typename parent_t::arr_t rhod;
   real_t dx, dz; // 0->dx, 1->dy ! TODO
 
+  void update_forcings(
+    arrvec_t<typename parent_t::arr_t> &rhs
+  )   
+  {   
+    parent_t::update_forcings(rhs);
+
+    // relaxation terms
+    {
+      // computed level-wise
+      //for (int j = 0; j < this->span[0]; ++j)
+      {  
+        // rhod_th
+        {
+          // TODO ...
+          //const auto &psi = this->state(ix::rhod_th);
+          //const auto psi_mean = this->mem->sum(psi, this->i, j) / this->span[0];
+          //rhs.at(ix::rhod_th)(this->i, j) = - (psi(this->i, j) - psi_mean) / tau(j...);
+        }
+        // rhod_rv
+        {
+          // TODO: same as above...
+        }
+      }
+    }
+
+  }
+
   public:
 
   typedef ix_t ix;

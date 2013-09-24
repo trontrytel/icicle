@@ -22,7 +22,8 @@ template <
 >
 class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eqs>
 {
-  using parent_t = kin_cloud_2d_common<real_t, n_iters, ix, n_eqs>; // TODO: lgrngn has no inhomo - just adjustments
+  // note: lgrngn has no rhs terms - just adjustments (but there might be extrinsic rhs terms)
+  using parent_t = kin_cloud_2d_common<real_t, n_iters, ix, n_eqs>; 
 
   // member fields
   std::unique_ptr<libcloudphxx::lgrngn::particles_proto<real_t>> prtcls;
@@ -95,7 +96,7 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
   )
   {
     // TODO: attributes incl. units?
-    int rng = 0; // TODO: perhaps separate numbering for rd and rw - not to mislead?
+    int rng = 0; // note: same numbering for rd and rw 
     for (auto &rng_moms : outmoms)
     {
       for (auto &mom : rng_moms.second)

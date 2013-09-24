@@ -29,7 +29,7 @@ class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
       rhod    = this->rhod(this->ijk);
       
     libcloudphxx::blk_1m::adjustments<real_t>( 
-      opts, rhod, rhod_th, rhod_rv, rhod_rc, rhod_rr
+      opts, rhod, rhod_th, rhod_rv, rhod_rc, rhod_rr, this->dt
     );
     this->mem->barrier(); 
   }
@@ -107,8 +107,5 @@ class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
   ) : 
     parent_t(args, p),
     opts(p.cloudph_opts)
-  {
-    assert(p.dt != 0);
-    opts.dt = p.dt; // advection timestep = microphysics timestep
-  }  
+  {}  
 };

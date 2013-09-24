@@ -24,10 +24,10 @@ int main(int ac, char** av)
 
   map<str,mss> proc({
     pair<str,mss>({"blk_1m", mss({
-      pair<str,str>({"a___","--cond=off --cevp=off --revp=off --conv=off --clct=off --sedi=off"}),
-      pair<str,str>({"ac__","--cond=on  --cevp=on  --revp=on  --conv=off --clct=off --sedi=off"}),
-      pair<str,str>({"acc_","--cond=on  --cevp=on  --revp=on  --conv=on  --clct=on  --sedi=off"}),
-      pair<str,str>({"accs","--cond=on  --cevp=on  --revp=on  --conv=on  --clct=on  --sedi=on "})
+      pair<str,str>({"a___","--cond=off --cevp=off --revp=off --conv=off --accr=off --sedi=off"}),
+      pair<str,str>({"ac__","--cond=on  --cevp=on  --revp=on  --conv=off --accr=off --sedi=off"}),
+      pair<str,str>({"acc_","--cond=on  --cevp=on  --revp=on  --conv=on  --accr=on  --sedi=off"}),
+      pair<str,str>({"accs","--cond=on  --cevp=on  --revp=on  --conv=on  --accr=on  --sedi=on "})
     })}),
     pair<str,mss>({"blk_2m", mss({
       pair<str,str>({"a___","--acti=off --cond=off --accr=off --acnv=off --sedi=off"}),
