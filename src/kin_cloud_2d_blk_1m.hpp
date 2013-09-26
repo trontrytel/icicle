@@ -1,8 +1,8 @@
 #include "kin_cloud_2d_common.hpp"
 
 #include <libcloudph++/blk_1m/options.hpp>
-#include <libcloudph++/blk_1m/adj_elementwise.hpp>
-#include <libcloudph++/blk_1m/rhs_elementwise.hpp>
+#include <libcloudph++/blk_1m/adj_cellwise.hpp>
+#include <libcloudph++/blk_1m/rhs_cellwise.hpp>
 #include <libcloudph++/blk_1m/rhs_columnwise.hpp>
 
 // @brief a minimalistic kinematic cloud model with bulk microphysics
@@ -28,7 +28,7 @@ class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
     auto const
       rhod    = this->rhod(this->ijk);
       
-    libcloudphxx::blk_1m::adj_elementwise<real_t>( 
+    libcloudphxx::blk_1m::adj_cellwise<real_t>( 
       opts, rhod, rhod_th, rhod_rv, rhod_rc, rhod_rr, this->dt
     );
     this->mem->barrier(); 
@@ -60,7 +60,7 @@ class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
   {
     parent_t::update_forcings(rhs);
  
-    // element-wise
+    // cell-wise
     {
       auto 
 	dot_rhod_rc = rhs.at(ix::rhod_rc)(this->i, this->j),
@@ -69,7 +69,7 @@ class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
 	rhod_rc  = this->state(ix::rhod_rc)(this->i, this->j),
 	rhod_rr  = this->state(ix::rhod_rr)(this->i, this->j),
 	rhod     = this->rhod(this->i, this->j);
-      libcloudphxx::blk_1m::rhs_elementwise<real_t>(opts, dot_rhod_rc, dot_rhod_rr, rhod, rhod_rc, rhod_rr);
+      libcloudphxx::blk_1m::rhs_cellwise<real_t>(opts, dot_rhod_rc, dot_rhod_rr, rhod, rhod_rc, rhod_rr);
     }
 
     // column-wise

@@ -1,7 +1,7 @@
 #include "kin_cloud_2d_common.hpp"
 
 #include <libcloudph++/blk_2m/options.hpp>
-#include <libcloudph++/blk_2m/rhs_elementwise.hpp>
+#include <libcloudph++/blk_2m/rhs_cellwise.hpp>
 #include <libcloudph++/blk_2m/rhs_columnwise.hpp>
 
 template <
@@ -26,7 +26,7 @@ class kin_cloud_2d_blk_2m : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
 
     this->mem->barrier(); // TODO: if neccesarry, then move to adv_rhs/....hpp
 
-    // element-wise
+    // cell-wise
     {
       auto
 	dot_rhod_th = rhs.at(ix::rhod_th)(this->i, this->j),
@@ -44,7 +44,7 @@ class kin_cloud_2d_blk_2m : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
 	rhod_nc  = this->state(ix::rhod_nc)(this->i, this->j),
 	rhod_nr  = this->state(ix::rhod_nr)(this->i, this->j);
 
-      libcloudphxx::blk_2m::rhs_elementwise<real_t>(
+      libcloudphxx::blk_2m::rhs_cellwise<real_t>(
         opts, dot_rhod_th, dot_rhod_rv, dot_rhod_rc, dot_rhod_nc, dot_rhod_rr, dot_rhod_nr,
 	rhod,     rhod_th,     rhod_rv,     rhod_rc,     rhod_nc,     rhod_rr,     rhod_nr,
         this->dt
