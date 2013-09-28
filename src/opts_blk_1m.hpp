@@ -24,13 +24,13 @@ void setopts_micro(
 std::cerr << "setopts_blk_1m" << std::endl;
   po::options_description opts("Single-moment bulk microphysics options"); 
   opts.add_options()
-    ("cond", po::value<bool>()->default_value(true) , "cloud water condensation (1=on, 0=off)")
-    ("cevp", po::value<bool>()->default_value(true) , "cloud water evaporation (1=on, 0=off)")
-    ("revp", po::value<bool>()->default_value(true) , "rain water evaporation (1=on, 0=off)")
-    ("conv", po::value<bool>()->default_value(true) , "autoconversion of cloud water into rain (1=on, 0=off)")
-    ("accr", po::value<bool>()->default_value(true) , "cloud water collection by rain (1=on, 0=off)")
-    ("sedi", po::value<bool>()->default_value(true) , "rain water sedimentation (1=on, 0=off)")
-//TODO: venti, autoconv_threshold
+    ("cond", po::value<bool>()->default_value(params.cloudph_opts.cond) , "cloud water condensation (1=on, 0=off)")
+    ("cevp", po::value<bool>()->default_value(params.cloudph_opts.cevp) , "cloud water evaporation (1=on, 0=off)")
+    ("revp", po::value<bool>()->default_value(params.cloudph_opts.revp) , "rain water evaporation (1=on, 0=off)")
+    ("conv", po::value<bool>()->default_value(params.cloudph_opts.conv) , "autoconversion of cloud water into rain (1=on, 0=off)")
+    ("accr", po::value<bool>()->default_value(params.cloudph_opts.accr) , "cloud water collection by rain (1=on, 0=off)")
+    ("sedi", po::value<bool>()->default_value(params.cloudph_opts.sedi) , "rain water sedimentation (1=on, 0=off)")
+//TODO: autoconv_threshold, epsilon
   ;
   po::variables_map vm;
   handle_opts(opts, vm);

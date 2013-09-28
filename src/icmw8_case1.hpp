@@ -34,7 +34,7 @@ namespace icmw8_case1
   const quantity<si::time, real_t>
     dt = real_t(1.) * si::seconds;//4 * si::seconds;
 
-  //aerosol bimodal lognormal dist. for super droplets
+  //aerosol bimodal lognormal dist. 
   const quantity<si::length, real_t>
     mean_rd1 = real_t(.04e-6 / 2) * si::metres,
     mean_rd2 = real_t(.15e-6 / 2) * si::metres;
@@ -44,15 +44,12 @@ namespace icmw8_case1
   const quantity<power_typeof_helper<si::length, static_rational<-3>>::type, real_t>
     n1_stp = real_t(60e6) / si::cubic_metres,
     n2_stp = real_t(40e6) / si::cubic_metres;
-// TODO: kappa!!!
 
-  //aerosol lognormal dist. for 2-moment bulk scheme (needed for activation)
-  auto mean_rd = mean_rd2;
-  auto sdev_rd = sdev_rd2;
-  auto N_stp   = n1_stp + n2_stp; // (sic!) // TODO: discuss it
-  //aerosol chemical composition parameter (needed for activation)
-  const quantity<si::dimensionless, real_t> chem_b = .55; //ammonium sulphate
-                                          //chem_b = 1.33; // sodium chloride
+  //aerosol chemical composition parameters (needed for activation)
+  // for lgrngn:
+  const quantity<si::dimensionless, real_t> kappa = .61; // CCN-derived value from Table 1 in Petters and Kreidenweis 2007
+  // for blk_2m:
+  const quantity<si::dimensionless, real_t> chem_b = .55; //ammonium sulphate //chem_b = 1.33; // sodium chloride
 
   // density profile as a function of altitude
   struct rhod

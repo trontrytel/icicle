@@ -25,16 +25,12 @@ void setopts_micro(
 std::cerr << "setopts_blk_2m" << std::endl;
   po::options_description opts("Double-moment bulk microphysics options"); 
   opts.add_options()
-    ("acti", po::value<bool>()->default_value(true) , "TODO (on/off)")
-    ("cond", po::value<bool>()->default_value(true) , "TODO (on/off)")
-    ("accr", po::value<bool>()->default_value(true) , "TODO (on/off)")
-    ("acnv", po::value<bool>()->default_value(true) , "TODO (on/off)")
-    ("sedi", po::value<bool>()->default_value(true) , "TODO (on/off)")
-    ("mean_rd", po::value<setup::real_t>()->default_value(setup::mean_rd / si::metres) , "TODO")
-    ("sdev_rd", po::value<setup::real_t>()->default_value(setup::sdev_rd) , "TODO")
-    ("N_stp",   po::value<setup::real_t>()->default_value(setup::N_stp * si::cubic_metres  ) , "TODO")
-    ("chem_b",  po::value<setup::real_t>()->default_value(setup::chem_b ) , "TODO")
-//TODO: venti
+    ("acti", po::value<bool>()->default_value(params.cloudph_opts.acti) , "TODO (on/off)")
+    ("cond", po::value<bool>()->default_value(params.cloudph_opts.cond) , "TODO (on/off)")
+    ("accr", po::value<bool>()->default_value(params.cloudph_opts.accr) , "TODO (on/off)")
+    ("acnv", po::value<bool>()->default_value(params.cloudph_opts.acnv) , "TODO (on/off)")
+    ("sedi", po::value<bool>()->default_value(params.cloudph_opts.sedi) , "TODO (on/off)")
+    ("RH_max", po::value<setup::real_t>()->default_value(params.cloudph_opts.RH_max) , "TODO")
   ;
   po::variables_map vm;
   handle_opts(opts, vm);
@@ -45,10 +41,19 @@ std::cerr << "setopts_blk_2m" << std::endl;
   params.cloudph_opts.accr = vm["accr"].as<bool>();
   params.cloudph_opts.acnv = vm["acnv"].as<bool>();
   params.cloudph_opts.sedi = vm["sedi"].as<bool>();
-  params.cloudph_opts.mean_rd = vm["mean_rd"].as<setup::real_t>();
-  params.cloudph_opts.sdev_rd = vm["sdev_rd"].as<setup::real_t>();
-  params.cloudph_opts.N_stp   = vm["N_stp"].as<setup::real_t>();
-  params.cloudph_opts.chem_b  = vm["chem_b"].as<setup::real_t>();
+  
+  params.cloudph_opts.dry_distro.push_back({
+    .mean_rd = setup::mean_rd1 / si::metres,
+    .sdev_rd = setup::sdev_rd1,
+    .N_stp   = setup::n1_stp * si::cubic_metres,
+    .chem_b  = setup::chem_b
+  });
+  params.cloudph_opts.dry_distro.push_back({
+    .mean_rd = setup::mean_rd2 / si::metres,
+    .sdev_rd = setup::sdev_rd2,
+    .N_stp   = setup::n2_stp * si::cubic_metres,
+    .chem_b  = setup::chem_b
+  });
 
   // output variables
   params.outvars = {

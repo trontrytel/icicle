@@ -37,16 +37,14 @@ std::cerr << "setopts_lgrngn" << std::endl;
     ("async", po::value<bool>()->default_value(true), "use CPU for advection while GPU does micro (ignored if backend != CUDA)")
     ("sd_conc_mean", po::value<thrust_real_t>()->required() , "mean super-droplet concentration per grid cell (int)")
     // processes
-    ("adve", po::value<bool>()->default_value(true ) , "particle advection     (1=on, 0=off)")
-    ("sedi", po::value<bool>()->default_value(true ) , "particle sedimentation (1=on, 0=off)")
-    ("cond", po::value<bool>()->default_value(true ) , "condensational growth  (1=on, 0=off)")
-    ("coal", po::value<bool>()->default_value(true ) , "collisional growth     (1=on, 0=off)")
-    //("rcyc", po::value<bool>()->default_value(false) , "particle recycling     (1=on, 0=off)")
-    //("chem", po::value<bool>()->default_value(false) , "aqueous chemistry      (1=on, 0=off)")
+    ("adve", po::value<bool>()->default_value(params.cloudph_opts.adve) , "particle advection     (1=on, 0=off)")
+    ("sedi", po::value<bool>()->default_value(params.cloudph_opts.sedi) , "particle sedimentation (1=on, 0=off)")
+    ("cond", po::value<bool>()->default_value(params.cloudph_opts.cond) , "condensational growth  (1=on, 0=off)")
+    ("coal", po::value<bool>()->default_value(params.cloudph_opts.coal) , "collisional growth     (1=on, 0=off)")
     // free parameters
-    ("sstp_cond", po::value<int>()->default_value(10), "no. of substeps for condensation")
-    ("sstp_coal", po::value<int>()->default_value(10), "no. of substeps for coalescence")
-    ("RH_max", po::value<setup::real_t>()->default_value(1.01), "RH limit for drop growth equation")
+    ("sstp_cond", po::value<int>()->default_value(params.cloudph_opts.sstp_cond), "no. of substeps for condensation")
+    ("sstp_coal", po::value<int>()->default_value(params.cloudph_opts.sstp_coal), "no. of substeps for coalescence")
+    ("RH_max", po::value<setup::real_t>()->default_value(params.cloudph_opts.RH_max), "RH limit for drop growth equation")
     // 
     ("out_dry", po::value<std::string>()->default_value("0:1|0"),       "dry radius ranges and moment numbers (r1:r2|n1,n2...;...)")
     ("out_wet", po::value<std::string>()->default_value(".5e-6:25e-6|0,1,2,3;25e-6:1|0,3,6"),  "wet radius ranges and moment numbers (r1:r2|n1,n2...;...)")
@@ -55,8 +53,6 @@ std::cerr << "setopts_lgrngn" << std::endl;
   po::variables_map vm;
   handle_opts(opts, vm);
       
-  thrust_real_t kappa = .5; // TODO!!!
-
   std::string backend_str = vm["backend"].as<std::string>();
   if (backend_str == "CUDA") params.backend = libcloudphxx::lgrngn::cuda;
   else if (backend_str == "OpenMP") params.backend = libcloudphxx::lgrngn::omp;
@@ -72,7 +68,7 @@ std::cerr << "setopts_lgrngn" << std::endl;
   >(
     params.cloudph_opts.dry_distros // map
   )(
-    kappa // key
+    setup::kappa // key
   );
 
   // output variables
