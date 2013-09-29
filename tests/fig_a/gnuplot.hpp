@@ -7,6 +7,7 @@ void init(Gnuplot &gp, const std::string &file, const int &ny, const int &nx)
 {
   gp << "set term svg dynamic enhanced fsize 13 size " << nx * 500 << "," << ny * 500 << "\n";
   gp << "set size square\n";
+  gp << "set encoding utf8\n";
   // progressive-rock connoisseur palette ;)
   gp << "set palette defined (0 '#FFFFFF', 1 '#993399', 2 '#00CCFF', 3 '#66CC00', 4 '#FFFF00', 5 '#FC8727', 6 '#FD0000')\n";
   gp << "set view map\n";

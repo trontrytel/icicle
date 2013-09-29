@@ -1,2 +1,3 @@
 - include compiler flags and full cmd string in output file
-- kappa as command-line option
+- finish relax terms
+- coalescence kernel as cmd line option

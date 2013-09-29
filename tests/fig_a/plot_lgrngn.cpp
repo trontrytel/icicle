@@ -15,28 +15,46 @@ int main(int ac, char** av)
   Gnuplot gp;
   init(gp, svg, 3, 2);
 
-  char lbl = 'a';
-  for (auto &fcs : std::set<std::set<std::pair<int, int>>>({focus.first, focus.second}))
   {
-    for (auto &pr : fcs) 
+    char lbl = 'a';
+    for (auto &fcs : std::set<std::set<std::pair<int, int>>>({focus.first, focus.second}))
     {
-      auto &x = pr.first;
-      auto &y = pr.second;
+      for (auto &pr : fcs) 
+      {
+	auto &x = pr.first;
+	auto &y = pr.second;
 
-//TODO: make the square and label more visible somehow??
+	// black square
+	gp << "set arrow from " << x-1 << "," << y-1 << " to " << x+2 << "," << y-1 << " nohead lw 4 lc rgbcolor '#ffffff' front\n";
+	gp << "set arrow from " << x-1 << "," << y+2 << " to " << x+2 << "," << y+2 << " nohead lw 4 lc rgbcolor '#ffffff' front\n";
+	gp << "set arrow from " << x-1 << "," << y-1 << " to " << x-1 << "," << y+2 << " nohead lw 4 lc rgbcolor '#ffffff' front\n";
+	gp << "set arrow from " << x+2 << "," << y-1 << " to " << x+2 << "," << y+2 << " nohead lw 4 lc rgbcolor '#ffffff' front\n";
+	// white square
+	gp << "set arrow from " << x-1 << "," << y-1 << " to " << x+2 << "," << y-1 << " nohead lw 2 front\n";
+	gp << "set arrow from " << x-1 << "," << y+2 << " to " << x+2 << "," << y+2 << " nohead lw 2 front\n";
+	gp << "set arrow from " << x-1 << "," << y-1 << " to " << x-1 << "," << y+2 << " nohead lw 2 front\n";
+	gp << "set arrow from " << x+2 << "," << y-1 << " to " << x+2 << "," << y+2 << " nohead lw 2 front\n";
 
-      // square
-      gp << "set arrow from " << x-1 << "," << y-1 << " to " << x+2 << "," << y-1 << " nohead lw 1 front\n";
-      gp << "set arrow from " << x-1 << "," << y+2 << " to " << x+2 << "," << y+2 << " nohead lw 1 front\n";
-      gp << "set arrow from " << x-1 << "," << y-1 << " to " << x-1 << "," << y+2 << " nohead lw 1 front\n";
-      gp << "set arrow from " << x+2 << "," << y-1 << " to " << x+2 << "," << y+2 << " nohead lw 1 front\n";
-      // cross 
-      //gp << "set arrow from " << x-2 << "," << y+.5 << " to " << x+3 << "," << y+.5 << " nohead lw 1 front\n";
-      //gp << "set arrow from " << x+.5 << "," << y-2 << " to " << x+.5 << "," << y+3 << " nohead lw 1 front\n";
-      // labels
-      gp << "set label " << int(lbl) << " '" << lbl << "' at " << x+(lbl%2?-8:+4) << "," << y+.5 << " front\n";
+	++lbl;
+      }
+    }
+  }
 
-      ++lbl;
+  // labels
+  {
+    char lbl = 'a';
+    for (auto &fcs : std::set<std::set<std::pair<int, int>>>({focus.first, focus.second}))
+    {
+      for (auto &pr : fcs) 
+      {
+	auto &x = pr.first;
+	auto &y = pr.second;
+
+	// labels
+	gp << "set label " << int(lbl) << " '" << lbl << "' at " << x+(lbl%2?-6:+4) << "," << y+.5 << " front font \",20\"\n";
+
+	++lbl;
+      }
     }
   }
 
@@ -79,12 +97,14 @@ int main(int ac, char** av)
   // effective radius
   {
     auto r_eff = h5load(h5, "rw_rng000_mom3") / h5load(h5, "rw_rng000_mom2") * 1e6;
-    gp << "set title 'effective radius [um]'\n"; // TODO: Symbol nie dziala...
+    gp << "set title 'cloud droplet effective radius [μm]'\n"; 
     gp << "set cbrange [1:20]\n";
     plot(gp, r_eff);
   }
 
+
   // radar reflectivity
+/*
   {
     auto m0 = h5load(h5, "rw_rng001_mom0");
     auto m6 = h5load(h5, "rw_rng001_mom6");
@@ -103,5 +123,23 @@ int main(int ac, char** av)
     );
     gp << "set title 'radar reflectivity [dB]'\n";
     plot(gp, dbZ);
+  }
+*/
+  
+  // super-droplet concentration
+  {
+    auto tmp = h5load(h5, "rw_rng002_mom0");
+    vector<quantity<si::length>> left_edges = bins_wet();
+    for (int i = 1; i < left_edges.size()-1; ++i)
+    {
+      if (left_edges[i + 1] > 1e-6 * si::metres) break;
+      ostringstream str;
+      str << "rw_rng" << std::setw(3) << std::setfill('0') << i + 2  << "_mom0";
+      tmp += h5load(h5, str.str());
+    }
+    gp << "set cbrange [" << 0 << ":" << 150 << "]\n";
+    gp << "set title 'aerosol concentration [cm^{-3}]'\n";
+    tmp /= 1e6;
+    plot(gp, tmp);
   }
 }

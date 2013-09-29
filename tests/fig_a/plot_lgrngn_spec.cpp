@@ -31,7 +31,7 @@ int main(int ac, char** av)
   gp << "set logscale xy\n";
   gp << "set xrange [.002:100]\n";
   gp << "set yrange [" << ymin << ":" << ymax << "]\n";
-  gp << "set ylabel '[cm^{-3} um^{-1}]'\n"; // TODO: add textual description (PDF?)
+  gp << "set ylabel '[cm^{-3} μm^{-1}]'\n"; // TODO: add textual description (PDF?)
   gp << "set grid\n";
   //gp << "set format y '%1.0e'\n";
   gp << "set nokey\n";
@@ -40,7 +40,7 @@ int main(int ac, char** av)
   gp << "set arrow from .5," << ymin << " to .5," << ymax << " nohead\n";
   gp << "set arrow from 25," << ymin << " to 25," << ymax << " nohead\n";
 
-  gp << "set xlabel offset 0,1.5 'particle radius [um]'\n";
+  gp << "set xlabel offset 0,1.5 'particle radius [μm]'\n";
   gp << "set key samplen 1.2\n";
   gp << "set xtics rotate by 65 right (.01, .1, 1, 10, 100) \n";
   //gp << "set x2tics rotate by 65 right (.5, 25) \n"; TODO
@@ -98,8 +98,8 @@ int main(int ac, char** av)
 
       notice_macro("setting-up plot parameters");
       gp << "plot"
-	 << "'-' with steps title 'wet radius' lw 2 lc rgb 'blue',"          // TODO: triple-check steps/fsteps/histeps
-	 << "'-' with steps title 'dry radius' lw 2 lc rgb 'red'" << endl;
+	 << "'-' with histeps title 'wet radius' lw 3 lc rgb 'blue'," 
+	 << "'-' with histeps title 'dry radius' lw 1 lc rgb 'red' " << endl;
       gp.send(focus_w);
       gp.send(focus_d);
 
