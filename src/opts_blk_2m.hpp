@@ -30,7 +30,6 @@ std::cerr << "setopts_blk_2m" << std::endl;
     ("accr", po::value<bool>()->default_value(params.cloudph_opts.accr) , "TODO (on/off)")
     ("acnv", po::value<bool>()->default_value(params.cloudph_opts.acnv) , "TODO (on/off)")
     ("sedi", po::value<bool>()->default_value(params.cloudph_opts.sedi) , "TODO (on/off)")
-    ("RH_max", po::value<setup::real_t>()->default_value(params.cloudph_opts.RH_max) , "TODO")
   ;
   po::variables_map vm;
   handle_opts(opts, vm);
@@ -41,7 +40,7 @@ std::cerr << "setopts_blk_2m" << std::endl;
   params.cloudph_opts.accr = vm["accr"].as<bool>();
   params.cloudph_opts.acnv = vm["acnv"].as<bool>();
   params.cloudph_opts.sedi = vm["sedi"].as<bool>();
-  
+
   params.cloudph_opts.dry_distro.push_back({
     .mean_rd = setup::mean_rd1 / si::metres,
     .sdev_rd = setup::sdev_rd1,

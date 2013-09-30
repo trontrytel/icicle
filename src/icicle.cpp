@@ -22,7 +22,7 @@ namespace setup = icmw8_case1;
 
 // model run logic - the same for any microphysics
 template <class solver_t>
-void run(int nx, int nz, int nt, const std::string &outfile, const int &outfreq)
+void run(int nx, int nz, int nt, const std::string &outfile, const int &outfreq, int spinup)
 {
   // instantiation of structure containing simulation parameters
   typename solver_t::params_t p;
@@ -30,6 +30,7 @@ void run(int nx, int nz, int nt, const std::string &outfile, const int &outfreq)
   // output and simulation parameters
   p.outfile = outfile;
   p.outfreq = outfreq;
+  p.spinup = spinup;
   setup::setopts(p, nx, nz);
   setopts_micro<solver_t>(p, nx, nz, nt);
 
@@ -65,9 +66,10 @@ int main(int argc, char** argv)
       ("micro", po::value<std::string>()->required(), "one of: blk_1m, blk_2m, lgrngn")
       ("nx", po::value<int>()->default_value(75) , "grid cell count in horizontal")
       ("nz", po::value<int>()->default_value(75) , "grid cell count in vertical")
-      ("nt", po::value<int>()->default_value(500) , "timestep count")
+      ("nt", po::value<int>()->default_value(3600) , "timestep count")
       ("outfile", po::value<std::string>(), "output file name (netCDF-compatible HDF5)")
       ("outfreq", po::value<int>(), "output rate (timestep interval)")
+      ("spinup", po::value<int>()->default_value(2400) , "number of initial timesteps during which rain formation is to be turned off")
       ("help", "produce a help message (see also --micro X --help)")
     ;
     po::variables_map vm;
@@ -98,26 +100,27 @@ int main(int argc, char** argv)
     int 
       nx = vm["nx"].as<int>(),
       nz = vm["nz"].as<int>(),
-      nt = vm["nt"].as<int>();
+      nt = vm["nt"].as<int>(),
+      spinup = vm["spinup"].as<int>();
 
     // handling the "micro" option
     std::string micro = vm["micro"].as<std::string>();
     if (micro == "blk_1m")
     {
       struct ix { enum {rhod_th, rhod_rv, rhod_rc, rhod_rr}; };
-      run<kin_cloud_2d_blk_1m<setup::real_t, n_iters, ix>>(nx, nz, nt, outfile, outfreq);
+      run<kin_cloud_2d_blk_1m<setup::real_t, n_iters, ix>>(nx, nz, nt, outfile, outfreq, spinup);
     }
     else
     if (micro == "blk_2m")
     {
       struct ix { enum {rhod_th, rhod_rv, rhod_rc, rhod_rr, rhod_nc, rhod_nr}; };
-      run<kin_cloud_2d_blk_2m<setup::real_t, n_iters, ix>>(nx, nz, nt, outfile, outfreq);
+      run<kin_cloud_2d_blk_2m<setup::real_t, n_iters, ix>>(nx, nz, nt, outfile, outfreq, spinup);
     }
     else 
     if (micro == "lgrngn")
     {
       struct ix { enum {rhod_th, rhod_rv}; };
-      run<kin_cloud_2d_lgrngn<setup::real_t, n_iters, ix>>(nx, nz, nt, outfile, outfreq);
+      run<kin_cloud_2d_lgrngn<setup::real_t, n_iters, ix>>(nx, nz, nt, outfile, outfreq, spinup);
     }
     else BOOST_THROW_EXCEPTION(
       po::validation_error(

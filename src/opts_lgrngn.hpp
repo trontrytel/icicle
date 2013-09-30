@@ -44,7 +44,6 @@ std::cerr << "setopts_lgrngn" << std::endl;
     // free parameters
     ("sstp_cond", po::value<int>()->default_value(params.cloudph_opts.sstp_cond), "no. of substeps for condensation")
     ("sstp_coal", po::value<int>()->default_value(params.cloudph_opts.sstp_coal), "no. of substeps for coalescence")
-    ("RH_max", po::value<setup::real_t>()->default_value(params.cloudph_opts.RH_max), "RH limit for drop growth equation")
     // 
     ("out_dry", po::value<std::string>()->default_value("0:1|0"),       "dry radius ranges and moment numbers (r1:r2|n1,n2...;...)")
     ("out_wet", po::value<std::string>()->default_value(".5e-6:25e-6|0,1,2,3;25e-6:1|0,3,6"),  "wet radius ranges and moment numbers (r1:r2|n1,n2...;...)")
@@ -90,7 +89,6 @@ std::cerr << "setopts_lgrngn" << std::endl;
   // free parameters
   params.cloudph_opts.sstp_cond = vm["sstp_cond"].as<int>();
   params.cloudph_opts.sstp_coal = vm["sstp_coal"].as<int>();
-  params.cloudph_opts.RH_max = vm["RH_max"].as<thrust_real_t>();
 
   // parsing --out_dry and --out_wet options values
   // the format is: "rmin:rmax|0,1,2;rmin:rmax|3;..."

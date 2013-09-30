@@ -109,6 +109,13 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
 
   protected:
 
+  bool get_rain() { return params.cloudph_opts.coal && params.cloudph_opts.sedi; }
+  void set_rain(bool val) 
+  { 
+    params.cloudph_opts.coal = params.cloudph_opts.sedi = val; 
+    params.cloudph_opts.RH_max = val ? 1.1 : 1.01; // 1% limit during spinup
+  };
+
   // deals with initial supersaturation
   void hook_ante_loop(int nt)
   {

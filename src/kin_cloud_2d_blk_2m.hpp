@@ -65,6 +65,7 @@ class kin_cloud_2d_blk_2m : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
         opts, 
         dot_rhod_rr, dot_rhod_nr, 
             rhod_rr,     rhod_nr, 
+	this->dt,
 	this->dz
       );
     }
@@ -86,6 +87,14 @@ class kin_cloud_2d_blk_2m : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
 
     parent_t::hook_ante_loop(nt); // forcings after adjustments
   }
+
+  // spinup stuff
+  bool get_rain() { return opts.acnv; }
+  void set_rain(bool val) 
+  { 
+    opts.acnv = val; 
+    opts.RH_max = val ? 1.1 : 1.01; // 1% limit during spinup
+  };
 
   public:
 

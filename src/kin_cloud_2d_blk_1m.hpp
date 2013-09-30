@@ -42,6 +42,9 @@ class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
 
   protected:
 
+  bool get_rain() { return opts.conv; }
+  void set_rain(bool val) { opts.conv = val; };
+
   // deals with initial supersaturation
   void hook_ante_loop(int nt)
   {
@@ -59,7 +62,7 @@ class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
   void update_forcings(libmpdataxx::arrvec_t<typename parent_t::arr_t> &rhs)
   {
     parent_t::update_forcings(rhs);
- 
+
     // cell-wise
     {
       auto 

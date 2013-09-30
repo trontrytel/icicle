@@ -19,17 +19,39 @@ class kin_cloud_2d_common : public
       solvers::inhomo_solver<
 //	solvers::mpdata_fct_2d<real_t, n_iters, n_eqs, formulae::mpdata::iga>, 
 	solvers::mpdata_2d<real_t, n_iters, n_eqs>, 
-	solvers::strang
+	solvers::euler 
     >
   >
 {
-//  using parent_t = output::hdf5<solvers::inhomo_solver<solvers::mpdata_fct_2d<real_t, n_iters, n_eqs, formulae::mpdata::iga>, solvers::strang>>;
-  using parent_t = output::hdf5<solvers::inhomo_solver<solvers::mpdata_2d<real_t, n_iters, n_eqs>, solvers::strang>>;
+//  using parent_t = output::hdf5<solvers::inhomo_solver<solvers::mpdata_fct_2d<real_t, n_iters, n_eqs, formulae::mpdata::iga>, solvers::euler>>;
+  using parent_t = output::hdf5<solvers::inhomo_solver<solvers::mpdata_2d<real_t, n_iters, n_eqs>, solvers::euler>>;
 
   protected:
 
   typename parent_t::arr_t rhod;
   real_t dx, dz; // 0->dx, 1->dy ! TODO
+  int spinup; // number of timesteps
+
+  // spinup stuff
+  virtual bool get_rain() = 0;
+  virtual void set_rain(bool) = 0;
+
+  void hook_ante_loop(int nt) 
+  {
+    if (get_rain() == false) spinup = 0; // spinup does not make sense without autoconversion  (TODO: issue a warning?)
+    if (spinup > 0) set_rain(false);
+
+    parent_t::hook_ante_loop(nt); 
+  }
+
+  void hook_ante_step()
+  {
+    // turn autoconversion on only after spinup (if spinup was specified)
+    if (spinup != 0 && spinup == this->timestep) set_rain(true);
+
+    parent_t::hook_ante_step(); 
+  }
+
 
   void update_forcings(
     arrvec_t<typename parent_t::arr_t> &rhs
@@ -66,6 +88,7 @@ class kin_cloud_2d_common : public
   { 
     std::vector<real_t> rhod; // profile
     real_t dx = 0, dz = 0;
+    int spinup = 0; // number of timesteps during which autoconversion is to be turned off
   };
 
   // ctor
@@ -76,7 +99,8 @@ class kin_cloud_2d_common : public
     parent_t(args, p),
     rhod(args.mem->tmp[__FILE__][0][0]),
     dx(p.dx),
-    dz(p.dz)
+    dz(p.dz),
+    spinup(p.spinup)
   {
     assert(p.rhod.size() == this->j.last()+1);
     assert(dx != 0);
