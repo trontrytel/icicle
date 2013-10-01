@@ -3,8 +3,6 @@
 #include "kin_cloud_2d_common.hpp"
 #include "outmom.hpp"
 
-#include <libcloudph++/lgrngn/options.hpp>
-#include <libcloudph++/lgrngn/particles.hpp>
 #include <libcloudph++/lgrngn/factory.hpp>
 
 #if defined(STD_FUTURE_WORKS)
@@ -134,7 +132,7 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
       params.cloudph_opts_init.dx = params.dx;
       params.cloudph_opts_init.dz = params.dz;
 
-      prtcls.reset(libcloudphxx::lgrngn::factory<real_t>::make(params.backend, params.cloudph_opts_init));
+      prtcls.reset(libcloudphxx::lgrngn::factory<real_t>(params.backend, params.cloudph_opts_init));
 
       setup_aux_helper("rd", params.out_dry); 
       setup_aux_helper("rw", params.out_wet); 
