@@ -126,13 +126,13 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
       assert(params.dt != 0); 
 
       // async does not make sense without CUDA
-      if (params.backend != libcloudphxx::lgrngn::cuda) params.async = false;
+      if (params.backend != libcloudphxx::lgrngn::CUDA) params.async = false;
 
       params.cloudph_opts_init.dt = params.dt; // advection timestep = microphysics timestep
       params.cloudph_opts_init.dx = params.dx;
       params.cloudph_opts_init.dz = params.dz;
 
-      prtcls.reset(libcloudphxx::lgrngn::factory<real_t>(params.backend, params.cloudph_opts_init));
+      prtcls.reset(libcloudphxx::lgrngn::factory<real_t>((libcloudphxx::lgrngn::backend_t)params.backend, params.cloudph_opts_init));
 
       setup_aux_helper("rd", params.out_dry); 
       setup_aux_helper("rw", params.out_wet); 
@@ -187,7 +187,7 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
       // running asynchronous stuff
       {
         using libcloudphxx::lgrngn::particles_t;
-        using libcloudphxx::lgrngn::cuda;
+        using libcloudphxx::lgrngn::CUDA;
 
 #if defined(STD_FUTURE_WORKS)
         if (params.async)
@@ -195,8 +195,8 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
           assert(!ftr.valid());
           ftr = std::async(
             std::launch::async, 
-            &particles_t<real_t, cuda>::step_async, 
-            dynamic_cast<particles_t<real_t, cuda>*>(prtcls.get()),
+            &particles_t<real_t, CUDA>::step_async, 
+            dynamic_cast<particles_t<real_t, CUDA>*>(prtcls.get()),
             params.cloudph_opts
           );
           assert(ftr.valid());

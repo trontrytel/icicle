@@ -53,9 +53,9 @@ std::cerr << "setopts_lgrngn" << std::endl;
   handle_opts(opts, vm);
       
   std::string backend_str = vm["backend"].as<std::string>();
-  if (backend_str == "CUDA") params.backend = libcloudphxx::lgrngn::cuda;
-  else if (backend_str == "OpenMP") params.backend = libcloudphxx::lgrngn::omp;
-  else if (backend_str == "serial") params.backend = libcloudphxx::lgrngn::cpp;
+  if (backend_str == "CUDA") params.backend = libcloudphxx::lgrngn::CUDA;
+  else if (backend_str == "OpenMP") params.backend = libcloudphxx::lgrngn::OpenMP;
+  else if (backend_str == "serial") params.backend = libcloudphxx::lgrngn::serial;
 
   params.async = vm["async"].as<bool>();
 
