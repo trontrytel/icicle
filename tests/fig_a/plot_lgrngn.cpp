@@ -59,7 +59,7 @@ int main(int ac, char** av)
   }
 
   // liquid water content
-  { //                                                   rho_w  kg2g
+  { //                                                     rho_w  kg2g
     auto tmp = h5load(h5, "rw_rng000_mom3") * 4./3 * 3.14 * 1e3 * 1e3;
     gp << "set title 'liquid water content [g/m^3]'\n";
     gp << "set cbrange [0:1.5]\n";
@@ -67,7 +67,7 @@ int main(int ac, char** av)
   }
 
   // rain water content
-  { //                                                   rho_w  kg2g
+  { //                                                     rho_w  kg2g
     auto tmp = h5load(h5, "rw_rng001_mom3") * 4./3 * 3.14 * 1e3 * 1e3;
     gp << "set logscale cb\n";
     gp << "set title 'rain water content [g/m^3]'\n";

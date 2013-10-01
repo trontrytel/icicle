@@ -59,13 +59,13 @@ std::cerr << "setopts_lgrngn" << std::endl;
 
   params.async = vm["async"].as<bool>();
 
-  params.cloudph_opts.sd_conc_mean = vm["sd_conc_mean"].as<thrust_real_t>();;
-  params.cloudph_opts.nx = nx;
-  params.cloudph_opts.nz = nz;
+  params.cloudph_opts_init.sd_conc_mean = vm["sd_conc_mean"].as<thrust_real_t>();;
+  params.cloudph_opts_init.nx = nx;
+  params.cloudph_opts_init.nz = nz;
   boost::assign::ptr_map_insert<
     setup::log_dry_radii<thrust_real_t> // value type
   >(
-    params.cloudph_opts.dry_distros // map
+    params.cloudph_opts_init.dry_distros // map
   )(
     setup::kappa // key
   );

@@ -93,7 +93,7 @@ class kin_cloud_2d_blk_2m : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
   void set_rain(bool val) 
   { 
     opts.acnv = val; 
-    opts.RH_max = val ? 1.1 : 1.01; // 1% limit during spinup
+    opts.RH_max = val ? 44 : 1.01; // 1% limit during spinup
   };
 
   public:
