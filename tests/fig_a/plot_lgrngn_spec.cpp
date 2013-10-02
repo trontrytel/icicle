@@ -24,7 +24,7 @@ int main(int ac, char** av)
   Gnuplot gp;
 
   int off = 2; // TODO!!!
-  float ymin = 1.1 * .001, ymax = .9 * 10000;
+  float ymin = .4 * .01, ymax = .9 * 10000;
 
   gp << "set term svg dynamic enhanced fsize 15 size 900, 1500 \n";
   gp << "set output '" << svg << "'\n";
