@@ -128,14 +128,14 @@ int main(int ac, char** av)
   
   // super-droplet concentration
   {
-    auto tmp = h5load(h5, "rw_rng002_mom0");
+    blitz::Array<float, 2> tmp(h5load(h5, "rw_rng002_mom0"));
     vector<quantity<si::length>> left_edges = bins_wet();
     for (int i = 1; i < left_edges.size()-1; ++i)
     {
       if (left_edges[i + 1] > 1e-6 * si::metres) break;
       ostringstream str;
       str << "rw_rng" << std::setw(3) << std::setfill('0') << i + 2  << "_mom0";
-      tmp += h5load(h5, str.str());
+      tmp = tmp + h5load(h5, str.str());
     }
     gp << "set cbrange [" << 0 << ":" << 150 << "]\n";
     gp << "set title 'aerosol concentration [cm^{-3}]'\n";

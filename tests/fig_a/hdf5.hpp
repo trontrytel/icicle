@@ -3,11 +3,11 @@
 #include <blitz/array.h>
 #include <H5Cpp.h>
 
-blitz::Array<float, 2> h5load(
+auto h5load(
   const string &file, 
   const string &dataset
-)
-{
+) -> decltype(blitz::safeToReturn(blitz::Array<float, 2>() + 0))
+ {
   //notice_macro("about to open file: " << file)
   H5::H5File h5f(file, H5F_ACC_RDONLY);
 
@@ -35,5 +35,5 @@ blitz::Array<float, 2> h5load(
   };
   h5d.read(tmp.data(), H5::PredType::NATIVE_FLOAT, H5::DataSpace(2, ext), h5s);
 
-  return tmp;
+  return blitz::safeToReturn(tmp + 0);
 }
