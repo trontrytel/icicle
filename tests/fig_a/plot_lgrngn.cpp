@@ -35,8 +35,9 @@ int main(int ac, char** av)
 	gp << "set arrow from " << x-1 << "," << y-1 << " to " << x-1 << "," << y+2 << " nohead lw 2 front\n";
 	gp << "set arrow from " << x+2 << "," << y-1 << " to " << x+2 << "," << y+2 << " nohead lw 2 front\n";
 
-	++lbl;
+	lbl += 2;
       }
+      lbl = 'b';
     }
   }
 
@@ -53,15 +54,16 @@ int main(int ac, char** av)
 	// labels
 	gp << "set label " << int(lbl) << " '" << lbl << "' at " << x+(lbl%2?-6:+4) << "," << y+.5 << " front font \",20\"\n";
 
-	++lbl;
+	lbl += 2;
       }
+      lbl = 'b';
     }
   }
 
-  // liquid water content
+  // cloud water content
   { //                                                     rho_w  kg2g
     auto tmp = h5load(h5, "rw_rng000_mom3") * 4./3 * 3.14 * 1e3 * 1e3;
-    gp << "set title 'liquid water content [g/m^3]'\n";
+    gp << "set title 'cloud water content [g/m^3]'\n";
     gp << "set cbrange [0:1.5]\n";
     plot(gp, tmp);
   }
