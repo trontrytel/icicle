@@ -14,7 +14,7 @@ vector<quantity<si::length>> bins_wet()
 {
   vector<quantity<si::length>> ret;
   for (int i = 0; i < 50; ++i)
-    ret.push_back(1e-6 * pow(10, -3 + i * .2) * si::metres);
+    ret.push_back(1e-6 * pow(10, -3 + i * .1) * si::metres);
   return ret;
 }
 
