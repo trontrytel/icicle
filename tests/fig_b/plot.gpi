@@ -33,7 +33,7 @@ set key font ",12" samplen .75 spacing .82
 set output "plot_10.svg"
 
 plot \
-  datafile index "blk_1m"      using ($0+.00):1 w linespoints lt 1 lw 2 t "single-moment bulk", \
+  datafile index "blk_1m"      using ($0+.00):1 w linespoints lt 1 pt 12 lw 2 t "single-moment bulk", \
   datafile index "blk_2m"      using ($0+.00):1 w linespoints lt 3 lw 2 t "double-moment bulk", \
   datafile index idx_cda."8"   using ($0+.15):1 w linespoints lt 5 lw 2 t "particles / 8 per cell / CUDA", \
   datafile index idx_om4."8"   using ($0+.15):1 w      points lt 6 lw 2 t "particles / 8 per cell / OpenMP / 4 threads", \
