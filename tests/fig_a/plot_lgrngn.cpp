@@ -16,7 +16,7 @@ int main(int ac, char** av)
   init(gp, svg, 3, 2);
 
   {
-    char lbl = 'a';
+    char lbl = 'i';
     for (auto &fcs : std::set<std::set<std::pair<int, int>>>({focus.first, focus.second}))
     {
       for (auto &pr : fcs) 
@@ -35,15 +35,15 @@ int main(int ac, char** av)
 	gp << "set arrow from " << x-1 << "," << y-1 << " to " << x-1 << "," << y+2 << " nohead lw 2 front\n";
 	gp << "set arrow from " << x+2 << "," << y-1 << " to " << x+2 << "," << y+2 << " nohead lw 2 front\n";
 
-	lbl += 2;
+	lbl -= 2;
       }
-      lbl = 'b';
+      lbl = 'j';
     }
   }
 
   // labels
   {
-    char lbl = 'a';
+    char lbl = 'i';
     for (auto &fcs : std::set<std::set<std::pair<int, int>>>({focus.first, focus.second}))
     {
       for (auto &pr : fcs) 
@@ -52,11 +52,11 @@ int main(int ac, char** av)
 	auto &y = pr.second;
 
 	// labels
-	gp << "set label " << int(lbl) << " '" << lbl << "' at " << x+(lbl%2?-6:+4) << "," << y+.5 << " front font \",20\"\n";
+	gp << "set label " << int(lbl) << " '" << lbl << "' at " << x+(((lbl+1)/2)%2?-6:+4) << "," << y+.5 << " front font \",20\"\n";
 
-	lbl += 2;
+	lbl -= 2;
       }
-      lbl = 'b';
+      lbl = 'j';
     }
   }
 

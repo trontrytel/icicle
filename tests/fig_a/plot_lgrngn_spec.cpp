@@ -48,10 +48,10 @@ int main(int ac, char** av)
 // TODO: use dashed lines to allow pronting with black and white... same in image plots
 
   assert(focus.first.size() == focus.second.size());
-  gp << "set multiplot layout " << focus.first.size() << ",2 columnsfirst downwards\n";
+  gp << "set multiplot layout " << focus.first.size() << ",2 columnsfirst upwards\n";
 
   // focus to the gridbox from where the size distribution is plotted
-  char lbl = 'a';
+  char lbl = 'i';
   for (auto &fcs : std::set<std::set<std::pair<int,int>>>({focus.first, focus.second}))
   {
     for (auto it = fcs.begin(); it != fcs.end(); ++it)
@@ -103,8 +103,8 @@ int main(int ac, char** av)
       gp.send(focus_w);
       gp.send(focus_d);
 
-      lbl += 2;
+      lbl -= 2;
     }
-    lbl = 'b';
+    lbl = 'j';
   }
 }
