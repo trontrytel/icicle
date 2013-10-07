@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iostream>
+
 // TODO: other includes?
 #include <libcloudph++/common/hydrostatic.hpp>
 #include <libcloudph++/common/theta_std.hpp>
