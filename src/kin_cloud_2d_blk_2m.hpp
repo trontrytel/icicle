@@ -58,13 +58,15 @@ class kin_cloud_2d_blk_2m : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
 	dot_rhod_rr = rhs.at(ix::rhod_rr)(i, this->j),
 	dot_rhod_nr = rhs.at(ix::rhod_nr)(i, this->j);
       const auto
+        rhod     = this->rhod(i, this->j),
 	rhod_rr  = this->state(ix::rhod_rr)(i, this->j),
 	rhod_nr  = this->state(ix::rhod_nr)(i, this->j);
 
       libcloudphxx::blk_2m::rhs_columnwise<real_t>(
         opts, 
         dot_rhod_rr, dot_rhod_nr, 
-            rhod_rr,     rhod_nr, 
+        rhod,
+            rhod_rr,     rhod_nr,  
 	this->dt,
 	this->dz
       );
