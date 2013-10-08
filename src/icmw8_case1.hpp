@@ -121,7 +121,10 @@ namespace icmw8_case1
 
     // velocity field obtained by numerically differentiating a stream function
     {
-      real_t A = (w_max / si::metres_per_second) * solver.state().extent(x) * dx / pi<real_t>();
+      assert(solver.state().extent(x) == nx);
+      assert(solver.state().extent(z) == nz);
+
+      real_t A = (w_max / si::metres_per_second) * nx * dx / pi<real_t>();
 
       solver.courant(x) = - A * (
 	psi(i/real_t(nx), (j+.5+.5)/nz)-
