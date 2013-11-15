@@ -11,12 +11,11 @@
 template <
   typename real_t, 
   int n_iters, 
-  typename ix,
-  int n_eqs = 4
+  typename ix
 >
-class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<real_t, n_iters, ix, n_eqs>
+class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<real_t, n_iters, ix>
 {
-  using parent_t = kin_cloud_2d_common<real_t, n_iters, ix, n_eqs>;
+  using parent_t = kin_cloud_2d_common<real_t, n_iters, ix>;
 
   void condevap()
   {
@@ -101,6 +100,9 @@ class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
   struct params_t : parent_t::params_t 
   { 
     libcloudphxx::blk_1m::opts_t<real_t> cloudph_opts;
+  
+    // ctor
+    params_t() { this->n_eqs = 4; }
   };
 
   // ctor

@@ -15,13 +15,12 @@
 template <
   typename real_t, 
   int n_iters, 
-  typename ix,
-  int n_eqs = 2
+  typename ix
 >
-class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eqs>
+class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix>
 {
   // note: lgrngn has no rhs terms - just adjustments (but there might be extrinsic rhs terms)
-  using parent_t = kin_cloud_2d_common<real_t, n_iters, ix, n_eqs>; 
+  using parent_t = kin_cloud_2d_common<real_t, n_iters, ix>; 
 
   // member fields
   std::unique_ptr<libcloudphxx::lgrngn::particles_proto_t<real_t>> prtcls;
@@ -139,11 +138,11 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
       this->setup_aux("sd_conc"); 
 
       prtcls->init(
-        make_arrinfo(this->mem->state(ix::rhod_th)),
-        make_arrinfo(this->mem->state(ix::rhod_rv)),
+        make_arrinfo(this->mem->advectee(ix::rhod_th)),
+        make_arrinfo(this->mem->advectee(ix::rhod_rv)),
 	make_arrinfo(this->rhod),
-        make_arrinfo(this->mem->courant(0)),
-        make_arrinfo(this->mem->courant(1))
+        make_arrinfo(this->mem->advector(0)),
+        make_arrinfo(this->mem->advector(1))
       ); 
 
       // writing diagnostic data for the initial condition
@@ -180,8 +179,8 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
       // running synchronous stuff
       prtcls->step_sync(
         params.cloudph_opts,
-        make_arrinfo(this->mem->state(ix::rhod_th)),
-        make_arrinfo(this->mem->state(ix::rhod_rv))
+        make_arrinfo(this->mem->advectee(ix::rhod_th)),
+        make_arrinfo(this->mem->advectee(ix::rhod_rv))
       ); 
 
       // running asynchronous stuff
@@ -231,6 +230,9 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, n_iters, ix, n_eq
     libcloudphxx::lgrngn::opts_t<real_t> cloudph_opts;
     libcloudphxx::lgrngn::opts_init_t<real_t> cloudph_opts_init;
     outmom_t<real_t> out_dry, out_wet;
+
+    // ctor
+    params_t() { this->n_eqs = 2; }
   };
 
   private:

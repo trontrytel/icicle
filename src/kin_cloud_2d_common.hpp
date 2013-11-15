@@ -11,20 +11,19 @@ using namespace libmpdataxx; // TODO: not here?
 template <
   typename real_t,
   int n_iters,
-  typename ix_t,
-  int n_eqs
+  typename ix_t
 >
 class kin_cloud_2d_common : public 
     output::hdf5<
       solvers::inhomo_solver<
-//	solvers::mpdata_fct_2d<real_t, n_iters, n_eqs, formulae::mpdata::iga>, 
-	solvers::mpdata_2d<real_t, n_iters, n_eqs>, 
+//	solvers::mpdata_fct_2d<real_t, n_iters, formulae::mpdata::iga>, 
+	solvers::mpdata_2d<real_t, n_iters>, 
 	solvers::euler 
     >
   >
 {
-//  using parent_t = output::hdf5<solvers::inhomo_solver<solvers::mpdata_fct_2d<real_t, n_iters, n_eqs, formulae::mpdata::iga>, solvers::euler>>;
-  using parent_t = output::hdf5<solvers::inhomo_solver<solvers::mpdata_2d<real_t, n_iters, n_eqs>, solvers::euler>>;
+//  using parent_t = output::hdf5<solvers::inhomo_solver<solvers::mpdata_fct_2d<real_t, n_iters, formulae::mpdata::iga>, solvers::euler>>;
+  using parent_t = output::hdf5<solvers::inhomo_solver<solvers::mpdata_2d<real_t, n_iters>, solvers::euler>>;
 
   protected:
 
