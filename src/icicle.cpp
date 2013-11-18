@@ -28,6 +28,7 @@ void run(int nx, int nz, int nt, const std::string &outfile, const int &outfreq,
   typename solver_t::params_t p;
 
   // output and simulation parameters
+  p.span = {nx, nz};
   p.outfile = outfile;
   p.outfreq = outfreq;
   p.spinup = spinup;
@@ -35,7 +36,7 @@ void run(int nx, int nz, int nt, const std::string &outfile, const int &outfreq,
   setopts_micro<solver_t>(p, nx, nz, nt);
 
   // solver instantiation
-  concurr::serial<solver_t, bcond::cyclic, bcond::cyclic> slv(nx, nz, p);
+  concurr::serial<solver_t, bcond::cyclic, bcond::cyclic> slv(p);
 
   // initial condition
   setup::intcond(slv);

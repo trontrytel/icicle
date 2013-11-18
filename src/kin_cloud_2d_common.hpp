@@ -110,11 +110,11 @@ class kin_cloud_2d_common : public
 	rhod(i, j) = p.rhod[j];
   }  
 
-  static void alloc(typename parent_t::mem_t *mem, const params_t &p, const int nx, const int ny)
+  static void alloc(typename parent_t::mem_t *mem, const params_t &p)
   {
     using namespace libmpdataxx::arakawa_c;
-    parent_t::alloc(mem, p, nx, ny);
-    const rng_t i(0, nx-1), j(0, ny-1);
+    parent_t::alloc(mem, p);
+    const rng_t i(0, p.span[0]-1), j(0, p.span[1]-1);
     mem->tmp[__FILE__].push_back(new arrvec_t<typename parent_t::arr_t>());
     mem->tmp[__FILE__].back().push_back(new typename parent_t::arr_t(i^parent_t::halo, j^parent_t::halo)); // rhod
   }
