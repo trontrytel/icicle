@@ -10,20 +10,19 @@ using namespace libmpdataxx; // TODO: not here?
 
 template <
   typename real_t,
-  int n_iters,
   typename ix_t
 >
 class kin_cloud_2d_common : public 
     output::hdf5<
       solvers::inhomo_solver<
-//	solvers::mpdata_fct_2d<real_t, n_iters, formulae::mpdata::iga>, 
-	solvers::mpdata_2d<real_t, n_iters>, 
+//	solvers::mpdata_fct_2d<real_t, formulae::mpdata::iga>, 
+	solvers::mpdata_2d<real_t>, 
 	solvers::euler 
     >
   >
 {
-//  using parent_t = output::hdf5<solvers::inhomo_solver<solvers::mpdata_fct_2d<real_t, n_iters, formulae::mpdata::iga>, solvers::euler>>;
-  using parent_t = output::hdf5<solvers::inhomo_solver<solvers::mpdata_2d<real_t, n_iters>, solvers::euler>>;
+//  using parent_t = output::hdf5<solvers::inhomo_solver<solvers::mpdata_fct_2d<real_t, formulae::mpdata::iga>, solvers::euler>>;
+  using parent_t = output::hdf5<solvers::inhomo_solver<solvers::mpdata_2d<real_t>, solvers::euler>>;
 
   protected:
 
@@ -111,10 +110,10 @@ class kin_cloud_2d_common : public
 	rhod(i, j) = p.rhod[j];
   }  
 
-  static void alloc(typename parent_t::mem_t *mem, const int nx, const int ny)
+  static void alloc(typename parent_t::mem_t *mem, const params_t &p, const int nx, const int ny)
   {
     using namespace libmpdataxx::arakawa_c;
-    parent_t::alloc(mem, nx, ny);
+    parent_t::alloc(mem, p, nx, ny);
     const rng_t i(0, nx-1), j(0, ny-1);
     mem->tmp[__FILE__].push_back(new arrvec_t<typename parent_t::arr_t>());
     mem->tmp[__FILE__].back().push_back(new typename parent_t::arr_t(i^parent_t::halo, j^parent_t::halo)); // rhod

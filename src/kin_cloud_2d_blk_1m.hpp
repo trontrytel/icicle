@@ -10,12 +10,11 @@
 //        custom hook_ante_loop() and hook_post_step() methods)
 template <
   typename real_t, 
-  int n_iters, 
   typename ix
 >
-class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<real_t, n_iters, ix>
+class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<real_t, ix>
 {
-  using parent_t = kin_cloud_2d_common<real_t, n_iters, ix>;
+  using parent_t = kin_cloud_2d_common<real_t, ix>;
 
   void condevap()
   {

@@ -57,8 +57,6 @@ int main(int argc, char** argv)
   ac = argc;
   av = argv;
 
-  const int n_iters = 2; // TODO: where to put such stuff? n_iters should be a param!
-
   try
   {
     // note: all options should have default values here to make "--micro=? --help" work
@@ -108,19 +106,19 @@ int main(int argc, char** argv)
     if (micro == "blk_1m")
     {
       struct ix { enum {rhod_th, rhod_rv, rhod_rc, rhod_rr}; };
-      run<kin_cloud_2d_blk_1m<setup::real_t, n_iters, ix>>(nx, nz, nt, outfile, outfreq, spinup);
+      run<kin_cloud_2d_blk_1m<setup::real_t, ix>>(nx, nz, nt, outfile, outfreq, spinup);
     }
     else
     if (micro == "blk_2m")
     {
       struct ix { enum {rhod_th, rhod_rv, rhod_rc, rhod_rr, rhod_nc, rhod_nr}; };
-      run<kin_cloud_2d_blk_2m<setup::real_t, n_iters, ix>>(nx, nz, nt, outfile, outfreq, spinup);
+      run<kin_cloud_2d_blk_2m<setup::real_t, ix>>(nx, nz, nt, outfile, outfreq, spinup);
     }
     else 
     if (micro == "lgrngn")
     {
       struct ix { enum {rhod_th, rhod_rv}; };
-      run<kin_cloud_2d_lgrngn<setup::real_t, n_iters, ix>>(nx, nz, nt, outfile, outfreq, spinup);
+      run<kin_cloud_2d_lgrngn<setup::real_t, ix>>(nx, nz, nt, outfile, outfreq, spinup);
     }
     else BOOST_THROW_EXCEPTION(
       po::validation_error(
