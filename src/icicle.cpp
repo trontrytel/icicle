@@ -7,6 +7,7 @@
 
 #include <libmpdata++/bcond/cyclic_2d.hpp>
 #include <libmpdata++/concurr/serial.hpp>
+//#include <libmpdata++/concurr/threads.hpp> // TODO (as of now, gives a segfault)
 
 #include "icmw8_case1.hpp" // 8th ICMW case 1 by Wojciech Grabowski)
 namespace setup = icmw8_case1;

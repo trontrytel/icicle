@@ -3,7 +3,7 @@
 #include <libmpdata++/solvers/mpdata_rhs.hpp>
 #include <libmpdata++/output/hdf5.hpp>
 
-using namespace libmpdataxx;
+using namespace libmpdataxx; // TODO: get rid of it?
 
 template <class ct_params_t>
 class kin_cloud_2d_common : public 
@@ -40,11 +40,13 @@ class kin_cloud_2d_common : public
   }
 
 
-  void update_forcings(
-    arrvec_t<typename parent_t::arr_t> &rhs
+  void update_rhs(
+    arrvec_t<typename parent_t::arr_t> &rhs,
+    const typename parent_t::real_t &dt,
+    const int &at 
   )   
   {   
-    parent_t::update_forcings(rhs);
+    parent_t::update_rhs(rhs, dt, at);
 
     // relaxation terms
     {

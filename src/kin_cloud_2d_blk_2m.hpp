@@ -20,9 +20,12 @@ class kin_cloud_2d_blk_2m : public kin_cloud_2d_common<ct_params_t>
     this->state(e)(this->ijk) = 0;
   }
 
-  void update_forcings(libmpdataxx::arrvec_t<typename parent_t::arr_t> &rhs)
-  {
-    parent_t::update_forcings(rhs);
+  void update_rhs(
+    libmpdataxx::arrvec_t<typename parent_t::arr_t> &rhs,
+    const typename parent_t::real_t &dt,
+    const int &at 
+  ) {
+    parent_t::update_rhs(rhs, dt, at);
 
     this->mem->barrier(); // TODO: if neccesarry, then move to adv_rhs/....hpp
 
