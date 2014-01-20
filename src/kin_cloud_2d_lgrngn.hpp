@@ -12,14 +12,16 @@
 // @brief a minimalistic kinematic cloud model with lagrangian microphysics
 //        built on top of the mpdata_2d solver (by extending it with
 //        custom hook_ante_loop() and hook_post_step() methods)
-template <
-  typename real_t, 
-  typename ix
->
-class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, ix>
+template <class ct_params_t>
+class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<ct_params_t>
 {
   // note: lgrngn has no rhs terms - just adjustments (but there might be extrinsic rhs terms)
-  using parent_t = kin_cloud_2d_common<real_t, ix>; 
+  using parent_t = kin_cloud_2d_common<ct_params_t>; 
+
+  public:
+  using ix = typename ct_params_t::ix;
+  using real_t = typename ct_params_t::real_t;
+  private:
 
   // member fields
   std::unique_ptr<libcloudphxx::lgrngn::particles_proto_t<real_t>> prtcls;
@@ -222,29 +224,26 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<real_t, ix>
 
   public:
 
-  struct params_t : parent_t::params_t 
+  struct rt_params_t : parent_t::rt_params_t 
   { 
     int backend = -1;
     bool async = true;
     libcloudphxx::lgrngn::opts_t<real_t> cloudph_opts;
     libcloudphxx::lgrngn::opts_init_t<real_t> cloudph_opts_init;
     outmom_t<real_t> out_dry, out_wet;
-
-    // ctor
-    params_t() { this->n_eqs = 2; }
   };
 
   private:
 
   // per-thread copy of params
-  params_t params;
+  rt_params_t params;
 
   public:
 
   // ctor
   kin_cloud_2d_lgrngn( 
     typename parent_t::ctor_args_t args, 
-    const params_t &p
+    const rt_params_t &p
   ) : 
     parent_t(args, p),
     params(p)

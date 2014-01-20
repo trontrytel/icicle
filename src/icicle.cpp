@@ -25,7 +25,7 @@ template <class solver_t>
 void run(int nx, int nz, int nt, const std::string &outfile, const int &outfreq, int spinup)
 {
   // instantiation of structure containing simulation parameters
-  typename solver_t::params_t p;
+  typename solver_t::rt_params_t p;
 
   // output and simulation parameters
   p.span = {nx, nz};
@@ -49,6 +49,15 @@ void run(int nx, int nz, int nt, const std::string &outfile, const int &outfreq,
   slv.advance(nt);
 }
 
+
+// libmpdata++'s compile-time parameters
+struct ct_params_common
+{
+  using real_t = setup::real_t;
+  enum { n_dims = 2 };
+  enum { opts = 0 }; // TODO: FCT
+  enum { rhs_scheme = solvers::euler_b };
+};
 
 
 // all starts here with handling general options 
@@ -106,20 +115,33 @@ int main(int argc, char** argv)
     std::string micro = vm["micro"].as<std::string>();
     if (micro == "blk_1m")
     {
-      struct ix { enum {rhod_th, rhod_rv, rhod_rc, rhod_rr}; };
-      run<kin_cloud_2d_blk_1m<setup::real_t, ix>>(nx, nz, nt, outfile, outfreq, spinup);
+      // libmpdata++'s compile-time parameters
+      struct ct_params_t : ct_params_common
+      {
+	enum { n_eqs = 4 };
+        struct ix { enum {rhod_th, rhod_rv, rhod_rc, rhod_rr}; };
+      };
+      run<kin_cloud_2d_blk_1m<ct_params_t>>(nx, nz, nt, outfile, outfreq, spinup);
     }
     else
     if (micro == "blk_2m")
     {
-      struct ix { enum {rhod_th, rhod_rv, rhod_rc, rhod_rr, rhod_nc, rhod_nr}; };
-      run<kin_cloud_2d_blk_2m<setup::real_t, ix>>(nx, nz, nt, outfile, outfreq, spinup);
+      struct ct_params_t : ct_params_common
+      {
+	enum { n_eqs = 6 };
+	struct ix { enum {rhod_th, rhod_rv, rhod_rc, rhod_rr, rhod_nc, rhod_nr}; };
+      };
+      run<kin_cloud_2d_blk_2m<ct_params_t>>(nx, nz, nt, outfile, outfreq, spinup);
     }
     else 
     if (micro == "lgrngn")
     {
-      struct ix { enum {rhod_th, rhod_rv}; };
-      run<kin_cloud_2d_lgrngn<setup::real_t, ix>>(nx, nz, nt, outfile, outfreq, spinup);
+      struct ct_params_t : ct_params_common
+      {
+	enum { n_eqs = 2 };
+	struct ix { enum {rhod_th, rhod_rv}; };
+      };
+      run<kin_cloud_2d_lgrngn<ct_params_t>>(nx, nz, nt, outfile, outfreq, spinup);
     }
     else BOOST_THROW_EXCEPTION(
       po::validation_error(

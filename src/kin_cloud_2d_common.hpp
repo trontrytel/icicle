@@ -1,33 +1,22 @@
 #pragma once
 
-#include <libmpdata++/solvers/adv/mpdata_2d.hpp>
-// note: FCT cannot be used as of now as the density is not constant in space here!
-//#include <libmpdata++/solvers/adv/mpdata_fct_2d.hpp>
-#include <libmpdata++/solvers/adv+rhs/solver_inhomo.hpp>
+#include <libmpdata++/solvers/mpdata_rhs.hpp>
 #include <libmpdata++/output/hdf5.hpp>
 
-using namespace libmpdataxx; // TODO: not here?
+using namespace libmpdataxx;
 
-template <
-  typename real_t,
-  typename ix_t
->
+template <class ct_params_t>
 class kin_cloud_2d_common : public 
-    output::hdf5<
-      solvers::inhomo_solver<
-//	solvers::mpdata_fct_2d<real_t, formulae::mpdata::iga>, 
-	solvers::mpdata_2d<real_t>, 
-	solvers::euler 
-    >
+  output::hdf5<
+    solvers::mpdata_rhs<ct_params_t>
   >
 {
-//  using parent_t = output::hdf5<solvers::inhomo_solver<solvers::mpdata_fct_2d<real_t, formulae::mpdata::iga>, solvers::euler>>;
-  using parent_t = output::hdf5<solvers::inhomo_solver<solvers::mpdata_2d<real_t>, solvers::euler>>;
+  using parent_t = output::hdf5<solvers::mpdata_rhs<ct_params_t>>;
 
   protected:
 
   typename parent_t::arr_t rhod;
-  real_t dx, dz; // 0->dx, 1->dy ! TODO
+  typename ct_params_t::real_t dx, dz; // 0->dx, 1->dy ! TODO
   int spinup; // number of timesteps
 
   // spinup stuff
@@ -80,19 +69,17 @@ class kin_cloud_2d_common : public
 
   public:
 
-  typedef ix_t ix;
-
-  struct params_t : parent_t::params_t 
+  struct rt_params_t : parent_t::rt_params_t 
   { 
-    std::vector<real_t> rhod; // profile
-    real_t dx = 0, dz = 0;
+    std::vector<typename ct_params_t::real_t> rhod; // profile
+    typename ct_params_t::real_t dx = 0, dz = 0;
     int spinup = 0; // number of timesteps during which autoconversion is to be turned off
   };
 
   // ctor
   kin_cloud_2d_common( 
     typename parent_t::ctor_args_t args, 
-    const params_t &p
+    const rt_params_t &p
   ) : 
     parent_t(args, p),
     rhod(args.mem->tmp[__FILE__][0][0]),
@@ -110,7 +97,7 @@ class kin_cloud_2d_common : public
 	rhod(i, j) = p.rhod[j];
   }  
 
-  static void alloc(typename parent_t::mem_t *mem, const params_t &p)
+  static void alloc(typename parent_t::mem_t *mem, const rt_params_t &p)
   {
     using namespace libmpdataxx::arakawa_c;
     parent_t::alloc(mem, p);

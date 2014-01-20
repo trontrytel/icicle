@@ -20,10 +20,10 @@
 // simulation and output parameters for micro=lgrngn
 template <class solver_t>
 void setopts_micro(
-  typename solver_t::params_t &params, 
+  typename solver_t::rt_params_t &rt_params, 
   int nx, int nz, int nt,
   typename std::enable_if<std::is_same<
-    decltype(solver_t::params_t::cloudph_opts),
+    decltype(solver_t::rt_params_t::cloudph_opts),
     libcloudphxx::lgrngn::opts_t<typename solver_t::real_t>
   >::value>::type* = 0
 )
@@ -37,13 +37,13 @@ std::cerr << "setopts_lgrngn" << std::endl;
     ("async", po::value<bool>()->default_value(true), "use CPU for advection while GPU does micro (ignored if backend != CUDA)")
     ("sd_conc_mean", po::value<thrust_real_t>()->required() , "mean super-droplet concentration per grid cell (int)")
     // processes
-    ("adve", po::value<bool>()->default_value(params.cloudph_opts.adve) , "particle advection     (1=on, 0=off)")
-    ("sedi", po::value<bool>()->default_value(params.cloudph_opts.sedi) , "particle sedimentation (1=on, 0=off)")
-    ("cond", po::value<bool>()->default_value(params.cloudph_opts.cond) , "condensational growth  (1=on, 0=off)")
-    ("coal", po::value<bool>()->default_value(params.cloudph_opts.coal) , "collisional growth     (1=on, 0=off)")
+    ("adve", po::value<bool>()->default_value(rt_params.cloudph_opts.adve) , "particle advection     (1=on, 0=off)")
+    ("sedi", po::value<bool>()->default_value(rt_params.cloudph_opts.sedi) , "particle sedimentation (1=on, 0=off)")
+    ("cond", po::value<bool>()->default_value(rt_params.cloudph_opts.cond) , "condensational growth  (1=on, 0=off)")
+    ("coal", po::value<bool>()->default_value(rt_params.cloudph_opts.coal) , "collisional growth     (1=on, 0=off)")
     // free parameters
-    ("sstp_cond", po::value<int>()->default_value(params.cloudph_opts.sstp_cond), "no. of substeps for condensation")
-    ("sstp_coal", po::value<int>()->default_value(params.cloudph_opts.sstp_coal), "no. of substeps for coalescence")
+    ("sstp_cond", po::value<int>()->default_value(rt_params.cloudph_opts.sstp_cond), "no. of substeps for condensation")
+    ("sstp_coal", po::value<int>()->default_value(rt_params.cloudph_opts.sstp_coal), "no. of substeps for coalescence")
     // 
     ("out_dry", po::value<std::string>()->default_value("0:1|0"),       "dry radius ranges and moment numbers (r1:r2|n1,n2...;...)")
     ("out_wet", po::value<std::string>()->default_value(".5e-6:25e-6|0,1,2,3;25e-6:1|0,3,6"),  "wet radius ranges and moment numbers (r1:r2|n1,n2...;...)")
@@ -53,25 +53,25 @@ std::cerr << "setopts_lgrngn" << std::endl;
   handle_opts(opts, vm);
       
   std::string backend_str = vm["backend"].as<std::string>();
-  if (backend_str == "CUDA") params.backend = libcloudphxx::lgrngn::CUDA;
-  else if (backend_str == "OpenMP") params.backend = libcloudphxx::lgrngn::OpenMP;
-  else if (backend_str == "serial") params.backend = libcloudphxx::lgrngn::serial;
+  if (backend_str == "CUDA") rt_params.backend = libcloudphxx::lgrngn::CUDA;
+  else if (backend_str == "OpenMP") rt_params.backend = libcloudphxx::lgrngn::OpenMP;
+  else if (backend_str == "serial") rt_params.backend = libcloudphxx::lgrngn::serial;
 
-  params.async = vm["async"].as<bool>();
+  rt_params.async = vm["async"].as<bool>();
 
-  params.cloudph_opts_init.sd_conc_mean = vm["sd_conc_mean"].as<thrust_real_t>();;
-  params.cloudph_opts_init.nx = nx;
-  params.cloudph_opts_init.nz = nz;
+  rt_params.cloudph_opts_init.sd_conc_mean = vm["sd_conc_mean"].as<thrust_real_t>();;
+  rt_params.cloudph_opts_init.nx = nx;
+  rt_params.cloudph_opts_init.nz = nz;
   boost::assign::ptr_map_insert<
     setup::log_dry_radii<thrust_real_t> // value type
   >(
-    params.cloudph_opts_init.dry_distros // map
+    rt_params.cloudph_opts_init.dry_distros // map
   )(
     setup::kappa // key
   );
 
   // output variables
-  params.outvars = {
+  rt_params.outvars = {
     // <TODO>: make it common among all three micro?
     {solver_t::ix::rhod_th, {"rhod_th", "[K kg m-3]"}},
     {solver_t::ix::rhod_rv, {"rhod_rv", "[kg m-3]"}}
@@ -79,16 +79,16 @@ std::cerr << "setopts_lgrngn" << std::endl;
   };
 
   // process toggling
-  params.cloudph_opts.adve = vm["adve"].as<bool>();
-  params.cloudph_opts.sedi = vm["sedi"].as<bool>();
-  params.cloudph_opts.cond = vm["cond"].as<bool>();
-  params.cloudph_opts.coal = vm["coal"].as<bool>();
-  //params.cloudph_opts.rcyc = vm["rcyc"].as<bool>();
-  //params.cloudph_opts.chem = vm["chem"].as<bool>();
+  rt_params.cloudph_opts.adve = vm["adve"].as<bool>();
+  rt_params.cloudph_opts.sedi = vm["sedi"].as<bool>();
+  rt_params.cloudph_opts.cond = vm["cond"].as<bool>();
+  rt_params.cloudph_opts.coal = vm["coal"].as<bool>();
+  //rt_params.cloudph_opts.rcyc = vm["rcyc"].as<bool>();
+  //rt_params.cloudph_opts.chem = vm["chem"].as<bool>();
 
   // free parameters
-  params.cloudph_opts.sstp_cond = vm["sstp_cond"].as<int>();
-  params.cloudph_opts.sstp_coal = vm["sstp_coal"].as<int>();
+  rt_params.cloudph_opts.sstp_cond = vm["sstp_cond"].as<int>();
+  rt_params.cloudph_opts.sstp_coal = vm["sstp_coal"].as<int>();
 
   // parsing --out_dry and --out_wet options values
   // the format is: "rmin:rmax|0,1,2;rmin:rmax|3;..."
@@ -104,8 +104,8 @@ std::cerr << "setopts_lgrngn" << std::endl;
     std::vector<std::pair<std::string, std::string>> min_maxnum;
     outmom_t<thrust_real_t> &moms = 
       opt == "out_dry"
-        ? params.out_dry
-        : params.out_wet;
+        ? rt_params.out_dry
+        : rt_params.out_wet;
 
     const bool result = qi::phrase_parse(first, last, 
       *(

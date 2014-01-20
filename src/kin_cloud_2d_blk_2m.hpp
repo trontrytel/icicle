@@ -4,13 +4,15 @@
 #include <libcloudph++/blk_2m/rhs_cellwise.hpp>
 #include <libcloudph++/blk_2m/rhs_columnwise.hpp>
 
-template <
-  typename real_t, 
-  typename ix
->
-class kin_cloud_2d_blk_2m : public kin_cloud_2d_common<real_t, ix>
+template <class ct_params_t>
+class kin_cloud_2d_blk_2m : public kin_cloud_2d_common<ct_params_t>
 {
-  using parent_t = kin_cloud_2d_common<real_t, ix>;
+  using parent_t = kin_cloud_2d_common<ct_params_t>;
+
+  public:
+  using ix = typename ct_params_t::ix;
+  using real_t = typename ct_params_t::real_t;
+  private:
 
   void zero_if_uninitialised(int e)  //TODO move to common
   {
@@ -98,18 +100,15 @@ class kin_cloud_2d_blk_2m : public kin_cloud_2d_common<real_t, ix>
 
   public:
 
-  struct params_t : parent_t::params_t 
+  struct rt_params_t : parent_t::rt_params_t 
   { 
     libcloudphxx::blk_2m::opts_t<real_t> cloudph_opts;
-  
-    // ctor
-    params_t() { this->n_eqs = 6; }
   };
 
   // ctor
   kin_cloud_2d_blk_2m( 
     typename parent_t::ctor_args_t args, 
-    const params_t &p
+    const rt_params_t &p
   ) : 
     parent_t(args, p),
     opts(p.cloudph_opts)
