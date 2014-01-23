@@ -52,7 +52,7 @@ void run(int nx, int nz, int nt, const std::string &outfile, const int &outfreq,
 
 
 // libmpdata++'s compile-time parameters
-struct ct_params_common
+struct ct_params_common : ct_params_default_t
 {
   using real_t = setup::real_t;
   enum { n_dims = 2 };

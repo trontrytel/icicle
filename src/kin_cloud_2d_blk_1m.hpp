@@ -21,10 +21,10 @@ class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<ct_params_t>
   void condevap()
   {
     auto 
-      rhod_th = this->state(ix::rhod_th)(this->ijk), // dry static energy density divided by c_pd (= dry air density times theta)
-      rhod_rv = this->state(ix::rhod_rv)(this->ijk), // water vapour density
-      rhod_rc = this->state(ix::rhod_rc)(this->ijk), // cloud water density
-      rhod_rr = this->state(ix::rhod_rr)(this->ijk); // rain water density
+      rhod_th = this->psi_n(ix::rhod_th)(this->ijk), // dry static energy density divided by c_pd (= dry air density times theta)
+      rhod_rv = this->psi_n(ix::rhod_rv)(this->ijk), // water vapour density
+      rhod_rc = this->psi_n(ix::rhod_rc)(this->ijk), // cloud water density
+      rhod_rr = this->psi_n(ix::rhod_rr)(this->ijk); // rain water density
     auto const
       rhod    = this->rhod(this->ijk);
       
@@ -36,8 +36,8 @@ class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<ct_params_t>
 
   void zero_if_uninitialised(int e)
   {
-    if (!finite(sum(this->state(e)(this->ijk)))) 
-      this->state(e)(this->ijk) = 0;
+    if (!finite(sum(this->psi_n(e)(this->ijk)))) 
+      this->psi_n(e)(this->ijk) = 0;
   }
 
   protected:
@@ -72,8 +72,8 @@ class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<ct_params_t>
 	dot_rhod_rc = rhs.at(ix::rhod_rc)(this->i, this->j),
 	dot_rhod_rr = rhs.at(ix::rhod_rr)(this->i, this->j);
       const auto 
-	rhod_rc  = this->state(ix::rhod_rc)(this->i, this->j),
-	rhod_rr  = this->state(ix::rhod_rr)(this->i, this->j),
+	rhod_rc  = this->psi_n(ix::rhod_rc)(this->i, this->j),
+	rhod_rr  = this->psi_n(ix::rhod_rr)(this->i, this->j),
 	rhod     = this->rhod(this->i, this->j);
       libcloudphxx::blk_1m::rhs_cellwise<real_t>(opts, dot_rhod_rc, dot_rhod_rr, rhod, rhod_rc, rhod_rr);
     }
@@ -84,7 +84,7 @@ class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<ct_params_t>
       auto 
 	dot_rhod_rr = rhs.at(ix::rhod_rr)(i, this->j);
       const auto 
-	rhod_rr  = this->state(ix::rhod_rr)(i, this->j),
+	rhod_rr  = this->psi_n(ix::rhod_rr)(i, this->j),
 	rhod     = this->rhod(i, this->j);
       libcloudphxx::blk_1m::rhs_columnwise<real_t>(opts, dot_rhod_rr, rhod, rhod_rr, this->dz);
     }
