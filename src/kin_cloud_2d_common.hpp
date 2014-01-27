@@ -103,8 +103,6 @@ class kin_cloud_2d_common : public
   {
     using namespace libmpdataxx::arakawa_c;
     parent_t::alloc(mem, p);
-    const rng_t i(0, p.span[0]-1), j(0, p.span[1]-1);
-    mem->tmp[__FILE__].push_back(new arrvec_t<typename parent_t::arr_t>());
-    mem->tmp[__FILE__].back().push_back(new typename parent_t::arr_t(i^parent_t::halo, j^parent_t::halo)); // rhod
+    parent_t::alloc_tmp_sclr(mem, p.span, __FILE__, 1); // 1 array for rhod
   }
 };

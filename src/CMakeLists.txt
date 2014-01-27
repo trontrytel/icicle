@@ -25,13 +25,14 @@ add_executable(icicle icicle.cpp)
 find_package(Boost COMPONENTS thread iostreams system timer program_options REQUIRED)
 target_link_libraries(icicle ${Boost_LIBRARIES})
 
-#TODO: obtain optimisation flags from libpdataxx-config?
-
 #TODO: check if it's there
 target_link_libraries(icicle cloudphxx_lgrngn)
 
 find_package(HDF5 COMPONENTS CXX HL REQUIRED QUIET)
 target_link_libraries(icicle ${HDF5_LIBRARIES})
+
+# release-mode options
+set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -Ofast -march=native")
 
 # handling Blitz debuging options in CMake's DEBUG mode
 set(CMAKE_CXX_FLAGS_DEBUG "-DBZ_DEBUG -g")
