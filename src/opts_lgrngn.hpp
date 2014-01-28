@@ -28,7 +28,6 @@ void setopts_micro(
   >::value>::type* = 0
 )
 {
-std::cerr << "setopts_lgrngn" << std::endl;
   using thrust_real_t = setup::real_t; // TODO: make it a choice?
 
   po::options_description opts("Lagrangian microphysics options"); 

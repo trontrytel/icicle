@@ -12,8 +12,8 @@
 namespace setup = icmw8_case1;
 
 #include "opts_blk_1m.hpp"
-#include "opts_blk_2m.hpp"
-#include "opts_lgrngn.hpp"
+//#include "opts_blk_2m.hpp"
+//#include "opts_lgrngn.hpp"
 
 // exception handling
 #include <boost/exception/all.hpp>
@@ -55,7 +55,7 @@ struct ct_params_common : ct_params_default_t
 {
   using real_t = setup::real_t;
   enum { n_dims = 2 };
-  enum { opts = formulae::opts::nug | formulae::opts::fct | formulae::opts::iga }; 
+  enum { opts = formulae::opts::nug | formulae::opts::fct }; // | formulae::opts::iga };  // TODO: iga causes negative rr values to pop up :(
   enum { rhs_scheme = solvers::euler_b };
   // TODO: hint_norhs?
 };
@@ -124,6 +124,7 @@ int main(int argc, char** argv)
       };
       run<kin_cloud_2d_blk_1m<ct_params_t>>(nx, nz, nt, outfile, outfreq, spinup);
     }
+/*
     else
     if (micro == "blk_2m")
     {
@@ -144,6 +145,7 @@ int main(int argc, char** argv)
       };
       run<kin_cloud_2d_lgrngn<ct_params_t>>(nx, nz, nt, outfile, outfreq, spinup);
     }
+*/
     else BOOST_THROW_EXCEPTION(
       po::validation_error(
         po::validation_error::invalid_option_value, micro, "micro" 

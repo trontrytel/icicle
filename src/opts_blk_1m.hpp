@@ -21,7 +21,6 @@ void setopts_micro(
   >::value>::type* = 0
 )
 {
-std::cerr << "setopts_blk_1m" << std::endl;
   po::options_description opts("Single-moment bulk microphysics options"); 
   opts.add_options()
     ("cond", po::value<bool>()->default_value(rt_params.cloudph_opts.cond) , "cloud water condensation (1=on, 0=off)")
