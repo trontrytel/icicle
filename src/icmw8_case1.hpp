@@ -91,10 +91,6 @@ namespace icmw8_case1
     params.dt = dt / si::seconds;
     params.dx = nxdx / si::metres / nx;
     params.dz = nzdz / si::metres / nz;
-
-    params.rhod.resize(nz);
-    for (int j = 0; j < nz; ++j)
-      params.rhod[j] = rhod()((j+.5) * params.dz);
   }
 
   // function expecting a libmpdata++ solver as argument
@@ -116,10 +112,13 @@ namespace icmw8_case1
       dz = nzdz / si::metres / nz; 
 
     // constant potential temperature & water vapour mixing ratio profiles
-    solver.advectee(ix::rhod_th) = rhod()((j+.5)*dz) * (th_0 / si::kelvins); // TODO: should be theta_dry and is theta
-    solver.advectee(ix::rhod_rv) = rhod()((j+.5)*dz) * real_t(rv_0);
+    solver.advectee(ix::th) = (th_0 / si::kelvins); // TODO: should be theta_dry and is theta
+    solver.advectee(ix::rv) = real_t(rv_0);
 
-    // velocity field obtained by numerically differentiating a stream function
+    // density profile
+    solver.g_factor() = rhod()((j+.5) * dz);
+
+    // momentum field obtained by numerically differentiating a stream function
     {
       assert(solver.advectee().extent(x) == nx);
       assert(solver.advectee().extent(z) == nz);
@@ -129,15 +128,13 @@ namespace icmw8_case1
       solver.advector(x) = - A * (
 	psi(i/real_t(nx), (j+.5+.5)/nz)-
 	psi(i/real_t(nx), (j+.5-.5)/nz)
-      ) / dz             // numerical derivative
-      / rhod()((j+.5)* dz) // psi defines rho_d times velocity
-      * (dt / si::seconds) / dx;         // converting to Courant number
+      ) / dz                       // numerical derivative
+      * (dt / si::seconds) / dx;   // converting to Courant number
 
       solver.advector(z) = A * (
 	psi((i+.5+.5)/nx, j/real_t(nz)) -
 	psi((i+.5-.5)/nx, j/real_t(nz))
       ) / dx 
-      / rhod()(j * dz)
       * (dt / si::seconds) / dz; 
     }
   }

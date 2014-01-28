@@ -55,8 +55,9 @@ struct ct_params_common : ct_params_default_t
 {
   using real_t = setup::real_t;
   enum { n_dims = 2 };
-  enum { opts = 0 }; // TODO: FCT
+  enum { opts = formulae::opts::nug | formulae::opts::fct | formulae::opts::iga }; 
   enum { rhs_scheme = solvers::euler_b };
+  // TODO: hint_norhs?
 };
 
 
@@ -119,7 +120,7 @@ int main(int argc, char** argv)
       struct ct_params_t : ct_params_common
       {
 	enum { n_eqs = 4 };
-        struct ix { enum {rhod_th, rhod_rv, rhod_rc, rhod_rr}; };
+        struct ix { enum {th, rv, rc, rr}; };
       };
       run<kin_cloud_2d_blk_1m<ct_params_t>>(nx, nz, nt, outfile, outfreq, spinup);
     }
@@ -129,7 +130,7 @@ int main(int argc, char** argv)
       struct ct_params_t : ct_params_common
       {
 	enum { n_eqs = 6 };
-	struct ix { enum {rhod_th, rhod_rv, rhod_rc, rhod_rr, rhod_nc, rhod_nr}; };
+	struct ix { enum {th, rv, rc, rr, nc, nr}; };
       };
       run<kin_cloud_2d_blk_2m<ct_params_t>>(nx, nz, nt, outfile, outfreq, spinup);
     }
@@ -139,7 +140,7 @@ int main(int argc, char** argv)
       struct ct_params_t : ct_params_common
       {
 	enum { n_eqs = 2 };
-	struct ix { enum {rhod_th, rhod_rv}; };
+	struct ix { enum {th, rv}; };
       };
       run<kin_cloud_2d_lgrngn<ct_params_t>>(nx, nz, nt, outfile, outfreq, spinup);
     }

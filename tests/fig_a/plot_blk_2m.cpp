@@ -16,33 +16,33 @@ int main(int ac, char** av)
   init(gp, svg, 2, 2);
 
   {
-    auto rhod_rc = h5load(h5, "rhod_rc") * 1e3;
-    gp << "set title 'cloud water content ρ_c [g/m^3]'\n";
+    auto rc = h5load(h5, "rc") * 1e3;
+    gp << "set title 'cloud water mixing ratio r_c [g/kg]'\n"; // TODO: *rho_d
     gp << "set cbrange [0:1.5]\n";
-    plot(gp, rhod_rc);
+    plot(gp, rc);
   }
 
   {
-    auto rhod_rr = h5load(h5, "rhod_rr") * 1e3;
+    auto rr = h5load(h5, "rr") * 1e3;
     gp << "set logscale cb\n";
-    gp << "set title 'rain water content ρ_r [g/m^3]'\n";
+    gp << "set title 'rain water mixing ratio r_r [g/kg]'\n"; // TODO: *rho_d
     gp << "set cbrange [1e-2:1]\n";
-    plot(gp, rhod_rr);
+    plot(gp, rr);
     gp << "unset logscale cb\n";
   }
 
   {
-    auto rhod_nc = h5load(h5, "rhod_nc") * 1e-6;
-    gp << "set title 'cloud droplet concentration n_c [cm^{-3}]'\n";
+    auto nc = h5load(h5, "nc") * 1e-6;
+    gp << "set title 'cloud droplet specific concentration n_c [mg^{-1}]'\n"; // TODO: *rho_d
     gp << "set cbrange [0:150]\n";
-    plot(gp, rhod_nc);
+    plot(gp, nc);
   }
 
   {
-    auto rhod_nr = h5load(h5, "rhod_nr") * 1e-6;
-    gp << "set title 'rain drop concentration n_r [cm^{-3}]'\n";
+    auto nr = h5load(h5, "nr") * 1e-6;
+    gp << "set title 'rain drop specific concentration n_r [mg^{-1}]'\n"; // TODO: *rho_d
     gp << "set cbrange [0.01:10]\n";
     gp << "set logscale cb\n";
-    plot(gp, rhod_nr);
+    plot(gp, nr);
   }
 }

@@ -16,17 +16,17 @@ int main(int ac, char** av)
   init(gp, svg, 1, 2);
 
   {
-    auto rhod_rc = h5load(h5, "rhod_rc") * 1e3;
-    gp << "set title 'cloud water content ρ_c [g/m^3]'\n"; 
+    auto rc = h5load(h5, "rc") * 1e3;
+    gp << "set title 'cloud water mixing ratio r_c [g/kg]'\n";  // TODO: -> multiply by density to compare with SD
     gp << "set cbrange [0:1.5]\n";
-    plot(gp, rhod_rc);
+    plot(gp, rc);
   }
 
   {
-    auto rhod_rr = h5load(h5, "rhod_rr") * 1e3;
+    auto rr = h5load(h5, "rr") * 1e3;
     gp << "set logscale cb\n";
-    gp << "set title 'rain water content ρ_r [g/m^3]'\n"; 
+    gp << "set title 'rain water mixing ratio r_r [g/kg]'\n"; // TODO: -> multiply by density to compare with SD
     gp << "set cbrange [1e-2:1]\n";
-    plot(gp, rhod_rr);
+    plot(gp, rr);
   }
 }

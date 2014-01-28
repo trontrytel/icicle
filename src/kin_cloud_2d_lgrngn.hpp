@@ -139,9 +139,9 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<ct_params_t>
       this->setup_aux("sd_conc"); 
 
       prtcls->init(
-        make_arrinfo(this->mem->advectee(ix::rhod_th)),
-        make_arrinfo(this->mem->advectee(ix::rhod_rv)),
-	make_arrinfo(this->rhod),
+        make_arrinfo(this->mem->advectee(ix::th)),
+        make_arrinfo(this->mem->advectee(ix::rv)),
+	make_arrinfo(this->mem->g_factor()), // TODO: triple-check - was this->rhod which has differend base!
         make_arrinfo(this->mem->advector(0)),
         make_arrinfo(this->mem->advector(1))
       ); 
@@ -180,8 +180,8 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<ct_params_t>
       // running synchronous stuff
       prtcls->step_sync(
         params.cloudph_opts,
-        make_arrinfo(this->mem->advectee(ix::rhod_th)),
-        make_arrinfo(this->mem->advectee(ix::rhod_rv))
+        make_arrinfo(this->mem->advectee(ix::th)),
+        make_arrinfo(this->mem->advectee(ix::rv))
       ); 
 
       // running asynchronous stuff

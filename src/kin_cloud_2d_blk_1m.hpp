@@ -21,15 +21,15 @@ class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<ct_params_t>
   void condevap()
   {
     auto 
-      rhod_th = this->psi_n(ix::rhod_th)(this->ijk), // dry static energy density divided by c_pd (= dry air density times theta)
-      rhod_rv = this->psi_n(ix::rhod_rv)(this->ijk), // water vapour density
-      rhod_rc = this->psi_n(ix::rhod_rc)(this->ijk), // cloud water density
-      rhod_rr = this->psi_n(ix::rhod_rr)(this->ijk); // rain water density
+      th   = this->psi_n(ix::th)(this->ijk), // potential temperature
+      rv   = this->psi_n(ix::rv)(this->ijk), // water vapour mixing ratio
+      rc   = this->psi_n(ix::rc)(this->ijk), // cloud water mixing ratio
+      rr   = this->psi_n(ix::rr)(this->ijk); // rain water mixing ratio
     auto const
-      rhod    = this->rhod(this->ijk);
+      rhod = (*this->mem->G)(this->ijk);
       
     libcloudphxx::blk_1m::adj_cellwise<real_t>( 
-      opts, rhod, rhod_th, rhod_rv, rhod_rc, rhod_rr, this->dt
+      opts, rhod, th, rv, rc, rr, this->dt
     );
     this->mem->barrier(); 
   }
@@ -49,8 +49,8 @@ class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<ct_params_t>
   void hook_ante_loop(int nt)
   {
     // if uninitialised fill with zeros
-    zero_if_uninitialised(ix::rhod_rc);
-    zero_if_uninitialised(ix::rhod_rr);
+    zero_if_uninitialised(ix::rc);
+    zero_if_uninitialised(ix::rr);
 
     // deal with initial supersaturation
     condevap();
@@ -69,24 +69,23 @@ class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<ct_params_t>
     // cell-wise
     {
       auto 
-	dot_rhod_rc = rhs.at(ix::rhod_rc)(this->i, this->j),
-	dot_rhod_rr = rhs.at(ix::rhod_rr)(this->i, this->j);
+	dot_rc = rhs.at(ix::rc)(this->ijk),
+	dot_rr = rhs.at(ix::rr)(this->ijk);
       const auto 
-	rhod_rc  = this->psi_n(ix::rhod_rc)(this->i, this->j),
-	rhod_rr  = this->psi_n(ix::rhod_rr)(this->i, this->j),
-	rhod     = this->rhod(this->i, this->j);
-      libcloudphxx::blk_1m::rhs_cellwise<real_t>(opts, dot_rhod_rc, dot_rhod_rr, rhod, rhod_rc, rhod_rr);
+	rc   = this->psi_n(ix::rc)(this->ijk),
+	rr   = this->psi_n(ix::rr)(this->ijk);
+      libcloudphxx::blk_1m::rhs_cellwise<real_t>(opts, dot_rc, dot_rr, rc, rr);
     }
 
     // column-wise
     for (int i = this->i.first(); i <= this->i.last(); ++i)
     {
       auto 
-	dot_rhod_rr = rhs.at(ix::rhod_rr)(i, this->j);
+	dot_rr = rhs.at(ix::rr)(i, this->j);
       const auto 
-	rhod_rr  = this->psi_n(ix::rhod_rr)(i, this->j),
-	rhod     = this->rhod(i, this->j);
-      libcloudphxx::blk_1m::rhs_columnwise<real_t>(opts, dot_rhod_rr, rhod, rhod_rr, this->dz);
+        rhod   = (*this->mem->G)(i, this->j),
+	rr     = this->psi_n(ix::rr)(i, this->j);
+      libcloudphxx::blk_1m::rhs_columnwise<real_t>(opts, dot_rr, rhod, rr, this->dz);
     }
   }
 

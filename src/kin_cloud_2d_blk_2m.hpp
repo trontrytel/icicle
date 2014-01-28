@@ -32,24 +32,24 @@ class kin_cloud_2d_blk_2m : public kin_cloud_2d_common<ct_params_t>
     // cell-wise
     {
       auto
-	dot_rhod_th = rhs.at(ix::rhod_th)(this->i, this->j),
-	dot_rhod_rv = rhs.at(ix::rhod_rv)(this->i, this->j),
-	dot_rhod_rc = rhs.at(ix::rhod_rc)(this->i, this->j),
-	dot_rhod_rr = rhs.at(ix::rhod_rr)(this->i, this->j),
-	dot_rhod_nc = rhs.at(ix::rhod_nc)(this->i, this->j),
-	dot_rhod_nr = rhs.at(ix::rhod_nr)(this->i, this->j);
+	dot_th = rhs.at(ix::th)(this->ijk),
+	dot_rv = rhs.at(ix::rv)(this->ijk),
+	dot_rc = rhs.at(ix::rc)(this->ijk),
+	dot_rr = rhs.at(ix::rr)(this->ijk),
+	dot_nc = rhs.at(ix::nc)(this->ijk),
+	dot_nr = rhs.at(ix::nr)(this->ijk);
       const auto
-	rhod     = this->rhod(this->i, this->j),
-	rhod_th  = this->psi_n(ix::rhod_th)(this->i, this->j),
-	rhod_rv  = this->psi_n(ix::rhod_rv)(this->i, this->j),
-	rhod_rc  = this->psi_n(ix::rhod_rc)(this->i, this->j),
-	rhod_rr  = this->psi_n(ix::rhod_rr)(this->i, this->j),
-	rhod_nc  = this->psi_n(ix::rhod_nc)(this->i, this->j),
-	rhod_nr  = this->psi_n(ix::rhod_nr)(this->i, this->j);
+        rhod   = (*this->mem->G)(this->ijk),
+        th     = this->psi_n(ix::th)(this->ijk),
+        rv     = this->psi_n(ix::rv)(this->ijk),
+        rc     = this->psi_n(ix::rc)(this->ijk),
+        rr     = this->psi_n(ix::rr)(this->ijk),
+        nc     = this->psi_n(ix::nc)(this->ijk),
+        nr     = this->psi_n(ix::nr)(this->ijk);
 
       libcloudphxx::blk_2m::rhs_cellwise<real_t>(
-        opts, dot_rhod_th, dot_rhod_rv, dot_rhod_rc, dot_rhod_nc, dot_rhod_rr, dot_rhod_nr,
-	rhod,     rhod_th,     rhod_rv,     rhod_rc,     rhod_nc,     rhod_rr,     rhod_nr,
+        opts, dot_th, dot_rv, dot_rc, dot_nc, dot_rr, dot_nr,
+	rhod,     th,     rv,     rc,     nc,     rr,     nr,
         this->dt
       );
     }
@@ -58,18 +58,16 @@ class kin_cloud_2d_blk_2m : public kin_cloud_2d_common<ct_params_t>
     for (int i = this->i.first(); i <= this->i.last(); ++i)
     {
       auto
-	dot_rhod_rr = rhs.at(ix::rhod_rr)(i, this->j),
-	dot_rhod_nr = rhs.at(ix::rhod_nr)(i, this->j);
+	dot_rr = rhs.at(ix::rr)(i, this->j),
+	dot_nr = rhs.at(ix::nr)(i, this->j);
       const auto
-        rhod     = this->rhod(i, this->j),
-	rhod_rr  = this->psi_n(ix::rhod_rr)(i, this->j),
-	rhod_nr  = this->psi_n(ix::rhod_nr)(i, this->j);
+        rhod   = (*this->mem->G)(i, this->j),
+	rr     = this->psi_n(ix::rr)(i, this->j),
+	nr     = this->psi_n(ix::nr)(i, this->j);
 
       libcloudphxx::blk_2m::rhs_columnwise<real_t>(
-        opts, 
-        dot_rhod_rr, dot_rhod_nr, 
-        rhod,
-            rhod_rr,     rhod_nr,  
+        opts, dot_rr, dot_nr, 
+        rhod,     rr,     nr,  
 	this->dt,
 	this->dz
       );
@@ -85,12 +83,12 @@ class kin_cloud_2d_blk_2m : public kin_cloud_2d_common<ct_params_t>
   void hook_ante_loop(int nt)
   {
     // if uninitialised fill with zeros
-    zero_if_uninitialised(ix::rhod_rc);
-    zero_if_uninitialised(ix::rhod_nc);
-    zero_if_uninitialised(ix::rhod_rr);
-    zero_if_uninitialised(ix::rhod_nr);
+    zero_if_uninitialised(ix::rc);
+    zero_if_uninitialised(ix::nc);
+    zero_if_uninitialised(ix::rr);
+    zero_if_uninitialised(ix::nr);
 
-    parent_t::hook_ante_loop(nt); // forcings after adjustments
+    parent_t::hook_ante_loop(nt); 
   }
 
   // spinup stuff

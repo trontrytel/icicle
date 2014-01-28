@@ -46,10 +46,10 @@ std::cerr << "setopts_blk_1m" << std::endl;
   // output variables
   rt_params.outvars = {
     // <TODO>: make it common among all three micro?
-    {solver_t::ix::rhod_th, {"rhod_th", "[K kg m-3]"}},
-    {solver_t::ix::rhod_rv, {"rhod_rv", "[kg m-3]"}},
+    {solver_t::ix::th, {"th", "[K]"}},
+    {solver_t::ix::rv, {"rv", "[kg kg-1]"}},
     // </TODO>
-    {solver_t::ix::rhod_rc, {"rhod_rc", "[kg m-3]"}},
-    {solver_t::ix::rhod_rr, {"rhod_rr", "[kg m-3]"}}
+    {solver_t::ix::rc, {"rc", "[kg kg-1]"}},
+    {solver_t::ix::rr, {"rr", "[kg kg-1]"}}
   };
 }

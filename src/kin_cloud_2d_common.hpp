@@ -15,7 +15,6 @@ class kin_cloud_2d_common : public
 
   protected:
 
-  typename parent_t::arr_t rhod;
   typename ct_params_t::real_t dx, dz; // 0->dx, 1->dy ! TODO
   int spinup; // number of timesteps
 
@@ -53,14 +52,14 @@ class kin_cloud_2d_common : public
       // computed level-wise
       //for (int j = 0; j < this->span[0]; ++j)
       {  
-        // rhod_th
+        // th
         {
           // TODO ...
-          //const auto &psi = this->psi_n(ix::rhod_th);
+          //const auto &psi = this->psi_n(ix::th);
           //const auto psi_mean = this->mem->sum(psi, this->i, j) / this->span[0];
-          //rhs.at(ix::rhod_th)(this->i, j) = - (psi(this->i, j) - psi_mean) / tau(j...);
+          //rhs.at(ix::th)(this->i, j) = - (psi(this->i, j) - psi_mean) / tau(j...);
         }
-        // rhod_rv
+        // rv
         {
           // TODO: same as above...
         }
@@ -73,7 +72,6 @@ class kin_cloud_2d_common : public
 
   struct rt_params_t : parent_t::rt_params_t 
   { 
-    std::vector<typename ct_params_t::real_t> rhod; // profile
     typename ct_params_t::real_t dx = 0, dz = 0;
     int spinup = 0; // number of timesteps during which autoconversion is to be turned off
   };
@@ -84,25 +82,11 @@ class kin_cloud_2d_common : public
     const rt_params_t &p
   ) : 
     parent_t(args, p),
-    rhod(args.mem->tmp[__FILE__][0][0]),
     dx(p.dx),
     dz(p.dz),
     spinup(p.spinup)
   {
-    assert(p.rhod.size() == this->j.last()+1);
     assert(dx != 0);
     assert(dz != 0);
-
-    // initialising rhod array columnwise with data from the p.rhod profile
-    for (int i = this->i.first(); i <= this->i.last(); ++i)
-      for (int j = this->j.first(); j <= this->j.last(); ++j)
-	rhod(i, j) = p.rhod[j];
   }  
-
-  static void alloc(typename parent_t::mem_t *mem, const rt_params_t &p)
-  {
-    using namespace libmpdataxx::arakawa_c;
-    parent_t::alloc(mem, p);
-    parent_t::alloc_tmp_sclr(mem, p.span, __FILE__, 1); // 1 array for rhod
-  }
 };
