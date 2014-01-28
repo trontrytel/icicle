@@ -110,33 +110,29 @@ namespace icmw8_case1
     real_t 
       dx = nxdx / si::metres / nx, 
       dz = nzdz / si::metres / nz; 
+    real_t A = (w_max / si::metres_per_second) * nx * dx / pi<real_t>();
 
     // constant potential temperature & water vapour mixing ratio profiles
     solver.advectee(ix::th) = (th_0 / si::kelvins); // TODO: should be theta_dry and is theta
     solver.advectee(ix::rv) = real_t(rv_0);
 
+//<listing-1>
     // density profile
     solver.g_factor() = rhod()((j+.5) * dz);
 
     // momentum field obtained by numerically differentiating a stream function
-    {
-      assert(solver.advectee().extent(x) == nx);
-      assert(solver.advectee().extent(z) == nz);
+    solver.advector(x) = - A * (
+      psi(i/real_t(nx), (j+.5+.5)/nz)-
+      psi(i/real_t(nx), (j+.5-.5)/nz)
+    ) / dz                       // numerical derivative
+    * (dt / si::seconds) / dx;   // converting to Courant number
 
-      real_t A = (w_max / si::metres_per_second) * nx * dx / pi<real_t>();
-
-      solver.advector(x) = - A * (
-	psi(i/real_t(nx), (j+.5+.5)/nz)-
-	psi(i/real_t(nx), (j+.5-.5)/nz)
-      ) / dz                       // numerical derivative
-      * (dt / si::seconds) / dx;   // converting to Courant number
-
-      solver.advector(z) = A * (
-	psi((i+.5+.5)/nx, j/real_t(nz)) -
-	psi((i+.5-.5)/nx, j/real_t(nz))
-      ) / dx 
-      * (dt / si::seconds) / dz; 
-    }
+    solver.advector(z) = A * (
+      psi((i+.5+.5)/nx, j/real_t(nz)) -
+      psi((i+.5-.5)/nx, j/real_t(nz))
+    ) / dx 
+    * (dt / si::seconds) / dz; 
+//</listing-1>
   }
 
   // lognormal aerosol distribution
