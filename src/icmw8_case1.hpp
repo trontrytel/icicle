@@ -2,11 +2,15 @@
 
 #include <iostream>
 
-// TODO: other includes?
+#include <libmpdata++/blitz.hpp> // TODO: change to <> when make-install rule in libmpdata++ ready
+
 #include <libcloudph++/common/hydrostatic.hpp>
 #include <libcloudph++/common/theta_std.hpp>
 #include <libcloudph++/common/lognormal.hpp>
 #include <libcloudph++/common/unary_function.hpp>
+
+#include <boost/math/special_functions/sin_pi.hpp>
+#include <boost/math/special_functions/cos_pi.hpp>
 
 // TODO: relaxation terms still missing
 
@@ -80,7 +84,12 @@ namespace icmw8_case1
   /// @arg zZ = z / (nz*dz)
   real_t psi(real_t xX, real_t zZ)
   {
-    return - sin(pi<real_t>() * zZ) * cos(2 * pi<real_t>() * xX);
+    assert(xX >= 0);
+    assert(xX <= 1);
+    assert(zZ >= 0);
+    assert(zZ <= 1);
+    using namespace boost::math;
+    return - sin_pi(zZ) * cos_pi(2 * xX);
   }
   BZ_DECLARE_FUNCTION2_RET(psi, real_t)
 
@@ -105,8 +114,8 @@ namespace icmw8_case1
 
     // dx, dy ensuring 1500x1500 domain
     int 
-      nx = solver.advectee().extent(x),
-      nz = solver.advectee().extent(z);
+      nx = solver.advectee().extent(x), // TODO: this will change meaning!
+      nz = solver.advectee().extent(z); // TODO: ditto
     real_t 
       dx = nxdx / si::metres / nx, 
       dz = nzdz / si::metres / nz; 
