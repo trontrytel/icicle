@@ -1,0 +1,6 @@
+set(tmp "icmw8_case1_zerodiv")
+add_executable(${tmp} ${tmp}.cpp)
+find_package(Boost COMPONENTS timer system REQUIRED)
+target_link_libraries(${tmp} ${Boost_LIBRARIES})
+add_test(${tmp} ${tmp})
+unset(tmp)

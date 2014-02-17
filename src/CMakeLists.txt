@@ -9,8 +9,6 @@ find_path(GNUPLOT-IOSTREAM_INCLUDE_DIR PATH_SUFFIXES gnuplot-iostream/ NAMES gnu
 #TODO: the same for blitz, libcloudph, libmpdata
 #TODO: add the above paths to compiler flags
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${CMAKE_SOURCE_DIR}/../libmpdataxx") # TODO: handle it correctly!!!
-
 #
 include(CheckCXXSourceCompiles)
 check_cxx_source_compiles("#include <future>\n int main() { std::future<void> f; }\n" STD_FUTURE_WORKS)
@@ -34,6 +32,7 @@ target_link_libraries(icicle ${HDF5_LIBRARIES})
 # release-mode options
 set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -Ofast -march=native")
 
+#TODO: is it needed here??? (hould only be needed in libmpdata++'s tests)
 # handling Blitz debuging options in CMake's DEBUG mode
 set(CMAKE_CXX_FLAGS_DEBUG "-DBZ_DEBUG -g")
 set_target_properties(icicle PROPERTIES LINK_FLAGS_DEBUG "-lblitz")

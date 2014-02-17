@@ -55,7 +55,7 @@ struct ct_params_common : ct_params_default_t
 {
   using real_t = setup::real_t;
   enum { n_dims = 2 };
-  enum { opts = formulae::opts::nug | formulae::opts::fct }; // | formulae::opts::iga };  // TODO: iga causes negative rr values to pop up :(
+  enum { opts = formulae::opts::nug | formulae::opts::fct };  // TODO: iga causes negative rr values to pop up :(
   enum { rhs_scheme = solvers::euler_b };
   // TODO: hint_norhs?
 };

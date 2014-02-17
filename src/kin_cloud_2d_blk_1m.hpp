@@ -14,7 +14,7 @@ class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<ct_params_t>
   using parent_t = kin_cloud_2d_common<ct_params_t>;
 
   public:
-  using ix = typename ct_params_t::ix;
+  using ix = typename ct_params_t::ix; // TODO: it's now in solver_common - is it needed here?
   using real_t = typename ct_params_t::real_t;
   private:
 
