@@ -63,7 +63,7 @@ int main(int ac, char** av)
   // cloud water content
   { //                                                     rho_w  kg2g
     auto tmp = h5load(h5, "rw_rng000_mom3") * 4./3 * 3.14 * 1e3 * 1e3;
-    gp << "set title 'cloud water content [g/m^3]'\n";
+    gp << "set title 'cloud water mixing ratio [g/kg]'\n";
     gp << "set cbrange [0:1.5]\n";
     plot(gp, tmp);
   }
@@ -72,7 +72,7 @@ int main(int ac, char** av)
   { //                                                     rho_w  kg2g
     auto tmp = h5load(h5, "rw_rng001_mom3") * 4./3 * 3.14 * 1e3 * 1e3;
     gp << "set logscale cb\n";
-    gp << "set title 'rain water content [g/m^3]'\n";
+    gp << "set title 'rain water mixing ratio [g/kg]'\n";
     gp << "set cbrange [1e-2:1]\n";
     plot(gp, tmp);
     gp << "unset logscale cb\n";
@@ -81,7 +81,7 @@ int main(int ac, char** av)
   // cloud particle concentration
   {
     auto tmp = 1e-6 * h5load(h5, "rw_rng000_mom0");
-    gp << "set title 'cloud droplet concentration [cm^{-3}]'\n";
+    gp << "set title 'cloud droplet spec. conc. [mg^{-1}]'\n";
     gp << "set cbrange [0:150]\n";
     plot(gp, tmp);
   }
@@ -89,7 +89,7 @@ int main(int ac, char** av)
   // rain particle concentration
   {
     auto tmp = 1e-6 * h5load(h5, "rw_rng001_mom0");
-    gp << "set title 'rain drop concentration [cm^{-3}]'\n";
+    gp << "set title 'rain drop spec. conc. [cm^{-1}]'\n";
     gp << "set cbrange [.01:10]\n";
     gp << "set logscale cb\n";
     plot(gp, tmp);
@@ -120,7 +120,7 @@ int main(int ac, char** av)
       // else
       10 * log10(    // reflectivity -> decibels of reflectivity
         pow(2e3,6) * // radii in metres -> diameters in milimetres
-        m6 / m0      // sixth moment per unit volume
+        m6 / m0      // sixth moment per unit volume // TODO: now it is "per mass"!
       )
     );
     gp << "set title 'radar reflectivity [dB]'\n";
@@ -128,7 +128,7 @@ int main(int ac, char** av)
   }
 */
   
-  // super-droplet concentration
+  // aerosol concentration
   {
     blitz::Array<float, 2> tmp(h5load(h5, "rw_rng002_mom0"));
     vector<quantity<si::length>> left_edges = bins_wet();
@@ -140,7 +140,7 @@ int main(int ac, char** av)
       tmp = tmp + h5load(h5, str.str());
     }
     gp << "set cbrange [" << 0 << ":" << 150 << "]\n";
-    gp << "set title 'aerosol concentration [cm^{-3}]'\n";
+    gp << "set title 'aerosol concentration [mg^{-1}]'\n";
     tmp /= 1e6;
     plot(gp, tmp);
   }

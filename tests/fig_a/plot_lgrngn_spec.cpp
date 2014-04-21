@@ -31,7 +31,7 @@ int main(int ac, char** av)
   gp << "set logscale xy\n";
   gp << "set xrange [.002:100]\n";
   gp << "set yrange [" << ymin << ":" << ymax << "]\n";
-  gp << "set ylabel '[cm^{-3} μm^{-1}]'\n"; // TODO: add textual description (PDF?)
+  gp << "set ylabel '[mg^{-1} μm^{-1}]'\n"; // TODO: add textual description (PDF?)
   gp << "set grid\n";
   //gp << "set format y '%1.0e'\n";
   gp << "set nokey\n";
