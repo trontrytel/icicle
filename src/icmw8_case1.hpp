@@ -35,10 +35,10 @@ namespace icmw8_case1
     w_max = real_t(.6) * si::metres_per_second;
   const quantity<si::length, real_t> 
     z_0  = 0    * si::metres,
-    nzdz = 1500 * si::metres, 
-    nxdx = 1500 * si::metres;
+    Z    = 1500 * si::metres, 
+    X    = 1500 * si::metres;
   const quantity<si::time, real_t>
-    dt = real_t(1.) * si::seconds;//4 * si::seconds;
+    dt = real_t(1) * si::seconds;
 
   //aerosol bimodal lognormal dist. 
   const quantity<si::length, real_t>
@@ -80,26 +80,36 @@ namespace icmw8_case1
 
 
   /// (similar to eq. 2 in @copydetails Rasinski_et_al_2011, Atmos. Res. 102)
-  /// @arg xX = x / (nx*dx)
-  /// @arg zZ = z / (nz*dz)
-  real_t psi(real_t xX, real_t zZ)
+  /// @arg xX = x / X
+  /// @arg zZ = z / Z
+  real_t psi(real_t xX, real_t zZ) // for computing a numerical derivative
   {
-    assert(xX >= 0);
-    assert(xX <= 1);
-    assert(zZ >= 0);
-    assert(zZ <= 1);
     using namespace boost::math;
     return - sin_pi(zZ) * cos_pi(2 * xX);
   }
   BZ_DECLARE_FUNCTION2_RET(psi, real_t)
+
+  real_t dpsi_dz(real_t xX, real_t zZ)
+  {
+    using namespace boost::math;
+    return - pi<real_t>() / (Z / si::metres) * cos_pi(2 * xX) * cos_pi(zZ);
+  }
+  BZ_DECLARE_FUNCTION2_RET(dpsi_dz, real_t)
+
+  real_t dpsi_dx(real_t xX, real_t zZ)
+  {
+    using namespace boost::math;
+    return 2 * pi<real_t>() / (X / si::metres) * sin_pi(2 * xX) * sin_pi(zZ);
+  }
+  BZ_DECLARE_FUNCTION2_RET(dpsi_dx, real_t)
 
   // function expecting a libmpdata solver parameters struct as argument
   template <class T>
   void setopts(T &params, int nx, int nz)
   {
     params.dt = dt / si::seconds;
-    params.dx = nxdx / si::metres / nx;
-    params.dz = nzdz / si::metres / nz;
+    params.dx = (X / si::metres) / (nx-1); 
+    params.dz = (Z / si::metres) / (nz-1);
   }
 
   // function expecting a libmpdata++ solver as argument
@@ -114,12 +124,12 @@ namespace icmw8_case1
 
     // dx, dy ensuring 1500x1500 domain
     int 
-      nx = solver.advectee().extent(x), // TODO: this will change meaning!
-      nz = solver.advectee().extent(z); // TODO: ditto
+      nx = solver.advectee().extent(x), 
+      nz = solver.advectee().extent(z); 
     real_t 
-      dx = nxdx / si::metres / nx, 
-      dz = nzdz / si::metres / nz; 
-    real_t A = (w_max / si::metres_per_second) * nx * dx / pi<real_t>();
+      dx = (X / si::metres) / (nx-1), 
+      dz = (Z / si::metres) / (nz-1); 
+    real_t A = (w_max / si::metres_per_second) * (nx-1) * dx / pi<real_t>();
 
     // constant potential temperature & water vapour mixing ratio profiles
     solver.advectee(ix::th) = (th_0 / si::kelvins); // TODO: should be theta_dry and is theta
@@ -127,20 +137,28 @@ namespace icmw8_case1
 
 //<listing-1>
     // density profile
-    solver.g_factor() = rhod()((j+.5) * dz);
+    solver.g_factor() = rhod()(j * dz);
 
     // momentum field obtained by numerically differentiating a stream function
-    solver.advector(x) = - A * (
-      psi(i/real_t(nx), (j+.5+.5)/nz)-
-      psi(i/real_t(nx), (j+.5-.5)/nz)
-    ) / dz                       // numerical derivative
-    * (dt / si::seconds) / dx;   // converting to Courant number
+    solver.advector(x) = - A * 
+    // numerical derivative (see note on div values below)
+    (
+      psi((i+.5)/real_t(nx-1), (j+.5)/(nz-1))- 
+      psi((i+.5)/real_t(nx-1), (j-.5)/(nz-1))  
+    ) / dz                       
+    // analytical derivative (ditto)
+    //dpsi_dz((i+.5)/real_t(nx-1), j/real_t(nz-1))
+    * (dt / si::seconds) / dx;  // converting to Courant number
 
-    solver.advector(z) = A * (
-      psi((i+.5+.5)/nx, j/real_t(nz)) -
-      psi((i+.5-.5)/nx, j/real_t(nz))
+    solver.advector(z) = A * 
+    // numerical derivative (max(abs(div)) ~ 5e-10)
+    (
+      psi((i+.5)/(nx-1), (j+.5)/real_t(nz-1)) - 
+      psi((i-.5)/(nx-1), (j+.5)/real_t(nz-1))   
     ) / dx 
-    * (dt / si::seconds) / dz; 
+    // analytical derivative (max(abs(div)) ~ 3e-5)
+    //dpsi_dx(i/real_t(nx-1), (j+.5)/real_t(nz-1))
+    * (dt / si::seconds) / dz; // converting to Courant number
 //</listing-1>
   }
 
