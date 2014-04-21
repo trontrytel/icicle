@@ -29,7 +29,7 @@ void run(int nx, int nz, int nt, const std::string &outfile, const int &outfreq,
   typename solver_t::rt_params_t p;
 
   // output and simulation parameters
-  p.span = {nx, nz};
+  p.grid_size = {nx, nz};
   p.outfile = outfile;
   p.outfreq = outfreq;
   p.spinup = spinup;
@@ -59,7 +59,7 @@ struct ct_params_common : ct_params_default_t
 {
   using real_t = setup::real_t;
   enum { n_dims = 2 };
-  enum { opts = formulae::opts::nug | formulae::opts::fct };  // TODO: iga causes negative rr values to pop up :(
+  enum { opts = opts::nug | opts::fct };  // TODO: iga causes negative rr values to pop up :(
   enum { rhs_scheme = solvers::euler_b };
   // TODO: hint_norhs?
 };
@@ -123,7 +123,7 @@ int main(int argc, char** argv)
       // libmpdata++'s compile-time parameters
       struct ct_params_t : ct_params_common
       {
-	enum { n_eqs = 4 };
+	enum { n_eqns = 4 };
         struct ix { enum {th, rv, rc, rr}; };
       };
       run<kin_cloud_2d_blk_1m<ct_params_t>>(nx, nz, nt, outfile, outfreq, spinup);
@@ -133,7 +133,7 @@ int main(int argc, char** argv)
     {
       struct ct_params_t : ct_params_common
       {
-	enum { n_eqs = 6 };
+	enum { n_eqns = 6 };
 	struct ix { enum {th, rv, rc, rr, nc, nr}; };
       };
       run<kin_cloud_2d_blk_2m<ct_params_t>>(nx, nz, nt, outfile, outfreq, spinup);
@@ -143,7 +143,7 @@ int main(int argc, char** argv)
     {
       struct ct_params_t : ct_params_common
       {
-	enum { n_eqs = 2 };
+	enum { n_eqns = 2 };
 	struct ix { enum {th, rv}; };
       };
       run<kin_cloud_2d_lgrngn<ct_params_t>>(nx, nz, nt, outfile, outfreq, spinup);
