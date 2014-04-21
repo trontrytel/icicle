@@ -6,14 +6,15 @@
  */
 
 #include <libmpdata++/bcond/cyclic_2d.hpp>
+#include <libmpdata++/bcond/open_2d.hpp>
 #include <libmpdata++/concurr/threads.hpp>
 
 #include "icmw8_case1.hpp" // 8th ICMW case 1 by Wojciech Grabowski)
 namespace setup = icmw8_case1;
 
 #include "opts_blk_1m.hpp"
-//#include "opts_blk_2m.hpp"
-//#include "opts_lgrngn.hpp"
+#include "opts_blk_2m.hpp"
+#include "opts_lgrngn.hpp"
 
 // exception handling
 #include <boost/exception/all.hpp>
@@ -36,7 +37,10 @@ void run(int nx, int nz, int nt, const std::string &outfile, const int &outfreq,
   setopts_micro<solver_t>(p, nx, nz, nt);
 
   // solver instantiation
-  concurr::threads<solver_t, bcond::cyclic, bcond::cyclic> slv(p);
+  concurr::threads<solver_t, 
+    bcond::cyclic, bcond::cyclic,
+    bcond::open,   bcond::open 
+  > slv(p);
 
   // initial condition
   setup::intcond(slv);
@@ -124,7 +128,6 @@ int main(int argc, char** argv)
       };
       run<kin_cloud_2d_blk_1m<ct_params_t>>(nx, nz, nt, outfile, outfreq, spinup);
     }
-/*
     else
     if (micro == "blk_2m")
     {
@@ -145,7 +148,6 @@ int main(int argc, char** argv)
       };
       run<kin_cloud_2d_lgrngn<ct_params_t>>(nx, nz, nt, outfile, outfreq, spinup);
     }
-*/
     else BOOST_THROW_EXCEPTION(
       po::validation_error(
         po::validation_error::invalid_option_value, micro, "micro" 
