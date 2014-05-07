@@ -132,7 +132,10 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<ct_params_t>
       params.cloudph_opts_init.dx = params.dx;
       params.cloudph_opts_init.dz = params.dz;
 
-      prtcls.reset(libcloudphxx::lgrngn::factory<real_t>((libcloudphxx::lgrngn::backend_t)params.backend, params.cloudph_opts_init));
+      prtcls.reset(libcloudphxx::lgrngn::factory<real_t>(
+        (libcloudphxx::lgrngn::backend_t)params.backend, 
+        params.cloudph_opts_init
+      ));
 
       setup_aux_helper("rd", params.out_dry); 
       setup_aux_helper("rw", params.out_wet); 
