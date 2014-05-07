@@ -65,12 +65,12 @@ class kin_cloud_2d_blk_2m : public kin_cloud_2d_common<ct_params_t>
 	rr     = this->psi_n(ix::rr)(i, this->j),
 	nr     = this->psi_n(ix::nr)(i, this->j);
 
-      libcloudphxx::blk_2m::rhs_columnwise<real_t>(
-        opts, dot_rr, dot_nr, 
-        rhod,     rr,     nr,  
-	this->dt,
-	this->dz
-      );
+//      libcloudphxx::blk_2m::rhs_columnwise<real_t>(
+//        opts, dot_rr, dot_nr, 
+//        rhod,     rr,     nr,  
+//	this->dt,
+//	this->dz
+//      );
     }
 
     this->mem->barrier(); // TODO: if needed, move to adv+rhs
