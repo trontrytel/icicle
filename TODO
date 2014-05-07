@@ -1,3 +1,4 @@
+- transition from rho to mixr in lgrngn
 - include compiler flags and full cmd string in output file
 - finish relax terms
 - coalescence kernel as cmd line option

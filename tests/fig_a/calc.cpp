@@ -33,12 +33,11 @@ int main(int ac, char** av)
   }
 
   string opts_common = 
-    "--outfreq=200 --nt=9000 --spinup=7200 --nx=75 --nz=75"; 
+    "--outfreq=200 --nt=9000 --spinup=7200 --nx=75 --nz=75";
   set<string> opts_micro({
     "--micro=blk_1m --outfile=out_blk_1m.h5",
     "--micro=blk_2m --outfile=out_blk_2m.h5",
-/*
-    "--micro=lgrngn --outfile=out_lgrngn.h5 --backend=CUDA --sd_conc_mean=64 --sstp_cond=10 --sstp_coal=10" 
+    "--micro=lgrngn --outfile=out_lgrngn.h5 --backend=OpenMP --sd_conc_mean=64 --sstp_cond=10 --sstp_coal=10"  // TODO: was CUDA
       " --out_wet=\""
         ".5e-6:25e-6|0,1,2,3;" // FSSP
         "25e-6:1|0,3;"         // "rain"
@@ -47,7 +46,6 @@ int main(int ac, char** av)
       " --out_dry=\""
         + bins_dry_str + // aerosol spectrum (dry)
       "\""
-*/
   });
 
   for (auto &opts_m : opts_micro)
