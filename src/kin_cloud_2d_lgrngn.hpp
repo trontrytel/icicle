@@ -132,6 +132,12 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<ct_params_t>
       params.cloudph_opts_init.dx = params.dx;
       params.cloudph_opts_init.dz = params.dz;
 
+      // libmpdata++'s grid interpretation
+      params.cloudph_opts_init.x0 = params.dx / 2;
+      params.cloudph_opts_init.z0 = params.dz / 2;
+      params.cloudph_opts_init.x1 = (this->mem->grid_size[0] - .5) * params.dx;
+      params.cloudph_opts_init.z1 = (this->mem->grid_size[1] - .5) * params.dz;
+
       prtcls.reset(libcloudphxx::lgrngn::factory<real_t>(
         (libcloudphxx::lgrngn::backend_t)params.backend, 
         params.cloudph_opts_init

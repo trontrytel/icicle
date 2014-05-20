@@ -40,13 +40,13 @@ void setopts_micro(
   rt_params.cloudph_opts.acnv = vm["acnv"].as<bool>();
   rt_params.cloudph_opts.sedi = vm["sedi"].as<bool>();
 
-  rt_params.cloudph_opts.dry_distro.push_back({
+  rt_params.cloudph_opts.dry_distros.push_back({
     .mean_rd = setup::mean_rd1 / si::metres,
     .sdev_rd = setup::sdev_rd1,
     .N_stp   = setup::n1_stp * si::cubic_metres,
     .chem_b  = setup::chem_b
   });
-  rt_params.cloudph_opts.dry_distro.push_back({
+  rt_params.cloudph_opts.dry_distros.push_back({
     .mean_rd = setup::mean_rd2 / si::metres,
     .sdev_rd = setup::sdev_rd2,
     .N_stp   = setup::n2_stp * si::cubic_metres,

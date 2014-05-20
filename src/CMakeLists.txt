@@ -30,9 +30,5 @@ find_package(HDF5 COMPONENTS CXX HL REQUIRED QUIET)
 target_link_libraries(icicle ${HDF5_LIBRARIES})
 
 # release-mode options
-set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -Ofast -march=native")
-
-#TODO: is it needed here??? (hould only be needed in libmpdata++'s tests)
-# handling Blitz debuging options in CMake's DEBUG mode
-set(CMAKE_CXX_FLAGS_DEBUG "-DBZ_DEBUG -g")
-set_target_properties(icicle PROPERTIES LINK_FLAGS_DEBUG "-lblitz")
+#set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -Ofast -march=native") TEMP TODO - 
+set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -O3 -march=native")

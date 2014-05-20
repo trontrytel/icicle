@@ -10,22 +10,22 @@ int main(int ac, char** av)
   using namespace icmw8_case1;
 
   int nx = 15, nz = 15;
-  float dx = (nxdx / si::metres) / nx, dz = (nzdz / si::metres) / nz;
+  float dx = (X / si::metres) / nx, dz = (Z / si::metres) / nz;
 
   blitz::Array<float, 2> tmp(nx, nz);
 
-  float A = (w_max / si::metres_per_second) * (nxdx / si::metres) / pi<float>();
+  float A = (w_max / si::metres_per_second) * (X / si::metres) / pi<float>();
 
   blitz::firstIndex ix;
   blitz::secondIndex jx;
 
   std::vector<std::vector<float>> v(4);
 
-  tmp = (ix + .5) / nx * (nxdx / si::metres) / 20; 
+  tmp = (ix + .5) / nx * (X / si::metres) / 20; 
 
   for (const auto &i : tmp) v[0].push_back(i);
   
-  tmp = (jx + .5) / nz * (nzdz / si::metres) / 20;
+  tmp = (jx + .5) / nz * (Z / si::metres) / 20;
 
   for (const auto &i : tmp) v[1].push_back(i);
 

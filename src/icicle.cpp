@@ -59,7 +59,7 @@ struct ct_params_common : ct_params_default_t
 {
   using real_t = setup::real_t;
   enum { n_dims = 2 };
-  enum { opts = opts::nug | opts::iga | opts::fct }; 
+  enum { opts = opts::nug /*| opts::iga*/ | opts::fct }; 
   enum { rhs_scheme = solvers::euler_b };
   // TODO: hint_norhs?
 };
@@ -77,8 +77,8 @@ int main(int argc, char** argv)
     // note: all options should have default values here to make "--micro=? --help" work
     opts_main.add_options()
       ("micro", po::value<std::string>()->required(), "one of: blk_1m, blk_2m, lgrngn")
-      ("nx", po::value<int>()->default_value(75) , "grid cell count in horizontal")
-      ("nz", po::value<int>()->default_value(75) , "grid cell count in vertical")
+      ("nx", po::value<int>()->default_value(76) , "grid cell count in horizontal")
+      ("nz", po::value<int>()->default_value(76) , "grid cell count in vertical")
       ("nt", po::value<int>()->default_value(3600) , "timestep count")
       ("outfile", po::value<std::string>(), "output file name (netCDF-compatible HDF5)")
       ("outfreq", po::value<int>(), "output rate (timestep interval)")
