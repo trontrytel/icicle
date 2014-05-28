@@ -2,10 +2,11 @@
 
 #include <iostream>
 
-#include <libmpdata++/blitz.hpp> // TODO: change to <> when make-install rule in libmpdata++ ready
+#include <libmpdata++/blitz.hpp> 
 
 #include <libcloudph++/common/hydrostatic.hpp>
 #include <libcloudph++/common/theta_std.hpp>
+#include <libcloudph++/common/theta_dry.hpp>
 #include <libcloudph++/common/lognormal.hpp>
 #include <libcloudph++/common/unary_function.hpp>
 
@@ -20,7 +21,8 @@ namespace icmw8_case1
   using real_t = float; //double;
 
   namespace hydrostatic = libcloudphxx::common::hydrostatic;
-  namespace theta = libcloudphxx::common::theta_std;
+  namespace theta_std = libcloudphxx::common::theta_std;
+  namespace theta_dry = libcloudphxx::common::theta_dry;
   namespace lognormal = libcloudphxx::common::lognormal;
 
   enum {x, z}; // dimensions
@@ -66,7 +68,7 @@ namespace icmw8_case1
 	z * si::metres, th_0, rv_0, z_0, p_0
       );
       
-      quantity<si::mass_density, real_t> rhod = theta::rhod(
+      quantity<si::mass_density, real_t> rhod = theta_std::rhod(
 	p, th_0, rv_0
       );
 
@@ -132,7 +134,7 @@ namespace icmw8_case1
     real_t A = (w_max / si::metres_per_second) * (nx-1) * dx / pi<real_t>();
 
     // constant potential temperature & water vapour mixing ratio profiles
-    solver.advectee(ix::th) = (th_0 / si::kelvins); // TODO: should be theta_dry and is theta
+    solver.advectee(ix::th) = (theta_dry::std2dry(th_0, rv_0) / si::kelvins); 
     solver.advectee(ix::rv) = real_t(rv_0);
 
 //<listing-1>
