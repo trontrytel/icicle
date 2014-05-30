@@ -1,7 +1,7 @@
 #pragma once
 
-#define GNUPLOT_ENABLE_BLITZ
-#include <gnuplot-iostream/gnuplot-iostream.h>
+#include <blitz/array.h>
+#include <gnuplot-iostream.h>
 
 void init(Gnuplot &gp, const std::string &file, const int &ny, const int &nx)
 {
