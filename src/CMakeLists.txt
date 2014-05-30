@@ -28,7 +28,3 @@ target_link_libraries(icicle cloudphxx_lgrngn)
 
 find_package(HDF5 COMPONENTS CXX HL REQUIRED QUIET)
 target_link_libraries(icicle ${HDF5_LIBRARIES})
-
-# release-mode options
-#set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -Ofast -march=native") TEMP TODO - 
-set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -O3 -march=native")

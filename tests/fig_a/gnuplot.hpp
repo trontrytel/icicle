@@ -1,7 +1,7 @@
 #pragma once
 
-#define GNUPLOT_ENABLE_BLITZ
-#include <gnuplot-iostream/gnuplot-iostream.h>
+#include <blitz/array.h>
+#include <gnuplot-iostream.h>
 
 void init(Gnuplot &gp, const std::string &file, const int &ny, const int &nx)
 {
@@ -28,7 +28,7 @@ void plot(Gnuplot &gp, const data_t &data)
 
   gp << "set xrange [0:" << tmp.extent(0)-1 << "]\n";
   gp << "set yrange [0:" << tmp.extent(1)-1 << "]\n";
-  gp << "splot '-' binary" << gp.binfmt(tmp) << " origin=(0,0,0) with image failsafe notitle\n";
+  gp << "splot '-' binary" << gp.binfmt(tmp) << " scan=yx origin=(0,0,0) with image failsafe notitle\n";
 
   gp.sendBinary(tmp);
 }
