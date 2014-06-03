@@ -40,9 +40,11 @@ void setopts_micro(
     ("sedi", po::value<bool>()->default_value(rt_params.cloudph_opts.sedi) , "particle sedimentation (1=on, 0=off)")
     ("cond", po::value<bool>()->default_value(rt_params.cloudph_opts.cond) , "condensational growth  (1=on, 0=off)")
     ("coal", po::value<bool>()->default_value(rt_params.cloudph_opts.coal) , "collisional growth     (1=on, 0=off)")
+    ("chem", po::value<bool>()->default_value(rt_params.cloudph_opts.chem) , "aqueous chemistry      (1=on, 0=off)")
     // free parameters
     ("sstp_cond", po::value<int>()->default_value(rt_params.cloudph_opts.sstp_cond), "no. of substeps for condensation")
     ("sstp_coal", po::value<int>()->default_value(rt_params.cloudph_opts.sstp_coal), "no. of substeps for coalescence")
+    ("sstp_chem", po::value<int>()->default_value(rt_params.cloudph_opts.sstp_chem), "no. of substeps for chemistry")
     // 
     ("out_dry", po::value<std::string>()->default_value("0:1|0"),       "dry radius ranges and moment numbers (r1:r2|n1,n2...;...)")
     ("out_wet", po::value<std::string>()->default_value(".5e-6:25e-6|0,1,2,3;25e-6:1|0,3,6"),  "wet radius ranges and moment numbers (r1:r2|n1,n2...;...)")
@@ -83,11 +85,12 @@ void setopts_micro(
   rt_params.cloudph_opts.cond = vm["cond"].as<bool>();
   rt_params.cloudph_opts.coal = vm["coal"].as<bool>();
   //rt_params.cloudph_opts.rcyc = vm["rcyc"].as<bool>();
-  //rt_params.cloudph_opts.chem = vm["chem"].as<bool>();
+  rt_params.cloudph_opts.chem = vm["chem"].as<bool>();
 
   // free parameters
   rt_params.cloudph_opts.sstp_cond = vm["sstp_cond"].as<int>();
   rt_params.cloudph_opts.sstp_coal = vm["sstp_coal"].as<int>();
+  rt_params.cloudph_opts.sstp_chem = vm["sstp_chem"].as<int>();
 
   // parsing --out_dry and --out_wet options values
   // the format is: "rmin:rmax|0,1,2;rmin:rmax|3;..."
