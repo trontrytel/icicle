@@ -12,8 +12,10 @@ int main(int ac, char** av)
     h5  = dir + "out_blk_1m.h5",
     svg = dir + "out_blk_1m.svg";
 
+  auto n = h5n(h5);
+
   Gnuplot gp;
-  init(gp, svg, 1, 2);
+  init(gp, svg, 1, 2, n);
 
   {
     auto rc = h5load(h5, "rc") * 1e3;

@@ -2,6 +2,25 @@
 
 #include <blitz/array.h>
 #include <H5Cpp.h>
+#include <map>
+
+std::map<std::string, int> h5n(
+  const string &file
+)
+{
+  H5::H5File h5f(file, H5F_ACC_RDONLY);
+  H5::DataSet h5d = h5f.openDataSet("th");
+  H5::DataSpace h5s = h5d.getSpace();
+  hsize_t n[4];
+  enum {t, x, y, z};
+  h5s.getSimpleExtentDims(n, NULL);
+  return std::map<std::string, int>({
+    { "t", n[t] },
+    { "x", n[x] },
+    { "y", n[y] },
+    { "z", n[z] }
+  });
+}
 
 auto h5load(
   const string &file, 

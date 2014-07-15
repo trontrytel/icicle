@@ -12,51 +12,56 @@ int main(int ac, char** av)
     h5  = dir + "out_lgrngn.h5",
     svg = dir + "out_lgrngn.svg";
 
+  auto n = h5n(h5);
+
   Gnuplot gp;
-  init(gp, svg, 3, 2);
+  init(gp, svg, 3, 2, n);
 
+  if (n["x"] == n["z"] == 75)
   {
-    char lbl = 'i';
-    for (auto &fcs : std::set<std::set<std::pair<int, int>>>({focus.first, focus.second}))
     {
-      for (auto &pr : fcs) 
+      char lbl = 'i';
+      for (auto &fcs : std::set<std::set<std::pair<int, int>>>({focus.first, focus.second}))
       {
-	auto &x = pr.first;
-	auto &y = pr.second;
+	for (auto &pr : fcs) 
+	{
+	  auto &x = pr.first;
+	  auto &y = pr.second;
 
-	// black square
-	gp << "set arrow from " << x-1 << "," << y-1 << " to " << x+2 << "," << y-1 << " nohead lw 4 lc rgbcolor '#ffffff' front\n";
-	gp << "set arrow from " << x-1 << "," << y+2 << " to " << x+2 << "," << y+2 << " nohead lw 4 lc rgbcolor '#ffffff' front\n";
-	gp << "set arrow from " << x-1 << "," << y-1 << " to " << x-1 << "," << y+2 << " nohead lw 4 lc rgbcolor '#ffffff' front\n";
-	gp << "set arrow from " << x+2 << "," << y-1 << " to " << x+2 << "," << y+2 << " nohead lw 4 lc rgbcolor '#ffffff' front\n";
-	// white square
-	gp << "set arrow from " << x-1 << "," << y-1 << " to " << x+2 << "," << y-1 << " nohead lw 2 front\n";
-	gp << "set arrow from " << x-1 << "," << y+2 << " to " << x+2 << "," << y+2 << " nohead lw 2 front\n";
-	gp << "set arrow from " << x-1 << "," << y-1 << " to " << x-1 << "," << y+2 << " nohead lw 2 front\n";
-	gp << "set arrow from " << x+2 << "," << y-1 << " to " << x+2 << "," << y+2 << " nohead lw 2 front\n";
+	  // black square
+	  gp << "set arrow from " << x-1 << "," << y-1 << " to " << x+2 << "," << y-1 << " nohead lw 4 lc rgbcolor '#ffffff' front\n";
+	  gp << "set arrow from " << x-1 << "," << y+2 << " to " << x+2 << "," << y+2 << " nohead lw 4 lc rgbcolor '#ffffff' front\n";
+	  gp << "set arrow from " << x-1 << "," << y-1 << " to " << x-1 << "," << y+2 << " nohead lw 4 lc rgbcolor '#ffffff' front\n";
+	  gp << "set arrow from " << x+2 << "," << y-1 << " to " << x+2 << "," << y+2 << " nohead lw 4 lc rgbcolor '#ffffff' front\n";
+	  // white square
+	  gp << "set arrow from " << x-1 << "," << y-1 << " to " << x+2 << "," << y-1 << " nohead lw 2 front\n";
+	  gp << "set arrow from " << x-1 << "," << y+2 << " to " << x+2 << "," << y+2 << " nohead lw 2 front\n";
+	  gp << "set arrow from " << x-1 << "," << y-1 << " to " << x-1 << "," << y+2 << " nohead lw 2 front\n";
+	  gp << "set arrow from " << x+2 << "," << y-1 << " to " << x+2 << "," << y+2 << " nohead lw 2 front\n";
 
-	lbl -= 2;
+	  lbl -= 2;
+	}
+	lbl = 'j';
       }
-      lbl = 'j';
     }
-  }
 
-  // labels
-  {
-    char lbl = 'i';
-    for (auto &fcs : std::set<std::set<std::pair<int, int>>>({focus.first, focus.second}))
+    // labels
     {
-      for (auto &pr : fcs) 
+      char lbl = 'i';
+      for (auto &fcs : std::set<std::set<std::pair<int, int>>>({focus.first, focus.second}))
       {
-	auto &x = pr.first;
-	auto &y = pr.second;
+	for (auto &pr : fcs) 
+	{
+	  auto &x = pr.first;
+	  auto &y = pr.second;
 
-	// labels
-	gp << "set label " << int(lbl) << " '" << lbl << "' at " << x+(((lbl+1)/2)%2?-6:+4) << "," << y+.5 << " front font \",20\"\n";
+	  // labels
+	  gp << "set label " << int(lbl) << " '" << lbl << "' at " << x+(((lbl+1)/2)%2?-6:+4) << "," << y+.5 << " front font \",20\"\n";
 
-	lbl -= 2;
+	  lbl -= 2;
+	}
+	lbl = 'j';
       }
-      lbl = 'j';
     }
   }
 
@@ -104,30 +109,6 @@ int main(int ac, char** av)
     plot(gp, r_eff);
   }
 
-
-  // radar reflectivity
-/*
-  {
-    auto m0 = h5load(h5, "rw_rng001_mom0");
-    auto m6 = h5load(h5, "rw_rng001_mom6");
-    float minval = -80, maxval = -20;
-    gp << "set cbrange [" << minval << ":" << maxval << "]\n";
-    auto dbZ = where(
-      // if
-      m0==0, 
-      // then
-      minval,
-      // else
-      10 * log10(    // reflectivity -> decibels of reflectivity
-        pow(2e3,6) * // radii in metres -> diameters in milimetres
-        m6 / m0      // sixth moment per unit volume // TODO: now it is "per mass"!
-      )
-    );
-    gp << "set title 'radar reflectivity [dB]'\n";
-    plot(gp, dbZ);
-  }
-*/
-  
   // aerosol concentration
   {
     blitz::Array<float, 2> tmp(h5load(h5, "rw_rng002_mom0"));
