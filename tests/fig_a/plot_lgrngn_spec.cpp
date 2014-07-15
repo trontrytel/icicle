@@ -5,13 +5,6 @@
 
 #include <map>
 
-string zeropad(int n)
-{
-  ostringstream tmp;
-  tmp << std::setw(3) << std::setfill('0') << n;
-  return tmp.str();
-}
-
 int main(int ac, char** av)
 {
   if (ac != 2) error_macro("expecting 1 argument: CMAKE_BINARY_DIR")
