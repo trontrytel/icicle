@@ -4,15 +4,16 @@
 
 int main(int ac, char** av)
 {
+  std::map<std::string, int> n({{"x", 15},{"z", 15}});
+
   Gnuplot gp;
-  init(gp, "plot.svg", 1, 1);
+  init(gp, "./plot.svg", 1, 1, n);
 
   using namespace icmw8_case1;
 
-  int nx = 15, nz = 15;
-  float dx = (X / si::metres) / nx, dz = (Z / si::metres) / nz;
+  float dx = (X / si::metres) / n["x"], dz = (Z / si::metres) / n["z"];
 
-  blitz::Array<float, 2> tmp(nx, nz);
+  blitz::Array<float, 2> tmp(n["x"], n["z"]);
 
   float A = (w_max / si::metres_per_second) * (X / si::metres) / pi<float>();
 
@@ -21,25 +22,25 @@ int main(int ac, char** av)
 
   std::vector<std::vector<float>> v(4);
 
-  tmp = (ix + .5) / nx * (X / si::metres) / 20; 
+  tmp = (ix + .5) / n["x"] * (X / si::metres) / 20; 
 
   for (const auto &i : tmp) v[0].push_back(i);
   
-  tmp = (jx + .5) / nz * (Z / si::metres) / 20;
+  tmp = (jx + .5) / n["z"] * (Z / si::metres) / 20;
 
   for (const auto &i : tmp) v[1].push_back(i);
 
   tmp = - A * ( 
-    psi((ix+.5)/nx, (jx+.5+.5)/nz)-
-    psi((ix+.5)/nx, (jx+.5-.5)/nz)
+    psi((ix+.5)/n["x"], (jx+.5+.5)/n["z"])-
+    psi((ix+.5)/n["x"], (jx+.5-.5)/n["z"])
   ) / dz                // numerical derivative
   / rhod()((jx+.5) * dz); // psi defines rho_d times velocity
 
   for (const auto &i : tmp) v[2].push_back(i);
 
   tmp = A * ( 
-    psi((ix+.5+.5)/nx, (jx+.5)/nz) -
-    psi((ix+.5-.5)/nx, (jx+.5)/nz)
+    psi((ix+.5+.5)/n["x"], (jx+.5)/n["z"]) -
+    psi((ix+.5-.5)/n["x"], (jx+.5)/n["z"])
   ) / dx  
   / rhod()(jx * dz);
 
