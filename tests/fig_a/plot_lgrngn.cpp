@@ -20,7 +20,7 @@ int main(int ac, char** av)
       Gnuplot gp;
       init(gp, h5 + ".plot/" + plt + "/" + zeropad(at) + ".svg", 1, 1, n); // TODO: loop over time
 
-      if (n["x"] == n["z"] == 75)
+      if (n["x"] == 75 && n["z"] == 75)
       {
 	{
 	  char lbl = 'i';
