@@ -21,10 +21,10 @@ class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<ct_params_t>
   void condevap()
   {
     auto 
-      th   = this->psi_n(ix::th)(this->ijk), // potential temperature
-      rv   = this->psi_n(ix::rv)(this->ijk), // water vapour mixing ratio
-      rc   = this->psi_n(ix::rc)(this->ijk), // cloud water mixing ratio
-      rr   = this->psi_n(ix::rr)(this->ijk); // rain water mixing ratio
+      th   = this->state(ix::th)(this->ijk), // potential temperature
+      rv   = this->state(ix::rv)(this->ijk), // water vapour mixing ratio
+      rc   = this->state(ix::rc)(this->ijk), // cloud water mixing ratio
+      rr   = this->state(ix::rr)(this->ijk); // rain water mixing ratio
     auto const
       rhod = (*this->mem->G)(this->ijk);
       
@@ -36,8 +36,8 @@ class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<ct_params_t>
 
   void zero_if_uninitialised(int e)
   {
-    if (!finite(sum(this->psi_n(e)(this->ijk)))) 
-      this->psi_n(e)(this->ijk) = 0;
+    if (!finite(sum(this->state(e)(this->ijk)))) 
+      this->state(e)(this->ijk) = 0;
   }
 
   protected:
@@ -72,8 +72,8 @@ class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<ct_params_t>
 	dot_rc = rhs.at(ix::rc)(this->ijk),
 	dot_rr = rhs.at(ix::rr)(this->ijk);
       const auto 
-	rc   = this->psi_n(ix::rc)(this->ijk),
-	rr   = this->psi_n(ix::rr)(this->ijk);
+	rc   = this->state(ix::rc)(this->ijk),
+	rr   = this->state(ix::rr)(this->ijk);
       libcloudphxx::blk_1m::rhs_cellwise<real_t>(opts, dot_rc, dot_rr, rc, rr);
     }
 
@@ -84,7 +84,7 @@ class kin_cloud_2d_blk_1m : public kin_cloud_2d_common<ct_params_t>
 	dot_rr = rhs.at(ix::rr)(i, this->j);
       const auto 
         rhod   = (*this->mem->G)(i, this->j),
-	rr     = this->psi_n(ix::rr)(i, this->j);
+	rr     = this->state(ix::rr)(i, this->j);
       libcloudphxx::blk_1m::rhs_columnwise<real_t>(opts, dot_rr, rhod, rr, this->dz);
     }
   }

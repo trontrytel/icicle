@@ -16,8 +16,8 @@ class kin_cloud_2d_blk_2m : public kin_cloud_2d_common<ct_params_t>
 
   void zero_if_uninitialised(int e)  //TODO move to common
   {
-    if (!finite(sum(this->psi_n(e)(this->ijk)))) 
-    this->psi_n(e)(this->ijk) = 0;
+    if (!finite(sum(this->state(e)(this->ijk)))) 
+    this->state(e)(this->ijk) = 0;
   }
 
   void update_rhs(
@@ -40,12 +40,12 @@ class kin_cloud_2d_blk_2m : public kin_cloud_2d_common<ct_params_t>
 	dot_nr = rhs.at(ix::nr)(this->ijk);
       const auto
         rhod   = (*this->mem->G)(this->ijk),
-        th     = this->psi_n(ix::th)(this->ijk),
-        rv     = this->psi_n(ix::rv)(this->ijk),
-        rc     = this->psi_n(ix::rc)(this->ijk),
-        rr     = this->psi_n(ix::rr)(this->ijk),
-        nc     = this->psi_n(ix::nc)(this->ijk),
-        nr     = this->psi_n(ix::nr)(this->ijk);
+        th     = this->state(ix::th)(this->ijk),
+        rv     = this->state(ix::rv)(this->ijk),
+        rc     = this->state(ix::rc)(this->ijk),
+        rr     = this->state(ix::rr)(this->ijk),
+        nc     = this->state(ix::nc)(this->ijk),
+        nr     = this->state(ix::nr)(this->ijk);
 
       libcloudphxx::blk_2m::rhs_cellwise<real_t>(
         opts, dot_th, dot_rv, dot_rc, dot_nc, dot_rr, dot_nr,
@@ -62,8 +62,8 @@ class kin_cloud_2d_blk_2m : public kin_cloud_2d_common<ct_params_t>
 	dot_nr = rhs.at(ix::nr)(i, this->j);
       const auto
         rhod   = (*this->mem->G)(i, this->j),
-	rr     = this->psi_n(ix::rr)(i, this->j),
-	nr     = this->psi_n(ix::nr)(i, this->j);
+	rr     = this->state(ix::rr)(i, this->j),
+	nr     = this->state(ix::nr)(i, this->j);
 
       libcloudphxx::blk_2m::rhs_columnwise<real_t>(
         opts, dot_rr, dot_nr, 
