@@ -59,9 +59,8 @@ struct ct_params_common : ct_params_default_t
 {
   using real_t = setup::real_t;
   enum { n_dims = 2 };
-  enum { opts = opts::nug /*| opts::iga*/ | opts::fct }; 
+  enum { opts = opts::nug | opts::iga | opts::fct }; 
   enum { rhs_scheme = solvers::euler_b };
-  // TODO: hint_norhs?
 };
 
 
@@ -125,6 +124,7 @@ int main(int argc, char** argv)
       {
 	enum { n_eqns = 4 };
         struct ix { enum {th, rv, rc, rr}; };
+        enum { hint_norhs = opts::bit(ix::th) | opts::bit(ix::rv) }; // only through adjustments
       };
       run<kin_cloud_2d_blk_1m<ct_params_t>>(nx, nz, nt, outfile, outfreq, spinup);
     }
@@ -134,7 +134,17 @@ int main(int argc, char** argv)
       struct ct_params_t : ct_params_common
       {
 	enum { n_eqns = 6 };
-	struct ix { enum {th, rv, rc, rr, nc, nr}; };
+	struct ix { enum {th, rv, rc, rr, nc, nr}; }; 
+
+        static constexpr int hint_scale(const int &e) 
+	{
+	  return 
+            e == ix::nc ?  24 : // 1.7e7
+            e == ix::nr ?  17 : // 1.3e5 
+            e == ix::rc ? -14 : // 1.6e4
+            e == ix::rr ? -14 : // 1.6e4
+            0;
+	}
       };
       run<kin_cloud_2d_blk_2m<ct_params_t>>(nx, nz, nt, outfile, outfreq, spinup);
     }
@@ -145,6 +155,7 @@ int main(int argc, char** argv)
       {
 	enum { n_eqns = 2 };
 	struct ix { enum {th, rv}; };
+        enum { hint_norhs = opts::bit(ix::th) | opts::bit(ix::rv) }; // only through adjustments
       };
       run<kin_cloud_2d_lgrngn<ct_params_t>>(nx, nz, nt, outfile, outfreq, spinup);
     }
