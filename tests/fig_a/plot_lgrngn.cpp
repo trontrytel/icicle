@@ -18,7 +18,7 @@ int main(int ac, char** av)
     for (auto &plt : std::set<std::string>({"rl", "rr", "nc", "nr", "ef", "na"}))
     {
       Gnuplot gp;
-      init(gp, h5 + ".plot/" + plt + "/" + zeropad(at) + ".svg", 1, 1, n); // TODO: loop over time
+      init(gp, h5 + ".plot/" + plt + "/" + zeropad(at) + ".svg", 1, 1, n); 
 
       if (n["x"] == 76 && n["z"] == 76)
       {
