@@ -9,26 +9,33 @@ int main(int ac, char** av)
 
   std::string 
     dir = string(av[1]) + "/tests/fig_a/",
-    h5  = dir + "out_blk_1m.h5",
-    svg = dir + "out_blk_1m.svg";
+    h5  = dir + "out_blk_1m.h5";
 
   auto n = h5n(h5);
 
-  Gnuplot gp;
-  init(gp, svg, 1, 2, n);
-
+  for (int at = 0; at < n["t"]; ++at) // TODO: mark what time does it actually mean!
   {
-    auto rc = h5load(h5, "rc") * 1e3;
-    gp << "set title 'cloud water mixing ratio r_c [g/kg]'\n";  // TODO: -> multiply by density to compare with SD
-    gp << "set cbrange [0:1.5]\n";
-    plot(gp, rc);
-  }
+    for (auto &plt : std::set<std::string>({"rc", "rr"}))
+    {   
+      Gnuplot gp;
+      init(gp, h5 + ".plot/" + plt + "/" + zeropad(at) + ".svg", 1, 1, n); 
 
-  {
-    auto rr = h5load(h5, "rr") * 1e3;
-    gp << "set logscale cb\n";
-    gp << "set title 'rain water mixing ratio r_r [g/kg]'\n"; // TODO: -> multiply by density to compare with SD
-    gp << "set cbrange [1e-2:1]\n";
-    plot(gp, rr);
+      if (plt == "rc")
+      {
+	auto rc = h5load(h5, "rc", at) * 1e3;
+	gp << "set title 'cloud water mixing ratio r_c [g/kg]'\n";  // TODO: -> multiply by density to compare with SD
+	gp << "set cbrange [0:1.5]\n";
+	plot(gp, rc);
+      }
+
+      if (plt == "rr")
+      {
+	auto rr = h5load(h5, "rr", at) * 1e3;
+	gp << "set logscale cb\n";
+	gp << "set title 'rain water mixing ratio r_r [g/kg]'\n"; // TODO: -> multiply by density to compare with SD
+	gp << "set cbrange [1e-2:1]\n";
+	plot(gp, rr);
+      }
+    }
   }
 }
