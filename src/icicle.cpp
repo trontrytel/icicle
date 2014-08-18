@@ -59,7 +59,7 @@ struct ct_params_common : ct_params_default_t
 {
   using real_t = setup::real_t;
   enum { n_dims = 2 };
-  enum { opts = opts::nug | opts::iga | opts::fct }; 
+  enum { opts = opts::nug | opts::fct }; 
   enum { rhs_scheme = solvers::euler_b };
 };
 
