@@ -9,40 +9,48 @@ int main(int ac, char** av)
 
   std::string
     dir = string(av[1]) + "/tests/fig_a/",
-    h5  = dir + "out_blk_2m.h5",
-    svg = dir + "out_blk_2m.svg";
+    h5  = dir + "out_blk_2m.h5";
 
-  Gnuplot gp;
-  init(gp, svg, 2, 2);
+  auto n = h5n(h5);
 
+  for (int at = 0; at < n["t"]; ++at) // TODO: mark what time does it actually mean!
   {
-    auto rc = h5load(h5, "rc") * 1e3;
-    gp << "set title 'cloud water mixing ratio r_c [g/kg]'\n"; // TODO: *rho_d
-    gp << "set cbrange [0:1.5]\n";
-    plot(gp, rc);
-  }
+    for (auto &plt : std::set<std::string>({"rc", "rr", "nc", "nr"}))
+    {
+      Gnuplot gp;
+      init(gp, h5 + ".plot/" + plt + "/" + zeropad(at) + ".svg", 1, 1, n); 
 
-  {
-    auto rr = h5load(h5, "rr") * 1e3;
-    gp << "set logscale cb\n";
-    gp << "set title 'rain water mixing ratio r_r [g/kg]'\n"; // TODO: *rho_d
-    gp << "set cbrange [1e-2:1]\n";
-    plot(gp, rr);
-    gp << "unset logscale cb\n";
-  }
-
-  {
-    auto nc = h5load(h5, "nc") * 1e-6;
-    gp << "set title 'cloud droplet specific concentration n_c [mg^{-1}]'\n"; // TODO: *rho_d
-    gp << "set cbrange [0:150]\n";
-    plot(gp, nc);
-  }
-
-  {
-    auto nr = h5load(h5, "nr") * 1e-6;
-    gp << "set title 'rain drop specific concentration n_r [mg^{-1}]'\n"; // TODO: *rho_d
-    gp << "set cbrange [0.01:10]\n";
-    gp << "set logscale cb\n";
-    plot(gp, nr);
-  }
+      if (plt == "rc") 
+      {
+	auto rc = h5load(h5, "rc", at) * 1e3;
+	gp << "set title 'cloud water mixing ratio r_c [g/kg]'\n"; // TODO: *rho_d
+	gp << "set cbrange [0:1.5]\n";
+	plot(gp, rc);
+      }
+      else if (plt == "rr")
+      {
+	auto rr = h5load(h5, "rr", at) * 1e3;
+	gp << "set logscale cb\n";
+	gp << "set title 'rain water mixing ratio r_r [g/kg]'\n"; // TODO: *rho_d
+	gp << "set cbrange [1e-2:1]\n";
+	plot(gp, rr);
+	gp << "unset logscale cb\n";
+      }
+      else if (plt == "nc")
+      {
+	auto nc = h5load(h5, "nc", at) * 1e-6;
+	gp << "set title 'cloud droplet specific concentration n_c [mg^{-1}]'\n"; // TODO: *rho_d
+	gp << "set cbrange [0:150]\n";
+	plot(gp, nc);
+      }
+      else if (plt == "nr")
+      {
+	auto nr = h5load(h5, "nr", at) * 1e-6;
+	gp << "set title 'rain drop specific concentration n_r [mg^{-1}]'\n"; // TODO: *rho_d
+	gp << "set cbrange [0.01:10]\n";
+	gp << "set logscale cb\n";
+	plot(gp, nr);
+      }
+    }
+  } 
 }

@@ -5,13 +5,6 @@
 
 #include <map>
 
-string zeropad(int n)
-{
-  ostringstream tmp;
-  tmp << std::setw(3) << std::setfill('0') << n;
-  return tmp.str();
-}
-
 int main(int ac, char** av)
 {
   if (ac != 2) error_macro("expecting 1 argument: CMAKE_BINARY_DIR")
@@ -33,7 +26,6 @@ int main(int ac, char** av)
   gp << "set yrange [" << ymin << ":" << ymax << "]\n";
   gp << "set ylabel '[mg^{-1} μm^{-1}]'\n"; // TODO: add textual description (PDF?)
   gp << "set grid\n";
-  //gp << "set format y '%1.0e'\n";
   gp << "set nokey\n";
 
   // FSSP range
@@ -43,9 +35,8 @@ int main(int ac, char** av)
   gp << "set xlabel offset 0,1.5 'particle radius [μm]'\n";
   gp << "set key samplen 1.2\n";
   gp << "set xtics rotate by 65 right (.01, .1, 1, 10, 100) \n";
-  //gp << "set x2tics rotate by 65 right (.5, 25) \n"; TODO
 
-// TODO: use dashed lines to allow pronting with black and white... same in image plots
+// TODO: use dashed lines to allow printing in black and white... same in image plots
 
   assert(focus.first.size() == focus.second.size());
   gp << "set multiplot layout " << focus.first.size() << ",2 columnsfirst upwards\n";

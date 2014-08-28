@@ -2,10 +2,30 @@
 
 #include <blitz/array.h>
 #include <H5Cpp.h>
+#include <map>
+
+std::map<std::string, int> h5n(
+  const string &file
+)
+{
+  H5::H5File h5f(file, H5F_ACC_RDONLY);
+  H5::DataSet h5d = h5f.openDataSet("th");
+  H5::DataSpace h5s = h5d.getSpace();
+  hsize_t n[4];
+  enum {t, x, y, z};
+  h5s.getSimpleExtentDims(n, NULL);
+  return std::map<std::string, int>({
+    { "t", n[t] },
+    { "x", n[x] },
+    { "y", n[y] },
+    { "z", n[z] }
+  });
+}
 
 auto h5load(
   const string &file, 
-  const string &dataset
+  const string &dataset,
+  int at = -1
 ) -> decltype(blitz::safeToReturn(blitz::Array<float, 2>() + 0))
  {
   //notice_macro("about to open file: " << file)
@@ -24,9 +44,10 @@ auto h5load(
 
   blitz::Array<float, 2> tmp(n[x], n[z]);
 
+  if (at == -1) at = n[t] - 1;
   hsize_t 
-    cnt[4] = { 1,      n[x], 1, n[z] }, 
-    off[4] = { n[t]-1, 0,    0, 0    };
+    cnt[4] = { 1,           n[x], 1, n[z] }, 
+    off[4] = { (hsize_t)at, 0,    0, 0    };
   h5s.selectHyperslab( H5S_SELECT_SET, cnt, off);
 
   hsize_t ext[2] = {

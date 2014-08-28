@@ -137,7 +137,6 @@ namespace icmw8_case1
     solver.advectee(ix::th) = (theta_dry::std2dry(th_0, rv_0) / si::kelvins); 
     solver.advectee(ix::rv) = real_t(rv_0);
 
-//<listing-1>
     // density profile
     solver.g_factor() = rhod()(j * dz);
 
@@ -145,8 +144,8 @@ namespace icmw8_case1
     solver.advector(x) = - A * 
     // numerical derivative (see note on div values below)
     (
-      psi((i+.5)/real_t(nx-1), (j+.5)/(nz-1))- 
-      psi((i+.5)/real_t(nx-1), (j-.5)/(nz-1))  
+      psi((i+.5)/(nx-1), (j+.5)/(nz-1))- 
+      psi((i+.5)/(nx-1), (j-.5)/(nz-1))  
     ) / dz                       
     // analytical derivative (ditto)
     //dpsi_dz((i+.5)/real_t(nx-1), j/real_t(nz-1))
@@ -155,13 +154,12 @@ namespace icmw8_case1
     solver.advector(z) = A * 
     // numerical derivative (max(abs(div)) ~ 5e-10)
     (
-      psi((i+.5)/(nx-1), (j+.5)/real_t(nz-1)) - 
-      psi((i-.5)/(nx-1), (j+.5)/real_t(nz-1))   
+      psi((i+.5)/(nx-1), (j+.5)/(nz-1)) - 
+      psi((i-.5)/(nx-1), (j+.5)/(nz-1))   
     ) / dx 
     // analytical derivative (max(abs(div)) ~ 3e-5)
     //dpsi_dx(i/real_t(nx-1), (j+.5)/real_t(nz-1))
     * (dt / si::seconds) / dz; // converting to Courant number
-//</listing-1>
   }
 
   // lognormal aerosol distribution

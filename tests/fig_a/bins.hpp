@@ -20,22 +20,22 @@ vector<quantity<si::length>> bins_wet()
 }
 
 // focus plot locations
-int ox = 0, oy=1;
+int ox = 0, oy=7;
 std::pair<
   std::set<std::pair<int,int>>,
   std::set<std::pair<int,int>>
 > focus = {
   {   // left column
-    {17+ox, 24+oy}, 
+    {17+ox, 21+oy}, 
     {17+ox, 35+oy}, 
     {17+ox, 37+oy}, 
     {17+ox, 41+oy},
-    {17+ox, 70+oy} 
+    {17+ox, 65+oy} 
   },{ // right column
-    {58+ox, 24+oy},
+    {58+ox, 21+oy},
     {58+ox, 35+oy}, 
     {58+ox, 37+oy}, 
     {58+ox, 41+oy},
-    {58+ox, 70+oy}
+    {58+ox, 65+oy}
   }
 };

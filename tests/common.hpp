@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <iomanip>
 #include <set>
 #include <string>
 #include <sstream>
@@ -29,4 +30,11 @@ using boost::units::quantity;
 #define notice_macro(msg) \
 { \
   cerr << " info: " << msg << endl; \
+}
+
+string zeropad(int n)
+{
+  std::ostringstream tmp;
+  tmp << std::setw(3) << std::setfill('0') << n;
+  return tmp.str();
 }

@@ -17,14 +17,13 @@ install:
     - sudo apt-get install --no-install-recommends -t trusty -y libboost-thread-dev libboost-timer-dev libblitz0-dev gnuplot-nox libhdf5-serial-dev cmake libgnuplot-iostream-dev libboost-python-dev python-numpy libthrust-dev libboost-program-options-dev
 
     # libmpdata
-    - cd ../..
+    - cd ..
     - git clone --depth=1 git://github.com/igfuw/libmpdataxx.git
     - cd libmpdataxx
     - mkdir build
     - cd build
     - cmake -DCMAKE_BUILD_TYPE=Release ../
-    - make
-    - sudo make install
+    - sudo cmake -P cmake_install.cmake
 
     # libcloudphxx
     - cd ../..

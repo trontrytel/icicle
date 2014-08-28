@@ -147,13 +147,16 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<ct_params_t>
       setup_aux_helper("rw", params.out_wet); 
       this->setup_aux("sd_conc"); 
 
-      prtcls->init(
-        make_arrinfo(this->mem->advectee(ix::th)),
-        make_arrinfo(this->mem->advectee(ix::rv)),
-	make_arrinfo(this->mem->g_factor()), // TODO: triple-check - was this->rhod which has differend base!
-        make_arrinfo(this->mem->advector(0)),
-        make_arrinfo(this->mem->advector(1))
-      ); 
+      {
+        using libmpdataxx::arakawa_c::h;
+	prtcls->init(
+	  make_arrinfo(this->mem->advectee(ix::th)),
+	  make_arrinfo(this->mem->advectee(ix::rv)),
+	  make_arrinfo(this->mem->g_factor()),
+	  make_arrinfo(this->mem->GC[0](this->i^h, this->j  ).reindex({0,0})),
+	  make_arrinfo(this->mem->GC[1](this->i,   this->j^h).reindex({0,0}))
+	); 
+      }
 
       // writing diagnostic data for the initial condition
       diag();
@@ -162,7 +165,7 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<ct_params_t>
   }
 
 #if defined(STD_FUTURE_WORKS)
-  std::future<void> ftr;
+  std::future<real_t> ftr;
 #endif
 
   // 

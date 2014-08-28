@@ -28,3 +28,5 @@ target_link_libraries(icicle cloudphxx_lgrngn)
 
 find_package(HDF5 COMPONENTS CXX HL REQUIRED QUIET)
 target_link_libraries(icicle ${HDF5_LIBRARIES})
+
+install(TARGETS icicle DESTINATION bin)
