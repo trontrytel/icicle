@@ -42,9 +42,9 @@ void setopts_micro(
     ("coal", po::value<bool>()->default_value(rt_params.cloudph_opts.coal) , "collisional growth     (1=on, 0=off)")
     ("chem", po::value<bool>()->default_value(rt_params.cloudph_opts.chem) , "aqueous chemistry      (1=on, 0=off)")
     // free parameters
-    ("sstp_cond", po::value<int>()->default_value(rt_params.cloudph_opts.sstp_cond), "no. of substeps for condensation")
-    ("sstp_coal", po::value<int>()->default_value(rt_params.cloudph_opts.sstp_coal), "no. of substeps for coalescence")
-    ("sstp_chem", po::value<int>()->default_value(rt_params.cloudph_opts.sstp_chem), "no. of substeps for chemistry")
+    ("sstp_cond", po::value<int>()->default_value(rt_params.cloudph_opts_init.sstp_cond), "no. of substeps for condensation")
+    ("sstp_coal", po::value<int>()->default_value(rt_params.cloudph_opts_init.sstp_coal), "no. of substeps for coalescence")
+    ("sstp_chem", po::value<int>()->default_value(rt_params.cloudph_opts_init.sstp_chem), "no. of substeps for chemistry")
     // 
     ("out_dry", po::value<std::string>()->default_value("0:1|0"),       "dry radius ranges and moment numbers (r1:r2|n1,n2...;...)")
     ("out_wet", po::value<std::string>()->default_value(".5e-6:25e-6|0,1,2,3;25e-6:1|0,3,6"),  "wet radius ranges and moment numbers (r1:r2|n1,n2...;...)")
