@@ -88,9 +88,9 @@ void setopts_micro(
   rt_params.cloudph_opts.chem = vm["chem"].as<bool>();
 
   // free parameters
-  rt_params.cloudph_opts.sstp_cond = vm["sstp_cond"].as<int>();
-  rt_params.cloudph_opts.sstp_coal = vm["sstp_coal"].as<int>();
-  rt_params.cloudph_opts.sstp_chem = vm["sstp_chem"].as<int>();
+  rt_params.cloudph_opts_init.sstp_cond = vm["sstp_cond"].as<int>();
+  rt_params.cloudph_opts_init.sstp_coal = vm["sstp_coal"].as<int>();
+  rt_params.cloudph_opts_init.sstp_chem = vm["sstp_chem"].as<int>();
 
   // parsing --out_dry and --out_wet options values
   // the format is: "rmin:rmax|0,1,2;rmin:rmax|3;..."
