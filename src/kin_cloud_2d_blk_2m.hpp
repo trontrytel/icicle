@@ -16,7 +16,7 @@ class kin_cloud_2d_blk_2m : public kin_cloud_2d_common<ct_params_t>
 
   void zero_if_uninitialised(int e)  //TODO move to common
   {
-    if (!finite(sum(this->state(e)(this->ijk)))) 
+    if (!isfinite(sum(this->state(e)(this->ijk)))) 
     this->state(e)(this->ijk) = 0;
   }
 
