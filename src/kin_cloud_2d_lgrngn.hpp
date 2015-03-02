@@ -29,7 +29,7 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<ct_params_t>
   // helper methods
   void diag()
   {
-    assert(this->mem->rank() == 0);
+    assert(this->rank == 0);
 
     // recording super-droplet concentration per grid cell 
     prtcls->diag_sd_conc();
@@ -120,7 +120,7 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<ct_params_t>
     parent_t::hook_ante_loop(nt); 
 
     // TODO: barrier?
-    if (this->mem->rank() == 0) 
+    if (this->rank == 0) 
     {
       assert(params.backend != -1);
       assert(params.dt != 0); 
@@ -175,7 +175,7 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<ct_params_t>
 
     this->mem->barrier();
 
-    if (this->mem->rank() == 0) 
+    if (this->rank == 0) 
     {
       // assuring previous async step finished ...
 #if defined(STD_FUTURE_WORKS)
@@ -260,7 +260,7 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<ct_params_t>
     parent_t(args, p),
     params(p)
   {
-    // delaying any initialisation to ante_loop as rank() does not function within ctor!
+    // delaying any initialisation to ante_loop as rank() does not function within ctor! // TODO: not anymore!!!
     // TODO: equip rank() in libmpdata with an assert() checking if not in serial block
   }  
 };
