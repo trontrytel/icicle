@@ -88,23 +88,6 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<ct_params_t>
     return tmp.str();
   }
 
-  void setup_aux_helper(
-    const std::string pfx, 
-    const outmom_t<real_t> &outmoms
-  )
-  {
-    // TODO: attributes incl. units?
-    int rng = 0; // note: same numbering for rd and rw 
-    for (auto &rng_moms : outmoms)
-    {
-      for (auto &mom : rng_moms.second)
-      {
-	this->setup_aux(aux_name(pfx, rng, mom)); 
-      }
-      ++rng;
-    }
-  }
-
   protected:
 
   bool get_rain() { return params.cloudph_opts.coal && params.cloudph_opts.sedi; }
@@ -142,10 +125,6 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<ct_params_t>
         (libcloudphxx::lgrngn::backend_t)params.backend, 
         params.cloudph_opts_init
       ));
-
-      setup_aux_helper("rd", params.out_dry); 
-      setup_aux_helper("rw", params.out_wet); 
-      this->setup_aux("sd_conc"); 
 
       {
         using libmpdataxx::arakawa_c::h;
