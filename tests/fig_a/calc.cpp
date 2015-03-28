@@ -2,6 +2,7 @@
 #include <set>
 #include <string>
 #include <sstream> // std::ostringstream
+#include <cstdlib> // std::getenv()
 
 #include "../common.hpp"
 #include "bins.hpp"
@@ -34,19 +35,25 @@ int main(int ac, char** av)
 
   string opts_common = 
     "--outfreq=200 --nt=9000 --spinup=7200 --nx=76 --nz=76";
-  set<string> opts_micro({
-    "--micro=blk_1m --outdir=out_blk_1m",
-    "--micro=blk_2m --outdir=out_blk_2m",
-    "--micro=lgrngn --outdir=out_lgrngn --backend=CUDA --sd_conc_mean=64 --sstp_cond=10 --sstp_coal=10"  
-      " --out_wet=\""
-        ".5e-6:25e-6|0,1,2,3;" // FSSP
-        "25e-6:1|0,3;"         // "rain"
-        + bins_wet_str + // aerosol spectrum (wet)
-      "\""
-      " --out_dry=\""
-        + bins_dry_str + // aerosol spectrum (dry)
-      "\""
-  });
+
+  set<string> opts_micro;
+  opts_micro.insert("--micro=blk_1m --outdir=out_blk_1m");
+  opts_micro.insert("--micro=blk_2m --outdir=out_blk_2m");
+
+  // turn off lagrangian model when on travis 
+  // (TODO think of a shorter test and enable automagic testing on travis as well)
+  const char *env_var("TRAVIS_OS_NAME");
+  if(std::getenv(env_var) != NULL){  //if not on travis
+    opts_micro.insert("--micro=lgrngn --outdir=out_lgrngn --backend=CUDA --sd_conc_mean=64 --sstp_cond=10 --sstp_coal=10"  
+        " --out_wet=\""
+          ".5e-6:25e-6|0,1,2,3;" // FSSP
+          "25e-6:1|0,3;"         // "rain"
+          + bins_wet_str + // aerosol spectrum (wet)
+        "\""
+        " --out_dry=\""
+          + bins_dry_str + // aerosol spectrum (dry)
+        "\"");
+  }
 
   for (auto &opts_m : opts_micro)
   {

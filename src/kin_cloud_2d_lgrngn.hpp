@@ -115,6 +115,9 @@ class kin_cloud_2d_lgrngn : public kin_cloud_2d_common<ct_params_t>
       params.cloudph_opts_init.dx = params.dx;
       params.cloudph_opts_init.dz = params.dz;
 
+      // coalescence kernel
+      params.cloudph_opts_init.kernel =  libcloudphxx::lgrngn::geometric;
+
       // libmpdata++'s grid interpretation
       params.cloudph_opts_init.x0 = params.dx / 2;
       params.cloudph_opts_init.z0 = params.dz / 2;
