@@ -43,7 +43,7 @@ int main(int ac, char** av)
   // turn off lagrangian model when on travis 
   // (TODO think of a shorter test and enable automagic testing on travis as well)
   const char *env_var("TRAVIS_OS_NAME");
-  if(std::getenv(env_var) != NULL){  //if not on travis TODO change to ==
+  if(std::getenv(env_var) == NULL){  // if not on travis
     opts_micro.insert("--micro=lgrngn --outdir=out_lgrngn --backend=CUDA --sd_conc_mean=64 --sstp_cond=10 --sstp_coal=10"  
         " --out_wet=\""
           ".5e-6:25e-6|0,1,2,3;" // FSSP
