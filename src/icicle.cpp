@@ -76,12 +76,12 @@ int main(int argc, char** argv)
     // note: all options should have default values here to make "--micro=? --help" work
     opts_main.add_options()
       ("micro", po::value<std::string>()->required(), "one of: blk_1m, blk_2m, lgrngn")
-      ("nx", po::value<int>()->default_value(76) , "grid cell count in horizontal")
-      ("nz", po::value<int>()->default_value(76) , "grid cell count in vertical")
-      ("nt", po::value<int>()->default_value(3600) , "timestep count")
+      ("nx", po::value<int>()->default_value(101) , "grid cell count in horizontal")
+      ("nz", po::value<int>()->default_value(51) , "grid cell count in vertical")
+      ("nt", po::value<int>()->default_value(3600) , "timestep count") // TODO!
       ("outdir", po::value<std::string>(), "output file name (netCDF-compatible HDF5)")
       ("outfreq", po::value<int>(), "output rate (timestep interval)")
-      ("spinup", po::value<int>()->default_value(2400) , "number of initial timesteps during which rain formation is to be turned off")
+      ("spinup", po::value<int>()->default_value(2400) , "number of initial timesteps during which rain formation is to be turned off") //TODO!
       ("help", "produce a help message (see also --micro X --help)")
     ;
     po::variables_map vm;

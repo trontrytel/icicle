@@ -37,7 +37,7 @@ int main(int ac, char** av)
     "--outfreq=200 --nt=9000 --spinup=7200 --nx=76 --nz=76";
 
   set<string> opts_micro;
-  opts_micro.insert("--micro=blk_1m --outdir=out_blk_1m");
+//  opts_micro.insert("--micro=blk_1m --outdir=out_blk_1m");
   opts_micro.insert("--micro=blk_2m --outdir=out_blk_2m");
 
   // turn off lagrangian model when on travis 

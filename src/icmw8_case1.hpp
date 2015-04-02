@@ -28,17 +28,17 @@ namespace icmw8_case1
   enum {x, z}; // dimensions
 
   const quantity<si::temperature, real_t> 
-    th_0 = 289 * si::kelvins;
+    th_0 = 288 * si::kelvins;
   const quantity<si::dimensionless, real_t> 
-    rv_0 = 7.5e-3;
+    rv_0 = 8.5e-3;
   const quantity<si::pressure, real_t> 
     p_0 = 101500 * si::pascals;
   const quantity<si::velocity, real_t> 
-    w_max = real_t(.6) * si::metres_per_second;
+    w_max = real_t(1.7) * si::metres_per_second;
   const quantity<si::length, real_t> 
     z_0  = 0    * si::metres,
-    Z    = 1500 * si::metres, 
-    X    = 1500 * si::metres;
+    Z    = 1000 * si::metres, 
+    X    = 2000 * si::metres;
   const quantity<si::time, real_t>
     dt = real_t(1) * si::seconds;
 
